@@ -12,7 +12,7 @@ module Network.Discord.Types where
     String
     String
     String
-    (Maybe Bool)
+    Bool
     (Maybe Bool)
     (Maybe Bool)
     (Maybe String)
@@ -24,7 +24,7 @@ module Network.Discord.Types where
            <*> o .:  "username"
            <*> o .:  "discriminator"
            <*> o .:  "avatar"
-           <*> o .:? "bot"
+           <*> o .:? "bot" .!= False
            <*> o .:? "mfa_enabled"
            <*> o .:? "verified"
            <*> o .:? "email"
