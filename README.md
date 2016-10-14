@@ -5,6 +5,7 @@
   - [x] Channel objects
   - [x] Message objects (and dependancies)
   - [x] Bot authentication (via token)
+  - [ ] Sharding
   - [ ] Websockets
     - [ ] Resuming sessions
     - [ ] Refine Client function signatures
