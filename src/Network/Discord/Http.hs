@@ -1,10 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Discord.Http where
-  import qualified Data.ByteString.Lazy as BS
-  import qualified Data.ByteString.Lazy.Char8 as BS8
   import Data.ByteString.Char8
-  import Data.Maybe
   import System.IO.Unsafe
+  import Control.Monad (mzero)
   import Paths_discord_hs (version)
   import Data.Version (showVersion)
 
@@ -68,9 +66,13 @@ module Network.Discord.Http where
   data GatewayURL = Gateway String
   instance FromJSON GatewayURL where
     parseJSON (Object o) = Gateway <$> o .: "url"
+    parseJSON _ = mzero
 
   getGateway :: (Client a) => a -> IO String
   getGateway client = do
     urlOrError <- apiGet client "/gateway"
     case urlOrError of
       Right (Gateway url) -> return url
+      Left  (reason)      -> do
+        Prelude.putStrLn reason
+        return mzero

@@ -1,23 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Discord where
-  import GHC.Generics
   import Control.Concurrent
   import Control.Concurrent.STM
-  import Control.Monad (forever, void, join)
+  import Control.Monad (forever, void)
 
-  import Data.Aeson.Types
   import Wuss as WS
   import qualified Network.WebSockets as WS
 
   import Network.Discord.Gateway
-  import Network.Discord.Http
   import Network.Discord.Client
-  import Network.Discord.Types
 
   heartbeatLoop :: Int -> TBQueue Payload -> TMVar Integer -> IO ()
-  heartbeatLoop interval queue seq = void . forkIO . forever $ do
+  heartbeatLoop interval queue seqId = void . forkIO . forever $ do
     atomically $ do
-      seq_id <- readTMVar seq
+      seq_id <- readTMVar seqId
       writeTBQueue queue $ Heartbeat seq_id
     threadDelay $ 1000 * interval
 
@@ -30,7 +26,7 @@ module Network.Discord where
     input <- atomically $ newTBQueue 100
     seq_num <- atomically newEmptyTMVar
     runSecureClient "gateway.discord.gg" 443 "/?v=5" (clientSM Start client seq_num input)
-  clientSM Start client seq input conn = do
+  clientSM Start client seqId input conn = do
     void . forkIO . forever $ do
       message <- atomically $ readTBQueue input
       WS.sendTextData conn message
@@ -38,16 +34,16 @@ module Network.Discord where
     hello <- WS.receiveData conn
     case hello of
       (Hello interval) -> do
-        heartbeatLoop interval input seq
-        clientSM Ready client seq input conn
-      _ -> clientSM (Invalid "Failed to recieve server Hello") client seq input conn
-  clientSM Ready client seq input conn = do
+        heartbeatLoop interval input seqId
+        clientSM Ready client seqId input conn
+      _ -> clientSM (Invalid "Failed to recieve server Hello") client seqId input conn
+  clientSM Ready client seqId input conn = do
     payload <- WS.receiveData conn
     case payload of
       Dispatch o new_seq event -> do
         atomically $ do
-          old_seq <- tryTakeTMVar seq
-          putTMVar seq new_seq
+          _ <- tryTakeTMVar seqId
+          putTMVar seqId new_seq
         putStrLn $ "Event: " ++ event
         case lookup event [
             ("READY", onReady)
@@ -81,14 +77,14 @@ module Network.Discord where
           ] of
             Just callback -> do
               newClient <- callback client input o
-              clientSM Ready newClient seq input conn
-            Nothing -> clientSM (Invalid "Unrecognized event") client seq input conn
+              clientSM Ready newClient seqId input conn
+            Nothing -> clientSM (Invalid "Unrecognized event") client seqId input conn
       Heartbeat new_seq -> do
         atomically $ do
-          old_seq <- tryTakeTMVar seq
-          putTMVar seq new_seq
-        clientSM Ready client seq input conn
-      HeartbeatAck -> clientSM Ready client seq input conn
-      ParseError err -> clientSM (Invalid err) client seq input conn
-      a -> clientSM (Invalid $ show a) client seq input conn
+          _ <- tryTakeTMVar seqId
+          putTMVar seqId new_seq
+        clientSM Ready client seqId input conn
+      HeartbeatAck -> clientSM Ready client seqId input conn
+      ParseError err -> clientSM (Invalid err) client seqId input conn
+      a -> clientSM (Invalid $ show a) client seqId input conn
   clientSM (Invalid reason) _ _ _ _ = putStrLn $ "Client error: " ++ reason

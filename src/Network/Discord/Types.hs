@@ -2,8 +2,8 @@
 module Network.Discord.Types where
   import Data.Time.Clock
   import Data.Aeson
-  import Data.Word
   import Data.Foldable
+  import Control.Monad (mzero)
 
   type Snowflake = String
   
@@ -28,6 +28,7 @@ module Network.Discord.Types where
            <*> o .:? "mfa_enabled"
            <*> o .:? "verified"
            <*> o .:? "email"
+    parseJSON _ = mzero
 
   data Channel = Text
     Snowflake
@@ -86,6 +87,7 @@ module Network.Discord.Types where
                 <*> o .: "type"
                 <*> o .: "allow"
                 <*> o .: "deny"
+    parseJSON _ = mzero
 
   data Message = Message
     Snowflake
@@ -120,6 +122,7 @@ module Network.Discord.Types where
               <*> o .:  "embeds"
               <*> o .:? "nonce"
               <*> o .:  "pinned"
+    parseJSON _ = mzero
 
   data Attachment = Attachment
     Snowflake
@@ -140,6 +143,7 @@ module Network.Discord.Types where
                  <*> o .:  "proxy_url"
                  <*> o .:? "height"
                  <*> o .:? "width"
+    parseJSON _ = mzero
 
   data Embed = Embed
     String
@@ -158,6 +162,7 @@ module Network.Discord.Types where
             <*> o .: "url"
             <*> o .: "thumbnail"
             <*> o .: "provider"
+    parseJSON _ = mzero
 
   data Thumbnail = Thumbnail
     String
@@ -172,6 +177,7 @@ module Network.Discord.Types where
                 <*> o .: "proxy_url"
                 <*> o .: "height"
                 <*> o .: "width"
+    parseJSON _ = mzero
 
   data Provider = Provider
     String
@@ -182,3 +188,4 @@ module Network.Discord.Types where
     parseJSON (Object o) =
       Provider <$> o .: "name"
                <*> o .: "url"
+    parseJSON _ = mzero

@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Network.Discord.Gateway where 
-  import Data.Maybe
   import System.Info
-  import qualified Data.ByteString.Lazy as BS
+  import Control.Monad (mzero)
 
   import Data.Aeson
   import Data.Aeson.Types
@@ -30,7 +29,6 @@ module Network.Discord.Gateway where
    (Maybe Snowflake)
     Bool
     Bool
-               | VoiceServerPing
                | Resume
     String
     String
@@ -46,15 +44,6 @@ module Network.Discord.Gateway where
                | HeartbeatAck
                | ParseError String
     deriving Show
-  instance Enum Payload where -- Note: Payload is an Enum only because I'm dumb and it's the only way I can think of to get JSON to play nice
-    fromEnum VoiceServerPing = 5
-    fromEnum Reconnect       = 7
-    fromEnum InvalidSession  = 9
-    fromEnum HeartbeatAck    = 11
-    toEnum 5  = VoiceServerPing
-    toEnum 7  = Reconnect
-    toEnum 9  = InvalidSession
-    toEnum 11 = HeartbeatAck
 
   instance FromJSON Payload where
     parseJSON = withObject "payload" $ \o -> do
@@ -62,8 +51,11 @@ module Network.Discord.Gateway where
       case op of
         0  -> Dispatch <$> o .: "d" <*> o .: "s" <*> o .: "t"
         1  -> Heartbeat <$> o .: "d"
+        7  -> return Reconnect
+        9  -> return InvalidSession
         10 -> (\od -> Hello <$> od .: "heartbeat_interval") =<< o .: "d"
-        _  -> toEnum <$> o .: "op"
+        11 -> return HeartbeatAck
+        _  -> mzero
 
   instance ToJSON Payload where
     toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= i ]
@@ -79,6 +71,7 @@ module Network.Discord.Gateway where
           , "$referring_domain"  .= (""           :: String)
           ]
         , "compress" .= compress
+        , "large_threshold" .= large
         , "shard" .= shard
         ]
       ]
@@ -100,12 +93,12 @@ module Network.Discord.Gateway where
         , "self_deaf"  .= deaf
         ]
       ]
-    toJSON (Resume token session seq) = object [
+    toJSON (Resume token session seqId) = object [
         "op" .= (6 :: Int)
       , "d"  .= object [
           "token"      .= token
         , "session_id" .= session
-        , "seq"        .= seq
+        , "seq"        .= seqId
         ]
       ]
     toJSON (RequestGuildMembers guild query limit) = object [
@@ -116,6 +109,8 @@ module Network.Discord.Gateway where
         , "limit"    .= limit
         ]
       ]
+    toJSON _ = object []
+
   instance WebSocketsData Payload where
     fromLazyByteString bs = case eitherDecode bs of
         Right payload -> payload
