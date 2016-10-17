@@ -1,5 +1,13 @@
 # Discord.hs -- A set of Haskell bindings for Discord
 
+### Theory:
+  - Network.Discord.\* contains the type data needed for the library to work
+  - Network.Discord contains the transformations on the types that make the library work
+  - The general idea of a client is it represents a state machine (clientSM)
+  - Dispatch events as defined in the Discord api are represented as on\*Event\* functions in a client instance
+  - on\* functions represent transformations in client state
+  - As on\* events are triggered by side effects (and will probably result in side effects to do useful things), they are wrapped in an IO monad.
+
 ### TODO:
   - [x] User objects
   - [x] Channel objects
