@@ -12,9 +12,7 @@ module Network.Discord where
 
   heartbeatLoop :: Int -> TBQueue Payload -> TMVar Integer -> IO ()
   heartbeatLoop interval queue seqId = void . forkIO . forever $ do
-    atomically $ do
-      seq_id <- readTMVar seqId
-      writeTBQueue queue $ Heartbeat seq_id
+    _ <- atomically $ writeTBQueue queue <$> Heartbeat <$> readTMVar seqId
     threadDelay $ 1000 * interval
 
   startClient :: (Client a) => a -> IO ()
