@@ -17,7 +17,7 @@ module Network.Discord.Http where
   baseURL = "/api"
 
   baseRequest :: Request
-  baseRequest = addProxy "localhost" 8080 $ defaultRequest {secure=True
+  baseRequest = defaultRequest {secure=True
                                , port=443, host="discordapp.com"
                                , requestHeaders = [
                                    (hUserAgent, pack $ "DiscordBot(https://github.com/jano017/Discord.hs, " ++ showVersion version ++ ")")
