@@ -73,6 +73,6 @@ module Network.Discord.Http where
     urlOrError <- apiGet client "/gateway"
     case urlOrError of
       Right (Gateway url) -> return url
-      Left  (reason)      -> do
+      Left   reason      -> do
         Prelude.putStrLn reason
         return mzero
