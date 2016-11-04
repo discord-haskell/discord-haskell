@@ -1,119 +1,76 @@
-{-# LANGUAGE OverloadedStrings #-}
-module Network.Discord.Gateway where 
-  import System.Info
-  import Control.Monad (mzero)
+{-# LANGUAGE OverloadedStrings, FlexibleContexts, RankNTypes #-}
+module Network.Discord.Gateway where
+  import Control.Concurrent (forkIO, threadDelay)
+  import Control.Monad.State
 
+  import Wuss
   import Data.Aeson
   import Data.Aeson.Types
   import Network.WebSockets
+  import Network.URL
+  import Control.Concurrent.STM
+  import Pipes
 
   import Network.Discord.Types
 
-  type Auth = String
-  data Payload = Dispatch
-    Object
-    Integer
-    String
-               | Heartbeat
-    Integer
-               | Identify
-    Auth
-    Bool
-    Integer
-   (Int, Int)
-               | StatusUpdate
-   (Maybe Integer)
-   (Maybe String)
-               | VoiceStatusUpdate
-    Snowflake
-   (Maybe Snowflake)
-    Bool
-    Bool
-               | Resume
-    String
-    String
-    Integer
-               | Reconnect
-               | RequestGuildMembers
-    Snowflake
-    String
-    Integer
-               | InvalidSession
-               | Hello
-    Int
-               | HeartbeatAck
-               | ParseError String
-    deriving Show
 
-  instance FromJSON Payload where
-    parseJSON = withObject "payload" $ \o -> do
-      op <- o .: "op" :: Parser Int
-      case op of
-        0  -> Dispatch <$> o .: "d" <*> o .: "s" <*> o .: "t"
-        1  -> Heartbeat <$> o .: "d"
-        7  -> return Reconnect
-        9  -> return InvalidSession
-        10 -> (\od -> Hello <$> od .: "heartbeat_interval") =<< o .: "d"
-        11 -> return HeartbeatAck
-        _  -> mzero
+  makeWebsocketSource :: (WebSocketsData a, MonadIO m)
+    => Connection -> Producer a m ()
+  makeWebsocketSource conn = forever $ do
+    msg <- lift . liftIO $ receiveData conn
+    yield msg
 
-  instance ToJSON Payload where
-    toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= i ]
-    toJSON (Identify token compress large shard) = object [
-        "op" .= (2 :: Int)
-      , "d"  .= object [
-          "token" .= token 
-        , "properties" .= object [
-            "$os"                .= os
-          , "$browser"           .= ("discord.hs" :: String)
-          , "$device"            .= ("discord.hs" :: String)
-          , "$referrer"          .= (""           :: String)
-          , "$referring_domain"  .= (""           :: String)
-          ]
-        , "compress" .= compress
-        , "large_threshold" .= large
-        , "shard" .= shard
-        ]
-      ]
-    toJSON (StatusUpdate idle game) = object [
-        "op" .= (3 :: Int)
-      , "d"  .= object [
-          "idle_since" .= idle
-        , "game"       .= object [
-            "name" .= game
-          ]
-        ]
-      ]
-    toJSON (VoiceStatusUpdate guild channel mute deaf) = object [
-        "op" .= (4 :: Int)
-      , "d"  .= object [
-          "guild_id"   .= guild
-        , "channel_id" .= channel
-        , "self_mute"  .= mute
-        , "self_deaf"  .= deaf
-        ]
-      ]
-    toJSON (Resume token session seqId) = object [
-        "op" .= (6 :: Int)
-      , "d"  .= object [
-          "token"      .= token
-        , "session_id" .= session
-        , "seq"        .= seqId
-        ]
-      ]
-    toJSON (RequestGuildMembers guild query limit) = object [
-        "op" .= (8 :: Int)
-      , "d"  .= object [
-          "guild_id" .= guild
-        , "query"    .= query
-        , "limit"    .= limit
-        ]
-      ]
-    toJSON _ = object []
+  runWebsocket :: (Client c)
+    => URL -> c -> Effect DiscordM a -> IO a
+  runWebsocket (URL (Absolute h) path _) client inner =
+    runSecureClient (host h) 443 (path++"/?v=6")
+      $ \conn -> evalStateT (runEffect inner)
+        (DiscordState Create client conn undefined [])
+  runWebsocket _ _ _ = mzero
 
-  instance WebSocketsData Payload where
-    fromLazyByteString bs = case eitherDecode bs of
-        Right payload -> payload
-        Left  reason  -> ParseError reason
-    toLazyByteString   = encode
+  heartbeat :: Int -> Connection -> TMVar Integer -> IO ()
+  heartbeat interval conn sq = void . forkIO . forever $ do
+    seqNum <- atomically $ readTMVar sq
+    sendTextData conn $ Heartbeat seqNum
+    threadDelay $ interval * 1000
 
+  makeEvents :: Pipe Payload Event DiscordM a
+  makeEvents = forever $ do
+    st@(DiscordState dState client ws _ _) <- get
+    case dState of
+      Create -> do
+        Hello interval <- await
+        sq <- liftIO . atomically $ newEmptyTMVar
+        put st {getState=Start, getSequenceNum=sq}
+        liftIO $ heartbeat interval ws sq
+      Start  -> do
+        liftIO $ sendTextData ws
+          (Identify (getAuth client) False 50 (0, 1))
+        Dispatch o sq "READY" <- await
+        liftIO . atomically $ putTMVar (getSequenceNum st) sq
+        case parseEither parseJSON $ Object o of
+          Right a -> yield $ Ready a
+          Left reason -> liftIO $ putStrLn reason
+        put st {getState=Running}
+      Running          -> do
+        pl <- await
+        case pl of
+          Dispatch _ sq _ -> do
+            liftIO . atomically $ tryTakeTMVar (getSequenceNum st)
+              >> putTMVar (getSequenceNum st) sq
+            yield $ parseDispatch pl
+          Heartbeat sq    -> do
+            liftIO . atomically $ tryTakeTMVar (getSequenceNum st)
+              >> putTMVar (getSequenceNum st) sq
+            liftIO . sendTextData ws $ Heartbeat sq
+          Reconnect       -> put st {getState=InvalidReconnect}
+          InvalidSession  -> put st {getState=Start}
+          HeartbeatAck    -> liftIO $ putStrLn "Heartbeat Ack"
+          _               -> do
+            liftIO $ putStrLn "Invalid Packet"
+            put st {getState=InvalidDead}
+      InvalidReconnect -> put st {getState=InvalidDead}
+      InvalidDead      -> liftIO $ putStrLn "Bot died"
+
+  eventCore :: Connection -> Producer Event DiscordM ()
+  eventCore conn = makeWebsocketSource conn >-> makeEvents
