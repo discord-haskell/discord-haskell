@@ -1,5 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module Network.Discord.Types.Prelude where
+  import Data.Aeson.Types
 
   type Auth = String
   type Snowflake = String
@@ -16,3 +17,6 @@ module Network.Discord.Types.Prelude where
   justRight :: (Show a) => Either a b -> b
   justRight (Right b) = b
   justRight (Left a) = error $ show a
+
+  reparse :: (ToJSON a, FromJSON b) => a -> b
+  reparse val = justRight . parseEither parseJSON $ toJSON val

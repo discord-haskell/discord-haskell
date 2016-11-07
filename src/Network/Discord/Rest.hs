@@ -8,8 +8,13 @@ module Network.Discord.Rest
     import Pipes.Core
     import Control.Monad.Morph (lift)
     import Data.Hashable
+    import Data.Maybe (fromJust)
 
-    import Network.Discord.Types
+    import Network.Discord.Types as Dc
+    import Network.URL
+    import Network.Wreq
+    import Control.Lens
+    import Data.Aeson.Types
     import Network.Discord.Rest.Prelude as Rest
     import Network.Discord.Rest.Channel as Rest
 
@@ -20,3 +25,11 @@ module Network.Discord.Rest
     fetch :: (DoFetch a, Hashable a)
       => a -> Pipes.Core.Client Fetchable Fetched DiscordM Fetched
     fetch req = request $ Fetch req
+
+    getURL :: Value -> Parser String
+    getURL = withObject "url" (.: "url")
+
+    getGateway :: IO URL
+    getGateway = do
+      resp <- asValue =<< get (baseURL++"/gateway")
+      return . fromJust $ importURL =<< parseMaybe getURL (resp ^. responseBody)

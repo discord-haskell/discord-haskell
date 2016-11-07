@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings, MultiWayIf #-}
 module Network.Discord.Types.Channel where
-  import Data.Foldable (asum)
   import Control.Monad (mzero)
-  import Data.Text (pack)
+  import Data.Text as Text (pack, Text)
 
   import Data.Time.Clock
   import Data.Aeson
+  import Data.Aeson.Types (Parser)
   import Data.Vector (toList)
   import qualified Data.HashMap.Strict as HM
 
-  import Network.Discord.Types.Global
+  import Network.Discord.Types.Prelude
 
   data User = User
     Snowflake
@@ -39,7 +39,6 @@ module Network.Discord.Types.Channel where
         Snowflake
         Snowflake
         String
-        String
         Integer
         [Overwrite]
         String
@@ -47,7 +46,6 @@ module Network.Discord.Types.Channel where
     | Voice
         Snowflake
         Snowflake
-        String
         String
         Integer
         [Overwrite]
@@ -61,28 +59,30 @@ module Network.Discord.Types.Channel where
 
   instance FromJSON Channel where
     parseJSON = withObject "text or voice" $ \o -> do
-      private <- o .: "is_private"
-      if private then
-        asum [
-          Text  <$> o .: "id"
-                <*> o .: "guild_id"
-                <*> o .: "name"
-                <*> o .: "type"
-                <*> o .: "position"
-                <*> o .: "permission_overwrites"
-                <*> o .: "topic"
-                <*> o .: "last_message_id"
-         ,Voice <$> o .: "id"
-                <*> o .: "guild_id"
-                <*> o .: "name"
-                <*> o .: "type"
-                <*> o .: "position"
-                <*> o .: "permission_overwrites"
-                <*> o .: "topic"
-                <*> o .: "last_message_id"
-         ]
+      private <- o .:? "is_private" .!= False
+      if not private then do
+        type' <- (o .: "type") :: Parser Text
+        case type' of
+          "text" ->
+              Text  <$> o .: "id"
+                    <*> o .: "guild_id"
+                    <*> o .: "name"
+                    <*> o .: "position"
+                    <*> o .: "permission_overwrites"
+                    <*> o .: "topic"
+                    <*> o .: "last_message_id"
+          "voice" ->
+              Voice <$> o .: "id"
+                    <*> o .: "guild_id"
+                    <*> o .: "name"
+                    <*> o .: "position"
+                    <*> o .: "permission_overwrites"
+                    <*> o .: "bitrate"
+                    <*> o .: "user_limit"
+          _ -> mzero
+
       else DirectMessage <$> o .: "id"
-                         <*> o .: "recipient"
+                         <*> o .: "recipients"
                          <*> o .: "last_message_id"
   data Overwrite = Overwrite
     Snowflake
@@ -103,7 +103,7 @@ module Network.Discord.Types.Channel where
     Snowflake
     Snowflake
     User
-    String
+    Text
     UTCTime
     (Maybe UTCTime)
     Bool

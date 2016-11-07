@@ -8,7 +8,7 @@ module Network.Discord.Types
     import Control.Concurrent.STM
     import Network.WebSockets (Connection)
 
-    import Network.Discord.Types.Json as Re
+    import Network.Discord.Types.Channel as Re
     import Network.Discord.Types.Events as Re
     import Network.Discord.Types.Gateway as Re
     import Network.Discord.Types.Prelude as Re

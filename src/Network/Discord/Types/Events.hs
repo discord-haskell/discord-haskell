@@ -4,8 +4,10 @@ module Network.Discord.Types.Events where
 
   import Data.Aeson
 
-  import Network.Discord.Types.Json
+  import Network.Discord.Types.Channel
   import Network.Discord.Types.Gateway
+  import Network.Discord.Types.Guild (Member, Guild)
+  import Network.Discord.Types.Prelude
 
   data Init = Init Int User [Channel] [Guild] String deriving Show
   instance FromJSON Init where
@@ -64,6 +66,7 @@ module Network.Discord.Types.Events where
     "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate        $ reparse o
     "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate $ reparse o
     "GUILD_MEMBER_ADD"          -> GuildMemberAdd          $ reparse o
+    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate       $ reparse o
     "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove       $ reparse o
     "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk        $ reparse o
     "GUILD_ROLE_CREATE"         -> GuildRoleCreate         $ reparse o

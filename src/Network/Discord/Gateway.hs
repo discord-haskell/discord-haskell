@@ -2,6 +2,7 @@
 module Network.Discord.Gateway where
   import Control.Concurrent (forkIO, threadDelay)
   import Control.Monad.State
+  import System.Mem
 
   import Wuss
   import Data.Aeson
@@ -33,6 +34,8 @@ module Network.Discord.Gateway where
     seqNum <- atomically $ readTMVar sq
     sendTextData conn $ Heartbeat seqNum
     threadDelay $ interval * 1000
+    putStrLn "Heartbeat"
+    performGC
 
   makeEvents :: Pipe Payload Event DiscordM a
   makeEvents = forever $ do
