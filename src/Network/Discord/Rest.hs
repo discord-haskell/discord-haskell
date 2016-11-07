@@ -26,10 +26,10 @@ module Network.Discord.Rest
       => a -> Pipes.Core.Client Fetchable Fetched DiscordM Fetched
     fetch req = request $ Fetch req
 
-    getURL :: Value -> Parser String
-    getURL = withObject "url" (.: "url")
-
     getGateway :: IO URL
     getGateway = do
       resp <- asValue =<< get (baseURL++"/gateway")
       return . fromJust $ importURL =<< parseMaybe getURL (resp ^. responseBody)
+      where
+        getURL :: Value -> Parser String
+        getURL = withObject "url" (.: "url")
