@@ -22,11 +22,12 @@ library
                      , Network.Discord.Types
   other-modules:       Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Prelude
+                     , Network.Discord.Types.Channel
+                     , Network.Discord.Types.Guild
                      , Network.Discord.Types.Events
                      , Network.Discord.Types.Gateway
                      , Network.Discord.Types.Prelude
                      , Network.Discord.Types.Events
-                     , Network.Discord.Types.Json
                      , Paths_discord_hs
   -- other-extensions:
   build-depends:       base==4.*, pipes, transformers, stm-conduit, websockets
