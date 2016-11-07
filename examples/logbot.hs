@@ -12,7 +12,7 @@ import Network.Discord.Gateway
 
 data LogClient = LogClient
 instance Client LogClient where
-  getAuth _ = "MjMyMjg0Mzg5NDIwMTcxMjY0.Cv6rgw.uE6wqrKoLWNS3eG1Jgb4S_ZsNQw"
+  getAuth _ = "TOKEN"
 
 main :: IO ()
 main = do
