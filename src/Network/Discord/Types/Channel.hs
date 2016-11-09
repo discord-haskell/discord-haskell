@@ -11,16 +11,16 @@ module Network.Discord.Types.Channel where
 
   import Network.Discord.Types.Prelude
 
-  data User = User
-    Snowflake
-    String
-    String
-    (Maybe String)
-    Bool
-    (Maybe Bool)
-    (Maybe Bool)
-    (Maybe String)
-    deriving (Show, Eq)
+  data User = User {
+      userId :: Snowflake,
+      userName:: String,
+      userDiscrim:: String,
+      userAvatatr:: Maybe String,
+      userIsBot:: Bool,
+      userMfa:: Maybe Bool,
+      userVerified:: Maybe Bool,
+      userEmail:: Maybe String
+    } deriving (Show, Eq)
 
   instance FromJSON User where
     parseJSON (Object o) =
@@ -35,27 +35,27 @@ module Network.Discord.Types.Channel where
     parseJSON _ = mzero
 
   data Channel =
-      Text
-        Snowflake
-        Snowflake
-        String
-        Integer
-        [Overwrite]
-        String
-        Snowflake
-    | Voice
-        Snowflake
-        Snowflake
-        String
-        Integer
-        [Overwrite]
-        Integer
-        Integer
-    | DirectMessage
-        Snowflake
-        User
-        Snowflake
-    deriving (Show, Eq)
+      Text{
+        channelId:: Snowflake,
+        channelGuild:: Snowflake,
+        channelName:: String,
+        channelPosition:: Integer,
+        channelPermissions:: [Overwrite],
+        channelTopic:: String,
+        channelLastMessage:: Snowflake }
+    | Voice{
+        channelId:: Snowflake,
+        channelGuild:: Snowflake,
+        channelName:: String,
+        channelPosition:: Integer,
+        channelPermissions:: [Overwrite],
+        channelBitRate:: Integer,
+        channelUserLimit:: Integer }
+    | DirectMessage {
+        channelId:: Snowflake,
+        channelRecipient:: User,
+        channelLastMessage:: Snowflake
+    } deriving (Show, Eq)
 
   instance FromJSON Channel where
     parseJSON = withObject "text or voice" $ \o -> do
@@ -84,12 +84,12 @@ module Network.Discord.Types.Channel where
       else DirectMessage <$> o .: "id"
                          <*> o .: "recipients"
                          <*> o .: "last_message_id"
-  data Overwrite = Overwrite
-    Snowflake
-    String
-    Integer
-    Integer
-    deriving (Show, Eq)
+  data Overwrite = Overwrite {
+    overwriteId:: Snowflake,
+    overWriteType:: String,
+    overwriteAllow:: Integer,
+    overwriteDeny:: Integer
+    } deriving (Show, Eq)
 
   instance FromJSON Overwrite where
     parseJSON (Object o) =
@@ -99,22 +99,22 @@ module Network.Discord.Types.Channel where
                 <*> o .: "deny"
     parseJSON _ = mzero
 
-  data Message = Message
-    Snowflake
-    Snowflake
-    User
-    Text
-    UTCTime
-    (Maybe UTCTime)
-    Bool
-    Bool
-    [User]
-    [Snowflake]
-    [Attachment]
-    [Embed]
-    (Maybe Snowflake)
-    Bool
-    deriving (Show, Eq)
+  data Message = Message{
+    messageId:: Snowflake,
+    messageChannel:: Snowflake,
+    messageAuthor:: User,
+    messageContent:: Text,
+    messageTimestamp:: UTCTime,
+    messageEdited:: Maybe UTCTime,
+    messageTts:: Bool,
+    messageEveryone:: Bool,
+    messageMentions:: [User],
+    messageMentionRoles:: [Snowflake],
+    messageAttachments:: [Attachment],
+    messageEmbeds:: [Embed],
+    messageNonce:: Maybe Snowflake,
+    messagePinned:: Bool
+    } deriving (Show, Eq)
 
   instance FromJSON Message where
     parseJSON (Object o) =
@@ -134,15 +134,15 @@ module Network.Discord.Types.Channel where
               <*> o .:  "pinned"
     parseJSON _ = mzero
 
-  data Attachment = Attachment
-    Snowflake
-    String
-    Integer
-    String
-    String
-    (Maybe Integer)
-    (Maybe Integer)
-    deriving (Show, Eq)
+  data Attachment = Attachment{
+    attachmentId:: Snowflake,
+    attachmentFilename:: String,
+    attachmentSize:: Integer,
+    attachmentUrl:: String,
+    attachmentProxy:: String,
+    attachmentHeight:: Maybe Integer,
+    attachmentWidth:: Maybe Integer
+    } deriving (Show, Eq)
 
   instance FromJSON Attachment where
     parseJSON (Object o) =
