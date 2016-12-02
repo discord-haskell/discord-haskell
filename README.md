@@ -56,3 +56,10 @@ main = do
 - Missing voice support
 - Missing stack support
 - Travis-CI build fails
+
+## Future goals:
+- [Eta](https://github.com/typelead/eta) compatibility
+- [HaLVM](https://github.com/GaloisInc/HaLVM) compatibility (maybe)
+- Tighten properties/prove properties
+- Monad based declarative bots
+- Proper logging?
