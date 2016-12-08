@@ -14,7 +14,7 @@ module Network.Discord.Types
     import Network.Discord.Types.Prelude as Re
 
     class Client c where
-      getAuth :: Client c => c -> Auth
+      getAuth :: c -> Auth
 
     data StateEnum = Create | Start | Running | InvalidReconnect | InvalidDead
 
