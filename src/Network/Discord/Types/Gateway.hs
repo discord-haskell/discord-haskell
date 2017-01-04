@@ -9,6 +9,7 @@ module Network.Discord.Types.Gateway where
 
   import Network.Discord.Types.Prelude
 
+  -- |Represents all sorts of things that we can send to Discord.
   data Payload = Dispatch
     Object
     Integer
@@ -44,6 +45,7 @@ module Network.Discord.Types.Gateway where
                | ParseError String
     deriving Show
 
+  -- |Allows payload to be generated using JSON.
   instance FromJSON Payload where
     parseJSON = withObject "payload" $ \o -> do
       op <- o .: "op" :: Parser Int
@@ -56,6 +58,7 @@ module Network.Discord.Types.Gateway where
         11 -> return HeartbeatAck
         _  -> mzero
 
+  -- |Allows JSON to be generated using a payload.
   instance ToJSON Payload where
     toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= i ]
     toJSON (Identify token compress large shard) = object [
@@ -110,6 +113,7 @@ module Network.Discord.Types.Gateway where
       ]
     toJSON _ = object []
 
+  -- |Allows payload to be used as a data sent to the grumpy Discord gateway.
   instance WebSocketsData Payload where
     fromLazyByteString bs = case eitherDecode bs of
         Right payload -> payload
