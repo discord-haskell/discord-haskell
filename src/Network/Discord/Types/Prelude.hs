@@ -1,15 +1,17 @@
 {-# LANGUAGE ExistentialQuantification #-}
 module Network.Discord.Types.Prelude where
   import Data.Aeson.Types
+  import Data.Time.Clock
   import Data.Time.Clock.POSIX
+  import Data.Bits
 
   type Auth = String
   -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
   type Snowflake = String
 
   -- |Gets a creation date from a snowflake.
-  creationDate :: Snowflake -> IO Int
-  creationDate x = posixSecondsToUTCTime (1420070400 + (((read x :: Int) >> 22) / 1000))
+  creationDate :: Snowflake -> UTCTime
+  creationDate x = posixSecondsToUTCTime $ realToFrac(1420070400 + (((read x :: Int) `shiftR` 22) `quot` 1000))
 
   delete :: Eq a => a -> [(a, b)] -> [(a, b)]
   delete k ((x,y):xs)
