@@ -26,6 +26,10 @@ module Network.Discord.Rest
       => a -> Pipes.Core.Client Fetchable Fetched DiscordM Fetched
     fetch req = request $ Fetch req
 
+    withApi :: Pipes.Core.Client Fetchable Fetched DiscordM Fetched
+      -> Effect DiscordM a
+    withApi inner = void $ restServer +>> inner
+
     -- |Obtains a new gateway to connect to.
     getGateway :: IO URL
     getGateway = do
