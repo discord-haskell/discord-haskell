@@ -19,8 +19,12 @@ module Network.Discord.Rest.Guild
     import Network.Discord.Types as Dc
     import Network.Discord.Rest.Prelude
 
+
+    -- |Data constructor for Guild requests. See <https://discordapp.com/developers/docs/resources/guild Guild API>
     data GuildRequest a where
+      -- |Returns the new guild object for the given id.
       GetGuild    :: Snowflake -> GuildRequest Guild
+      -- |Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a Guild Update gateway event.
       ModifyGuild :: ToJSON a => Snowflake -> a -> GuildRequest Guild
       DeleteGuild :: Snowflake -> GuildRequest Guild
       GetGuildChannels   :: Snowflake -> GuildRequest [Channel]
@@ -51,6 +55,7 @@ module Network.Discord.Rest.Guild
       GetGuildEmbed          :: Snowflake -> GuildRequest GuildEmbed
       ModifyGuildEmbed       :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
+    -- |Hashable instance to place ChannelRequests in the proper rate limit buckets
     instance Hashable (ChannelRequest a) where
       hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::Text, chan)
       hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::Text, chan)
