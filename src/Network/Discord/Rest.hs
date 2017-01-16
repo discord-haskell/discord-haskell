@@ -6,6 +6,7 @@ module Network.Discord.Rest
   , module Rest
   ) where
     import Pipes.Core
+    import Control.Monad (void)
     import Control.Monad.Morph (lift)
     import Data.Hashable
     import Data.Maybe (fromJust)
@@ -25,6 +26,10 @@ module Network.Discord.Rest
     fetch :: (DoFetch a, Hashable a)
       => a -> Pipes.Core.Client Fetchable Fetched DiscordM Fetched
     fetch req = request $ Fetch req
+
+    withApi :: Pipes.Core.Client Fetchable Fetched DiscordM Fetched
+      -> Effect DiscordM ()
+    withApi inner = void $ restServer +>> inner
 
     -- |Obtains a new gateway to connect to.
     getGateway :: IO URL
