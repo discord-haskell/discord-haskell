@@ -9,7 +9,10 @@ module Network.Discord.Types.Events where
   import Network.Discord.Types.Guild (Member, Guild)
   import Network.Discord.Types.Prelude
 
+  -- |Represents data sent on READY event.
   data Init = Init Int User [Channel] [Guild] String deriving Show
+
+  -- |Allows Init type to be generated using a JSON response by Discord.
   instance FromJSON Init where
     parseJSON (Object o) = Init <$> o .: "v"
                                 <*> o .: "user"
@@ -18,6 +21,7 @@ module Network.Discord.Types.Events where
                                 <*> o .: "session_id"
     parseJSON _          = mzero
 
+  -- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
   data Event =
       Ready                   Init
     | Resumed                 Object
@@ -51,6 +55,7 @@ module Network.Discord.Types.Events where
     | UnknownEvent     String Object
     deriving Show
 
+  -- |Parses JSON stuff by Discord to an event type.
   parseDispatch :: Payload -> Event
   parseDispatch (Dispatch ob _ ev) = case ev of
     "READY"                     -> Ready                   $ reparse o

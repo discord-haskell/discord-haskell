@@ -1,0 +1,5 @@
+build:
+  image: $CI_REGISTRY_IMAGE:latest
+  stage: build
+  script:
+    - stack haddock

@@ -21,6 +21,7 @@ module Network.Discord.Gateway where
     msg <- lift . liftIO $ receiveData conn
     yield msg
 
+  -- |Starts a websocket connection that allows you to handle Discord events.
   runWebsocket :: (Client c)
     => URL -> c -> Effect DiscordM a -> IO a
   runWebsocket (URL (Absolute h) path _) client inner =

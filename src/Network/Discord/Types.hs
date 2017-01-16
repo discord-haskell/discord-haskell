@@ -14,10 +14,12 @@ module Network.Discord.Types
     import Network.Discord.Types.Prelude as Re
 
     class Client c where
-      getAuth :: Client c => c -> Auth
+      getAuth :: c -> Auth
 
+    -- |A state of discord connection.
     data StateEnum = Create | Start | Running | InvalidReconnect | InvalidDead
 
+    -- |A local state in which important connection details are stored.
     data DiscordState = forall a. (Client a) => DiscordState {
         getState       :: StateEnum
       , getClient      :: a

@@ -6,6 +6,7 @@ module Network.Discord.Types.Guild where
   import Network.Discord.Types.Channel
   import Network.Discord.Types.Prelude
 
+  -- |Representation of a guild member.
   data Member = GuildMember Snowflake User
             | MemberShort User (Maybe String) [Snowflake]
             deriving Show
