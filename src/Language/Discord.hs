@@ -1,10 +1,12 @@
 {-# LANGUAGE TypeFamilies, ExistentialQuantification, RankNTypes, MultiParamTypeClasses #-}
 module Language.Discord where
   import Control.Monad.Writer
-  import Control.Monad.IO.Class
 
   import Pipes.Core
+  import Data.Aeson (Object)
+
   import Network.Discord as D
+  import Network.Discord.Types.Guild (Member, Guild)
   
   data BotClient = BotClient Auth
   instance D.Client BotClient where
@@ -20,37 +22,37 @@ module Language.Discord where
   type DiscordBot a = Writer Handle a
 
   data Handle = Null 
-              | Misc (Event -> Effect DiscordM ())
-              | ReadyEvent (Event -> Effect DiscordM ())
-              | ResumedEvent (Event -> Effect DiscordM ())
-              | ChannelCreateEvent (Event -> Effect DiscordM ())
-              | ChannelUpdateEvent (Event -> Effect DiscordM ())
-              | ChannelDeleteEvent (Event -> Effect DiscordM ())
-              | GuildCreateEvent (Event -> Effect DiscordM ())
-              | GuildUpdateEvent (Event -> Effect DiscordM ())
-              | GuildDeleteEvent (Event -> Effect DiscordM ())
-              | GuildBanAddEvent (Event -> Effect DiscordM ())
-              | GuildBanRemoveEvent (Event -> Effect DiscordM ())
-              | GuildEmojiUpdateEvent (Event -> Effect DiscordM ())
-              | GuildIntegrationsUpdateEvent (Event -> Effect DiscordM ())
-              | GuildMemberAddEvent (Event -> Effect DiscordM ())
-              | GuildMemberRemoveEvent (Event -> Effect DiscordM ())
-              | GuildMemberUpdateEvent (Event -> Effect DiscordM ())
-              | GuildMemberChunkEvent (Event -> Effect DiscordM ())
-              | GuildRoleCreateEvent (Event -> Effect DiscordM ())
-              | GuildRoleUpdateEvent (Event -> Effect DiscordM ())
-              | GuildRoleDeleteEvent (Event -> Effect DiscordM ())
-              | MessageCreateEvent (Event -> Effect DiscordM ())
-              | MessageUpdateEvent (Event -> Effect DiscordM ())
-              | MessageDeleteEvent (Event -> Effect DiscordM ())
-              | MessageDeleteBulkEvent (Event -> Effect DiscordM ())
-              | PresenceUpdateEvent (Event -> Effect DiscordM ())
-              | TypingStartEvent (Event -> Effect DiscordM ())
-              | UserSettingsUpdateEvent (Event -> Effect DiscordM ())
-              | UserUpdateEvent (Event -> Effect DiscordM ())
-              | VoiceStateUpdateEvent (Event -> Effect DiscordM ())
-              | VoiceServerUpdateEvent (Event -> Effect DiscordM ())
-              | Event String (Event -> Effect DiscordM ())
+              | Misc                         (Event -> Effect DiscordM ())
+              | ReadyEvent                   (Init -> Effect DiscordM ())
+              | ResumedEvent                 (Object -> Effect DiscordM ())
+              | ChannelCreateEvent           (Channel -> Effect DiscordM ())
+              | ChannelUpdateEvent           (Channel -> Effect DiscordM ())
+              | ChannelDeleteEvent           (Channel -> Effect DiscordM ())
+              | GuildCreateEvent             (Guild -> Effect DiscordM ())
+              | GuildUpdateEvent             (Guild -> Effect DiscordM ())
+              | GuildDeleteEvent             (Guild -> Effect DiscordM ())
+              | GuildBanAddEvent             (Member -> Effect DiscordM ())
+              | GuildBanRemoveEvent          (Member -> Effect DiscordM ())
+              | GuildEmojiUpdateEvent        (Object -> Effect DiscordM ())
+              | GuildIntegrationsUpdateEvent (Object -> Effect DiscordM ())
+              | GuildMemberAddEvent          (Member -> Effect DiscordM ())
+              | GuildMemberRemoveEvent       (Member -> Effect DiscordM ())
+              | GuildMemberUpdateEvent       (Member -> Effect DiscordM ())
+              | GuildMemberChunkEvent        (Object -> Effect DiscordM ())
+              | GuildRoleCreateEvent         (Object -> Effect DiscordM ())
+              | GuildRoleUpdateEvent         (Object -> Effect DiscordM ())
+              | GuildRoleDeleteEvent         (Object -> Effect DiscordM ())
+              | MessageCreateEvent           (Message -> Effect DiscordM ())
+              | MessageUpdateEvent           (Message -> Effect DiscordM ())
+              | MessageDeleteEvent           (Object -> Effect DiscordM ())
+              | MessageDeleteBulkEvent       (Object -> Effect DiscordM ())
+              | PresenceUpdateEvent          (Object -> Effect DiscordM ())
+              | TypingStartEvent             (Object -> Effect DiscordM ())
+              | UserSettingsUpdateEvent      (Object -> Effect DiscordM ())
+              | UserUpdateEvent              (Object -> Effect DiscordM ())
+              | VoiceStateUpdateEvent        (Object -> Effect DiscordM ())
+              | VoiceServerUpdateEvent       (Object -> Effect DiscordM ())
+              | Event String                 (Object -> Effect DiscordM ())
 
   with :: (a -> Handle) -> a -> DiscordBot ()
   with f a = tell $ f a
@@ -60,36 +62,36 @@ module Language.Discord where
     a `mappend` b = Misc ( \ev -> handle a ev <> handle b ev)
 
   handle :: Handle -> Event -> Effect DiscordM ()
-  handle (Misc f) ev = f ev
-  handle (ReadyEvent p) ev@(D.Ready _) = p ev
-  handle (ResumedEvent p) ev@(D.Resumed _) = p ev
-  handle (ChannelCreateEvent p) ev@(D.ChannelCreate _) = p ev
-  handle (ChannelUpdateEvent p) ev@(D.ChannelUpdate _) = p ev
-  handle (ChannelDeleteEvent p) ev@(D.ChannelDelete _) = p ev
-  handle (GuildCreateEvent p) ev@(D.GuildCreate _) = p ev
-  handle (GuildUpdateEvent p) ev@(D.GuildUpdate _) = p ev
-  handle (GuildDeleteEvent p) ev@(D.GuildDelete _) = p ev
-  handle (GuildBanAddEvent p) ev@(D.GuildBanAdd _) = p ev
-  handle (GuildBanRemoveEvent p) ev@(D.GuildBanRemove _) = p ev
-  handle (GuildEmojiUpdateEvent p) ev@(D.GuildEmojiUpdate _) = p ev
-  handle (GuildIntegrationsUpdateEvent p) ev@(D.GuildIntegrationsUpdate _) = p ev
-  handle (GuildMemberAddEvent p) ev@(D.GuildMemberAdd _) = p ev
-  handle (GuildMemberRemoveEvent p) ev@(D.GuildMemberRemove _) = p ev
-  handle (GuildMemberUpdateEvent p) ev@(D.GuildMemberUpdate _) = p ev
-  handle (GuildMemberChunkEvent p) ev@(D.GuildMemberChunk _) = p ev
-  handle (GuildRoleCreateEvent p) ev@(D.GuildRoleCreate _) = p ev
-  handle (GuildRoleUpdateEvent p) ev@(D.GuildRoleUpdate _) = p ev
-  handle (GuildRoleDeleteEvent p) ev@(D.GuildRoleDelete _) = p ev
-  handle (MessageCreateEvent p) ev@(D.MessageCreate _) = p ev
-  handle (MessageUpdateEvent p) ev@(D.MessageUpdate _) = p ev
-  handle (MessageDeleteEvent p) ev@(D.MessageDelete _) = p ev
-  handle (MessageDeleteBulkEvent p) ev@(D.MessageDeleteBulk _) = p ev
-  handle (PresenceUpdateEvent p) ev@(D.PresenceUpdate _) = p ev
-  handle (TypingStartEvent p) ev@(D.TypingStart _) = p ev
-  handle (UserSettingsUpdateEvent p) ev@(D.UserSettingsUpdate _) = p ev
-  handle (UserUpdateEvent p) ev@(D.UserUpdate _) = p ev
-  handle (VoiceStateUpdateEvent p) ev@(D.VoiceStateUpdate _) = p ev
-  handle (VoiceServerUpdateEvent p) ev@(D.VoiceServerUpdate _) = p ev
-  handle (Event s p) ev@(D.UnknownEvent v _)
-    | s == v = p ev
+  handle (Misc p)                         ev =                               p ev
+  handle (ReadyEvent p)                   (D.Ready o)                   = p o
+  handle (ResumedEvent p)                 (D.Resumed o)                 = p o
+  handle (ChannelCreateEvent p)           (D.ChannelCreate o)           = p o
+  handle (ChannelUpdateEvent p)           (D.ChannelUpdate o)           = p o
+  handle (ChannelDeleteEvent p)           (D.ChannelDelete o)           = p o
+  handle (GuildCreateEvent p)             (D.GuildCreate o)             = p o
+  handle (GuildUpdateEvent p)             (D.GuildUpdate o)             = p o
+  handle (GuildDeleteEvent p)             (D.GuildDelete o)             = p o
+  handle (GuildBanAddEvent p)             (D.GuildBanAdd o)             = p o
+  handle (GuildBanRemoveEvent p)          (D.GuildBanRemove o)          = p o
+  handle (GuildEmojiUpdateEvent p)        (D.GuildEmojiUpdate o)        = p o
+  handle (GuildIntegrationsUpdateEvent p) (D.GuildIntegrationsUpdate o) = p o
+  handle (GuildMemberAddEvent p)          (D.GuildMemberAdd o)          = p o
+  handle (GuildMemberRemoveEvent p)       (D.GuildMemberRemove o)       = p o
+  handle (GuildMemberUpdateEvent p)       (D.GuildMemberUpdate o)       = p o
+  handle (GuildMemberChunkEvent p)        (D.GuildMemberChunk o)        = p o
+  handle (GuildRoleCreateEvent p)         (D.GuildRoleCreate o)         = p o
+  handle (GuildRoleUpdateEvent p)         (D.GuildRoleUpdate o)         = p o
+  handle (GuildRoleDeleteEvent p)         (D.GuildRoleDelete o)         = p o
+  handle (MessageCreateEvent p)           (D.MessageCreate o)           = p o
+  handle (MessageUpdateEvent p)           (D.MessageUpdate o)           = p o
+  handle (MessageDeleteEvent p)           (D.MessageDelete o)           = p o
+  handle (MessageDeleteBulkEvent p)       (D.MessageDeleteBulk o)       = p o
+  handle (PresenceUpdateEvent p)          (D.PresenceUpdate o)          = p o
+  handle (TypingStartEvent p)             (D.TypingStart o)             = p o
+  handle (UserSettingsUpdateEvent p)      (D.UserSettingsUpdate o)      = p o
+  handle (UserUpdateEvent p)              (D.UserUpdate o)              = p o
+  handle (VoiceStateUpdateEvent p)        (D.VoiceStateUpdate o)        = p o
+  handle (VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)       = p o
+  handle (Event s p)                      (D.UnknownEvent v o)
+    | s == v = p o
   handle _ ev = liftIO $ putStrLn $ "Miss event " ++ show ev
