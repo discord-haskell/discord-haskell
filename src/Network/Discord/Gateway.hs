@@ -30,12 +30,12 @@ module Network.Discord.Gateway where
         (DiscordState Create client conn undefined [])
   runWebsocket _ _ _ = mzero
 
+  -- |Spawn a heartbeat thread
   heartbeat :: Int -> Connection -> TMVar Integer -> IO ()
   heartbeat interval conn sq = void . forkIO . forever $ do
     seqNum <- atomically $ readTMVar sq
     sendTextData conn $ Heartbeat seqNum
     threadDelay $ interval * 1000
-    putStrLn "Heartbeat"
     performGC
 
   makeEvents :: Pipe Payload Event DiscordM a
