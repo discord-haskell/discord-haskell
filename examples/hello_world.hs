@@ -11,12 +11,9 @@ import Network.Discord.Rest
 
 data LogClient = LClient
 instance Client LogClient where
-  getAuth _ = "TOKEN GOES HERE"
+  getAuth _ = "TOKEN"
 
 main :: IO ()
 main = runWebsocket (fromJust $ importURL "wss://gateway.discord.gg") LClient $ do
-  _ <-
-    restServer +>>
-      (fetch (CreateMessage "188134500411244545" "Hello, World!")
-        >> fetch (CreateMessage "188134500411244545" "I'm running discord.hs!"))
-  return ()
+  fetch' (CreateMessage "188134500411244545" "Hello, World!")
+  fetch' (CreateMessage "188134500411244545" "I'm running discord.hs!")

@@ -1,22 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 import Data.Text
+import Pipes
 
 import Network.Discord
+import Language.Discord
 
-data PingPongClient = PingPongClient
-instance Client PingPongClient where
-  getAuth _ = "TOKEN"
+reply :: Message -> Text -> Effect DiscordM ()
+reply Message{messageChannel=chan} cont = fetch' $ CreateMessage chan cont
 
 main :: IO ()
-main = do
-  gateway <- getGateway
-  runWebsocket gateway PingPongClient $ do
-    DiscordState {getWebSocket=ws} <- get
-    (eventCore ~> \event -> case event of
-      Ready (Init v u _ _ _) -> liftIO . putStrLn $ "Connected to gateway v"++show v
-        ++ " as user " ++ show u
-      MessageCreate Message{messageChannel=chan, messageAuthor=user, messageContent=cont} ->
-        when ("Ping" `isPrefixOf` cont && not (userIsBot user)) $
-          void $ restServer +>> fetch (CreateMessage chan "Pong!")
-      _ -> return ()
-      ) ws
+main = runBot "TOKEN" $ do
+  with ReadyEvent $ \_ ->
+    liftIO $ putStrLn "Online"
+
+  with MessageCreateEvent $ \(MessageCreate msg) -> do
+    when (messageContent msg == "Ping!") $
+      reply msg "Pong!"
