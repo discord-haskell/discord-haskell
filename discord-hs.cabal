@@ -21,6 +21,7 @@ library
                      , Network.Discord.Gateway
                      , Network.Discord.Rest
                      , Network.Discord.Types
+                     , Language.Discord
 
   other-modules:       Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Prelude
