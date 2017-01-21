@@ -1,7 +1,6 @@
 module Network.Discord
   (
-    module Network.Discord
-  , module Discord
+    module Discord
   , module Re
   ) where
     import Network.Discord.Rest as Discord
