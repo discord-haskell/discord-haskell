@@ -23,6 +23,7 @@ library
                      , Network.Discord.Types
                      
   other-modules:       Network.Discord.Rest.Channel
+                     , Network.Discord.Rest.Guild
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Channel
                      , Network.Discord.Types.Guild
