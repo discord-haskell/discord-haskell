@@ -55,4 +55,3 @@ main = do
 - Only Channel api endpoints are implemented
 - Missing voice support
 - Missing stack support
-- Travis-CI build fails

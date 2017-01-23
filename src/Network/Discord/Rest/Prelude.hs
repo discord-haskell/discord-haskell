@@ -1,5 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+
+-- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
   import Data.ByteString (append)
   import Data.ByteString.Char8 (pack)
@@ -16,12 +18,14 @@ module Network.Discord.Rest.Prelude where
 
   import Network.Discord.Types
 
+  -- | Read function specialized for Integers
   readInteger :: String -> Integer
   readInteger = read
 
   baseURL :: String
   baseURL = "https://discordapp.com/api/v6"
 
+  -- | Construct base request with auth from Discord state
   baseRequest :: DiscordM Options
   baseRequest = do
     DiscordState {getClient=client} <- St.get
@@ -33,9 +37,15 @@ module Network.Discord.Rest.Prelude where
           ++ ")"]
       & header "Content-Type" .~ ["application/json"]
 
+  -- | Class for rate-limitable actions
   class RateLimit a where
+    -- | Return seconds to expiration if we're waiting
+    --   for a rate limit to reset
     getRateLimit  :: a -> DiscordM (Maybe Int)
+    -- | Set seconds to the next rate limit reset when
+    --   we hit a rate limit
     setRateLimit  :: a -> Int -> DiscordM ()
+    -- | If we hit a rate limit, wait for it to reset
     waitRateLimit :: a -> DiscordM ()
     waitRateLimit endpoint = do
       rl <- getRateLimit endpoint

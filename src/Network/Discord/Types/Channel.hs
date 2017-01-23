@@ -20,7 +20,7 @@ module Network.Discord.Types.Channel where
       -- |A unique discriminator consisting of four numbers.
       userDiscrim:: String,
       -- |An optional avatar hash that's a part of url.
-      userAvatatr:: Maybe String,
+      userAvatar:: Maybe String,
       -- |True if a user is a bot account.
       userIsBot:: Bool,
       -- |If current user, true if 2-factor authentication is enabled.

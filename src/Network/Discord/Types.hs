@@ -9,6 +9,7 @@ module Network.Discord.Types
     import Network.WebSockets (Connection)
 
     import Network.Discord.Types.Channel as Re
+    import Network.Discord.Types.Guild as Re
     import Network.Discord.Types.Events as Re
     import Network.Discord.Types.Gateway as Re
     import Network.Discord.Types.Prelude as Re

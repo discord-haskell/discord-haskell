@@ -5,7 +5,6 @@ module Network.Discord.Rest.Guild
     GuildRequest(..)
   ) where
     import Data.Text
-    import Data.ByteString.Lazy
     import qualified Control.Monad.State as ST (get, put, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
@@ -22,66 +21,81 @@ module Network.Discord.Rest.Guild
 
     -- |Data constructor for Guild requests. See <https://discordapp.com/developers/docs/resources/guild Guild API>
     data GuildRequest a where
-      -- |Returns the new guild object for the given id.
-      GetGuild    :: Snowflake -> GuildRequest Guild
-      -- |Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a Guild Update gateway event.
-      ModifyGuild :: ToJSON a => Snowflake -> a -> GuildRequest Guild
-      DeleteGuild :: Snowflake -> GuildRequest Guild
-      GetGuildChannels   :: Snowflake -> GuildRequest [Channel]
-      CreateGuildChannel :: ToJSON a => Snowflake -> a -> GuildRequest Channel
-      ModifyChanPosition :: ToJSON a => Snowflake -> a -> GuildRequest [Channel]
-      GetGuildMember     :: Snowflake -> Snowflake -> GuildRequest Member
-      ListGuildMembers   :: Snowflake -> Integer -> Integer -> GuildRequest [Member]
-      AddGuildMember     :: ToJSON a => Snowflake -> Snowflake -> a -> GuildRequest Member
-      ModifyGuildMember  :: ToJSON a => Snowflake -> Snowflake -> a -> GuildRequest Member
-      RemoveGuildMember  :: Snowflake -> Snowflake -> GuildRequest ()
-      GetGuildBans       :: Snowflake -> GuildRequest [User]
-      CreateGuildBan     :: Snowflake -> Snowflake -> Integer -> GuildRequest ()
-      RemoveGuildBan     :: Snowflake -> Snowflake -> GuildRequest ()
-      GetGuildRoles      :: Snowlfake -> GuildRequest [Role]
-      CreateGuildRole    :: Snowflake -> GuildRequest Role
+      GetGuild                 :: Snowflake -> GuildRequest Guild
+      ModifyGuild              :: ToJSON a => Snowflake -> a -> GuildRequest Guild
+      DeleteGuild              :: Snowflake -> GuildRequest Guild
+      GetGuildChannels         :: Snowflake -> GuildRequest [Channel]
+      CreateGuildChannel       :: ToJSON a => Snowflake -> a -> GuildRequest Channel
+      ModifyChanPosition       :: ToJSON a => Snowflake -> a -> GuildRequest [Channel]
+      GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest Member
+      ListGuildMembers         :: Snowflake -> Integer -> Integer -> GuildRequest [Member]
+      AddGuildMember           :: ToJSON a => Snowflake -> Snowflake -> a 
+                                    -> GuildRequest Member
+      ModifyGuildMember        :: ToJSON a => Snowflake -> Snowflake -> a 
+                                    -> GuildRequest Member
+      RemoveGuildMember        :: Snowflake -> Snowflake -> GuildRequest ()
+      GetGuildBans             :: Snowflake -> GuildRequest [User]
+      CreateGuildBan           :: Snowflake -> Snowflake -> Integer -> GuildRequest ()
+      RemoveGuildBan           :: Snowflake -> Snowflake -> GuildRequest ()
+      GetGuildRoles            :: Snowflake -> GuildRequest [Role]
+      CreateGuildRole          :: Snowflake -> GuildRequest Role
       ModifyGuildRolePositions :: ToJSON a => Snowflake -> [a] -> GuildRequest [Role]
-      ModifyGuildRole    :: ToJSON a => Snowflake -> Snowflake -> a -> GuildRequest Role
-      DeleteGuildRole    :: Snowflake -> Snowflake -> GuildRequest Role
-      GetGuildPruneCount :: Snowflake -> Integer -> GuildRequest Object
-      BeginGuildPrune    :: Snowflake -> Integer -> GuildRequest Object
-      GetGuildVoiceRegions :: Snowflake -> GuildRequest [VoiceRegion]
-      GetGuildInvites    :: Snowflake -> GuildRequest [Invite]
-      GetGuildIntegrations :: Snowflake -> GuildRequest [Integration]
-      CreateGuildIntegration :: ToJSON a => Snowflake -> a -> GuildRequest ()
-      ModifyGuildIntegration :: Snowflake -> Snowflake -> GuildRequest ()
-      DeleteGuildIntegration :: Snowflake -> Snowflake -> GuildRequest ()
-      SyncGuildIntegration   :: Snowflake -> Snowflake -> GuildRequest ()
-      GetGuildEmbed          :: Snowflake -> GuildRequest GuildEmbed
-      ModifyGuildEmbed       :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
+      ModifyGuildRole          :: ToJSON a => Snowflake -> Snowflake -> a 
+                                    -> GuildRequest Role
+      DeleteGuildRole          :: Snowflake -> Snowflake -> GuildRequest Role
+      GetGuildPruneCount       :: Snowflake -> Integer -> GuildRequest Object
+      BeginGuildPrune          :: Snowflake -> Integer -> GuildRequest Object
+      GetGuildVoiceRegions     :: Snowflake -> GuildRequest [VoiceRegion]
+      GetGuildInvites          :: Snowflake -> GuildRequest [Invite]
+      GetGuildIntegrations     :: Snowflake -> GuildRequest [Integration]
+      CreateGuildIntegration   :: ToJSON a => Snowflake -> a -> GuildRequest ()
+      ModifyGuildIntegration   :: ToJSON a => Snowflake -> Snowflake -> a -> GuildRequest ()
+      DeleteGuildIntegration   :: Snowflake -> Snowflake -> GuildRequest ()
+      SyncGuildIntegration     :: Snowflake -> Snowflake -> GuildRequest ()
+      GetGuildEmbed            :: Snowflake -> GuildRequest GuildEmbed
+      ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
     -- |Hashable instance to place ChannelRequests in the proper rate limit buckets
-    instance Hashable (ChannelRequest a) where
-      hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::Text, chan)
-      hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::Text, chan)
-      hashWithSalt s (DeleteChannel chan) = hashWithSalt s ("mod_chan"::Text, chan)
-      hashWithSalt s (GetChannelMessages chan _) = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (GetChannelMessage chan _) = hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (CreateMessage chan _) = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (UploadFile chan _ _)  = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _) =
-        hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (DeleteMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _)) =
-        hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (BulkDeleteMessage chan _) = hashWithSalt s ("del_msgs"::Text, chan)
-      hashWithSalt s (EditChannelPermissions chan _ _) = hashWithSalt s ("perms"::Text, chan)
-      hashWithSalt s (GetChannelInvites chan) = hashWithSalt s ("invites"::Text, chan)
-      hashWithSalt s (CreateChannelInvite chan _) = hashWithSalt s ("invites"::Text, chan)
-      hashWithSalt s (DeleteChannelPermission chan _) = hashWithSalt s ("perms"::Text, chan)
-      hashWithSalt s (TriggerTypingIndicator chan)  = hashWithSalt s ("tti"::Text, chan)
-      hashWithSalt s (GetPinnedMessages chan) = hashWithSalt s ("pins"::Text, chan)
-      hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
-      hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
+    instance Hashable (GuildRequest a) where
+      hashWithSalt s (GetGuild g)              = hashWithSalt s ("guild"::Text, g)
+      hashWithSalt s (ModifyGuild g _)         = hashWithSalt s ("guild"::Text, g)
+      hashWithSalt s (DeleteGuild g)           = hashWithSalt s ("guild"::Text, g)
+      hashWithSalt s (GetGuildChannels g)      = hashWithSalt s ("guild_chan"::Text, g)
+      hashWithSalt s (CreateGuildChannel g _)  = hashWithSalt s ("guild_chan"::Text, g)
+      hashWithSalt s (ModifyChanPosition g _)  = hashWithSalt s ("guild_chan"::Text, g)
+      hashWithSalt s (GetGuildMember g _)      = hashWithSalt s ("guild_memb"::Text, g)
+      hashWithSalt s (ListGuildMembers g _ _)  = hashWithSalt s ("guild_membs"::Text, g)
+      hashWithSalt s (AddGuildMember g _ _)    = hashWithSalt s ("guild_memb"::Text, g)
+      hashWithSalt s (ModifyGuildMember g _ _) = hashWithSalt s ("guild_memb"::Text, g)
+      hashWithSalt s (RemoveGuildMember g _)   = hashWithSalt s ("guild_memb"::Text, g)
+      hashWithSalt s (GetGuildBans g)          = hashWithSalt s ("guild_bans"::Text, g)
+      hashWithSalt s (CreateGuildBan g _ _)    = hashWithSalt s ("guild_ban" ::Text, g)
+      hashWithSalt s (RemoveGuildBan g _)      = hashWithSalt s ("guild_ban" ::Text, g)
+      hashWithSalt s (GetGuildRoles  g)        = hashWithSalt s ("guild_roles"::Text, g)
+      hashWithSalt s (CreateGuildRole g)       = hashWithSalt s ("guild_roles"::Text, g)
+      hashWithSalt s (ModifyGuildRolePositions g _)
+                                               = hashWithSalt s ("guild_roles"::Text, g)
+      hashWithSalt s (ModifyGuildRole g _ _)   = hashWithSalt s ("guild_role" ::Text, g)
+      hashWithSalt s (DeleteGuildRole g _ )    = hashWithSalt s ("guild_role" ::Text, g)
+      hashWithSalt s (GetGuildPruneCount g _)  = hashWithSalt s ("guild_prune"::Text, g)
+      hashWithSalt s (BeginGuildPrune    g _)  = hashWithSalt s ("guild_prune"::Text, g)
+      hashWithSalt s (GetGuildVoiceRegions g)  = hashWithSalt s ("guild_voice"::Text, g)
+      hashWithSalt s (GetGuildInvites g)       = hashWithSalt s ("guild_invit"::Text, g)
+      hashWithSalt s (GetGuildIntegrations g)  = hashWithSalt s ("guild_integ"::Text, g)
+      hashWithSalt s (CreateGuildIntegration g _)
+                                               = hashWithSalt s ("guild_integ"::Text, g)
+      hashWithSalt s (ModifyGuildIntegration g _ _)
+                                               = hashWithSalt s ("guild_intgr"::Text, g)
+      hashWithSalt s (DeleteGuildIntegration g _)
+                                               = hashWithSalt s ("guild_intgr"::Text, g)
+      hashWithSalt s (SyncGuildIntegration g _)= hashWithSalt s ("guild_sync" ::Text, g)
+      hashWithSalt s (GetGuildEmbed g)         = hashWithSalt s ("guild_embed"::Text, g)
+      hashWithSalt s (ModifyGuildEmbed g _)    = hashWithSalt s ("guild_embed"::Text, g)
 
-    instance Eq (ChannelRequest a) where
+    instance Eq (GuildRequest a) where
       a == b = hash a == hash b
 
-    instance RateLimit (ChannelRequest a) where
+    instance RateLimit (GuildRequest a) where
       getRateLimit req = do
         st@DiscordState {getRateLimits=rl} <- ST.get
         now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
@@ -95,84 +109,120 @@ module Network.Discord.Rest.Guild
         st@DiscordState {getRateLimits=rl} <- ST.get
         ST.put st {getRateLimits=Dc.insert (hash req) reset rl}
 
-    instance (FromJSON a) => DoFetch (ChannelRequest a) where
+    instance (FromJSON a) => DoFetch (GuildRequest a) where
       doFetch req = do
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    fetch :: FromJSON a => ChannelRequest a -> DiscordM a
+    fetch :: FromJSON a => GuildRequest a -> DiscordM a
     fetch request = do
-      req  <- baseRequest
+      req <- baseRequest
       (resp, rlRem, rlNext) <- lift $ do
         resp <- case request of
-          GetChannel chan -> getWith req
-            (baseURL++"/channels/"++chan)
-
-          ModifyChannel chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/channels/"++chan)
+          GetGuild chan -> getWith req
+            (baseURL++"/guilds/"++chan)
+          
+          ModifyGuild chan patch -> customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan)
             (toJSON patch)
 
-          DeleteChannel chan -> deleteWith req
-            (baseURL++"/channels/"++chan)
+          DeleteGuild chan -> deleteWith req
+            (baseURL++"/guilds/"++chan)
 
-          GetChannelMessages chan patch -> getWith
-            (Prelude.foldr (\(k, v) -> param k .~ [v]) req patch)
-            (baseURL++"/channels/"++chan++"/messages")
+          GetGuildChannels chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/channels")
 
-          GetChannelMessage chan msg -> getWith req
-            (baseURL++"/channels/"++chan++"/messages/"++msg)
-
-          CreateMessage chan msg -> postWith req
-            (baseURL++"/channels/"++chan++"/messages")
-            (object [("content", toJSON msg)])
-
-          UploadFile chan msg file -> postWith
-            (req & header "Content-Type" .~ ["multipart/form-data"])
-            (baseURL++"/channels/"++chan++"/messages")
-            ["content" := msg, "file" := file]
-
-          EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new ->
-            customPayloadMethodWith "PATCH" req
-              (baseURL++"/channels/"++chan++"/messages/"++msg)
-              (object [("content", toJSON new)])
-
-          DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-            deleteWith req
-              (baseURL++"/channels/"++chan++"/messages/"++msg)
-
-          BulkDeleteMessage chan msgs -> postWith req
-            (baseURL++"/channels/"++chan++"/messages/bulk-delete")
-            (object
-              [("messages", toJSON
-                $ Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs)])
-
-          EditChannelPermissions chan perm patch -> putWith req
-            (baseURL++"/channels/"++chan++"/permissions/"++perm)
+          CreateGuildChannel chan patch -> postWith req
+            (baseURL++"/guilds/"++chan++"/channels")
             (toJSON patch)
 
-          GetChannelInvites chan -> getWith req
-            (baseURL++"/channels/"++chan++"/invites")
-
-          CreateChannelInvite chan patch -> postWith req
-            (baseURL++"/channels/"++chan++"/invites")
+          ModifyChanPosition chan patch -> customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan++"/channels")
             (toJSON patch)
 
-          DeleteChannelPermission chan perm -> deleteWith req
-            (baseURL++"/channels/"++chan++"/permissions/"++perm)
+          GetGuildMember chan user -> getWith req
+            (baseURL++"/guilds/"++chan++"/members/"++user)
 
-          TriggerTypingIndicator chan -> postWith req
-            (baseURL++"/channels/"++chan++"/typing")
-            (toJSON ([]::[Int]))
+          ListGuildMembers chan limit after -> getWith req
+            (baseURL++"/guilds/"++chan++"/members?limit="++show limit++"&after="++show after)
 
-          GetPinnedMessages chan -> getWith req
-            (baseURL++"/channels/"++chan++"/pins")
+          AddGuildMember chan user patch -> customPayloadMethodWith "PUT" req
+            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (toJSON patch)
 
-          AddPinnedMessage chan msg -> putWith req
-            (baseURL++"/channels/"++chan++"/pins/"++msg)
-            (toJSON ([]::[Int]))
+          ModifyGuildMember chan user patch -> customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (toJSON patch)
 
-          DeletePinnedMessage chan msg -> deleteWith req
-            (baseURL++"/channels/"++chan++"/pins/"++msg)
+          RemoveGuildMember chan user -> deleteWith req
+            (baseURL++"/guilds/"++chan++"/members/"++user)
+
+          GetGuildBans chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/bans")
+
+          CreateGuildBan chan user msg -> customPayloadMethodWith "PUT" req
+            (baseURL++"/guilds/"++chan++"/bans/"++user)
+            ["delete-message-days" := msg]
+
+          RemoveGuildBan chan user -> deleteWith req
+            (baseURL++"/guilds/"++chan++"/bans/"++user)
+
+          GetGuildRoles chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/roles")
+
+          CreateGuildRole chan -> postWith req
+            (baseURL++"/guilds/"++chan++"/roles")
+            (toJSON (""::Text))
+
+          ModifyGuildRolePositions chan pos -> postWith req
+            (baseURL++"/guilds/"++chan++"/roles")
+            (toJSON pos)
+
+          ModifyGuildRole chan role patch -> postWith req
+            (baseURL++"/guilds/"++chan++"/roles/"++role)
+            (toJSON patch)
+
+          DeleteGuildRole chan role -> deleteWith req
+            (baseURL++"/guilds/"++chan++"/roles/"++role)
+
+          GetGuildPruneCount chan days -> getWith req
+            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
+
+          BeginGuildPrune chan days -> postWith req
+            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
+            (toJSON (""::Text))
+
+          GetGuildVoiceRegions chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/regions")
+
+          GetGuildInvites chan -> getWith req 
+            (baseURL++"/guilds/"++chan++"/invites")
+
+          GetGuildIntegrations chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/integrations")
+
+          CreateGuildIntegration chan patch -> postWith req
+            (baseURL++"/guilds/"++chan++"/integrations")
+            (toJSON patch)
+
+          ModifyGuildIntegration chan integ patch -> customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+            (toJSON patch)
+
+          DeleteGuildIntegration chan integ -> deleteWith req
+            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+
+          SyncGuildIntegration chan integ -> postWith req
+            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+            (toJSON (""::Text))
+
+          GetGuildEmbed chan -> getWith req
+            (baseURL++"/guilds/"++chan++"/embed")
+          
+          ModifyGuildEmbed chan embed -> customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan++"/embed")
+            (toJSON embed)
+
         return (justRight . eitherDecode $ resp ^. responseBody
           , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
           , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
