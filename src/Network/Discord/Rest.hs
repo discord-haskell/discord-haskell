@@ -19,6 +19,7 @@ module Network.Discord.Rest
     import Network.Discord.Rest.Prelude as Rest
     import Network.Discord.Rest.Channel as Rest
     import Network.Discord.Rest.Guild   as Rest
+    import Network.Discord.Rest.User    as Rest
 
     restServer :: Fetchable -> Server Fetchable Fetched DiscordM Fetched
     restServer req =
