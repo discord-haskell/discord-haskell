@@ -35,8 +35,6 @@ main = runBot "TOKEN" $ do
 ## Known issues:
 - Init isn't parsing correctly
 - Client doesn't close correctly
-- All json serialization is currently in Types.Channel. Should be broken out
-- Only Channel api endpoints are implemented
 - Missing voice support
 
 ## Future goals:
