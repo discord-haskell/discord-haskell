@@ -24,6 +24,7 @@ library
                      
   other-modules:       Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Guild
+                     , Network.Discord.Rest.User
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Channel
                      , Network.Discord.Types.Guild
@@ -37,6 +38,7 @@ library
                         , aeson, url, time, stm, mtl, wuss, bytestring
                         , unordered-containers, text, vector, mmorph, wreq
                         , template-haskell, lens, containers, hashable
+                        , data-default
   ghc-options:         -Wall -Werror
   hs-source-dirs:      src
   default-language:    Haskell2010
