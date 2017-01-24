@@ -13,28 +13,24 @@ Stack support to come.
 
 ## PingPong
 ```haskell
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
 import Data.Text
+import Pipes
 
 import Network.Discord
+import Language.Discord
 
-data PingPongClient = PingPongClient
-instance Client PingPongClient where
-  getAuth _ = "TOKEN"
+reply :: Message -> Text -> Effect DiscordM ()
+reply Message{messageChannel=chan} cont = fetch' $ CreateMessage chan cont
 
 main :: IO ()
-main = do
-  gateway <- getGateway
-  runWebsocket gateway PingPongClient $ do
-    DiscordState {getWebSocket=ws} <- get
-    (eventCore ~> \event -> case event of
-      Ready (Init v u _ _ _) -> liftIO . putStrLn $ "Connected to gateway v"++show v
-        ++ " as user " ++ show u
-      MessageCreate (Message {messageChannel=chan, messageAuthor=user, messageContent=cont}) ->
-        when ("Ping" `isPrefixOf` cont && not (userIsBot user)) $
-          void $ restServer +>> fetch (CreateMessage chan "Pong!")
-      _ -> return ()
-      ) ws
+main = runBot "TOKEN" $ do
+  with ReadyEvent $ \(Init v u _ _ _) ->
+    liftIO . putStrLn $ "Connected to gateway v" ++ show v ++ " as user " ++ show u
+
+  with MessageCreateEvent $ \msg@Message{..} -> do
+    when ("Ping" `isPrefixOf` messageContent && (not . userIsBot $ messageAuthor)) $
+      reply msg "Pong!"
 ```
 
 ## Core components:
@@ -55,3 +51,16 @@ main = do
 - Only Channel api endpoints are implemented
 - Missing voice support
 - Missing stack support
+<<<<<<< HEAD
+||||||| merged common ancestors
+- Travis-CI build fails
+=======
+- Travis-CI build fails
+
+## Future goals:
+- [Eta](https://github.com/typelead/eta) compatibility
+- [HaLVM](https://github.com/GaloisInc/HaLVM) compatibility (maybe)
+- Tighten properties/prove properties
+- Monad based declarative bots
+- Proper logging?
+>>>>>>> edsl

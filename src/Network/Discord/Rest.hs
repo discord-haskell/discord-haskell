@@ -26,8 +26,12 @@ module Network.Discord.Rest
       lift (doFetch req) >>= respond >>= restServer
 
     fetch :: (DoFetch a, Hashable a)
-      => a -> Pipes.Core.Client Fetchable Fetched DiscordM Fetched
-    fetch req = request $ Fetch req
+      => a -> Pipes.Core.Proxy X () c' c DiscordM Fetched
+    fetch req = restServer +>> (request $ Fetch req)
+    
+    fetch' :: (DoFetch a, Hashable a)
+      => a -> Pipes.Core.Proxy X () c' c DiscordM ()
+    fetch' = void . fetch
 
     withApi :: Pipes.Core.Client Fetchable Fetched DiscordM Fetched
       -> Effect DiscordM ()
