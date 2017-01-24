@@ -5,6 +5,7 @@
 module Network.Discord.Rest.Prelude where
   import Data.ByteString (append)
   import Data.ByteString.Char8 (pack)
+  import Data.Default
   import Data.Time.Clock.POSIX
   import Control.Concurrent (threadDelay)
 
@@ -74,3 +75,11 @@ module Network.Discord.Rest.Prelude where
     (Fetch a) == (Fetch b) = hash a == hash b
 
   data Fetched = forall a. (FromJSON a) => SyncFetched a
+
+  data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Snowflake}
+
+  instance Default Range where
+    def = Range "0" "18446744073709551615" "100"
+
+  toQueryString :: Range -> String
+  toQueryString (Range a b l) = "after="++a++"&before="++b++"&limit="++l

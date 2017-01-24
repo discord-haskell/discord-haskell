@@ -28,7 +28,7 @@ module Network.Discord.Rest.Guild
       CreateGuildChannel       :: ToJSON a => Snowflake -> a -> GuildRequest Channel
       ModifyChanPosition       :: ToJSON a => Snowflake -> a -> GuildRequest [Channel]
       GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest Member
-      ListGuildMembers         :: Snowflake -> Integer -> Integer -> GuildRequest [Member]
+      ListGuildMembers         :: Snowflake -> Range -> GuildRequest [Member]
       AddGuildMember           :: ToJSON a => Snowflake -> Snowflake -> a 
                                     -> GuildRequest Member
       ModifyGuildMember        :: ToJSON a => Snowflake -> Snowflake -> a 
@@ -64,7 +64,7 @@ module Network.Discord.Rest.Guild
       hashWithSalt s (CreateGuildChannel g _)  = hashWithSalt s ("guild_chan"::Text, g)
       hashWithSalt s (ModifyChanPosition g _)  = hashWithSalt s ("guild_chan"::Text, g)
       hashWithSalt s (GetGuildMember g _)      = hashWithSalt s ("guild_memb"::Text, g)
-      hashWithSalt s (ListGuildMembers g _ _)  = hashWithSalt s ("guild_membs"::Text, g)
+      hashWithSalt s (ListGuildMembers g _)  = hashWithSalt s ("guild_membs"::Text, g)
       hashWithSalt s (AddGuildMember g _ _)    = hashWithSalt s ("guild_memb"::Text, g)
       hashWithSalt s (ModifyGuildMember g _ _) = hashWithSalt s ("guild_memb"::Text, g)
       hashWithSalt s (RemoveGuildMember g _)   = hashWithSalt s ("guild_memb"::Text, g)
@@ -143,8 +143,8 @@ module Network.Discord.Rest.Guild
           GetGuildMember chan user -> getWith req
             (baseURL++"/guilds/"++chan++"/members/"++user)
 
-          ListGuildMembers chan limit after -> getWith req
-            (baseURL++"/guilds/"++chan++"/members?limit="++show limit++"&after="++show after)
+          ListGuildMembers chan range -> getWith req
+            (baseURL++"/guilds/"++chan++"/members?limit="++toQueryString range)
 
           AddGuildMember chan user patch -> customPayloadMethodWith "PUT" req
             (baseURL++"/guilds/"++chan++"/members/"++user)
