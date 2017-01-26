@@ -230,7 +230,7 @@ module Network.Discord.Types.Channel where
 
   -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
-    parseJSON (Object o) =
+    parseJSON (Object o) = 
       Embed <$> o .: "title"
             <*> o .: "type"
             <*> o .: "description"
@@ -258,7 +258,7 @@ module Network.Discord.Types.Channel where
                    <*> v .: "width") : a
           | k == pack "provider" =
             (Provider <$> v .: "name"
-                      <*> v .: "url") : a
+                      <*> v .:? "url" .!= "") : a
           | k == pack "author" =
             (Author <$> v .: "name"
                     <*> v .: "url"
