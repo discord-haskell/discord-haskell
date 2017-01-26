@@ -234,7 +234,7 @@ module Network.Discord.Types.Channel where
       Embed <$> o .: "title"
             <*> o .: "type"
             <*> o .: "description"
-            <*> o .:? "url" .:= ""
+            <*> o .:? "url" .!= ""
             <*> sequence (HM.foldrWithKey to_embed [] o)
       where
         to_embed k (Object v) a
