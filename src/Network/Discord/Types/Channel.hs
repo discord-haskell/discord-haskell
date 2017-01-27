@@ -29,7 +29,8 @@ module Network.Discord.Types.Channel where
       userVerified:: Maybe Bool,
       -- |If current user, a string containing e-mail.
       userEmail:: Maybe String
-    } deriving (Show, Eq)
+    } 
+    | Webhook deriving (Show, Eq)
 
   -- |Allows a user datatype to be generated using a JSON response by Discord.
   instance FromJSON User where
@@ -175,7 +176,7 @@ module Network.Discord.Types.Channel where
     parseJSON (Object o) =
       Message <$> o .:  "id"
               <*> o .:  "channel_id"
-              <*> o .:  "author"
+              <*> o .:? "author" .!= Webhook
               <*> o .:  "content"
               <*> o .:  "timestamp"
               <*> o .:? "edited_timestamp"
@@ -231,10 +232,10 @@ module Network.Discord.Types.Channel where
   -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
     parseJSON (Object o) = 
-      Embed <$> o .: "title"
-            <*> o .: "type"
-            <*> o .: "description"
-            <*> o .: "url"
+      Embed <$> o .:? "title" .!= "Untitled"
+            <*> o .:  "type"
+            <*> o .:  "description"
+            <*> o .:  "url"
             <*> sequence (HM.foldrWithKey to_embed [] o)
       where
         to_embed k (Object v) a
@@ -260,10 +261,10 @@ module Network.Discord.Types.Channel where
             (Provider <$> v .: "name"
                       <*> v .:? "url" .!= "") : a
           | k == pack "author" =
-            (Author <$> v .: "name"
-                    <*> v .: "url"
-                    <*> v .: "icon_url"
-                    <*> v .: "proxy_icon_url") : a
+            (Author <$> v .:  "name"
+                    <*> v .:?  "url" .!= ""
+                    <*> v .:? "icon_url" .!= ""
+                    <*> v .:? "proxy_icon_url" .!= "") : a
         to_embed k (Array v) a
           | k == pack "fields" =
             [Field <$> i .: "name"
