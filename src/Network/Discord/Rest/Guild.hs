@@ -19,7 +19,7 @@ module Network.Discord.Rest.Guild
     import Network.Discord.Rest.Prelude
 
 
-    -- |Data constructor for Guild requests. See <https://discordapp.com/developers/docs/resources/guild Guild API>
+    -- | Data constructor for Guild requests. See <https://discordapp.com/developers/docs/resources/guild Guild API>
     data GuildRequest a where
       GetGuild                 :: Snowflake -> GuildRequest Guild
       ModifyGuild              :: ToJSON a => Snowflake -> a -> GuildRequest Guild
@@ -55,7 +55,7 @@ module Network.Discord.Rest.Guild
       GetGuildEmbed            :: Snowflake -> GuildRequest GuildEmbed
       ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
-    -- |Hashable instance to place ChannelRequests in the proper rate limit buckets
+    -- | Hashable instance to place ChannelRequests in the proper rate limit buckets
     instance Hashable (GuildRequest a) where
       hashWithSalt s (GetGuild g)              = hashWithSalt s ("guild"::Text, g)
       hashWithSalt s (ModifyGuild g _)         = hashWithSalt s ("guild"::Text, g)
