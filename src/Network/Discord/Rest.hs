@@ -1,9 +1,12 @@
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# OPTIONS_HADDOCK prune, not-home #-}
 module Network.Discord.Rest
-  (
-    module Network.Discord.Rest
-  , module Rest
+  ( module Network.Discord.Rest
+  , module Network.Discord.Rest.Prelude
+  , module Network.Discord.Rest.Channel
+  , module Network.Discord.Rest.Guild
+  , module Network.Discord.Rest.User
   ) where
     import Pipes.Core
     import Control.Monad (void)
@@ -16,10 +19,10 @@ module Network.Discord.Rest
     import Network.Wreq
     import Control.Lens
     import Data.Aeson.Types
-    import Network.Discord.Rest.Prelude as Rest
-    import Network.Discord.Rest.Channel as Rest
-    import Network.Discord.Rest.Guild   as Rest
-    import Network.Discord.Rest.User    as Rest
+    import Network.Discord.Rest.Prelude
+    import Network.Discord.Rest.Channel
+    import Network.Discord.Rest.Guild
+    import Network.Discord.Rest.User
 
     restServer :: Fetchable -> Server Fetchable Fetched DiscordM Fetched
     restServer req =
@@ -37,7 +40,7 @@ module Network.Discord.Rest
       -> Effect DiscordM ()
     withApi inner = void $ restServer +>> inner
 
-    -- |Obtains a new gateway to connect to.
+    -- | Obtains a new gateway to connect to.
     getGateway :: IO URL
     getGateway = do
       resp <- asValue =<< get (baseURL++"/gateway")
