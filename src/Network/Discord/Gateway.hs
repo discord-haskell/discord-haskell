@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, FlexibleContexts, RankNTypes #-}
+{-# OPTIONS_HADDOCK prune, not-home #-}
 module Network.Discord.Gateway where
   import Control.Concurrent (forkIO, threadDelay)
   import Control.Monad.State
@@ -21,7 +22,7 @@ module Network.Discord.Gateway where
     msg <- lift . liftIO $ receiveData conn
     yield msg
 
-  -- |Starts a websocket connection that allows you to handle Discord events.
+  -- | Starts a websocket connection that allows you to handle Discord events.
   runWebsocket :: (Client c)
     => URL -> c -> Effect DiscordM a -> IO a
   runWebsocket (URL (Absolute h) path _) client inner =
@@ -30,7 +31,7 @@ module Network.Discord.Gateway where
         (DiscordState Create client conn undefined [])
   runWebsocket _ _ _ = mzero
 
-  -- |Spawn a heartbeat thread
+  -- | Spawn a heartbeat thread
   heartbeat :: Int -> Connection -> TMVar Integer -> IO ()
   heartbeat interval conn sq = void . forkIO . forever $ do
     seqNum <- atomically $ readTMVar sq
