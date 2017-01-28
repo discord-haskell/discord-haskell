@@ -14,6 +14,9 @@ module Network.Discord.Types.Prelude where
   creationDate :: Snowflake -> UTCTime
   creationDate x = posixSecondsToUTCTime $ realToFrac(1420070400 + (((read x :: Int) `shiftR` 22) `quot` 1000))
 
+  epochTime :: UTCTime
+  epochTime = posixSecondsToUTCTime $ realToFrac(0 :: Int)
+
   delete :: Eq a => a -> [(a, b)] -> [(a, b)]
   delete k ((x,y):xs)
     | k == x = delete k xs
