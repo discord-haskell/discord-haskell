@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                discord-hs
-version:             0.1.1
+version:             0.1.2
 synopsis:            An API wrapper for Discord in Haskell
 description:         You'll probably only ever find whatever haddock documentation I write over here. Try over at https://github.com/jano017/Discord.hs
 homepage:            https://github.com/jano017/Discord.hs
