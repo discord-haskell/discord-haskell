@@ -4,6 +4,7 @@ module Network.Discord.Types.Prelude where
   import Data.Time.Clock
   import Data.Time.Clock.POSIX
   import Data.Bits
+  import Debug.Trace
 
   type Auth = String
   -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
@@ -12,6 +13,9 @@ module Network.Discord.Types.Prelude where
   -- |Gets a creation date from a snowflake.
   creationDate :: Snowflake -> UTCTime
   creationDate x = posixSecondsToUTCTime $ realToFrac(1420070400 + (((read x :: Int) `shiftR` 22) `quot` 1000))
+
+  epochTime :: UTCTime
+  epochTime = posixSecondsToUTCTime $ realToFrac(0 :: Int)
 
   delete :: Eq a => a -> [(a, b)] -> [(a, b)]
   delete k ((x,y):xs)
@@ -26,5 +30,7 @@ module Network.Discord.Types.Prelude where
   justRight (Right b) = b
   justRight (Left a) = error $ show a
 
-  reparse :: (ToJSON a, FromJSON b) => a -> b
-  reparse val = justRight . parseEither parseJSON $ toJSON val
+  reparse :: (ToJSON a, Show a, FromJSON b) => a -> b
+  reparse val = case parseEither parseJSON $ toJSON val of
+    Left  err -> trace (show val) . error $ show err
+    Right a   -> a

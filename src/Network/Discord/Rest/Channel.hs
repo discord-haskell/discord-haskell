@@ -19,46 +19,46 @@ module Network.Discord.Rest.Channel
     import Network.Discord.Types as Dc
     import Network.Discord.Rest.Prelude
 
-    -- |A datatype containing all procedures that can be executed on a channel.
+    -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
     data ChannelRequest a where
-      -- |Gets a channel by its id.
+      -- | Gets a channel by its id.
       GetChannel              :: Snowflake -> ChannelRequest Channel
-      -- |Edits channels options.
+      -- | Edits channels options.
       ModifyChannel           :: ToJSON a  => Snowflake -> a -> ChannelRequest Channel
-      -- |Deletes a channel if its id doesn't equal to the id of guild.
+      -- | Deletes a channel if its id doesn't equal to the id of guild.
       DeleteChannel           :: Snowflake -> ChannelRequest Channel
-      -- |Gets a messages from a channel with limit of 100 per request.
+      -- | Gets a messages from a channel with limit of 100 per request.
       GetChannelMessages      :: Snowflake -> [(Text, Text)] -> ChannelRequest [Message]
-      -- |Gets a message in a channel by its id.
+      -- | Gets a message in a channel by its id.
       GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
-      -- |Sends a message to a channel.
+      -- | Sends a message to a channel.
       CreateMessage           :: Snowflake -> Text -> ChannelRequest Message
-      -- |Sends a message with a file to a channel.
+      -- | Sends a message with a file to a channel.
       UploadFile              :: Snowflake -> Text -> ByteString -> ChannelRequest Message
-      -- |Edits a message content.
+      -- | Edits a message content.
       EditMessage             :: Message   -> Text -> ChannelRequest Message
-      -- |Deletes a message.
+      -- | Deletes a message.
       DeleteMessage           :: Message   -> ChannelRequest ()
-      -- |Deletes a group of messages.
+      -- | Deletes a group of messages.
       BulkDeleteMessage       :: Snowflake -> [Message] -> ChannelRequest ()
-      -- |Edits a permission overrides for a channel.
+      -- | Edits a permission overrides for a channel.
       EditChannelPermissions  :: ToJSON a  => Snowflake -> Snowflake -> a -> ChannelRequest ()
-      -- |Gets all instant invites to a channel.
+      -- | Gets all instant invites to a channel.
       GetChannelInvites       :: Snowflake -> ChannelRequest Object
-      -- |Creates an instant invite to a channel.
+      -- | Creates an instant invite to a channel.
       CreateChannelInvite     :: ToJSON a  => Snowflake -> a -> ChannelRequest Object
-      -- |Deletes a permission override from a channel.
+      -- | Deletes a permission override from a channel.
       DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
-      -- |Sends a typing indicator a channel which lasts 10 seconds.
+      -- | Sends a typing indicator a channel which lasts 10 seconds.
       TriggerTypingIndicator  :: Snowflake -> ChannelRequest ()
-      -- |Gets all pinned messages of a channel.
+      -- | Gets all pinned messages of a channel.
       GetPinnedMessages       :: Snowflake -> ChannelRequest [Message]
-      -- |Pins a message.
+      -- | Pins a message.
       AddPinnedMessage        :: Snowflake -> Snowflake -> ChannelRequest ()
-      -- |Unpins a message.
+      -- | Unpins a message.
       DeletePinnedMessage     :: Snowflake -> Snowflake -> ChannelRequest ()
 
-    -- |Instance of Hashable that allows to get the major parts of an endpoint.
+    -- | Instance of Hashable that allows to get the major parts of an endpoint.
     instance Hashable (ChannelRequest a) where
       hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::Text, chan)
       hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::Text, chan)
