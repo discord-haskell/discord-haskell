@@ -177,17 +177,17 @@ module Network.Discord.Types.Channel where
       Message <$> o .:  "id"
               <*> o .:  "channel_id"
               <*> o .:? "author" .!= Webhook
-              <*> o .:  "content"
-              <*> o .:  "timestamp"
+              <*> o .:? "content" .!= ""
+              <*> o .:? "timestamp" .!= epochTime
               <*> o .:? "edited_timestamp"
-              <*> o .:  "tts"
-              <*> o .:  "mention_everyone"
-              <*> o .:  "mentions"
-              <*> o .:  "mention_roles"
-              <*> o .:  "attachments"
+              <*> o .:? "tts" .!= False
+              <*> o .:? "mention_everyone" .!= False
+              <*> o .:? "mentions" .!= []
+              <*> o .:? "mention_roles" .!= []
+              <*> o .:? "attachments" .!= []
               <*> o .:  "embeds"
               <*> o .:? "nonce"
-              <*> o .:  "pinned"
+              <*> o .:? "pinned" .!= False
     parseJSON _ = mzero
 
   -- |Represents an attached to a message file.
@@ -234,15 +234,15 @@ module Network.Discord.Types.Channel where
     parseJSON (Object o) = 
       Embed <$> o .:? "title" .!= "Untitled"
             <*> o .:  "type"
-            <*> o .:  "description"
-            <*> o .:  "url"
+            <*> o .:? "description" .!= ""
+            <*> o .:? "url" .!= ""
             <*> sequence (HM.foldrWithKey to_embed [] o)
       where
         to_embed k (Object v) a
           | k == pack "footer" =
             (Footer <$> v .: "text"
-                    <*> v .: "icon_url"
-                    <*> v .: "proxy_icon_url") : a
+                    <*> v .:? "icon_url" .!= ""
+                    <*> v .:? "proxy_icon_url" .!= "") : a
           | k == pack "image" =
             (Image <$> v .: "url"
                    <*> v .: "proxy_url"
