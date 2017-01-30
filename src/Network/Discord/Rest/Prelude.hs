@@ -16,6 +16,7 @@ module Network.Discord.Rest.Prelude where
   import qualified Control.Monad.State as St
   import Paths_discord_hs (version)
   import Data.Version     (showVersion)
+  import System.Log.Logger
 
   import Network.Discord.Types
 
@@ -55,7 +56,7 @@ module Network.Discord.Rest.Prelude where
         Just a  -> do
           now <- St.liftIO (fmap round getPOSIXTime :: IO Int)
           St.liftIO $ do
-            putStrLn "Waiting for rate limit to reset..."
+            infoM "Discord-hs.Rest" "Waiting for rate limit to reset..."
             threadDelay $ 1000000 * (a - now)
             putStrLn "Done"
           return ()
