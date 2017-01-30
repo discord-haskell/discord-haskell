@@ -84,8 +84,8 @@ module Network.Discord.Types.Channel where
     | DirectMessage {
         -- |A unique, timestamp based id.
         channelId:: Snowflake,
-        -- |The target user of a direct message.
-        channelRecipient:: User,
+        -- |The target users of a direct message.
+        channelRecipients:: [User],
         -- |The snowflake of last message sent, used by client to check for unread messages.
         channelLastMessage:: Snowflake
     } deriving (Show, Eq)
@@ -93,31 +93,30 @@ module Network.Discord.Types.Channel where
   -- |Allows a channel datatype to be generated using a JSON response by Discord.
   instance FromJSON Channel where
     parseJSON = withObject "text or voice" $ \o -> do
-      private <- o .:? "is_private" .!= False
-      if not private then do
-        type' <- (o .: "type") :: Parser Text
-        case type' of
-          "text" ->
-              Text  <$> o .: "id"
-                    <*> o .: "guild_id"
-                    <*> o .: "name"
-                    <*> o .: "position"
-                    <*> o .: "permission_overwrites"
-                    <*> o .: "topic"
-                    <*> o .: "last_message_id"
-          "voice" ->
-              Voice <$> o .: "id"
-                    <*> o .: "guild_id"
-                    <*> o .: "name"
-                    <*> o .: "position"
-                    <*> o .: "permission_overwrites"
-                    <*> o .: "bitrate"
-                    <*> o .: "user_limit"
-          _ -> mzero
+      type' <- (o .: "type") :: Parser Int
+      case type' of
+        0 ->
+            Text  <$> o .:  "id"
+                  <*> o .:  "guild_id"
+                  <*> o .:  "name"
+                  <*> o .:  "position"
+                  <*> o .:  "permission_overwrites"
+                  <*> o .:? "topic" .!= ""
+                  <*> o .:? "last_message_id" .!= ""
+        1 ->
+            DirectMessage <$> o .: "id"
+                          <*> o .: "recipients"
+                          <*> o .: "last_message_id"
+        2 ->
+            Voice <$> o .: "id"
+                  <*> o .: "guild_id"
+                  <*> o .: "name"
+                  <*> o .: "position"
+                  <*> o .: "permission_overwrites"
+                  <*> o .: "bitrate"
+                  <*> o .: "user_limit"
+        _ -> mzero
 
-      else DirectMessage <$> o .: "id"
-                         <*> o .: "recipients"
-                         <*> o .: "last_message_id"
   -- | Permission overwrites for a channel.
   data Overwrite = Overwrite {
     -- |An id of an overwrite's target which is a role or a member.
