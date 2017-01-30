@@ -12,6 +12,7 @@ module Network.Discord.Gateway where
   import Network.URL
   import Control.Concurrent.STM
   import Pipes
+  import System.Log.Logger
 
   import Network.Discord.Types
 
@@ -55,7 +56,7 @@ module Network.Discord.Gateway where
         liftIO . atomically $ putTMVar (getSequenceNum st) sq
         case parseEither parseJSON $ Object o of
           Right a -> yield $ Ready a
-          Left reason -> liftIO $ putStrLn reason
+          Left reason -> liftIO $ errorM "Discord-hs.Gateway" reason
         put st {getState=Running}
       Running          -> do
         pl <- await
@@ -63,19 +64,21 @@ module Network.Discord.Gateway where
           Dispatch _ sq _ -> do
             liftIO . atomically $ tryTakeTMVar (getSequenceNum st)
               >> putTMVar (getSequenceNum st) sq
-            yield $ parseDispatch pl
+            case parseDispatch pl of
+              Left reason   -> liftIO $ errorM "Discord-hs.Gateway" reason
+              Right payload -> yield payload
           Heartbeat sq    -> do
             liftIO . atomically $ tryTakeTMVar (getSequenceNum st)
               >> putTMVar (getSequenceNum st) sq
             liftIO . sendTextData ws $ Heartbeat sq
           Reconnect       -> put st {getState=InvalidReconnect}
           InvalidSession  -> put st {getState=Start}
-          HeartbeatAck    -> liftIO $ putStrLn "Heartbeat Ack"
+          HeartbeatAck    -> liftIO $ infoM "Discord-hs.Gateway" "Heartbeat Ack"
           _               -> do
             liftIO $ putStrLn "Invalid Packet"
             put st {getState=InvalidDead}
       InvalidReconnect -> put st {getState=InvalidDead}
-      InvalidDead      -> liftIO $ putStrLn "Bot died"
+      InvalidDead      -> liftIO $ errorM "Discord-hs.Gateway" "Bot died"
 
   eventCore :: Connection -> Producer Event DiscordM ()
   eventCore conn = makeWebsocketSource conn >-> makeEvents
