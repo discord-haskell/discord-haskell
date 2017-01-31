@@ -95,4 +95,4 @@ module Language.Discord where
   handle (VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)       = p o
   handle (Event s p)                      (D.UnknownEvent v o)
     | s == v = p o
-  handle _ ev = liftIO $ debugM "Discord-hs.Language" $ "Miss event " ++ show ev
+  handle _ ev = liftIO $ debugM "Discord-hs.Language.Events" $ show ev
