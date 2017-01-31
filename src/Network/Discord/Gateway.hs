@@ -73,12 +73,12 @@ module Network.Discord.Gateway where
             liftIO . sendTextData ws $ Heartbeat sq
           Reconnect       -> put st {getState=InvalidReconnect}
           InvalidSession  -> put st {getState=Start}
-          HeartbeatAck    -> liftIO $ infoM "Discord-hs.Gateway.Heartbeat" "Heartbeat Ack"
+          HeartbeatAck    -> liftIO $ infoM "Discord-hs.Gateway.Heartbeat" "HeartbeatAck"
           _               -> do
             liftIO $ putStrLn "Invalid Packet"
             put st {getState=InvalidDead}
       InvalidReconnect -> put st {getState=InvalidDead}
-      InvalidDead      -> liftIO $ errorM "Discord-hs.Gateway.Error" "Bot died"
+      InvalidDead      -> liftIO $ errorM "Discord-hs.Gateway.Error" "BotDied"
 
   eventCore :: Connection -> Producer Event DiscordM ()
   eventCore conn = makeWebsocketSource conn >-> makeEvents
