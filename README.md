@@ -4,11 +4,29 @@ A Haskell wrapper for the Discord API
 ## Installing
 Discord-hs isn't on hackage or stackage (Yet, I'll upload when documentation is in a good state.)  
 In order to install:
+
 ```sh
-git clone https://github.com/jano017/Discord.hs.git
+git clone https://gitlab.com/jkoike/Discord.hs.git
 cd discord.hs
 stack install
 ```
+
+## Using in a project
+
+The preferred (and only supported) method of using discord.hs is through [stack](https://docs.haskellstack.org/en/stable/README/). Open your `stack.yaml`
+and find the `packages` section. Replace it with the following:
+
+```yaml
+packages:
+  - location: '.'
+  - location:
+      git: https://gitlab.com/jkoike/Discord.hs.git
+      commit: master
+    extra-dep: true
+```
+
+Then open your project.cabal file and add `discord-hs` to your build-depends.
+
 
 ## PingPong
 ```haskell
