@@ -4,7 +4,6 @@ module Network.Discord.Types.Prelude where
   import Data.Time.Clock
   import Data.Time.Clock.POSIX
   import Data.Bits
-  import Debug.Trace
 
   type Auth = String
   -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
@@ -30,7 +29,5 @@ module Network.Discord.Types.Prelude where
   justRight (Right b) = b
   justRight (Left a) = error $ show a
 
-  reparse :: (ToJSON a, Show a, FromJSON b) => a -> b
-  reparse val = case parseEither parseJSON $ toJSON val of
-    Left  err -> trace (show val) . error $ show err
-    Right a   -> a
+  reparse :: (ToJSON a, FromJSON b) => a -> Either String b
+  reparse val = parseEither parseJSON $ toJSON val

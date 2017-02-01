@@ -4,6 +4,7 @@ module Language.Discord where
 
   import Pipes.Core
   import Data.Aeson (Object)
+  import System.Log.Logger
 
   import Network.Discord as D
   import Network.Discord.Types.Guild (Member, Guild)
@@ -94,4 +95,4 @@ module Language.Discord where
   handle (VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)       = p o
   handle (Event s p)                      (D.UnknownEvent v o)
     | s == v = p o
-  handle _ ev = liftIO $ putStrLn $ "Miss event " ++ show ev
+  handle _ ev = liftIO $ debugM "Discord-hs.Language.Events" $ show ev
