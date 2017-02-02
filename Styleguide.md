@@ -212,3 +212,124 @@ module MyModule where
 whyDoThis :: Bool
 whyDoThis = False
 ```
+
+## If-then-else clauses
+
+In general, guards and pattern matches should be used over if-then-else clauses. However,
+where guards and pattern matches cannot be used, `then` and `else` statements should be indented.
+
+```haskell
+foo = if condition
+        then code
+        else moreCode
+```
+
+## Case expressions
+
+Case expressions should be as follows:
+
+```haskell
+foobar = case something of
+  Just j  -> foo
+  Nothing -> bar
+```
+
+When the statement in question is too long to place on a single line, the `->` should be
+deferred to the next line
+
+```haskell
+foobar' = case something of
+  VeryLongPatternToBeMatched var
+    -> foo
+  otherwise -> bar
+```
+
+## Imports
+
+Imports should be grouped in the following order:
+
+1. Standard library
+2. Related third party
+3. Local application/library specific imports
+
+Seperate import groups with a blank line. Imports should be sorted alphabetically, by module name.
+
+Comments and Commits
+---
+
+In order to maintain basic sanity, pull requests will be rejected if the following guidelines
+are not followed.
+
+## Punctuation and spelling
+
+Write proper sentences, start with a capital letter and use proper punctuation. 
+Spell words properly.
+
+## Top level definitions
+
+All top level definitions must have a type signature. Top level definitions should have a
+Haddock syntax comment. If a top level definition is exported, it must have a Haddock syntax
+comment.
+
+```haskell
+-- | Send a message on a socket.  The socket must be in a connected
+--   state.  Returns the number of bytes sent.  Applications are
+--   responsible for ensuring that all data has been sent.
+send :: Socket      -- ^ Connected socket
+     -> ByteString  -- ^ Data to send
+     -> IO Int      -- ^ Bytes sent
+```
+
+Record datatypes should also be commented.
+
+```haskell
+-- | Bla bla bla.
+data Person = Person
+    { age  :: !Int     -- ^ Age
+    , name :: !String  -- ^ First name
+    }
+```
+
+## Multi line comments
+
+Block comments should be avoided. Haddock-style comments should be aligned with the first letter of the first line
+
+```haskell
+-- | This is a haddock comment
+--   that spans multiple lines
+```
+
+Other multi-line comments should be indented after the first line
+
+```haskell
+-- This is a non-haddock
+--   comment that also spans
+--   multiple lines
+```
+
+Code patterns
+---
+
+## Naming
+
+Use camelCase for functions and PascalCase for data types. For readability, don't capitalize
+all the letters of of abbreviations when there are 3 or more letters. E.g. `HttpServer`
+instead of `HTTPServer`
+
+## Modules
+
+Use singulars for modulare names, e.g. `Data.Map` over `Data.Maps`.
+
+## Lambda functions
+
+`where` clauses should generally be preferred over lambda functions. This is because `where`
+clauses support type signatures, and generally give more readable errors.
+EXCEPTION: Lambdas are acceptable as arguments to higher-order functions when the function
+body is short.
+
+## Point-Free style and `(>>=)`
+
+Point-free style should generally be avoided, as it tends to lead to unreadable code.
+However, in most cases, pointfree code should be annotated with its pointful equivalent.
+`(>>=)` should be treated similar Unix's `|` operator. If you would save the output of a
+command to a file, you should save the output of the equivalent function to a variable.
