@@ -1,3 +1,20 @@
+stages:
+  - pre_build
+  - build
+
+before_script:
+  - docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN $CI_REGISTRY
+
+pre_build:
+  stage: pre_build
+  image: docker:latest
+  when: manual
+  services:
+    - docker:dind
+  script:
+    - docker build --pull --build-arg base_url=$CI_PROJECT_URL -t $CI_REGISTRY_IMAGE:latest
+    - docker push $CI_REGISTRY_IMAGE:latest
+  
 build:
   image: $CI_REGISTRY_IMAGE:latest
   stage: build
