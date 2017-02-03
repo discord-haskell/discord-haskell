@@ -1,5 +1,6 @@
 Haskell Style Guide
 ---
+------
 
 In order to keep code in this repository as readable and aproachable as possible, we ask that you follow some basic formatting guidelines.
 As with all style guides, functionality comes first, and if for some reason, you absolutely must choose between writing code that works
@@ -9,6 +10,7 @@ explicitly covered in this style guide, try your best to follow code examples in
 
 Formatting
 ---
+------
 
 ## Line length
 
@@ -256,6 +258,7 @@ Seperate import groups with a blank line. Imports should be sorted alphabeticall
 
 Comments and Commits
 ---
+------
 
 In order to maintain basic sanity, pull requests will be rejected if the following guidelines
 are not followed.
@@ -309,6 +312,7 @@ Other multi-line comments should be indented after the first line
 
 Code patterns
 ---
+------
 
 ## Naming
 
