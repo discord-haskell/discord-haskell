@@ -5,4 +5,4 @@ RUN  apt-get update && \
      rm -rf /var/lib/apt/lists/*
 RUN  curl -o stack.yaml       $base_url/raw/master/stack.yaml && \
      curl -o discord-hs.cabal $base_url/raw/master/discord-hs.cabal && \
-     stack install --install-ghc --only-dependencies
+     stack install --install-ghc --only-dependencies --haddock
