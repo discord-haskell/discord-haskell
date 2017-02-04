@@ -6,9 +6,10 @@ module Network.Discord.Rest.Channel
   ) where
     import Data.Text
     import Data.ByteString.Lazy
-    import qualified Control.Monad.State as ST (get, put, liftIO)
+    import qualified Control.Monad.State as ST (get, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
+    import Control.Concurrent.STM
 
     import Data.Aeson
     import Data.Hashable
@@ -89,18 +90,20 @@ module Network.Discord.Rest.Channel
     instance RateLimit (ChannelRequest a) where
       -- |Gets the delay until an endpoint can be used again.
       getRateLimit req = do
-        st@DiscordState {getRateLimits=rl} <- ST.get
+        DiscordState {getRateLimits=rl} <- ST.get
         now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
-        case lookup (hash req) rl of
-          Nothing -> return Nothing
-          Just a
-            | a >= now  -> return $ Just a
-            | otherwise -> ST.put st{getRateLimits=Dc.delete (hash req) rl} >> return Nothing
+        ST.liftIO . atomically $ do
+          rateLimits <- readTVar rl
+          case lookup (hash req) rateLimits of
+            Nothing -> return Nothing
+            Just a
+              | a >= now  -> return $ Just a
+              | otherwise -> modifyTVar' rl (Dc.delete $ hash req) >> return Nothing
 
       -- |Sets a delay until an endpoint can be used again.
       setRateLimit req reset = do
-        st@DiscordState {getRateLimits=rl} <- ST.get
-        ST.put st {getRateLimits=Dc.insert (hash req) reset rl}
+        DiscordState {getRateLimits=rl} <- ST.get
+        ST.liftIO . atomically . modifyTVar rl $ Dc.insert (hash req) reset
 
     -- |Waits for rate limits and then returns fetched request.
     instance (FromJSON a) => DoFetch (ChannelRequest a) where

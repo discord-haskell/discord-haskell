@@ -26,10 +26,11 @@ module Network.Discord.Gateway where
   -- | Starts a websocket connection that allows you to handle Discord events.
   runWebsocket :: (Client c)
     => URL -> c -> Effect DiscordM a -> IO a
-  runWebsocket (URL (Absolute h) path _) client inner =
+  runWebsocket (URL (Absolute h) path _) client inner = do
+    rl <- newTVarIO []
     runSecureClient (host h) 443 (path++"/?v=6")
       $ \conn -> evalStateT (runEffect inner)
-        (DiscordState Create client conn undefined [])
+        (DiscordState Create client conn undefined rl)
   runWebsocket _ _ _ = mzero
 
   -- | Spawn a heartbeat thread
