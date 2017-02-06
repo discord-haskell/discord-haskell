@@ -4,6 +4,7 @@ module Network.Discord.Gateway where
   import Control.Concurrent (forkIO, threadDelay)
   import Control.Monad.State
   import System.Mem
+  import Data.ByteString.Lazy.Char8 (unpack)
 
   import Wuss
   import Data.Aeson
@@ -17,11 +18,15 @@ module Network.Discord.Gateway where
   import Network.Discord.Types
 
 
-  makeWebsocketSource :: (WebSocketsData a, MonadIO m)
+  makeWebsocketSource :: (FromJSON a, MonadIO m)
     => Connection -> Producer a m ()
   makeWebsocketSource conn = forever $ do
-    msg <- lift . liftIO $ receiveData conn
-    yield msg
+    msg' <- lift . liftIO $ receiveData conn
+    case eitherDecode msg' of
+      Right msg -> yield $ msg
+      Left  err -> liftIO $
+        errorM "Discord-hs.Gateway.Parse" err
+          >> debugM "Discord-hs.Gateway.Raw" (unpack msg')
 
   -- | Starts a websocket connection that allows you to handle Discord events.
   runWebsocket :: (Client c)
@@ -76,7 +81,7 @@ module Network.Discord.Gateway where
           InvalidSession  -> put st {getState=Start}
           HeartbeatAck    -> liftIO $ infoM "Discord-hs.Gateway.Heartbeat" "HeartbeatAck"
           _               -> do
-            liftIO $ putStrLn "Invalid Packet"
+            liftIO $ errorM "Discord-hs.Gateway.Error" "InvalidPacket"
             put st {getState=InvalidDead}
       InvalidReconnect -> put st {getState=InvalidDead}
       InvalidDead      -> liftIO $ errorM "Discord-hs.Gateway.Error" "BotDied"
