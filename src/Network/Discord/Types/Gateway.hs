@@ -64,7 +64,7 @@ module Network.Discord.Types.Gateway where
     toJSON (Identify token compress large shard) = object [
         "op" .= (2 :: Int)
       , "d"  .= object [
-          "token" .= token
+          "token" .= authToken token
         , "properties" .= object [
             "$os"                .= os
           , "$browser"           .= ("discord.hs" :: String)

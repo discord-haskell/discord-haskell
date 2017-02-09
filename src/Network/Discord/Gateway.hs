@@ -61,7 +61,7 @@ module Network.Discord.Gateway where
         Dispatch o sq "READY" <- await
         liftIO . atomically $ putTMVar (getSequenceNum st) sq
         case parseEither parseJSON $ Object o of
-          Right a -> yield $ Ready a
+          Right a     -> yield  $ Ready a
           Left reason -> liftIO $ errorM "Discord-hs.Gateway.Dispatch" reason
         put st {getState=Running}
       Running          -> do

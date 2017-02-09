@@ -3,7 +3,6 @@
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
-  import Data.ByteString (append)
   import Data.ByteString.Char8 (pack)
   import Data.Default
   import Data.Time.Clock.POSIX
@@ -32,7 +31,7 @@ module Network.Discord.Rest.Prelude where
   baseRequest = do
     DiscordState {getClient=client} <- St.get
     return $ defaults
-      & header "Authorization" .~ [append "Bot " . pack $ getAuth client]
+      & header "Authorization" .~ [pack . authToken $ getAuth client]
       & header "User-Agent"    .~
         [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
           ++ showVersion version
