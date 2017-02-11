@@ -10,8 +10,8 @@ module Network.Discord.Types.Guild where
   import Network.Discord.Types.Prelude
 
   -- |Representation of a guild member.
-  data Member = GuildMember Snowflake User
-            | MemberShort User (Maybe String) [Snowflake]
+  data Member = GuildMember {-# UNPACK #-} !Snowflake User
+            | MemberShort User (Maybe String) ![Snowflake]
             deriving Show
   instance FromJSON Member where
     parseJSON (Object o) =
@@ -20,7 +20,7 @@ module Network.Discord.Types.Guild where
 
   -- |Temporary representation of a guild, will be replaced
   data Guild =
-    Guild Snowflake
+    Guild {-# UNPACK #-} !Snowflake
     deriving Show
   instance FromJSON Guild where
     parseJSON (Object o) = Guild <$> o .: "id"
@@ -28,7 +28,7 @@ module Network.Discord.Types.Guild where
 
   data Role = 
       Role {
-          roleID      :: Snowflake
+          roleID      :: {-# UNPACK #-} !Snowflake
         , roleName    :: String
         , roleColor   :: Integer
         , roleHoist   :: Bool
@@ -53,7 +53,7 @@ module Network.Discord.Types.Guild where
   -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
   data VoiceRegion =
       VoiceRegion {
-          regionId          :: Snowflake
+          regionId          :: {-# UNPACK #-} !Snowflake
         , regionName        :: String
         , regionHostname    :: String
         , regionPort        :: Int
@@ -115,7 +115,7 @@ module Network.Discord.Types.Guild where
 
   data InviteGuild =
     InviteGuild {
-        guildId     :: Snowflake
+        guildId     :: {-# UNPACK #-} !Snowflake
       , guildName   :: String
       , guildSplash :: String
       , guildIcon   :: String
@@ -131,7 +131,7 @@ module Network.Discord.Types.Guild where
 
   data InviteChannel =
     InviteChannel {
-        inviteChannel :: Snowflake
+        inviteChannel :: {-# UNPACK #-} !Snowflake
       , inviteName    :: String
       , inviteType    :: String
     }
@@ -145,7 +145,7 @@ module Network.Discord.Types.Guild where
 
   data Integration =
       Integration {
-          integrationId       :: Snowflake
+          integrationId       :: {-# UNPACK #-} !Snowflake
         , integrationName     :: String
         , integrationType     :: String
         , integrationEnabled  :: Bool
@@ -188,7 +188,7 @@ module Network.Discord.Types.Guild where
   data GuildEmbed =
       GuildEmbed {
           embedEnabled :: Bool
-        , embedChannel :: Snowflake
+        , embedChannel :: {-# UNPACK #-} !Snowflake
       }
   instance FromJSON GuildEmbed where
     parseJSON (Object o) = GuildEmbed

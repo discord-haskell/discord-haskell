@@ -14,7 +14,7 @@ module Network.Discord.Types.Channel where
   -- |Represents information about a user.
   data User = User {
       -- |A unique, timestamp based id.
-      userId :: Snowflake,
+      userId :: {-# UNPACK #-} !Snowflake,
       -- |The account's username. If changed, may cause discriminator to change.
       userName:: String,
       -- |A unique discriminator consisting of four numbers.
@@ -51,9 +51,9 @@ module Network.Discord.Types.Channel where
       -- |A text channel in a guild.
       Text{
         -- |A unique, timestamp based id.
-        channelId:: Snowflake,
+        channelId:: {-# UNPACK #-} !Snowflake,
         -- |An id of guild that holds the channel.
-        channelGuild:: Snowflake,
+        channelGuild:: {-# UNPACK #-} !Snowflake,
         -- |A name of the channel.
         channelName:: String,
         -- |A position of the channel.
@@ -67,7 +67,7 @@ module Network.Discord.Types.Channel where
     -- |A voice channel in a guild.
     | Voice{
         -- |A unique, timestamp based id.
-        channelId:: Snowflake,
+        channelId:: {-# UNPACK #-} !Snowflake,
         -- |An id of guild that holds the channel.
         channelGuild:: Snowflake,
         -- |A name of the voice channel.
@@ -83,7 +83,7 @@ module Network.Discord.Types.Channel where
     -- |A direct message channel between two users.
     | DirectMessage {
         -- |A unique, timestamp based id.
-        channelId:: Snowflake,
+        channelId:: {-# UNPACK #-} !Snowflake,
         -- |The target users of a direct message.
         channelRecipients:: [User],
         -- |The snowflake of last message sent, used by client to check for unread messages.
@@ -102,11 +102,11 @@ module Network.Discord.Types.Channel where
                   <*> o .:  "position"
                   <*> o .:  "permission_overwrites"
                   <*> o .:? "topic" .!= ""
-                  <*> o .:? "last_message_id" .!= "0"
+                  <*> o .:? "last_message_id" .!= 0
         1 ->
             DirectMessage <$> o .:  "id"
                           <*> o .:  "recipients"
-                          <*> o .:? "last_message_id" .!= "0"
+                          <*> o .:? "last_message_id" .!= 0
         2 ->
             Voice <$> o .: "id"
                   <*> o .: "guild_id"
@@ -120,7 +120,7 @@ module Network.Discord.Types.Channel where
   -- | Permission overwrites for a channel.
   data Overwrite = Overwrite {
     -- |An id of an overwrite's target which is a role or a member.
-    overwriteId:: Snowflake,
+    overwriteId:: {-# UNPACK #-} !Snowflake,
     -- |A type of an overwrite target.
     overWriteType:: String,
     -- |Allowed permission bits for a channel.
@@ -141,9 +141,9 @@ module Network.Discord.Types.Channel where
   -- |Represents information about a message in a Discord channel.
   data Message = Message{
     -- |A unique, timestamp based id.
-    messageId:: Snowflake,
+    messageId:: {-# UNPACK #-} !Snowflake,
     -- |The Id of a target channel.
-    messageChannel:: Snowflake,
+    messageChannel:: {-# UNPACK #-} !Snowflake,
     -- |The person that sent the message.
     messageAuthor:: User,
     -- |The content of message.
@@ -192,7 +192,7 @@ module Network.Discord.Types.Channel where
   -- |Represents an attached to a message file.
   data Attachment = Attachment{
     -- |A unique, timestamp based id.
-    attachmentId:: Snowflake,
+    attachmentId:: {-# UNPACK #-} !Snowflake,
     -- |The attachment's filename.
     attachmentFilename:: String,
     -- |The attachment's file size in bytes.

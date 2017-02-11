@@ -76,10 +76,11 @@ module Network.Discord.Rest.Prelude where
 
   data Fetched = forall a. (FromJSON a) => SyncFetched a
 
-  data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Snowflake}
+  data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
 
   instance Default Range where
-    def = Range "0" "18446744073709551615" "100"
+    def = Range 0 18446744073709551615 100
 
   toQueryString :: Range -> String
-  toQueryString (Range a b l) = "after="++a++"&before="++b++"&limit="++l
+  toQueryString (Range a b l) = 
+    "after=" ++ show a ++ "&before=" ++ show b ++ "&limit=" ++ show l

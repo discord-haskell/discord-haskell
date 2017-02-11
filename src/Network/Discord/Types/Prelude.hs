@@ -1,9 +1,10 @@
-{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ExistentialQuantification, TypeSynonymInstances #-}
 module Network.Discord.Types.Prelude where
   import Data.Aeson.Types
   import Data.Time.Clock
   import Data.Time.Clock.POSIX
   import Data.Bits
+  import Data.Word
 
   -- | Authorization token for the Discord API
   data Auth = Bot    String
@@ -23,12 +24,12 @@ module Network.Discord.Types.Prelude where
   authToken (Bearer token) = token
 
   -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
-  type Snowflake = String
+  type Snowflake = Word64
 
   -- |Gets a creation date from a snowflake.
   creationDate :: Snowflake -> UTCTime
   creationDate x = posixSecondsToUTCTime . realToFrac
-    $ 1420070400 + quot (shiftR (read x :: Int) 22) 1000
+    $ 1420070400 + quot (shiftR x 22) 1000
 
   epochTime :: UTCTime
   epochTime = posixSecondsToUTCTime $ realToFrac(0 :: Int)

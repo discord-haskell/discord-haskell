@@ -25,8 +25,8 @@ module Network.Discord.Types.Gateway where
    (Maybe Integer)
    (Maybe String)
                | VoiceStatusUpdate
-    Snowflake
-   (Maybe Snowflake)
+   {-# UNPACK #-} !Snowflake
+   !(Maybe Snowflake)
     Bool
     Bool
                | Resume
@@ -35,7 +35,7 @@ module Network.Discord.Types.Gateway where
     Integer
                | Reconnect
                | RequestGuildMembers
-    Snowflake
+    {-# UNPACK #-} !Snowflake
     String
     Integer
                | InvalidSession
