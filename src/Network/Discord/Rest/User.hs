@@ -69,14 +69,14 @@ module Network.Discord.Rest.User
           GetCurrentUser -> getWith req
             "/users/@me"
           GetUser user -> getWith req
-            ("/users/"++user)
+            ("/users/" ++ show user)
           ModifyCurrentUser patch -> customPayloadMethodWith "PATCH" req
             "/users/@me"
             (toJSON patch)
           GetCurrentUserGuilds range -> getWith req
             ("/users/@me/guilds?" ++ toQueryString range)
           LeaveGuild guild -> deleteWith req
-            ("/users/@me/guilds/"++guild)
+            ("/users/@me/guilds/" ++ show guild)
           GetUserDMs -> getWith req
             "/users/@me/channels"
           CreateDM user -> postWith req

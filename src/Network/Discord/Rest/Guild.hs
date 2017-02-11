@@ -123,107 +123,107 @@ module Network.Discord.Rest.Guild
       (resp, rlRem, rlNext) <- lift $ do
         resp <- case request of
           GetGuild chan -> getWith req
-            (baseURL++"/guilds/"++chan)
+            (baseURL ++ "/guilds/" ++ show chan)
           
           ModifyGuild chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan)
+            (baseURL ++ "/guilds/" ++ show chan)
             (toJSON patch)
 
           DeleteGuild chan -> deleteWith req
-            (baseURL++"/guilds/"++chan)
+            (baseURL ++ "/guilds/" ++ show chan)
 
           GetGuildChannels chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/channels")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
 
           CreateGuildChannel chan patch -> postWith req
-            (baseURL++"/guilds/"++chan++"/channels")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
             (toJSON patch)
 
           ModifyChanPosition chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/channels")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
             (toJSON patch)
 
           GetGuildMember chan user -> getWith req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
 
           ListGuildMembers chan range -> getWith req
-            (baseURL++"/guilds/"++chan++"/members?limit="++toQueryString range)
+            (baseURL ++ "/guilds/" ++ show chan ++"/members?" ++ toQueryString range)
 
           AddGuildMember chan user patch -> customPayloadMethodWith "PUT" req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
             (toJSON patch)
 
           ModifyGuildMember chan user patch -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
             (toJSON patch)
 
           RemoveGuildMember chan user -> deleteWith req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/members/"++ show user)
 
           GetGuildBans chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/bans")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/bans")
 
           CreateGuildBan chan user msg -> customPayloadMethodWith "PUT" req
-            (baseURL++"/guilds/"++chan++"/bans/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/bans/" ++ show user)
             ["delete-message-days" := msg]
 
           RemoveGuildBan chan user -> deleteWith req
-            (baseURL++"/guilds/"++chan++"/bans/"++user)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/bans/" ++ show user)
 
           GetGuildRoles chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/roles")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
 
           CreateGuildRole chan -> postWith req
-            (baseURL++"/guilds/"++chan++"/roles")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
             (toJSON (""::Text))
 
           ModifyGuildRolePositions chan pos -> postWith req
-            (baseURL++"/guilds/"++chan++"/roles")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
             (toJSON pos)
 
           ModifyGuildRole chan role patch -> postWith req
-            (baseURL++"/guilds/"++chan++"/roles/"++role)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/roles/" ++ show role)
             (toJSON patch)
 
           DeleteGuildRole chan role -> deleteWith req
-            (baseURL++"/guilds/"++chan++"/roles/"++role)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/roles/" ++ show role)
 
           GetGuildPruneCount chan days -> getWith req
-            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
+            (baseURL++"/guilds/"++ show chan ++"/prune?days="++show days)
 
           BeginGuildPrune chan days -> postWith req
-            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/prune?days=" ++ show days)
             (toJSON (""::Text))
 
           GetGuildVoiceRegions chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/regions")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/regions")
 
           GetGuildInvites chan -> getWith req 
-            (baseURL++"/guilds/"++chan++"/invites")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/invites")
 
           GetGuildIntegrations chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/integrations")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations")
 
           CreateGuildIntegration chan patch -> postWith req
-            (baseURL++"/guilds/"++chan++"/integrations")
+            (baseURL ++ "/guilds/"++ show chan ++ "/integrations")
             (toJSON patch)
 
           ModifyGuildIntegration chan integ patch -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
             (toJSON patch)
 
           DeleteGuildIntegration chan integ -> deleteWith req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
 
           SyncGuildIntegration chan integ -> postWith req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
             (toJSON (""::Text))
 
           GetGuildEmbed chan -> getWith req
-            (baseURL++"/guilds/"++chan++"/embed")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/embed")
           
           ModifyGuildEmbed chan embed -> customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/embed")
+            (baseURL ++ "/guilds/" ++ show chan ++ "/embed")
             (toJSON embed)
 
         return (justRight . eitherDecode $ resp ^. responseBody
