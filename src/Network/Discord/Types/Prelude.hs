@@ -5,15 +5,18 @@ module Network.Discord.Types.Prelude where
   import Data.Time.Clock.POSIX
   import Data.Bits
 
+  -- | Authorization token for the Discord API
   data Auth = Bot    String
             | Client String
             | Bearer String
-
+  
+  -- | Formats the token for use with the REST API
   instance Show Auth where
     show (Bot    token) = "Bot "    ++ token
     show (Client token) = token
     show (Bearer token) = "Bearer " ++ token
 
+  -- | Get the raw token formatted for use with the websocket gateway
   authToken :: Auth -> String
   authToken (Bot    token) = token
   authToken (Client token) = token

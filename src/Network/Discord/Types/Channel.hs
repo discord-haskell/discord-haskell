@@ -102,11 +102,11 @@ module Network.Discord.Types.Channel where
                   <*> o .:  "position"
                   <*> o .:  "permission_overwrites"
                   <*> o .:? "topic" .!= ""
-                  <*> o .:? "last_message_id" .!= ""
+                  <*> o .:? "last_message_id" .!= "0"
         1 ->
-            DirectMessage <$> o .: "id"
-                          <*> o .: "recipients"
-                          <*> o .: "last_message_id"
+            DirectMessage <$> o .:  "id"
+                          <*> o .:  "recipients"
+                          <*> o .:? "last_message_id" .!= "0"
         2 ->
             Voice <$> o .: "id"
                   <*> o .: "guild_id"

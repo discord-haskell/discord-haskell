@@ -17,23 +17,21 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Network.Discord
+  exposed-modules:     Language.Discord
+                     , Network.Discord
                      , Network.Discord.Gateway
                      , Network.Discord.Rest
-                     , Network.Discord.Types
-                     , Language.Discord
-
-  other-modules:       Network.Discord.Rest.Channel
+                     , Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Guild
                      , Network.Discord.Rest.User
-                     , Network.Discord.Rest.Prelude
+                     , Network.Discord.Types
                      , Network.Discord.Types.Channel
-                     , Network.Discord.Types.Guild
                      , Network.Discord.Types.Events
                      , Network.Discord.Types.Gateway
+                     , Network.Discord.Types.Guild
+  other-modules:       Paths_discord_hs
+                     , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Prelude
-                     , Network.Discord.Types.Events
-                     , Paths_discord_hs
   -- other-extensions:
   build-depends:       base==4.*, pipes, transformers, stm-conduit, websockets
                         , aeson, url, time, stm, mtl, wuss, bytestring

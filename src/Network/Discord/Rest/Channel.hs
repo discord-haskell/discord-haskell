@@ -59,7 +59,6 @@ module Network.Discord.Rest.Channel
       -- | Unpins a message.
       DeletePinnedMessage     :: Snowflake -> Snowflake -> ChannelRequest ()
 
-    -- | Instance of Hashable that allows to get the major parts of an endpoint.
     instance Hashable (ChannelRequest a) where
       hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::Text, chan)
       hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::Text, chan)
@@ -82,13 +81,10 @@ module Network.Discord.Rest.Channel
       hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
       hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
 
-    -- |Implementation of equality check that is aware of major parameteres.
     instance Eq (ChannelRequest a) where
       a == b = hash a == hash b
 
-    -- |Implementation of rate limiting logic over all channel procedures.
     instance RateLimit (ChannelRequest a) where
-      -- |Gets the delay until an endpoint can be used again.
       getRateLimit req = do
         DiscordState {getRateLimits=rl} <- ST.get
         now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
@@ -100,12 +96,10 @@ module Network.Discord.Rest.Channel
               | a >= now  -> return $ Just a
               | otherwise -> modifyTVar' rl (Dc.delete $ hash req) >> return Nothing
 
-      -- |Sets a delay until an endpoint can be used again.
       setRateLimit req reset = do
         DiscordState {getRateLimits=rl} <- ST.get
         ST.liftIO . atomically . modifyTVar rl $ Dc.insert (hash req) reset
 
-    -- |Waits for rate limits and then returns fetched request.
     instance (FromJSON a) => DoFetch (ChannelRequest a) where
       doFetch req = do
         waitRateLimit req

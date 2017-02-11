@@ -56,7 +56,6 @@ module Network.Discord.Rest.Guild
       GetGuildEmbed            :: Snowflake -> GuildRequest GuildEmbed
       ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
-    -- | Hashable instance to place ChannelRequests in the proper rate limit buckets
     instance Hashable (GuildRequest a) where
       hashWithSalt s (GetGuild g)              = hashWithSalt s ("guild"::Text, g)
       hashWithSalt s (ModifyGuild g _)         = hashWithSalt s ("guild"::Text, g)
@@ -96,9 +95,7 @@ module Network.Discord.Rest.Guild
     instance Eq (GuildRequest a) where
       a == b = hash a == hash b
 
-    -- |Implementation of rate limiting logic over all channel procedures.
     instance RateLimit (GuildRequest a) where
-      -- |Gets the delay until an endpoint can be used again.
       getRateLimit req = do
         DiscordState {getRateLimits=rl} <- ST.get
         now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
@@ -110,7 +107,6 @@ module Network.Discord.Rest.Guild
               | a >= now  -> return $ Just a
               | otherwise -> modifyTVar' rl (Dc.delete $ hash req) >> return Nothing
 
-      -- |Sets a delay until an endpoint can be used again.
       setRateLimit req reset = do
         DiscordState {getRateLimits=rl} <- ST.get
         ST.liftIO . atomically . modifyTVar rl $ Dc.insert (hash req) reset

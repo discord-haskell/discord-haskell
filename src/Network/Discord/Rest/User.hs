@@ -40,9 +40,7 @@ module Network.Discord.Rest.User
     instance Eq (UserRequest a) where
       a == b = hash a == hash b
 
-    -- |Implementation of rate limiting logic over all channel procedures.
     instance RateLimit (UserRequest a) where
-      -- |Gets the delay until an endpoint can be used again.
       getRateLimit req = do
         DiscordState {getRateLimits=rl} <- ST.get
         now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
@@ -54,7 +52,6 @@ module Network.Discord.Rest.User
               | a >= now  -> return $ Just a
               | otherwise -> modifyTVar' rl (Dc.delete $ hash req) >> return Nothing
 
-      -- |Sets a delay until an endpoint can be used again.
       setRateLimit req reset = do
         DiscordState {getRateLimits=rl} <- ST.get
         ST.liftIO . atomically . modifyTVar rl $ Dc.insert (hash req) reset
@@ -63,7 +60,6 @@ module Network.Discord.Rest.User
       doFetch req = do
         waitRateLimit req
         SyncFetched <$> fetch req
-
 
     fetch :: FromJSON a => UserRequest a -> DiscordM a
     fetch request = do
