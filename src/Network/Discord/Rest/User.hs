@@ -79,7 +79,7 @@ module Network.Discord.Rest.User
             ("/users/@me/guilds/" ++ show guild)
           GetUserDMs -> getWith req
             "/users/@me/channels"
-          CreateDM user -> postWith req
+          CreateDM (Snowflake user) -> postWith req
             "/users/@me/channels"
             ["recipient_id" := user]
         return (justRight . eitherDecode $ resp ^. responseBody

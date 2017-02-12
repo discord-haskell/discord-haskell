@@ -1,10 +1,13 @@
-{-# LANGUAGE ExistentialQuantification, TypeSynonymInstances #-}
+{-# LANGUAGE ExistentialQuantification, TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 module Network.Discord.Types.Prelude where
   import Data.Aeson.Types
   import Data.Time.Clock
   import Data.Time.Clock.POSIX
   import Data.Bits
   import Data.Word
+  import Data.Text
+  import Control.Monad (mzero)
+  import Data.Hashable
 
   -- | Authorization token for the Discord API
   data Auth = Bot    String
@@ -24,7 +27,18 @@ module Network.Discord.Types.Prelude where
   authToken (Bearer token) = token
 
   -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
-  type Snowflake = Word64
+  newtype Snowflake = Snowflake Word64 
+    deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
+
+  instance Show Snowflake where
+    show (Snowflake a) = show a
+
+  instance ToJSON Snowflake where
+    toJSON (Snowflake snowflake) = String . pack $ show snowflake
+
+  instance FromJSON Snowflake where
+    parseJSON (String snowflake) = Snowflake <$> (return . read $ unpack snowflake)
+    parseJSON _ = mzero
 
   -- |Gets a creation date from a snowflake.
   creationDate :: Snowflake -> UTCTime

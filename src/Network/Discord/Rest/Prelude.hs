@@ -31,7 +31,7 @@ module Network.Discord.Rest.Prelude where
   baseRequest = do
     DiscordState {getClient=client} <- St.get
     return $ defaults
-      & header "Authorization" .~ [pack . authToken $ getAuth client]
+      & header "Authorization" .~ [pack . show $ getAuth client]
       & header "User-Agent"    .~
         [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
           ++ showVersion version
