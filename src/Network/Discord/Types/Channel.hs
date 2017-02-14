@@ -8,6 +8,7 @@ module Network.Discord.Types.Channel where
   import Data.Aeson
   import Data.Aeson.Types (Parser)
   import Data.Vector (toList)
+  import qualified Data.Vector as V
   import qualified Data.HashMap.Strict as HM
 
   import Network.Discord.Types.Prelude
@@ -287,7 +288,50 @@ module Network.Discord.Types.Channel where
       , "url"         .= embedUrl
       , "timestamp"   .= embedTime
       , "color"       .= embedColor
-      ]
+      ] |> makeSubEmbeds embedFields
+      where
+        (Object o) |> hm = Object $ HM.union o hm
+        _ |> _ = error "Type mismatch"
+        makeSubEmbeds = foldr embed HM.empty
+        embed (Thumbnail url _ height width) =
+          HM.alter (\_ -> Just $ object
+            [ "url"    .= url
+            , "height" .= height
+            , "width"  .= width
+            ]) "thumbnail"
+        embed (Image url _ height width) = 
+          HM.alter (\_ -> Just $ object
+            [ "url"    .= url
+            , "height" .= height
+            , "width"  .= width
+            ]) "image"
+        embed (Author name url icon _) =
+          HM.alter (\_ -> Just $ object
+            [ "name"     .= name
+            , "url"      .= url
+            , "icon_url" .= icon
+            ]) "author"
+        embed (Footer text icon _) = 
+          HM.alter (\_ -> Just $ object
+            [ "text"     .= text
+            , "icon_url" .= icon
+            ]) "footer"
+        embed (Field name value inline) =
+          HM.alter (\val -> case val of
+            Just (Array a) -> Just . Array $ V.cons (object
+              [ "name"   .= name
+              , "value"  .= value
+              , "inline" .= inline
+              ]) a
+            _ -> Just $ toJSON [
+              object
+                [ "name"   .= name
+                , "value"  .= value
+                , "inline" .= inline
+                ]
+              ]
+          ) "fields"
+        embed _ = id
 
   -- |Represents a part of an embed.
   data SubEmbed =
