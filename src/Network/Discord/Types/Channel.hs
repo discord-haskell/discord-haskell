@@ -45,52 +45,52 @@ module Network.Discord.Types.Channel where
            <*> o .:? "email"
     parseJSON _ = mzero
 
-  -- |Represents information about possible variants of a Discord channel.
   -- TODO: group DM support.
+  -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
   data Channel =
-      -- |A text channel in a guild.
+      -- | A text channel in a guild.
       Text{
-        -- |A unique, timestamp based id.
+        -- | The id of the channel (Will be equal to the guild if it's the "general" channel.
         channelId:: Snowflake,
-        -- |An id of guild that holds the channel.
+        -- | The id of the guild.
         channelGuild:: Snowflake,
-        -- |A name of the channel.
+        -- | The name of the guild (2 - 1000 characters).
         channelName:: String,
-        -- |A position of the channel.
+        -- | The storing position of the channel.
         channelPosition:: Integer,
-        -- |Permission overwrites of the channel.
+        -- | An array of 'Overwrite' objects.
         channelPermissions:: [Overwrite],
-        -- |The channel's topic.
+        -- | The channel's topic (2 - 1024 characters).
         channelTopic:: String,
-        -- |The snowflake of last message sent, used by client to check for unread messages.
+        -- | The snowflake of last message sent.
         channelLastMessage:: Snowflake }
     -- |A voice channel in a guild.
     | Voice{
-        -- |A unique, timestamp based id.
+        -- | The id of the channel (Will be equal to the guild if it's the "general" channel.
         channelId:: Snowflake,
-        -- |An id of guild that holds the channel.
+        -- | The id of the guild.
         channelGuild:: Snowflake,
-        -- |A name of the voice channel.
+        -- | The name of the guild (2 - 1000 characters).
         channelName:: String,
-        -- |A position of the channel.
+        -- | The storing position of the channel.
         channelPosition:: Integer,
-        -- |Permission overwrites of the channel.
+        -- | An array of 'Overwrite' objects.
         channelPermissions:: [Overwrite],
-        -- |Bitrate of the channel.
+        -- | The bitrate (in bits) of the voice channel.
         channelBitRate:: Integer,
-        -- |Determines when discord should not allow a user to join this channel.
+        -- | The user limit of the voice channel.
         channelUserLimit:: Integer }
-    -- |A direct message channel between two users.
+    -- | DM Channels represent a one-to-one conversation between two users, outside the scope
+    --   of guilds
     | DirectMessage {
-        -- |A unique, timestamp based id.
+        -- | The id of this private message.
         channelId:: Snowflake,
-        -- |The target users of a direct message.
+        -- | The user object(s) of the DM recipient(s).
         channelRecipients:: [User],
-        -- |The snowflake of last message sent, used by client to check for unread messages.
+        -- | The id of of the last message sent in this DM.
         channelLastMessage:: Snowflake
     } deriving (Show, Eq)
 
-  -- |Allows a channel datatype to be generated using a JSON response by Discord.
   instance FromJSON Channel where
     parseJSON = withObject "text or voice" $ \o -> do
       type' <- (o .: "type") :: Parser Int

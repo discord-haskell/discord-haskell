@@ -14,6 +14,7 @@ module Language.Discord where
   import Network.Discord as D
   import Network.Discord.Types.Guild (Member, Guild)
 
+  -- | Isolated state representation for use with async event handling
   asyncState :: D.Client a => a -> Effect DiscordM DiscordState
   asyncState client = do
     DiscordState { getRateLimits = limits } <- get
@@ -23,20 +24,26 @@ module Language.Discord where
       undefined
       undefined
       limits
-  
+ 
+  -- | Basic client implementation. Most likely suitable for most bots.
   data BotClient = BotClient Auth
   instance D.Client BotClient where
     getAuth (BotClient auth) = auth
 
+  -- | This should be the entrypoint for most Discord bots.
   runBot :: Auth -> DiscordBot BotClient () -> IO ()
-  runBot auth bot = do
+  runBot auth bot = runBotWith (BotClient auth) bot
+
+  -- | A variant of 'runBot' which allows the user to specify a custom client implementation.
+  runBotWith :: D.Client a => a -> DiscordBot a () -> IO ()
+  runBotWith client bot = do
     gateway <- getGateway
-    atomically $ writeTVar getTMClient (BotClient auth)
-    runWebsocket gateway (BotClient auth) $ do
-      
+    atomically $ writeTVar getTMClient client
+    runWebsocket gateway client $ do
       DiscordState {getWebSocket=ws} <- get
       (eventCore ~> (handle $ execWriter bot)) ws
 
+  -- | Utility function to split event handlers into a seperate thread
   runAsync :: D.Client client => Proxy client -> Effect DiscordM () -> Effect DiscordM ()
   runAsync c effect = do
       client <- liftIO . atomically $ getSTMClient c
@@ -48,8 +55,11 @@ module Language.Discord where
       finish (Right DiscordState{getClient = st}) = atomically $ mergeClient st
       finish (Left err) = errorM "Language.Discord.Events" $ show err
 
+  -- | Monad to compose event handlers
   type DiscordBot c a = Writer (Handle c) a
 
+  -- | Event handlers for 'Gateway' events. These correspond to events listed in
+  --   'Network.Discord.Types.Events'
   data D.Client c => Handle c = Null                         
                               | Misc                         (Event   -> Effect DiscordM ())
                               | ReadyEvent                   (Init    -> Effect DiscordM ())
