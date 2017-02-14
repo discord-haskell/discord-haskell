@@ -9,6 +9,7 @@ module Network.Discord.Rest.Channel
     import qualified Control.Monad.State as ST (get, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
+    import Data.Monoid ((<>))
     import Control.Concurrent.STM
 
     import Data.Aeson
@@ -33,11 +34,11 @@ module Network.Discord.Rest.Channel
       -- | Gets a message in a channel by its id.
       GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
       -- | Sends a message to a channel.
-      CreateMessage           :: Snowflake -> Text -> ChannelRequest Message
+      CreateMessage           :: Snowflake -> Text -> Maybe Embed -> ChannelRequest Message
       -- | Sends a message with a file to a channel.
       UploadFile              :: Snowflake -> Text -> ByteString -> ChannelRequest Message
       -- | Edits a message content.
-      EditMessage             :: Message   -> Text -> ChannelRequest Message
+      EditMessage             :: Message   -> Text -> Maybe Embed -> ChannelRequest Message
       -- | Deletes a message.
       DeleteMessage           :: Message   -> ChannelRequest ()
       -- | Deletes a group of messages.
@@ -65,9 +66,9 @@ module Network.Discord.Rest.Channel
       hashWithSalt s (DeleteChannel chan) = hashWithSalt s ("mod_chan"::Text, chan)
       hashWithSalt s (GetChannelMessages chan _) = hashWithSalt s ("msg"::Text, chan)
       hashWithSalt s (GetChannelMessage chan _) = hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (CreateMessage chan _) = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (CreateMessage chan _ _) = hashWithSalt s ("msg"::Text, chan)
       hashWithSalt s (UploadFile chan _ _)  = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _) =
+      hashWithSalt s (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _ _) =
         hashWithSalt s ("get_msg"::Text, chan)
       hashWithSalt s (DeleteMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _)) =
         hashWithSalt s ("get_msg"::Text, chan)
@@ -128,19 +129,19 @@ module Network.Discord.Rest.Channel
           GetChannelMessage chan msg -> getWith req
             (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
 
-          CreateMessage chan msg -> postWith req
+          CreateMessage chan msg embed -> postWith req
             (baseURL ++ "/channels/" ++ show chan ++ "/messages")
-            (object [("content", toJSON msg)])
+            (toJSON $ [("content", toJSON msg)] <> maybeEmbed embed)
 
           UploadFile chan msg file -> postWith
             (req & header "Content-Type" .~ ["multipart/form-data"])
             (baseURL ++ "/channels/" ++ show chan ++ "/messages")
             ["content" := msg, "file" := file]
 
-          EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new ->
+          EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
             customPayloadMethodWith "PATCH" req
               (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
-              (object [("content", toJSON new)])
+              (toJSON $ [("content", toJSON new)] <> maybeEmbed embed)
 
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
             deleteWith req
@@ -184,3 +185,6 @@ module Network.Discord.Rest.Channel
           , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp
+      where
+        maybeEmbed :: Maybe Embed -> [(String, Value)]
+        maybeEmbed = maybe [] $ \embed -> [("embed", toJSON embed)]
