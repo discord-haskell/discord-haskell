@@ -59,7 +59,7 @@ module Language.Discord where
   type DiscordBot c a = Writer (Handle c) a
 
   -- | Event handlers for 'Gateway' events. These correspond to events listed in
-  --   'Network.Discord.Types.Events'
+  --   'Event'
   data D.Client c => Handle c = Null                         
                               | Misc                         (Event   -> Effect DiscordM ())
                               | ReadyEvent                   (Init    -> Effect DiscordM ())
@@ -93,9 +93,11 @@ module Language.Discord where
                               | VoiceServerUpdateEvent       (Object  -> Effect DiscordM ())
                               | Event String                 (Object  -> Effect DiscordM ())
 
+  -- | Provides a typehint for the correct 'D.Client' given an Event 'Handle'
   clientProxy   :: Handle c -> Proxy c
   clientProxy _ = Proxy
 
+  -- | Register an Event 'Handle' in the 'DiscordBot' monad
   with :: D.Client c => (a -> Handle c) -> a -> DiscordBot c ()
   with f a = tell $ f a
   
@@ -103,6 +105,7 @@ module Language.Discord where
     mempty = Null
     a `mappend` b = Misc (\ev -> handle a ev <> handle b ev)
 
+  -- | Asynchronously run an Event 'Handle' against a Gateway 'Event'
   handle :: D.Client a => Handle a -> Event -> Effect DiscordM ()
   handle a@(Misc p)                          ev                           = runAsync (clientProxy a) $ p ev
   handle a@(ReadyEvent p)                   (D.Ready o)                   = runAsync (clientProxy a) $ p o

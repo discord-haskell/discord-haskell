@@ -46,7 +46,7 @@ module Network.Discord.Types.Prelude where
     $ 1420070400 + quot (shiftR x 22) 1000
 
   epochTime :: UTCTime
-  epochTime = posixSecondsToUTCTime $ realToFrac(0 :: Int)
+  epochTime = posixSecondsToUTCTime 0
 
   delete :: Eq a => a -> [(a, b)] -> [(a, b)]
   delete k ((x,y):xs)
