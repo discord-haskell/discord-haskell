@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, MultiWayIf #-}
+{-# LANGUAGE RecordWildCards #-}
 module Network.Discord.Types.Channel where
   import Control.Monad (mzero)
   import Data.Text as Text (pack, Text)
@@ -129,7 +130,7 @@ module Network.Discord.Types.Channel where
     overwriteDeny:: Integer
     } deriving (Show, Eq)
 
-  -- |Allows a channel's permissions datatype to be generated using a JSON response by Discord.
+  -- | Allows a channel's permissions datatype to be generated using a JSON response by Discord.
   instance FromJSON Overwrite where
     parseJSON (Object o) =
       Overwrite <$> o .: "id"
@@ -138,7 +139,7 @@ module Network.Discord.Types.Channel where
                 <*> o .: "deny"
     parseJSON _ = mzero
 
-  -- |Represents information about a message in a Discord channel.
+  -- | Represents information about a message in a Discord channel.
   data Message = Message{
     -- |A unique, timestamp based id.
     messageId:: {-# UNPACK #-} !Snowflake,
@@ -205,7 +206,7 @@ module Network.Discord.Types.Channel where
     attachmentHeight:: Maybe Integer,
     -- |If an image, the width of it, in pixels
     attachmentWidth:: Maybe Integer
-    } deriving (Show, Eq)
+    } deriving (Show, Eq)
 
   -- |Allows a message's attachment to be generated using a JSON response by Discord.
   instance FromJSON Attachment where
@@ -221,12 +222,14 @@ module Network.Discord.Types.Channel where
 
   -- |An embed attached to a message.
   data Embed = Embed
-    String
-    String
-    String
-    String
-    [SubEmbed]
-    deriving (Show, Eq)
+    { embedTitle  :: String     -- ^ Title of the embed
+    , embedType   :: String     -- ^ Type of embed (Always "rich" for webhooks)
+    , embedDesc   :: String     -- ^ Description of embed
+    , embedUrl    :: String     -- ^ URL of embed
+    , embedTime   :: UTCTime    -- ^ The time of the embed content
+    , embedColor  :: Integer    -- ^ The embed color
+    , embedFields ::[SubEmbed]  -- ^ Fields of the embed
+    } deriving (Show, Eq)
 
   -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
@@ -235,6 +238,8 @@ module Network.Discord.Types.Channel where
             <*> o .:  "type"
             <*> o .:? "description" .!= ""
             <*> o .:? "url" .!= ""
+            <*> o .:? "timestamp" .!= epochTime
+            <*> o .:? "color" .!= 0
             <*> sequence (HM.foldrWithKey to_embed [] o)
       where
         to_embed k (Object v) a
@@ -273,6 +278,16 @@ module Network.Discord.Types.Channel where
         to_embed _ _ a = a
 
     parseJSON _ = mzero
+
+  instance ToJSON Embed where
+    toJSON (Embed {..}) = object 
+      [ "title"       .= embedTitle
+      , "type"        .= embedType
+      , "description" .= embedDesc
+      , "url"         .= embedUrl
+      , "timestamp"   .= embedTime
+      , "color"       .= embedColor
+      ]
 
   -- |Represents a part of an embed.
   data SubEmbed =
