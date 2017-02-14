@@ -230,7 +230,7 @@ module Network.Discord.Types.Channel where
     , embedTime   :: UTCTime    -- ^ The time of the embed content
     , embedColor  :: Integer    -- ^ The embed color
     , embedFields ::[SubEmbed]  -- ^ Fields of the embed
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
   -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
@@ -365,4 +365,4 @@ module Network.Discord.Types.Channel where
         String
         String
         Bool
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
