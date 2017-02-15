@@ -172,7 +172,6 @@ module Network.Discord.Types.Channel where
     messagePinned:: Bool
     } deriving (Show, Eq)
 
-  -- |Allows a message datatype to be generated using a JSON response by Discord.
   instance FromJSON Message where
     parseJSON (Object o) =
       Message <$> o .:  "id"
@@ -193,20 +192,13 @@ module Network.Discord.Types.Channel where
 
   -- |Represents an attached to a message file.
   data Attachment = Attachment
-      -- |A unique timestamp based id.
-    { attachmentId:: {-# UNPACK #-} !Snowflake
-      -- |The attachment's filename.
-    , attachmentFilename:: String
-      -- |The attachment's file size in bytes.
-    , attachmentSize:: Integer
-      -- |The CDN URL this attachment can be downloaded at.
-    , attachmentUrl:: String
-      -- |The attachment's proxy URL.
-    , attachmentProxy:: String
-      -- |If an image the height of it in pixels
-    , attachmentHeight:: Maybe Integer
-      -- |If an image the width of it in pixels
-    , attachmentWidth:: Maybe Integer
+    { attachmentId       :: {-# UNPACK #-} !Snowflake -- ^ Attachment id
+    , attachmentFilename :: String                    -- ^ Name of attached file
+    , attachmentSize     :: Integer                   -- ^ Size of file (in bytes)
+    , attachmentUrl      :: String                    -- ^ Source of file
+    , attachmentProxy    :: String                    -- ^ Proxied url of file
+    , attachmentHeight   :: Maybe Integer             -- ^ Height of file (if image)
+    , attachmentWidth    :: Maybe Integer             -- ^ Width of file (if image)
     } deriving (Show, Eq)
 
   -- |Allows a message's attachment to be generated using a JSON response by Discord.
