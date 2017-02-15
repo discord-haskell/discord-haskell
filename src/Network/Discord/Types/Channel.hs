@@ -192,22 +192,22 @@ module Network.Discord.Types.Channel where
     parseJSON _ = mzero
 
   -- |Represents an attached to a message file.
-  data Attachment = Attachment{
-    -- |A unique, timestamp based id.
-    attachmentId:: {-# UNPACK #-} !Snowflake,
-    -- |The attachment's filename.
-    attachmentFilename:: String,
-    -- |The attachment's file size in bytes.
-    attachmentSize:: Integer,
-    -- |The CDN URL this attachment can be downloaded at.
-    attachmentUrl:: String,
-    -- |The attachment's proxy URL.
-    attachmentProxy:: String,
-    -- |If an image, the height of it, in pixels
-    attachmentHeight:: Maybe Integer,
-    -- |If an image, the width of it, in pixels
-    attachmentWidth:: Maybe Integer
-    } deriving (Show, Eq)
+  data Attachment = Attachment
+      -- |A unique timestamp based id.
+    { attachmentId:: {-# UNPACK #-} !Snowflake
+      -- |The attachment's filename.
+    , attachmentFilename:: String
+      -- |The attachment's file size in bytes.
+    , attachmentSize:: Integer
+      -- |The CDN URL this attachment can be downloaded at.
+    , attachmentUrl:: String
+      -- |The attachment's proxy URL.
+    , attachmentProxy:: String
+      -- |If an image the height of it in pixels
+    , attachmentHeight:: Maybe Integer
+      -- |If an image the width of it in pixels
+    , attachmentWidth:: Maybe Integer
+    } deriving (Show, Eq)
 
   -- |Allows a message's attachment to be generated using a JSON response by Discord.
   instance FromJSON Attachment where

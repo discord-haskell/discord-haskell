@@ -131,7 +131,7 @@ module Network.Discord.Rest.Channel
 
           CreateMessage chan msg embed -> postWith req
             (baseURL ++ "/channels/" ++ show chan ++ "/messages")
-            (toJSON $ [("content", toJSON msg)] <> maybeEmbed embed)
+            (object $ [("content", toJSON msg)] <> maybeEmbed embed)
 
           UploadFile chan msg file -> postWith
             (req & header "Content-Type" .~ ["multipart/form-data"])
@@ -141,7 +141,7 @@ module Network.Discord.Rest.Channel
           EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
             customPayloadMethodWith "PATCH" req
               (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
-              (toJSON $ [("content", toJSON new)] <> maybeEmbed embed)
+              (object $ [("content", toJSON new)] <> maybeEmbed embed)
 
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
             deleteWith req
@@ -186,5 +186,5 @@ module Network.Discord.Rest.Channel
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp
       where
-        maybeEmbed :: Maybe Embed -> [(String, Value)]
+        maybeEmbed :: Maybe Embed -> [(Text, Value)]
         maybeEmbed = maybe [] $ \embed -> [("embed", toJSON embed)]

@@ -26,7 +26,7 @@ module Network.Discord.Gateway where
       Right msg -> yield $ msg
       Left  err -> liftIO $
         errorM "Discord-hs.Gateway.Parse" err
-          >> debugM "Discord-hs.Gateway.Raw" (unpack msg')
+          >> infoM "Discord-hs.Gateway.Raw" (unpack msg')
 
   -- | Starts a websocket connection that allows you to handle Discord events.
   runWebsocket :: (Client c)
