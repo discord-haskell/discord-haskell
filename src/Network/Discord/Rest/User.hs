@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+-- | Provide actions for User API interactions.
 module Network.Discord.Rest.User
   (
     UserRequest(..)
@@ -19,13 +20,25 @@ module Network.Discord.Rest.User
     import Network.Discord.Types as Dc
     import Network.Discord.Rest.Prelude
 
+    -- | Data constructor for User requests. See
+    --   <https://discordapp.com/developers/docs/resources/user User API>
     data UserRequest a where
+      -- | Returns the 'User' object of the requester's account. For OAuth2, this requires
+      --   the identify scope, which will return the object without an email, and optionally 
+      --   the email scope, which returns the object with an email.
       GetCurrentUser       :: UserRequest User
+      -- | Returns a 'User' for a given user ID
       GetUser              :: Snowflake -> UserRequest User
+      -- | Modify the requestors user account settings. Returns a 'User' object on success.
       ModifyCurrentUser    :: ToJSON a => a -> UserRequest User
+      -- | Returns a list of user 'Guild' objects the current user is a member of.
+      --   Requires the guilds OAuth2 scope.
       GetCurrentUserGuilds :: Range -> UserRequest Guild
+      -- | Leave a guild.
       LeaveGuild           :: Snowflake -> UserRequest ()
+      -- | Returns a list of DM 'Channel' objects
       GetUserDMs           :: UserRequest [Channel]
+      -- | Create a new DM channel with a user. Returns a DM 'Channel' object.
       CreateDM             :: Snowflake -> UserRequest Channel
 
     instance Hashable (UserRequest a) where

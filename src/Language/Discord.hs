@@ -107,36 +107,66 @@ module Language.Discord where
 
   -- | Asynchronously run an Event 'Handle' against a Gateway 'Event'
   handle :: D.Client a => Handle a -> Event -> Effect DiscordM ()
-  handle a@(Misc p)                          ev                           = runAsync (clientProxy a) $ p ev
-  handle a@(ReadyEvent p)                   (D.Ready o)                   = runAsync (clientProxy a) $ p o
-  handle a@(ResumedEvent p)                 (D.Resumed o)                 = runAsync (clientProxy a) $ p o
-  handle a@(ChannelCreateEvent p)           (D.ChannelCreate o)           = runAsync (clientProxy a) $ p o
-  handle a@(ChannelUpdateEvent p)           (D.ChannelUpdate o)           = runAsync (clientProxy a) $ p o
-  handle a@(ChannelDeleteEvent p)           (D.ChannelDelete o)           = runAsync (clientProxy a) $ p o
-  handle a@(GuildCreateEvent p)             (D.GuildCreate o)             = runAsync (clientProxy a) $ p o
-  handle a@(GuildUpdateEvent p)             (D.GuildUpdate o)             = runAsync (clientProxy a) $ p o
-  handle a@(GuildDeleteEvent p)             (D.GuildDelete o)             = runAsync (clientProxy a) $ p o
-  handle a@(GuildBanAddEvent p)             (D.GuildBanAdd o)             = runAsync (clientProxy a) $ p o
-  handle a@(GuildBanRemoveEvent p)          (D.GuildBanRemove o)          = runAsync (clientProxy a) $ p o
-  handle a@(GuildEmojiUpdateEvent p)        (D.GuildEmojiUpdate o)        = runAsync (clientProxy a) $ p o
-  handle a@(GuildIntegrationsUpdateEvent p) (D.GuildIntegrationsUpdate o) = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberAddEvent p)          (D.GuildMemberAdd o)          = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberRemoveEvent p)       (D.GuildMemberRemove o)       = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberUpdateEvent p)       (D.GuildMemberUpdate o)       = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberChunkEvent p)        (D.GuildMemberChunk o)        = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleCreateEvent p)         (D.GuildRoleCreate o)         = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleUpdateEvent p)         (D.GuildRoleUpdate o)         = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleDeleteEvent p)         (D.GuildRoleDelete o)         = runAsync (clientProxy a) $ p o
-  handle a@(MessageCreateEvent p)           (D.MessageCreate o)           = runAsync (clientProxy a) $ p o
-  handle a@(MessageUpdateEvent p)           (D.MessageUpdate o)           = runAsync (clientProxy a) $ p o
-  handle a@(MessageDeleteEvent p)           (D.MessageDelete o)           = runAsync (clientProxy a) $ p o
-  handle a@(MessageDeleteBulkEvent p)       (D.MessageDeleteBulk o)       = runAsync (clientProxy a) $ p o
-  handle a@(PresenceUpdateEvent p)          (D.PresenceUpdate o)          = runAsync (clientProxy a) $ p o
-  handle a@(TypingStartEvent p)             (D.TypingStart o)             = runAsync (clientProxy a) $ p o
-  handle a@(UserSettingsUpdateEvent p)      (D.UserSettingsUpdate o)      = runAsync (clientProxy a) $ p o
-  handle a@(UserUpdateEvent p)              (D.UserUpdate o)              = runAsync (clientProxy a) $ p o
-  handle a@(VoiceStateUpdateEvent p)        (D.VoiceStateUpdate o)        = runAsync (clientProxy a) $ p o
-  handle a@(VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)       = runAsync (clientProxy a) $ p o
+  handle a@(Misc p)                          ev                           
+    = runAsync (clientProxy a) $ p ev
+  handle a@(ReadyEvent p)                   (D.Ready o)                   
+    = runAsync (clientProxy a) $ p o
+  handle a@(ResumedEvent p)                 (D.Resumed o)                 
+    = runAsync (clientProxy a) $ p o
+  handle a@(ChannelCreateEvent p)           (D.ChannelCreate o)           
+    = runAsync (clientProxy a) $ p o
+  handle a@(ChannelUpdateEvent p)           (D.ChannelUpdate o)           
+    = runAsync (clientProxy a) $ p o
+  handle a@(ChannelDeleteEvent p)           (D.ChannelDelete o)           
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildCreateEvent p)             (D.GuildCreate o)             
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildUpdateEvent p)             (D.GuildUpdate o)             
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildDeleteEvent p)             (D.GuildDelete o)             
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildBanAddEvent p)             (D.GuildBanAdd o)             
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildBanRemoveEvent p)          (D.GuildBanRemove o)          
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildEmojiUpdateEvent p)        (D.GuildEmojiUpdate o)        
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildIntegrationsUpdateEvent p) (D.GuildIntegrationsUpdate o) 
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildMemberAddEvent p)          (D.GuildMemberAdd o)          
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildMemberRemoveEvent p)       (D.GuildMemberRemove o)      
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildMemberUpdateEvent p)       (D.GuildMemberUpdate o)      
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildMemberChunkEvent p)        (D.GuildMemberChunk o)       
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildRoleCreateEvent p)         (D.GuildRoleCreate o)        
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildRoleUpdateEvent p)         (D.GuildRoleUpdate o)        
+    = runAsync (clientProxy a) $ p o
+  handle a@(GuildRoleDeleteEvent p)         (D.GuildRoleDelete o)        
+    = runAsync (clientProxy a) $ p o
+  handle a@(MessageCreateEvent p)           (D.MessageCreate o)          
+    = runAsync (clientProxy a) $ p o
+  handle a@(MessageUpdateEvent p)           (D.MessageUpdate o)          
+    = runAsync (clientProxy a) $ p o
+  handle a@(MessageDeleteEvent p)           (D.MessageDelete o)          
+    = runAsync (clientProxy a) $ p o
+  handle a@(MessageDeleteBulkEvent p)       (D.MessageDeleteBulk o)      
+    = runAsync (clientProxy a) $ p o
+  handle a@(PresenceUpdateEvent p)          (D.PresenceUpdate o)         
+    = runAsync (clientProxy a) $ p o
+  handle a@(TypingStartEvent p)             (D.TypingStart o)            
+    = runAsync (clientProxy a) $ p o
+  handle a@(UserSettingsUpdateEvent p)      (D.UserSettingsUpdate o)     
+    = runAsync (clientProxy a) $ p o
+  handle a@(UserUpdateEvent p)              (D.UserUpdate o)             
+    = runAsync (clientProxy a) $ p o
+  handle a@(VoiceStateUpdateEvent p)        (D.VoiceStateUpdate o)       
+    = runAsync (clientProxy a) $ p o
+  handle a@(VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)      
+    = runAsync (clientProxy a) $ p o
   handle a@(Event s p)                      (D.UnknownEvent v o)
     | s == v = runAsync (clientProxy a) $ p o
   handle _ ev = liftIO $ debugM "Discord-hs.Language.Events" $ show ev

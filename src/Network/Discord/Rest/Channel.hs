@@ -1,5 +1,6 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+-- | Provides actions for Channel API interactions
 module Network.Discord.Rest.Channel
   (
     ChannelRequest(..)
