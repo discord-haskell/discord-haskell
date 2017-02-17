@@ -1,5 +1,6 @@
 .cabal-sandbox/*
 .stack-work/*
+.stack/*
 cabal.sandbox.config
 dist/*
 *.hi
