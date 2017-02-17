@@ -1,8 +1,5 @@
-stages:
-  - build
-
 cache:
-  directories:
+  paths:
   - ./.stack-work
 
 build:
