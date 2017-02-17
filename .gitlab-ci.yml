@@ -1,11 +1,12 @@
 cache:
   paths:
   - ./.stack-work
+  - ./.stack
 
 before_script:
-  - stack setup
+  - stack setup --stack-root `pwd`/.stack
 
 build:
   image: haskell:latest
   script:
-    - stack haddock
+    - stack haddock --stack-root `pwd`/.stack
