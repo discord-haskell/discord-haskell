@@ -2,6 +2,9 @@ cache:
   paths:
   - ./.stack-work
 
+before_script:
+  - stack setup
+
 build:
   image: haskell:latest
   script:
