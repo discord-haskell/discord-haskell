@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
+-- | Provides base types and utility functions needed for modules in Network.Discord.Types
 module Network.Discord.Types.Prelude where
   import Data.Aeson.Types
   import Data.Time.Clock
@@ -26,7 +27,7 @@ module Network.Discord.Types.Prelude where
   authToken (Client token) = token
   authToken (Bearer token) = token
 
-  -- |A unique integer identifier. Can be used to calculate the creation date of an entity.
+  -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
   newtype Snowflake = Snowflake Word64 
     deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
 
@@ -45,21 +46,26 @@ module Network.Discord.Types.Prelude where
   creationDate x = posixSecondsToUTCTime . realToFrac
     $ 1420070400 + quot (shiftR x 22) 1000
 
+  -- | Default timestamp
   epochTime :: UTCTime
   epochTime = posixSecondsToUTCTime 0
 
+  -- | Delete a (key, value) pair if the key exists
   delete :: Eq a => a -> [(a, b)] -> [(a, b)]
   delete k ((x,y):xs)
     | k == x = delete k xs
     | otherwise = (x, y):delete k xs
   delete _ [] = []
-
+  
+  -- | Insert or modify a (key, value) pair
   insert :: Eq a => a -> b -> [(a, b)] -> [(a, b)]
   insert k v s = (k, v):delete k s
 
+  -- | Return only the Right vaule from an either
   justRight :: (Show a) => Either a b -> b
   justRight (Right b) = b
   justRight (Left a) = error $ show a
 
+  -- | Convert ToJSON values to FromJSON values
   reparse :: (ToJSON a, FromJSON b) => a -> Either String b
   reparse val = parseEither parseJSON $ toJSON val
