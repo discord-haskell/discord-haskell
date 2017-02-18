@@ -1,8 +1,8 @@
 cache:
   key: "CI_BUILD_REF"
   paths:
-  - ./.stack-work
-  - ./.stack
+  - .stack-work
+  - .stack
 
 before_script:
   - ls .stack || echo ".stack does not exist"
