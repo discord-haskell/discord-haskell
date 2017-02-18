@@ -1,5 +1,5 @@
 cache:
-  key: "CI_BUILD_REF"
+  key: ${CI_BUILD_REF}
   paths:
   - .stack-work
   - .stack
