@@ -6,17 +6,16 @@
 module Network.Discord.Gateway where
   import Control.Concurrent (forkIO, threadDelay)
   import Control.Monad.State
-  import System.Mem
   import Data.ByteString.Lazy.Char8 (unpack)
 
-  import Wuss
+  import Control.Concurrent.STM
   import Data.Aeson
   import Data.Aeson.Types
   import Network.WebSockets
   import Network.URL
-  import Control.Concurrent.STM
   import Pipes
   import System.Log.Logger
+  import Wuss
 
   import Network.Discord.Types
 
@@ -48,7 +47,6 @@ module Network.Discord.Gateway where
     seqNum <- atomically $ readTMVar sq
     sendTextData conn $ Heartbeat seqNum
     threadDelay $ interval * 1000
-    performGC
   
   -- | Turn a websocket data source into an 'Event' data
   --   source

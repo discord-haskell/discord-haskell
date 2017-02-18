@@ -1,14 +1,15 @@
 {-# LANGUAGE ExistentialQuantification, TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
 -- | Provides base types and utility functions needed for modules in Network.Discord.Types
 module Network.Discord.Types.Prelude where
-  import Data.Aeson.Types
-  import Data.Time.Clock
-  import Data.Time.Clock.POSIX
   import Data.Bits
   import Data.Word
-  import Data.Text
-  import Control.Monad (mzero)
+
+  import Data.Aeson.Types
   import Data.Hashable
+  import Data.Text
+  import Data.Time.Clock
+  import Data.Time.Clock.POSIX
+  import Control.Monad (mzero)
 
   -- | Authorization token for the Discord API
   data Auth = Bot    String

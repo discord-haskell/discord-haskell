@@ -4,8 +4,8 @@ module Network.Discord.Types.Guild where
   import Data.Time.Clock
 
   import Data.Aeson
-  import Control.Monad (mzero)
   import Control.Applicative ((<|>))
+  import Control.Monad (mzero)
 
   import Network.Discord.Types.Channel
   import Network.Discord.Types.Prelude

@@ -2,7 +2,6 @@
 import Network.Discord
 import Pipes
 import Data.Text
-import Language.Discord
 import Control.Monad.IO.Class
 
 main = runBot (Bot "TOKEN") $ do

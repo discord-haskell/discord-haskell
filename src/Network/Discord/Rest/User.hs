@@ -5,20 +5,20 @@ module Network.Discord.Rest.User
   (
     UserRequest(..)
   ) where
-    import Data.Text
-    import qualified Control.Monad.State as ST (get, liftIO)
-    import Control.Monad.Morph (lift)
     import Control.Monad (when)
-    import Control.Concurrent.STM
 
+    import Control.Concurrent.STM
+    import Control.Monad.Morph (lift)
+    import Control.Lens
     import Data.Aeson
     import Data.Hashable
-    import Network.Wreq
-    import Control.Lens
+    import Data.Text
     import Data.Time.Clock.POSIX
+    import Network.Wreq
+    import qualified Control.Monad.State as ST (get, liftIO)
 
-    import Network.Discord.Types as Dc
     import Network.Discord.Rest.Prelude
+    import Network.Discord.Types as Dc
 
     -- | Data constructor for User requests. See
     --   <https://discordapp.com/developers/docs/resources/user User API>

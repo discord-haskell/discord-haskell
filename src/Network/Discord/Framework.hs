@@ -1,19 +1,21 @@
 {-# LANGUAGE TypeFamilies, ExistentialQuantification, RankNTypes, MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
-module Language.Discord where
-  import Control.Monad.Writer
+module Network.Discord.Framework where
   import Control.Concurrent
+  import Control.Monad.Writer
   import Data.Proxy
 
-  import Pipes.Core hiding (Proxy)
-  import Data.Aeson (Object)
-  import System.Log.Logger
   import Control.Concurrent.STM
   import Control.Monad.State (execStateT, get)
+  import Data.Aeson (Object)
+  import Pipes ((~>))
+  import Pipes.Core hiding (Proxy)
+  import System.Log.Logger
 
-  import Network.Discord as D
-  import Network.Discord.Types.Guild (Member, Guild)
+  import Network.Discord.Gateway as D
+  import Network.Discord.Rest    as D
+  import Network.Discord.Types   as D
 
   -- | Isolated state representation for use with async event handling
   asyncState :: D.Client a => a -> Effect DiscordM DiscordState

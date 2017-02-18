@@ -5,12 +5,12 @@ module Network.Discord.Types.Channel where
   import Control.Monad (mzero)
   import Data.Text as Text (pack, Text)
 
-  import Data.Time.Clock
   import Data.Aeson
   import Data.Aeson.Types (Parser)
+  import Data.Time.Clock
   import Data.Vector (toList)
-  import qualified Data.Vector as V
   import qualified Data.HashMap.Strict as HM
+  import qualified Data.Vector as V
 
   import Network.Discord.Types.Prelude
 

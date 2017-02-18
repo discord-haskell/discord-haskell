@@ -3,7 +3,6 @@ import Data.Text
 import Pipes
 
 import Network.Discord
-import Language.Discord
 
 reply :: Message -> Text -> Effect DiscordM ()
 reply Message{messageChannel=chan} cont = fetch' $ CreateMessage chan cont Nothing

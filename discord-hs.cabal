@@ -17,8 +17,8 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Language.Discord
-                     , Network.Discord
+  exposed-modules:     Network.Discord
+                     , Network.Discord.Framework
                      , Network.Discord.Gateway
                      , Network.Discord.Rest
                      , Network.Discord.Rest.Channel

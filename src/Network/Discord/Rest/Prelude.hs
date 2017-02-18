@@ -3,21 +3,21 @@
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
+  import Control.Concurrent (threadDelay)
+  import Data.Version     (showVersion)
+
+  import Control.Lens
+  import Data.Aeson
   import Data.ByteString.Char8 (pack)
   import Data.Default
-  import Data.Time.Clock.POSIX
-  import Control.Concurrent (threadDelay)
-
-  import Data.Aeson
-  import Network.Wreq
-  import Control.Lens
   import Data.Hashable
-  import qualified Control.Monad.State as St
-  import Paths_discord_hs (version)
-  import Data.Version     (showVersion)
+  import Data.Time.Clock.POSIX
+  import Network.Wreq
   import System.Log.Logger
+  import qualified Control.Monad.State as St
 
   import Network.Discord.Types
+  import Paths_discord_hs (version)
 
   -- | Read function specialized for Integers
   readInteger :: String -> Integer
