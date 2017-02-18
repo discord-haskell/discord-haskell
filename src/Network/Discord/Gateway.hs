@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings, FlexibleContexts, RankNTypes #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
+-- | Provides logic code for interacting with the Discord websocket
+--   gateway. Reallistically, this is probably lower level than most
+--   people will need, and you should use Language.Discord.
 module Network.Discord.Gateway where
   import Control.Concurrent (forkIO, threadDelay)
   import Control.Monad.State
@@ -17,7 +20,8 @@ module Network.Discord.Gateway where
 
   import Network.Discord.Types
 
-
+  -- | Turn a websocket Connection into a Pipes Producer
+  --   (data source)
   makeWebsocketSource :: (FromJSON a, MonadIO m)
     => Connection -> Producer a m ()
   makeWebsocketSource conn = forever $ do
@@ -45,7 +49,9 @@ module Network.Discord.Gateway where
     sendTextData conn $ Heartbeat seqNum
     threadDelay $ interval * 1000
     performGC
-
+  
+  -- | Turn a websocket data source into an 'Event' data
+  --   source
   makeEvents :: Pipe Payload Event DiscordM a
   makeEvents = forever $ do
     st@(DiscordState dState client ws _ _) <- get
@@ -85,6 +91,8 @@ module Network.Discord.Gateway where
             put st {getState=InvalidDead}
       InvalidReconnect -> put st {getState=InvalidDead}
       InvalidDead      -> liftIO $ errorM "Discord-hs.Gateway.Error" "BotDied"
-
+  
+  -- | Utility function providing core functionality by converting a Websocket
+  --   'Connection' to a stream of gateway 'Event's
   eventCore :: Connection -> Producer Event DiscordM ()
   eventCore conn = makeWebsocketSource conn >-> makeEvents

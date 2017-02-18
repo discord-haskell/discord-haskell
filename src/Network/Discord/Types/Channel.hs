@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings, MultiWayIf #-}
 {-# LANGUAGE RecordWildCards #-}
+-- | Data structures pertaining to Discord Channels
 module Network.Discord.Types.Channel where
   import Control.Monad (mzero)
   import Data.Text as Text (pack, Text)
@@ -30,7 +31,6 @@ module Network.Discord.Types.Channel where
     } 
     | Webhook deriving (Show, Eq)
 
-  -- |Allows a user datatype to be generated using a JSON response by Discord.
   instance FromJSON User where
     parseJSON (Object o) =
       User <$> o .:  "id"
@@ -171,7 +171,6 @@ module Network.Discord.Types.Channel where
     , attachmentWidth    :: Maybe Integer             -- ^ Width of file (if image)
     } deriving (Show, Eq)
 
-  -- |Allows a message's attachment to be generated using a JSON response by Discord.
   instance FromJSON Attachment where
     parseJSON (Object o) =
       Attachment <$> o .:  "id"
@@ -194,7 +193,6 @@ module Network.Discord.Types.Channel where
     , embedFields ::[SubEmbed]  -- ^ Fields of the embed
     } deriving (Show, Read, Eq)
 
-  -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
     parseJSON (Object o) = 
       Embed <$> o .:? "title" .!= "Untitled"

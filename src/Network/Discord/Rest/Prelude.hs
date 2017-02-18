@@ -23,6 +23,7 @@ module Network.Discord.Rest.Prelude where
   readInteger :: String -> Integer
   readInteger = read
 
+  -- | The base url for API requests
   baseURL :: String
   baseURL = "https://discordapp.com/api/v6"
 
@@ -59,10 +60,12 @@ module Network.Discord.Rest.Prelude where
             threadDelay $ 1000000 * (a - now)
             putStrLn "Done"
           return ()
-
+  
+  -- | Class over which performing a data retrieval action is defined
   class DoFetch a where
     doFetch :: a -> DiscordM Fetched
 
+  -- | Polymorphic type for all DoFetch types
   data Fetchable = forall a. (DoFetch a, Hashable a) => Fetch a
 
   instance DoFetch Fetchable where
@@ -74,13 +77,16 @@ module Network.Discord.Rest.Prelude where
   instance Eq Fetchable where
     (Fetch a) == (Fetch b) = hash a == hash b
 
+  -- | Result of a data retrieval action
   data Fetched = forall a. (FromJSON a) => SyncFetched a
-
+  
+  -- | Represents a range of 'Snowflake's
   data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
 
   instance Default Range where
     def = Range 0 18446744073709551615 100
-
+  
+  -- | Convert a Range to a query string
   toQueryString :: Range -> String
   toQueryString (Range a b l) = 
     "after=" ++ show a ++ "&before=" ++ show b ++ "&limit=" ++ show l

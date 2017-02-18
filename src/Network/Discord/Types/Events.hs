@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings, GADTs #-}
+-- | Data structures pertaining to gateway dispatch 'Event's
 module Network.Discord.Types.Events where
   import Control.Monad (mzero)
 
