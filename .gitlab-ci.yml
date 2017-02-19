@@ -1,15 +1,5 @@
-cache:
-  key: ${CI_BUILD_REF_NAME}
-  paths:
-  - .stack-work
-  - .stack
-
-before_script:
-  - ls .stack || echo ".stack does not exist"
-  - stack setup --stack-root `pwd`/.stack
-  - ls .stack
-
 build:
-  image: haskell:latest
+  image: $CI_REGISTRY_IMAGE:latest
+  stage: build
   script:
-    - stack haddock --stack-root `pwd`/.stack
+    - stack haddock
