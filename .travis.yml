@@ -6,8 +6,6 @@ cache:
   - $HOME/.stack
   - ./.stack-work
 
-before_install:
-
 install:
 - travis_wait nix-env -i stack cabal2nix
 - cabal2nix --shell . > shell.nix
