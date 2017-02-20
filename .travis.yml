@@ -1,4 +1,5 @@
 sudo: false
+language: nix
 
 cache:
   directories:
@@ -6,11 +7,9 @@ cache:
   - ./.stack-work
 
 before_install:
-# Download and unpack the stack executable
-- mkdir -p ~/.local/bin
-- export PATH=$HOME/.local/bin:$PATH
-- travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+
 install:
+- travis_wait nix-env -i stack
 - travis_wait stack --no-terminal --skip-ghc-check setup
 
 script:
