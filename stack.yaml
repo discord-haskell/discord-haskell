@@ -6,4 +6,4 @@ extra-deps:
 - wreq-0.5.0.0
 resolver: lts-8.0
 nix:
-  packages: [zlib, binutils]
+  shell-file: shell.nix

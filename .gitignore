@@ -3,5 +3,6 @@
 .stack/*
 cabal.sandbox.config
 dist/*
+shell.nix
 *.hi
 *.o
