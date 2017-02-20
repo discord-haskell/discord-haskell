@@ -10,7 +10,7 @@ before_install:
 
 install:
 - travis_wait nix-env -i stack
-- travis_wait stack --no-terminal --skip-ghc-check setup
+- travis_wait stack --nix --no-terminal --skip-ghc-check setup
 
 script:
-- travis_wait stack --no-terminal haddock
+- travis_wait stack --nix --no-terminal haddock
