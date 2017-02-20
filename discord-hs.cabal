@@ -3,7 +3,7 @@ version:             0.1.3
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
                      bots against the Discord <https://discordapp.com/> API.
-homepage:            https://gitlab.com/jano017/Discord.hs
+homepage:            https://github.com/jano017/Discord.hs
 license:             MIT
 license-file:        LICENSE
 author:              Joshua Koike
@@ -60,4 +60,4 @@ library
 
 source-repository head
   type : git
-  location: https://gitlab.com/jkoike/Discord.hs
+  location: https://github.com/jano017/Discord.hs
