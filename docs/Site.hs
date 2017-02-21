@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Hakyll
-import System.Process
 import Data.List
 import Data.List.Split
 
@@ -13,11 +12,6 @@ hackage xs = fixUrl $ splitWhen (=='/') xs
   where
     fixUrl ("..":package:ys) = "https://hackage.haskell.org/package/" ++ package ++ "/docs/" ++ intercalate "/" ys
     fixUrl zs = intercalate "/" zs
-
-
-fromJust :: Maybe a -> a
-fromJust (Just a) = a
-fromJust Nothing  = error "Expected Just, got Nothing"
 
 main :: IO ()
 main = do
