@@ -19,6 +19,7 @@ script:
 - cd _site && git add . && git commit --allow-empty -m "Auto build docs for $TRAVIS_COMMIT"
   && git push --quiet
 deploy:
+  skip_cleanup: true
   provider: hackage
   username: jkoike
   password:
