@@ -13,7 +13,7 @@ install:
 
 script:
 - stack --nix --no-terminal haddock
-- git clone https://$GIT_USER:GIT_PASS@github.com/jano017/Discord.hs.git -b docs _site/
+- git clone https://$GIT_USER:$GIT_PASS@github.com/jano017/Discord.hs.git -b docs _site/
 - cp $(stack path --local-doc-root --nix)/discord-*/* docs/
 - stack exec --nix docs build
 - cd _site && git push
