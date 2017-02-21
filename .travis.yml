@@ -16,4 +16,4 @@ script:
 - git clone https://$GIT_USER:$GIT_PASS@github.com/jano017/Discord.hs.git -b docs _site/
 - cp -r $(stack path --local-doc-root --nix)/discord-* docs/build
 - stack exec --nix docs build
-- cd _site && git commit -a -m "TRAVIS_COMMIT" --author "TRAVIS_CI" && git push
+- cd _site && git commit -a -m "TRAVIS_COMMIT" --author "TRAVIS_CI <>" && git push
