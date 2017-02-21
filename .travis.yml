@@ -18,12 +18,5 @@ script:
 - stack exec --nix docs build
 - cd _site && git add . && git commit --allow-empty -m "Auto build docs for $TRAVIS_COMMIT"
   && git push --quiet
-deploy:
-  skip_cleanup: true
-  provider: hackage
-  username: jkoike
-  password:
-    secure: ackw7YX08Lh4IxAi2llZvU4iJE7HopLL54GN4RpzhN3trEtq5D+3E0llkaYIVW6e4XTkvPIC65vAXD5oeLIdKwQdgpsI7F4O+l+KGXkyBDjfXaXlf9Gj73pUPLqI1caAvhKepjkcimRmJpqBtC+huQDEObt7JWZ37AiNd6/WpY0v0O8UvTmN00m8/bn7JeoPhNX2BNWVdx+eFzGDhJOJJwd1hwXpmhy28I1Aowu4U7hOwa1eoEWPaxb3phyCeEFVNb2ECgLftfYASNvGHcg+fh63cJwvE+RWxn3a9NcKIOsuRZz93TokryWNAbr9ZRgXKLmq1vdXJ50IT1Imiyy+6VBbQTalYyomM+6KQduedtFsf+atY9ijkEQh6JLYQca0peCkg5IVOK/V0gQ0nGyGmueEztK+HInpT9zt1xHBgR/os1QwMaY0AAHneO1VKoGWZyY6dKeN7HWqUUXi0ILjitW97o2WgecDe+lzBCiTAFAGTy7B0Vn3vnJ+z3JRVCW7fXBaou5hwHk8l3/ykW23an6HxWMKmOYqFK/kolUgvbHxHYzgKycuAZs0WyQ4Qk+FvxZgHcis6GMfHzKWtHs5JzjTywu7GRLx5i50teAf8jGR3DiUYfqwXzhNAZOhz9SJiNSacr814SeD2MGbcZ+haGQLYpFaKKlFwlrOHrYPJzI=
-  on:
-    repo: jano017/Discord.hs
-    tags: true
+after_success:
+  - [[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"
