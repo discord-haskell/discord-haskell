@@ -9,6 +9,8 @@ cache:
 install:
 - travis_wait nix-env -i stack cabal2nix
 - cabal2nix --shell . > shell.nix
+- git config --global user.email "travis@travis-ci.org"
+- git config --global user.name  "Travis CI"
 - stack --nix --no-terminal --skip-ghc-check setup
 
 script:
@@ -16,4 +18,4 @@ script:
 - git clone https://$GIT_USER:$GIT_PASS@github.com/jano017/Discord.hs.git -b docs _site/
 - cp -r $(stack path --local-doc-root --nix)/discord-* docs/build
 - stack exec --nix docs build
-- cd _site && git commit -a -m "TRAVIS_COMMIT" --author "TRAVIS_CI <noreply@travis-ci.org>" && git push
+- cd _site && git commit -a -m "TRAVIS_COMMIT" && git push
