@@ -13,3 +13,7 @@ install:
 
 script:
 - travis_wait stack --nix --no-terminal haddock
+- git clone https://$GIT_USER:GIT_PASS@github.com/jano017/Discord.hs.git -b docs _site/
+- cp $(stack path --local-doc-root)/discord-*/* docs/
+- stack exec docs build
+- cd _site && git push
