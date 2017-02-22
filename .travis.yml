@@ -1,28 +1,22 @@
 sudo: false
 language: nix
-
 cache:
   directories:
   - "$HOME/.stack"
   - "./.stack-work"
-
-env:
-- STACK_YAML='stack.yaml'                RESOLVER='lts-8.2'
-- STACK_YAML='matrix/stack-7.16.yaml'    RESOLVER='lts-7.16'
-- STACK_YAML='matrix/stack-nightly.yaml' RESOLVER='nightly'
-    
 install:
 - travis_wait nix-env -i stack cabal2nix
-- cabal2nix --shell . > shell.nix && cp shell.nix matrix/
+- cabal2nix --shell . > shell.nix
 - git config --global user.email "travis@travis-ci.org"
 - git config --global user.name  "Travis CI"
-- stack --nix --no-terminal --stack-yaml $STACK_YAML --resolver $RESOLVER --skip-ghc-check setup
-  || stack --no-terminal --stack-yaml $STACK_YAML --resolver $RESOLVER --skip-ghc-check setup
-
+- stack --nix --no-terminal --skip-ghc-check setup
 script:
-- stack --nix --no-terminal --stack-yaml $STACK_YAML --resolver $RESOLVER haddock
-  || stack --no-terminal --stack-yaml $STACK_YAML --resolver $RESOLVER haddock
-
+- stack --nix --no-terminal haddock
+- git clone https://$GIT_USER:$GIT_PASS@github.com/jano017/Discord.hs.git -b gh-pages
+  _site/
+- cp -r $(stack path --local-doc-root --nix)/discord-* docs/build
+- stack exec --nix docs build
+- cd _site && git add . && git commit --allow-empty -m "Auto build docs for $TRAVIS_COMMIT"
+  && git push --quiet
 after_success:
-- '[[ $STACK_YAML == "stack.yaml" ]] && sh docs/build.sh || echo "Not baseline build"'
-- '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'
+  - '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'

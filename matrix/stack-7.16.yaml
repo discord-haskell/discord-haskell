@@ -1,9 +1,0 @@
-flags: {}
-extra-package-dbs: []
-packages:
-- '.'
-extra-deps:
-- wreq-0.5.0.0
-resolver: lts-7.16
-nix:
-  shell-file: shell.nix

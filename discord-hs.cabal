@@ -10,7 +10,6 @@ license:             MIT
 license-file:        LICENSE
 author:              Joshua Koike
 maintainer:          jkoike2013@gmail.com
-stability:           experimental
 -- copyright:
 category:            Network
 build-type:          Simple
@@ -35,17 +34,17 @@ library
                      , Network.Discord.Types.Prelude
   -- other-extensions:
   build-depends:       base==4.*
-                     , aeson>=0.11
+                     , aeson==1.0.*
                      , bytestring==0.10.*
                      , case-insensitive==1.2.*
                      , containers==0.5.*
                      , data-default==0.7.*
                      , hashable==1.2.*
                      , hslogger==1.2.*
-                     , lens>=4.14
+                     , lens==4.15.*
                      , mmorph==1.0.*
                      , mtl==2.2.*
-                     , pipes>=4.1
+                     , pipes==4.3.*
                      , stm-conduit==3.0.*
                      , stm==2.4.*
                      , text==1.2.*
@@ -54,7 +53,7 @@ library
                      , unordered-containers==0.2.*
                      , url==2.1.*
                      , vector==0.11.*
-                     , websockets>=0.9
+                     , websockets==0.10.*
                      , wreq==0.5.*
                      , wuss==1.1.*
   ghc-options:         -Wall
