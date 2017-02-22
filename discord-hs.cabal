@@ -2,8 +2,9 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                discord-hs
+--name:                discord-hs-rest
 version:             0.1.2
-synopsis:            An API wrapper for Discord in Haskell
+synopsis:            An REST API wrapper for Discord in Haskell
 description:         You'll probably only ever find whatever haddock documentation I write over here. Try over at https://github.com/jano017/Discord.hs
 homepage:            https://github.com/jano017/Discord.hs
 license:             MIT
@@ -18,10 +19,8 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Network.Discord
-                     , Network.Discord.Gateway
                      , Network.Discord.Rest
                      , Network.Discord.Types
-                     , Language.Discord
 
   other-modules:       Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Guild
@@ -29,17 +28,14 @@ library
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Channel
                      , Network.Discord.Types.Guild
-                     , Network.Discord.Types.Events
-                     , Network.Discord.Types.Gateway
                      , Network.Discord.Types.Prelude
-                     , Network.Discord.Types.Events
                      , Paths_discord_hs
   -- other-extensions:
-  build-depends:       base==4.*, pipes, transformers, stm-conduit, websockets
-                        , aeson, url, time, stm, mtl, wuss, bytestring
+  build-depends:       base==4.*, pipes, transformers
+                        , aeson, url, time, stm, mtl, bytestring
                         , unordered-containers, text, vector, mmorph, wreq
                         , template-haskell, lens, containers, hashable
-                        , data-default, case-insensitive
+                        , data-default
   ghc-options:         -Wall -Werror
   hs-source-dirs:      src
   default-language:    Haskell2010
