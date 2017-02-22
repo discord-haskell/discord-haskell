@@ -1,9 +1,9 @@
 # Discord.hs
 A Haskell wrapper for the Discord API
 
-[![Hackage](https://img.shields.io/hackage/v/discord-hs.svg)](http://hackage.haskell.org/package/discord-hs)
+[![Hackage](https://img.shields.io/hackage/v/discord-hs.svg?style=flat-square)](http://hackage.haskell.org/package/discord-hs)
 [![Hackage-Deps](https://img.shields.io/hackage-deps/v/discord-hs.svg?style=flat-square)](http://packdeps.haskellers.com/feed?needle=discord-hs)
-[![Travis](https://img.shields.io/travis/jano017/Discord.hs.svg)](https://travis-ci.org/jano017/Discord.hs)
+[![Travis](https://img.shields.io/travis/jano017/Discord.hs.svg?style=flat-square)](https://travis-ci.org/jano017/Discord.hs)
 
 ## Using in a project
 
