@@ -12,7 +12,7 @@ module Network.Discord.Rest.Channel
 
     import Data.Aeson
     import Data.Hashable
-    import Network.Wreq
+    import qualified Network.Wreq as W
     import Control.Lens
     import Data.Time.Clock.POSIX
 
@@ -114,76 +114,76 @@ module Network.Discord.Rest.Channel
       req  <- baseRequest
       (resp, rlRem, rlNext) <- lift $ do
         resp <- case request of
-          GetChannel chan -> getWith req
+          GetChannel chan -> W.getWith req
             (baseURL++"/channels/"++chan)
 
-          ModifyChannel chan patch -> customPayloadMethodWith "PATCH" req
+          ModifyChannel chan patch -> W.customPayloadMethodWith "PATCH" req
             (baseURL++"/channels/"++chan)
             (toJSON patch)
 
-          DeleteChannel chan -> deleteWith req
+          DeleteChannel chan -> W.deleteWith req
             (baseURL++"/channels/"++chan)
 
-          GetChannelMessages chan patch -> getWith
-            (Prelude.foldr (\(k, v) -> param k .~ [v]) req patch)
+          GetChannelMessages chan patch -> W.getWith
+            (Prelude.foldr (\(k, v) -> W.param k .~ [v]) req patch)
             (baseURL++"/channels/"++chan++"/messages")
 
-          GetChannelMessage chan msg -> getWith req
+          GetChannelMessage chan msg -> W.getWith req
             (baseURL++"/channels/"++chan++"/messages/"++msg)
 
-          CreateMessage chan msg -> postWith req
+          CreateMessage chan msg -> W.postWith req
             (baseURL++"/channels/"++chan++"/messages")
             (object [("content", toJSON msg)])
 
-          UploadFile chan msg file -> postWith
-            (req & header "Content-Type" .~ ["multipart/form-data"])
+          UploadFile chan msg file -> W.postWith
+            (req & W.header "Content-Type" .~ ["multipart/form-data"])
             (baseURL++"/channels/"++chan++"/messages")
-            ["content" := msg, "file" := file]
+            ["content" W.:= msg, "file" W.:= file]
 
           EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new ->
-            customPayloadMethodWith "PATCH" req
+            W.customPayloadMethodWith "PATCH" req
               (baseURL++"/channels/"++chan++"/messages/"++msg)
               (object [("content", toJSON new)])
 
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-            deleteWith req
+            W.deleteWith req
               (baseURL++"/channels/"++chan++"/messages/"++msg)
 
-          BulkDeleteMessage chan msgs -> postWith req
+          BulkDeleteMessage chan msgs -> W.postWith req
             (baseURL++"/channels/"++chan++"/messages/bulk-delete")
             (object
               [("messages", toJSON
                 $ Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs)])
 
-          EditChannelPermissions chan perm patch -> putWith req
+          EditChannelPermissions chan perm patch -> W.putWith req
             (baseURL++"/channels/"++chan++"/permissions/"++perm)
             (toJSON patch)
 
-          GetChannelInvites chan -> getWith req
+          GetChannelInvites chan -> W.getWith req
             (baseURL++"/channels/"++chan++"/invites")
 
-          CreateChannelInvite chan patch -> postWith req
+          CreateChannelInvite chan patch -> W.postWith req
             (baseURL++"/channels/"++chan++"/invites")
             (toJSON patch)
 
-          DeleteChannelPermission chan perm -> deleteWith req
+          DeleteChannelPermission chan perm -> W.deleteWith req
             (baseURL++"/channels/"++chan++"/permissions/"++perm)
 
-          TriggerTypingIndicator chan -> postWith req
+          TriggerTypingIndicator chan -> W.postWith req
             (baseURL++"/channels/"++chan++"/typing")
             (toJSON ([]::[Int]))
 
-          GetPinnedMessages chan -> getWith req
+          GetPinnedMessages chan -> W.getWith req
             (baseURL++"/channels/"++chan++"/pins")
 
-          AddPinnedMessage chan msg -> putWith req
+          AddPinnedMessage chan msg -> W.putWith req
             (baseURL++"/channels/"++chan++"/pins/"++msg)
             (toJSON ([]::[Int]))
 
-          DeletePinnedMessage chan msg -> deleteWith req
+          DeletePinnedMessage chan msg -> W.deleteWith req
             (baseURL++"/channels/"++chan++"/pins/"++msg)
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
+        return (justRight . eitherDecode $ resp ^. W.responseBody
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp

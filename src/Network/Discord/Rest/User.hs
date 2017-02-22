@@ -11,7 +11,7 @@ module Network.Discord.Rest.User
 
     import Data.Aeson
     import Data.Hashable
-    import Network.Wreq
+    import qualified Network.Wreq as W
     import Control.Lens
     import Data.Time.Clock.POSIX
 
@@ -64,24 +64,24 @@ module Network.Discord.Rest.User
       req <- baseRequest
       (resp, rlRem, rlNext) <- lift $ do
         resp <- case request of
-          GetCurrentUser -> getWith req
+          GetCurrentUser -> W.getWith req
             "/users/@me"
-          GetUser user -> getWith req
+          GetUser user -> W.getWith req
             ("/users/"++user)
-          ModifyCurrentUser patch -> customPayloadMethodWith "PATCH" req
+          ModifyCurrentUser patch -> W.customPayloadMethodWith "PATCH" req
             "/users/@me"
             (toJSON patch)
-          GetCurrentUserGuilds range -> getWith req
+          GetCurrentUserGuilds range -> W.getWith req
             ("/users/@me/guilds?" ++ toQueryString range)
-          LeaveGuild guild -> deleteWith req
+          LeaveGuild guild -> W.deleteWith req
             ("/users/@me/guilds/"++guild)
-          GetUserDMs -> getWith req
+          GetUserDMs -> W.getWith req
             "/users/@me/channels"
-          CreateDM user -> postWith req
+          CreateDM user -> W.postWith req
             "/users/@me/channels"
-            ["recipient_id" := user]
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
+            ["recipient_id" W.:= user]
+        return (justRight . eitherDecode $ resp ^. W.responseBody
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp

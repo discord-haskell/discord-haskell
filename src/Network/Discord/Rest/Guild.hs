@@ -11,7 +11,7 @@ module Network.Discord.Rest.Guild
 
     import Data.Aeson
     import Data.Hashable
-    import Network.Wreq
+    import qualified Network.Wreq as W
     import Control.Lens
     import Data.Time.Clock.POSIX
 
@@ -119,112 +119,112 @@ module Network.Discord.Rest.Guild
       req <- baseRequest
       (resp, rlRem, rlNext) <- lift $ do
         resp <- case request of
-          GetGuild chan -> getWith req
+          GetGuild chan -> W.getWith req
             (baseURL++"/guilds/"++chan)
           
-          ModifyGuild chan patch -> customPayloadMethodWith "PATCH" req
+          ModifyGuild chan patch -> W.customPayloadMethodWith "PATCH" req
             (baseURL++"/guilds/"++chan)
             (toJSON patch)
 
-          DeleteGuild chan -> deleteWith req
+          DeleteGuild chan -> W.deleteWith req
             (baseURL++"/guilds/"++chan)
 
-          GetGuildChannels chan -> getWith req
+          GetGuildChannels chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/channels")
 
-          CreateGuildChannel chan patch -> postWith req
-            (baseURL++"/guilds/"++chan++"/channels")
-            (toJSON patch)
-
-          ModifyChanPosition chan patch -> customPayloadMethodWith "PATCH" req
+          CreateGuildChannel chan patch -> W.postWith req
             (baseURL++"/guilds/"++chan++"/channels")
             (toJSON patch)
 
-          GetGuildMember chan user -> getWith req
+          ModifyChanPosition chan patch -> W.customPayloadMethodWith "PATCH" req
+            (baseURL++"/guilds/"++chan++"/channels")
+            (toJSON patch)
+
+          GetGuildMember chan user -> W.getWith req
             (baseURL++"/guilds/"++chan++"/members/"++user)
 
-          ListGuildMembers chan range -> getWith req
+          ListGuildMembers chan range -> W.getWith req
             (baseURL++"/guilds/"++chan++"/members?limit="++toQueryString range)
 
-          AddGuildMember chan user patch -> customPayloadMethodWith "PUT" req
+          AddGuildMember chan user patch -> W.customPayloadMethodWith "PUT" req
             (baseURL++"/guilds/"++chan++"/members/"++user)
             (toJSON patch)
 
-          ModifyGuildMember chan user patch -> customPayloadMethodWith "PATCH" req
+          ModifyGuildMember chan user patch -> W.customPayloadMethodWith "PATCH" req
             (baseURL++"/guilds/"++chan++"/members/"++user)
             (toJSON patch)
 
-          RemoveGuildMember chan user -> deleteWith req
+          RemoveGuildMember chan user -> W.deleteWith req
             (baseURL++"/guilds/"++chan++"/members/"++user)
 
-          GetGuildBans chan -> getWith req
+          GetGuildBans chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/bans")
 
-          CreateGuildBan chan user msg -> customPayloadMethodWith "PUT" req
+          CreateGuildBan chan user msg -> W.customPayloadMethodWith "PUT" req
             (baseURL++"/guilds/"++chan++"/bans/"++user)
-            ["delete-message-days" := msg]
+            ["delete-message-days" W.:= msg]
 
-          RemoveGuildBan chan user -> deleteWith req
+          RemoveGuildBan chan user -> W.deleteWith req
             (baseURL++"/guilds/"++chan++"/bans/"++user)
 
-          GetGuildRoles chan -> getWith req
+          GetGuildRoles chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/roles")
 
-          CreateGuildRole chan -> postWith req
+          CreateGuildRole chan -> W.postWith req
             (baseURL++"/guilds/"++chan++"/roles")
             (toJSON (""::Text))
 
-          ModifyGuildRolePositions chan pos -> postWith req
+          ModifyGuildRolePositions chan pos -> W.postWith req
             (baseURL++"/guilds/"++chan++"/roles")
             (toJSON pos)
 
-          ModifyGuildRole chan role patch -> postWith req
+          ModifyGuildRole chan role patch -> W.postWith req
             (baseURL++"/guilds/"++chan++"/roles/"++role)
             (toJSON patch)
 
-          DeleteGuildRole chan role -> deleteWith req
+          DeleteGuildRole chan role -> W.deleteWith req
             (baseURL++"/guilds/"++chan++"/roles/"++role)
 
-          GetGuildPruneCount chan days -> getWith req
+          GetGuildPruneCount chan days -> W.getWith req
             (baseURL++"/guilds/"++chan++"/prune?days="++show days)
 
-          BeginGuildPrune chan days -> postWith req
+          BeginGuildPrune chan days -> W.postWith req
             (baseURL++"/guilds/"++chan++"/prune?days="++show days)
             (toJSON (""::Text))
 
-          GetGuildVoiceRegions chan -> getWith req
+          GetGuildVoiceRegions chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/regions")
 
-          GetGuildInvites chan -> getWith req 
+          GetGuildInvites chan -> W.getWith req 
             (baseURL++"/guilds/"++chan++"/invites")
 
-          GetGuildIntegrations chan -> getWith req
+          GetGuildIntegrations chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/integrations")
 
-          CreateGuildIntegration chan patch -> postWith req
+          CreateGuildIntegration chan patch -> W.postWith req
             (baseURL++"/guilds/"++chan++"/integrations")
             (toJSON patch)
 
-          ModifyGuildIntegration chan integ patch -> customPayloadMethodWith "PATCH" req
+          ModifyGuildIntegration chan integ patch -> W.customPayloadMethodWith "PATCH" req
             (baseURL++"/guilds/"++chan++"/integrations/"++integ)
             (toJSON patch)
 
-          DeleteGuildIntegration chan integ -> deleteWith req
+          DeleteGuildIntegration chan integ -> W.deleteWith req
             (baseURL++"/guilds/"++chan++"/integrations/"++integ)
 
-          SyncGuildIntegration chan integ -> postWith req
+          SyncGuildIntegration chan integ -> W.postWith req
             (baseURL++"/guilds/"++chan++"/integrations/"++integ)
             (toJSON (""::Text))
 
-          GetGuildEmbed chan -> getWith req
+          GetGuildEmbed chan -> W.getWith req
             (baseURL++"/guilds/"++chan++"/embed")
           
-          ModifyGuildEmbed chan embed -> customPayloadMethodWith "PATCH" req
+          ModifyGuildEmbed chan embed -> W.customPayloadMethodWith "PATCH" req
             (baseURL++"/guilds/"++chan++"/embed")
             (toJSON embed)
 
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
+        return (justRight . eitherDecode $ resp ^. W.responseBody
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
+          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp

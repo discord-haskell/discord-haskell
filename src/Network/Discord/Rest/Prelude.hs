@@ -10,7 +10,7 @@ module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
 
   import Data.Aeson
-  import Network.Wreq
+  import qualified Network.Wreq as W
   import Control.Lens
   import Data.Hashable
   import qualified Control.Monad.State as St
@@ -27,16 +27,16 @@ module Network.Discord.Rest.Prelude where
   baseURL = "https://discordapp.com/api/v6"
 
   -- | Construct base request with auth from Discord state
-  baseRequest :: DiscordM Options
+  baseRequest :: DiscordM W.Options
   baseRequest = do
     DiscordState {getClient=client} <- St.get
-    return $ defaults
-      & header "Authorization" .~ [append "Bot " . pack $ getAuth client]
-      & header "User-Agent"    .~
+    return $ W.defaults
+      & W.header "Authorization" .~ [append "Bot " . pack $ getAuth client]
+      & W.header "User-Agent"    .~
         [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
           ++ showVersion version
           ++ ")"]
-      & header "Content-Type" .~ ["application/json"]
+      & W.header "Content-Type" .~ ["application/json"]
 
   -- | Class for rate-limitable actions
   class RateLimit a where

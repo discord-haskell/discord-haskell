@@ -16,7 +16,7 @@ module Network.Discord.Rest
 
     import Network.Discord.Types as Dc
     import Network.URL
-    import Network.Wreq
+    import qualified Network.Wreq as W
     import Control.Lens
     import Data.Aeson.Types
     import Network.Discord.Rest.Prelude
@@ -43,8 +43,8 @@ module Network.Discord.Rest
     -- | Obtains a new gateway to connect to.
     getGateway :: IO URL
     getGateway = do
-      resp <- asValue =<< get (baseURL++"/gateway")
-      return . fromJust $ importURL =<< parseMaybe getURL (resp ^. responseBody)
+      resp <- W.asValue =<< W.get (baseURL++"/gateway")
+      return . fromJust $ importURL =<< parseMaybe getURL (resp ^. W.responseBody)
       where
         getURL :: Value -> Parser String
         getURL = withObject "url" (.: "url")
