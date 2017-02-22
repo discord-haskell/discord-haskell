@@ -1,15 +1,9 @@
 # Discord.hs
 A Haskell wrapper for the Discord API
 
-## Installing
-Discord-hs isn't on hackage or stackage (Yet, I'll upload when documentation is in a good state.)  
-In order to install:
-
-```sh
-git clone https://gitlab.com/jkoike/Discord.hs.git
-cd discord.hs
-stack install
-```
+[![Hackage](https://img.shields.io/hackage/v/discord-hs.svg)](http://hackage.haskell.org/package/discord-hs)
+[![Hackage-Deps](https://img.shields.io/hackage-deps/v/discord-hs.svg?style=flat-square)](http://packdeps.haskellers.com/feed?needle=discord-hs)
+[![Travis](https://img.shields.io/travis/jano017/Discord.hs.svg)](https://travis-ci.org/jano017/Discord.hs)
 
 ## Using in a project
 
@@ -18,11 +12,8 @@ and find the `packages` section. Replace it with the following:
 
 ```yaml
 packages:
-  - location: '.'
-  - location:
-      git: https://gitlab.com/jkoike/Discord.hs.git
-      commit: master
-    extra-dep: true
+  - '.'
+  - discord-hs-0.1.3
 ```
 
 Then open your project.cabal file and add `discord-hs` to your build-depends.
@@ -58,7 +49,6 @@ main = runBot "TOKEN" $ do
 ## Future goals:
 - [Eta](https://github.com/typelead/eta) compatibility
 - [HaLVM](https://github.com/GaloisInc/HaLVM) compatibility (maybe)
-- Tighten properties/prove properties
-- Monad based declarative bots (partially complete)
-- Command framework (expansion on above)
-- Proper logging?
+- Command framework (Posibly through compat layer with marvin?)
+- Ditch wreq (not included in stack lts-8.2)
+- Upload to stackage
