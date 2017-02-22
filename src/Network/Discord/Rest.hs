@@ -1,6 +1,7 @@
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
+
 module Network.Discord.Rest
   ( module Network.Discord.Rest
   , module Network.Discord.Rest.Prelude
@@ -16,8 +17,7 @@ module Network.Discord.Rest
 
     import Network.Discord.Types as Dc
     import Network.URL
-    import qualified Network.Wreq as W
-    import Control.Lens
+    import qualified Network.HTTP.Req as R
     import Data.Aeson.Types
     import Network.Discord.Rest.Prelude
     import Network.Discord.Rest.Channel
@@ -43,8 +43,9 @@ module Network.Discord.Rest
     -- | Obtains a new gateway to connect to.
     getGateway :: IO URL
     getGateway = do
-      resp <- W.asValue =<< W.get (baseURL++"/gateway")
-      return . fromJust $ importURL =<< parseMaybe getURL (resp ^. W.responseBody)
+      r <- R.req R.GET (baseUrl R./: "gateway") R.NoReqBody R.jsonResponse mempty
+      return . fromJust $ importURL =<< parseMaybe getURL (R.responseBody r)
+
       where
         getURL :: Value -> Parser String
         getURL = withObject "url" (.: "url")

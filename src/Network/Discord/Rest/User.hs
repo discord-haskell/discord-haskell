@@ -1,18 +1,20 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
 module Network.Discord.Rest.User
   (
     UserRequest(..)
   ) where
-    import Data.Text
+    import Data.Text as T
+    import Data.Maybe (fromMaybe)
     import qualified Control.Monad.State as ST (get, put, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
 
     import Data.Aeson
     import Data.Hashable
-    import qualified Network.Wreq as W
-    import Control.Lens
+    import qualified Network.HTTP.Req as R
+    import Data.ByteString.Char8 as B (unpack)
+    import Data.ByteString.Lazy as LBS
     import Data.Time.Clock.POSIX
 
     import Network.Discord.Types as Dc
@@ -58,30 +60,33 @@ module Network.Discord.Rest.User
         waitRateLimit req
         SyncFetched <$> fetch req
 
-
     fetch :: FromJSON a => UserRequest a -> DiscordM a
     fetch request = do
-      req <- baseRequest
+      opts <- baseRequestOptions
+      let makeUrl c = baseUrl R./: "users" R./~ (T.pack c)
+      let get c = (R.req R.GET (makeUrl c) R.NoReqBody R.lbsResponse opts) :: IO R.LbsResponse
       (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetCurrentUser -> W.getWith req
-            "/users/@me"
-          GetUser user -> W.getWith req
-            ("/users/"++user)
-          ModifyCurrentUser patch -> W.customPayloadMethodWith "PATCH" req
-            "/users/@me"
-            (toJSON patch)
-          GetCurrentUserGuilds range -> W.getWith req
-            ("/users/@me/guilds?" ++ toQueryString range)
-          LeaveGuild guild -> W.deleteWith req
-            ("/users/@me/guilds/"++guild)
-          GetUserDMs -> W.getWith req
-            "/users/@me/channels"
-          CreateDM user -> W.postWith req
-            "/users/@me/channels"
-            ["recipient_id" W.:= user]
-        return (justRight . eitherDecode $ resp ^. W.responseBody
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
+        resp :: R.LbsResponse <- case request of
+
+          GetCurrentUser -> get "@me"
+
+          GetUser user -> get user
+
+          ModifyCurrentUser patch -> R.req R.PATCH (makeUrl "@me") (R.ReqBodyJson patch) R.lbsResponse opts
+
+          GetCurrentUserGuilds range -> get $ "@me/guilds?" ++ toQueryString range
+
+          LeaveGuild guild -> R.req R.DELETE (makeUrl $ "@me/guilds/" ++ guild) R.NoReqBody R.lbsResponse opts
+
+          GetUserDMs -> get "@me/channels"
+
+          CreateDM user -> let payload = object ["recipient_id" .= user]
+                           in R.req R.POST (makeUrl $ "@me/channels") (R.ReqBodyJson payload) R.lbsResponse opts
+
+        let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
+            -- justRight . eitherDecodeStrict $
+        return (justRight $ eitherDecode $ (R.responseBody resp :: LBS.ByteString),
+                parseIntFrom "X-RateLimit-Remaining", parseIntFrom "X-RateLimit-Reset")
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp
+

@@ -1,5 +1,6 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings, FlexibleInstances, DataKinds #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
@@ -10,33 +11,38 @@ module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
 
   import Data.Aeson
-  import qualified Network.Wreq as W
-  import Control.Lens
+  import Control.Exception (throwIO)
+  import qualified Network.HTTP.Req as R
+  import Data.Semigroup ((<>))
   import Data.Hashable
   import qualified Control.Monad.State as St
   import Paths_discord_hs (version)
-  import Data.Version     (showVersion)
+  import Data.Version (showVersion)
 
   import Network.Discord.Types
+
+  instance R.MonadHttp IO where
+    handleHttpException = throwIO
 
   -- | Read function specialized for Integers
   readInteger :: String -> Integer
   readInteger = read
 
+  baseUrl :: R.Url 'R.Https
+  baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+    where apiVersion = "v6"
+
   baseURL :: String
   baseURL = "https://discordapp.com/api/v6"
 
-  -- | Construct base request with auth from Discord state
-  baseRequest :: DiscordM W.Options
-  baseRequest = do
+  -- | Construct base options with auth from Discord state
+  baseRequestOptions :: DiscordM (R.Option 'R.Https)
+  baseRequestOptions = do
     DiscordState {getClient=client} <- St.get
-    return $ W.defaults
-      & W.header "Authorization" .~ [append "Bot " . pack $ getAuth client]
-      & W.header "User-Agent"    .~
-        [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-          ++ showVersion version
-          ++ ")"]
-      & W.header "Content-Type" .~ ["application/json"]
+    return $ R.header "Authorization" (append "Bot " . pack $ getAuth client)
+          <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
+                                        ++ showVersion version ++ ")")
+          <> R.header "Content-Type" "application/json"
 
   -- | Class for rate-limitable actions
   class RateLimit a where

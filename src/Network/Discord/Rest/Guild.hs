@@ -1,18 +1,20 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
 module Network.Discord.Rest.Guild
   (
     GuildRequest(..)
   ) where
-    import Data.Text
+    import Data.Maybe
+    import Data.Text as T
     import qualified Control.Monad.State as ST (get, put, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
 
     import Data.Aeson
     import Data.Hashable
-    import qualified Network.Wreq as W
-    import Control.Lens
+    import qualified Network.HTTP.Req as R
+    import Data.ByteString.Char8 as B (unpack)
+    import Data.ByteString.Lazy as LBS
     import Data.Time.Clock.POSIX
 
     import Network.Discord.Types as Dc
@@ -116,115 +118,94 @@ module Network.Discord.Rest.Guild
 
     fetch :: FromJSON a => GuildRequest a -> DiscordM a
     fetch request = do
-      req <- baseRequest
+      opts <- baseRequestOptions
+      let makeUrl c = baseUrl R./: "guilds" R./~ (T.pack c)
+      let emptyJsonBody = R.ReqBodyJson "" :: R.ReqBodyJson Text
+      let get c = (R.req R.GET (makeUrl c) R.NoReqBody R.lbsResponse opts) :: IO R.LbsResponse
       (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetGuild chan -> W.getWith req
-            (baseURL++"/guilds/"++chan)
-          
-          ModifyGuild chan patch -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan)
-            (toJSON patch)
+        resp :: R.LbsResponse <- case request of
 
-          DeleteGuild chan -> W.deleteWith req
-            (baseURL++"/guilds/"++chan)
+          GetGuild chan -> get chan
 
-          GetGuildChannels chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/channels")
+          ModifyGuild chan patch -> R.req R.PATCH (makeUrl chan) (R.ReqBodyJson patch) R.lbsResponse opts
 
-          CreateGuildChannel chan patch -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/channels")
-            (toJSON patch)
+          DeleteGuild chan -> R.req R.DELETE (makeUrl chan) R.NoReqBody R.lbsResponse opts
 
-          ModifyChanPosition chan patch -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/channels")
-            (toJSON patch)
+          GetGuildChannels chan -> get (chan++"/channels")
 
-          GetGuildMember chan user -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+          CreateGuildChannel chan patch -> R.req R.POST (makeUrl $ chan++"/channels")
+                                                 (R.ReqBodyJson patch) R.lbsResponse opts
 
-          ListGuildMembers chan range -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/members?limit="++toQueryString range)
+          ModifyChanPosition chan patch -> R.req R.PATCH (makeUrl $ chan ++ "/channels")
+                                                 (R.ReqBodyJson patch) R.lbsResponse opts
 
-          AddGuildMember chan user patch -> W.customPayloadMethodWith "PUT" req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
-            (toJSON patch)
+          GetGuildMember chan user -> get (chan++"/members/"++user)
 
-          ModifyGuildMember chan user patch -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
-            (toJSON patch)
+          ListGuildMembers chan range -> get (chan++"/members?limit="++toQueryString range)
 
-          RemoveGuildMember chan user -> W.deleteWith req
-            (baseURL++"/guilds/"++chan++"/members/"++user)
+          AddGuildMember chan user patch -> R.req R.PUT (makeUrl $ chan++"/members/"++user)
+                                                 (R.ReqBodyJson patch) R.lbsResponse opts
 
-          GetGuildBans chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/bans")
+          ModifyGuildMember chan user patch ->  R.req R.PATCH (makeUrl $ chan++"/members/"++user)
+                                                      (R.ReqBodyJson patch) R.lbsResponse opts
 
-          CreateGuildBan chan user msg -> W.customPayloadMethodWith "PUT" req
-            (baseURL++"/guilds/"++chan++"/bans/"++user)
-            ["delete-message-days" W.:= msg]
+          RemoveGuildMember chan user ->  R.req R.DELETE (makeUrl $ chan++"/members/"++user)
+                                                R.NoReqBody R.lbsResponse opts
 
-          RemoveGuildBan chan user -> W.deleteWith req
-            (baseURL++"/guilds/"++chan++"/bans/"++user)
+          GetGuildBans chan -> get (chan++"/bans")
 
-          GetGuildRoles chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/roles")
+          CreateGuildBan chan user msg -> let payload = object ["delete-message-days" .= msg]
+                                          in R.req R.PUT (makeUrl $ chan++"/bans/"++user)
+                                                   (R.ReqBodyJson payload) R.lbsResponse opts
 
-          CreateGuildRole chan -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/roles")
-            (toJSON (""::Text))
+          RemoveGuildBan chan user ->  R.req R.DELETE (makeUrl $ chan++"/bans/"++user)
+                                             R.NoReqBody R.lbsResponse opts
 
-          ModifyGuildRolePositions chan pos -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/roles")
-            (toJSON pos)
+          GetGuildRoles chan -> get (chan++"/roles")
 
-          ModifyGuildRole chan role patch -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/roles/"++role)
-            (toJSON patch)
+          CreateGuildRole chan -> R.req R.POST (makeUrl $ chan++"/roles")
+                                        emptyJsonBody R.lbsResponse opts
 
-          DeleteGuildRole chan role -> W.deleteWith req
-            (baseURL++"/guilds/"++chan++"/roles/"++role)
+          ModifyGuildRolePositions chan pos -> R.req R.POST (makeUrl $ chan++"/roles")
+                                                     (R.ReqBodyJson pos) R.lbsResponse opts
 
-          GetGuildPruneCount chan days -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
+          ModifyGuildRole chan role patch -> R.req R.POST (makeUrl $ chan++"/roles/"++role)
+                                                   (R.ReqBodyJson patch) R.lbsResponse opts
 
-          BeginGuildPrune chan days -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/prune?days="++show days)
-            (toJSON (""::Text))
+          DeleteGuildRole chan role ->  R.req R.DELETE (makeUrl $ chan++"/roles/"++role)
+                                              R.NoReqBody R.lbsResponse opts
 
-          GetGuildVoiceRegions chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/regions")
+          GetGuildPruneCount chan days -> get (chan++"/prune?days="++show days)
 
-          GetGuildInvites chan -> W.getWith req 
-            (baseURL++"/guilds/"++chan++"/invites")
+          BeginGuildPrune chan days -> R.req R.POST (makeUrl $ chan++"/prune?days="++show days)
+                                             emptyJsonBody R.lbsResponse opts
 
-          GetGuildIntegrations chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/integrations")
+          GetGuildVoiceRegions chan -> get (chan++"/regions")
 
-          CreateGuildIntegration chan patch -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/integrations")
-            (toJSON patch)
+          GetGuildInvites chan -> get (chan++"/invites")
 
-          ModifyGuildIntegration chan integ patch -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
-            (toJSON patch)
+          GetGuildIntegrations chan -> get (chan++"/integrations")
 
-          DeleteGuildIntegration chan integ -> W.deleteWith req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
+          CreateGuildIntegration chan patch -> R.req R.POST (makeUrl $ chan++"/integrations")
+                                                     (R.ReqBodyJson patch) R.lbsResponse opts
 
-          SyncGuildIntegration chan integ -> W.postWith req
-            (baseURL++"/guilds/"++chan++"/integrations/"++integ)
-            (toJSON (""::Text))
+          ModifyGuildIntegration chan integ patch ->  R.req R.PATCH (makeUrl $ chan++"/integrations/"++integ)
+                                                            (R.ReqBodyJson patch) R.lbsResponse opts
 
-          GetGuildEmbed chan -> W.getWith req
-            (baseURL++"/guilds/"++chan++"/embed")
-          
-          ModifyGuildEmbed chan embed -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/guilds/"++chan++"/embed")
-            (toJSON embed)
+          DeleteGuildIntegration chan integ ->  R.req R.DELETE (makeUrl $ chan++"/integrations/"++integ)
+                                                      R.NoReqBody R.lbsResponse opts
 
-        return (justRight . eitherDecode $ resp ^. W.responseBody
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
+          SyncGuildIntegration chan integ -> R.req R.POST (makeUrl $ chan++"/integrations/"++integ)
+                                                   emptyJsonBody R.lbsResponse opts
+
+          GetGuildEmbed chan -> get (chan++"/embed")
+
+          ModifyGuildEmbed chan embed -> R.req R.PATCH (makeUrl $ chan++"/embed")
+                                               (R.ReqBodyJson embed) R.lbsResponse opts
+
+        let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
+            -- justRight . eitherDecodeStrict $
+        return (justRight $ eitherDecode $ (R.responseBody resp :: LBS.ByteString),
+                parseIntFrom "X-RateLimit-Remaining", parseIntFrom "X-RateLimit-Reset")
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp

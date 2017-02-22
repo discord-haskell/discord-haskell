@@ -33,7 +33,7 @@ library
   -- other-extensions:
   build-depends:       base==4.*, pipes, transformers
                         , aeson, url, time, stm, mtl, bytestring
-                        , unordered-containers, text, vector, mmorph, wreq
+                        , unordered-containers, text, vector, mmorph, req
                         , template-haskell, lens, containers, hashable
                         , data-default
   ghc-options:         -Wall -Werror

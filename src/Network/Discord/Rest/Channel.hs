@@ -1,19 +1,21 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, DataKinds #-}
 module Network.Discord.Rest.Channel
   (
     ChannelRequest(..)
   ) where
-    import Data.Text
-    import Data.ByteString.Lazy
+    import Data.Maybe (fromMaybe)
+    import qualified Data.Text as T
     import qualified Control.Monad.State as ST (get, put, liftIO)
     import Control.Monad.Morph (lift)
     import Control.Monad (when)
 
     import Data.Aeson
     import Data.Hashable
-    import qualified Network.Wreq as W
-    import Control.Lens
+    import Data.Semigroup ((<>))
+    import qualified Network.HTTP.Req as R
+    import qualified Data.ByteString.Char8 as B (unpack)
+    import qualified Data.ByteString.Lazy as LBS
     import Data.Time.Clock.POSIX
 
     import Network.Discord.Types as Dc
@@ -28,15 +30,15 @@ module Network.Discord.Rest.Channel
       -- | Deletes a channel if its id doesn't equal to the id of guild.
       DeleteChannel           :: Snowflake -> ChannelRequest Channel
       -- | Gets a messages from a channel with limit of 100 per request.
-      GetChannelMessages      :: Snowflake -> [(Text, Text)] -> ChannelRequest [Message]
+      GetChannelMessages      :: Snowflake -> [(T.Text, T.Text)] -> ChannelRequest [Message]
       -- | Gets a message in a channel by its id.
       GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
       -- | Sends a message to a channel.
-      CreateMessage           :: Snowflake -> Text -> ChannelRequest Message
+      CreateMessage           :: Snowflake -> T.Text -> ChannelRequest Message
       -- | Sends a message with a file to a channel.
-      UploadFile              :: Snowflake -> Text -> ByteString -> ChannelRequest Message
+      UploadFile              :: Snowflake -> T.Text -> FilePath -> ChannelRequest Message
       -- | Edits a message content.
-      EditMessage             :: Message   -> Text -> ChannelRequest Message
+      EditMessage             :: Message   -> T.Text -> ChannelRequest Message
       -- | Deletes a message.
       DeleteMessage           :: Message   -> ChannelRequest ()
       -- | Deletes a group of messages.
@@ -60,26 +62,26 @@ module Network.Discord.Rest.Channel
 
     -- | Instance of Hashable that allows to get the major parts of an endpoint.
     instance Hashable (ChannelRequest a) where
-      hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::Text, chan)
-      hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::Text, chan)
-      hashWithSalt s (DeleteChannel chan) = hashWithSalt s ("mod_chan"::Text, chan)
-      hashWithSalt s (GetChannelMessages chan _) = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (GetChannelMessage chan _) = hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (CreateMessage chan _) = hashWithSalt s ("msg"::Text, chan)
-      hashWithSalt s (UploadFile chan _ _)  = hashWithSalt s ("msg"::Text, chan)
+      hashWithSalt s (GetChannel chan) = hashWithSalt s ("get_chan"::T.Text, chan)
+      hashWithSalt s (ModifyChannel chan _) = hashWithSalt s ("mod_chan"::T.Text, chan)
+      hashWithSalt s (DeleteChannel chan) = hashWithSalt s ("mod_chan"::T.Text, chan)
+      hashWithSalt s (GetChannelMessages chan _) = hashWithSalt s ("msg"::T.Text, chan)
+      hashWithSalt s (GetChannelMessage chan _) = hashWithSalt s ("get_msg"::T.Text, chan)
+      hashWithSalt s (CreateMessage chan _) = hashWithSalt s ("msg"::T.Text, chan)
+      hashWithSalt s (UploadFile chan _ _)  = hashWithSalt s ("msg"::T.Text, chan)
       hashWithSalt s (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _) =
-        hashWithSalt s ("get_msg"::Text, chan)
+        hashWithSalt s ("get_msg"::T.Text, chan)
       hashWithSalt s (DeleteMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _)) =
-        hashWithSalt s ("get_msg"::Text, chan)
-      hashWithSalt s (BulkDeleteMessage chan _) = hashWithSalt s ("del_msgs"::Text, chan)
-      hashWithSalt s (EditChannelPermissions chan _ _) = hashWithSalt s ("perms"::Text, chan)
-      hashWithSalt s (GetChannelInvites chan) = hashWithSalt s ("invites"::Text, chan)
-      hashWithSalt s (CreateChannelInvite chan _) = hashWithSalt s ("invites"::Text, chan)
-      hashWithSalt s (DeleteChannelPermission chan _) = hashWithSalt s ("perms"::Text, chan)
-      hashWithSalt s (TriggerTypingIndicator chan)  = hashWithSalt s ("tti"::Text, chan)
-      hashWithSalt s (GetPinnedMessages chan) = hashWithSalt s ("pins"::Text, chan)
-      hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
-      hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
+        hashWithSalt s ("get_msg"::T.Text, chan)
+      hashWithSalt s (BulkDeleteMessage chan _) = hashWithSalt s ("del_msgs"::T.Text, chan)
+      hashWithSalt s (EditChannelPermissions chan _ _) = hashWithSalt s ("perms"::T.Text, chan)
+      hashWithSalt s (GetChannelInvites chan) = hashWithSalt s ("invites"::T.Text, chan)
+      hashWithSalt s (CreateChannelInvite chan _) = hashWithSalt s ("invites"::T.Text, chan)
+      hashWithSalt s (DeleteChannelPermission chan _) = hashWithSalt s ("perms"::T.Text, chan)
+      hashWithSalt s (TriggerTypingIndicator chan)  = hashWithSalt s ("tti"::T.Text, chan)
+      hashWithSalt s (GetPinnedMessages chan) = hashWithSalt s ("pins"::T.Text, chan)
+      hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::T.Text, chan)
+      hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::T.Text, chan)
 
     -- |Implementation of equality check that is aware of major parameteres.
     instance Eq (ChannelRequest a) where
@@ -111,79 +113,73 @@ module Network.Discord.Rest.Channel
     -- |Sends a request, used by doFetch.
     fetch :: FromJSON a => ChannelRequest a -> DiscordM a
     fetch request = do
-      req  <- baseRequest
+      opts <- baseRequestOptions
+      let makeUrl c = baseUrl R./: "guilds" R./~ (T.pack c)
+      let emptyJsonBody = R.ReqBodyJson "" :: R.ReqBodyJson T.Text
+      let get c = (R.req R.GET (makeUrl c) R.NoReqBody R.lbsResponse opts) :: IO R.LbsResponse
       (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetChannel chan -> W.getWith req
-            (baseURL++"/channels/"++chan)
+        resp :: R.LbsResponse <- case request of
 
-          ModifyChannel chan patch -> W.customPayloadMethodWith "PATCH" req
-            (baseURL++"/channels/"++chan)
-            (toJSON patch)
+          GetChannel chan -> get chan
 
-          DeleteChannel chan -> W.deleteWith req
-            (baseURL++"/channels/"++chan)
+          ModifyChannel chan patch ->  R.req R.PATCH (makeUrl chan)
+                                             (R.ReqBodyJson patch) R.lbsResponse opts
 
-          GetChannelMessages chan patch -> W.getWith
-            (Prelude.foldr (\(k, v) -> W.param k .~ [v]) req patch)
-            (baseURL++"/channels/"++chan++"/messages")
 
-          GetChannelMessage chan msg -> W.getWith req
-            (baseURL++"/channels/"++chan++"/messages/"++msg)
+          DeleteChannel chan ->  R.req R.DELETE (makeUrl chan) R.NoReqBody R.lbsResponse opts
 
-          CreateMessage chan msg -> W.postWith req
-            (baseURL++"/channels/"++chan++"/messages")
-            (object [("content", toJSON msg)])
+          GetChannelMessages chan patch -> let opts' :: R.Option 'R.Https = Prelude.foldr (<>) opts (map option patch)
+                                               option (k,v) = (k R.=: v) :: R.Option 'R.Https
+                                           in R.req R.GET (makeUrl $ chan++"/messages") R.NoReqBody R.lbsResponse opts'
 
-          UploadFile chan msg file -> W.postWith
-            (req & W.header "Content-Type" .~ ["multipart/form-data"])
-            (baseURL++"/channels/"++chan++"/messages")
-            ["content" W.:= msg, "file" W.:= file]
+          GetChannelMessage chan msg -> get (chan++"/messages/"++msg)
+
+          CreateMessage chan msg -> let payload = object [("content" .= msg)]
+                                    in R.req R.POST (makeUrl $ chan++"/messages")
+                                             (R.ReqBodyJson payload) R.lbsResponse opts
+
+          -- TODO: pass json as form, construct proper form-data
+          -- https://hackage.haskell.org/package/req-0.2.0/docs/Network-HTTP-Req.html#t:ReqBodyMultipart
+          UploadFile chan msg file -> let payload = object ["content" .= msg, "file" .= file]
+                                          --mpd = R.header "Content-Type" "multipart/form-data"
+                                      in R.req R.POST (makeUrl $ chan++"/messages")
+                                             (R.ReqBodyJson payload) R.lbsResponse opts -- (opts<>mpd)
 
           EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new ->
-            W.customPayloadMethodWith "PATCH" req
-              (baseURL++"/channels/"++chan++"/messages/"++msg)
-              (object [("content", toJSON new)])
+            let payload = object ["content" .= new]
+            in R.req R.PATCH (makeUrl $ chan++"/messages/"++msg)
+                     (R.ReqBodyJson payload) R.lbsResponse opts
+
 
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-            W.deleteWith req
-              (baseURL++"/channels/"++chan++"/messages/"++msg)
+             R.req R.DELETE (makeUrl $ chan++"/messages/"++msg) R.NoReqBody R.lbsResponse opts
 
-          BulkDeleteMessage chan msgs -> W.postWith req
-            (baseURL++"/channels/"++chan++"/messages/bulk-delete")
-            (object
-              [("messages", toJSON
-                $ Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs)])
+          BulkDeleteMessage chan msgs -> let payload = object ["messages" .= msgs']
+                                             msgs' = Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
+                                         in R.req R.POST (makeUrl $ chan++"/messages/bulk-delete")
+                                                  (R.ReqBodyJson payload) R.lbsResponse opts
 
-          EditChannelPermissions chan perm patch -> W.putWith req
-            (baseURL++"/channels/"++chan++"/permissions/"++perm)
-            (toJSON patch)
 
-          GetChannelInvites chan -> W.getWith req
-            (baseURL++"/channels/"++chan++"/invites")
+          EditChannelPermissions chan perm patch -> R.req R.PUT (makeUrl $ chan++"/permissions/"++perm)
+                                                          (R.ReqBodyJson patch) R.lbsResponse opts
 
-          CreateChannelInvite chan patch -> W.postWith req
-            (baseURL++"/channels/"++chan++"/invites")
-            (toJSON patch)
+          GetChannelInvites chan -> get (chan++"/invites")
 
-          DeleteChannelPermission chan perm -> W.deleteWith req
-            (baseURL++"/channels/"++chan++"/permissions/"++perm)
+          CreateChannelInvite chan patch -> R.req R.POST (makeUrl $ chan++"/invites") (R.ReqBodyJson patch) R.lbsResponse opts
 
-          TriggerTypingIndicator chan -> W.postWith req
-            (baseURL++"/channels/"++chan++"/typing")
-            (toJSON ([]::[Int]))
+          DeleteChannelPermission chan perm ->  R.req R.DELETE (makeUrl $ chan++"/permissions/"++perm) R.NoReqBody R.lbsResponse opts
 
-          GetPinnedMessages chan -> W.getWith req
-            (baseURL++"/channels/"++chan++"/pins")
+          TriggerTypingIndicator chan -> R.req R.POST (makeUrl $ chan++"/typing") emptyJsonBody R.lbsResponse opts
 
-          AddPinnedMessage chan msg -> W.putWith req
-            (baseURL++"/channels/"++chan++"/pins/"++msg)
-            (toJSON ([]::[Int]))
+          GetPinnedMessages chan -> get (chan++"/pins")
 
-          DeletePinnedMessage chan msg -> W.deleteWith req
-            (baseURL++"/channels/"++chan++"/pins/"++msg)
-        return (justRight . eitherDecode $ resp ^. W.responseBody
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. W.responseHeader "X-RateLimit-Reset"::Int)
+          AddPinnedMessage chan msg -> R.req R.PUT (makeUrl $ chan++"/pins/"++msg) emptyJsonBody R.lbsResponse opts
+
+          DeletePinnedMessage chan msg ->  R.req R.DELETE (makeUrl $ chan++"/pins/"++msg) R.NoReqBody R.lbsResponse opts
+
+        let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
+            -- justRight . eitherDecodeStrict $
+        return (justRight $ eitherDecode $ (R.responseBody resp :: LBS.ByteString),
+                parseIntFrom "X-RateLimit-Remaining", parseIntFrom "X-RateLimit-Reset")
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp
