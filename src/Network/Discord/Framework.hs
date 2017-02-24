@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies, ExistentialQuantification, RankNTypes, MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, DatatypeContexts #-}
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
 module Network.Discord.Framework where
   import Control.Concurrent

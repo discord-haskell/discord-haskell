@@ -11,7 +11,7 @@ import Network.Discord.Gateway
 
 data PutStrClient = PsClient
 instance Client PutStrClient where
-  getAuth _ = Bot "TOKEN HERE"
+  getAuth _ = Bot "TOKEN"
 
 main :: IO ()
 main = runWebsocket (fromJust $ importURL "wss://gateway.discord.gg") PsClient $ do
