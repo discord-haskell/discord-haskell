@@ -9,7 +9,6 @@ module Network.Discord.Rest.Guild
     import Data.Maybe (fromMaybe)
 
     import Control.Concurrent.STM
-    import Control.Lens
     import Control.Monad.Morph (lift)
     import Data.Aeson
     import Data.Hashable
@@ -192,84 +191,84 @@ module Network.Discord.Rest.Guild
       (resp, rlRem, rlNext) <- lift $ do
         resp :: R.LbsResponse <- case request of
 
-          GetGuild chan -> get chan
+          GetGuild chan -> get $ show chan
 
-          ModifyGuild chan patch -> R.req R.PATCH (makeUrl chan)
+          ModifyGuild chan patch -> R.req R.PATCH (makeUrl $ show chan)
                                           (R.ReqBodyJson patch) R.lbsResponse opts
 
-          DeleteGuild chan -> R.req R.DELETE (makeUrl chan)
+          DeleteGuild chan -> R.req R.DELETE (makeUrl $ show chan)
                                     R.NoReqBody R.lbsResponse opts
 
-          GetGuildChannels chan -> get (chan++"/channels")
+          GetGuildChannels chan -> get (show chan++"/channels")
 
-          CreateGuildChannel chan patch -> R.req R.POST (makeUrl $ chan++"/channels")
+          CreateGuildChannel chan patch -> R.req R.POST (makeUrl $ show chan++"/channels")
                                                  (R.ReqBodyJson patch) R.lbsResponse opts
 
-          ModifyChanPosition chan patch -> R.req R.PATCH (makeUrl $ chan ++ "/channels")
+          ModifyChanPosition chan patch -> R.req R.PATCH (makeUrl $ show chan ++ "/channels")
                                                  (R.ReqBodyJson patch) R.lbsResponse opts
 
-          GetGuildMember chan user -> get (chan++"/members/"++user)
+          GetGuildMember chan user -> get (show chan++"/members/"++show user)
 
-          ListGuildMembers chan range -> get (chan++"/members?limit="++toQueryString range)
+          ListGuildMembers chan range -> get (show chan++"/members?limit="++toQueryString range)
 
-          AddGuildMember chan user patch -> R.req R.PUT (makeUrl $ chan++"/members/"++user)
+          AddGuildMember chan user patch -> R.req R.PUT (makeUrl $ show chan++"/members/"++show user)
                                                  (R.ReqBodyJson patch) R.lbsResponse opts
 
-          ModifyGuildMember chan user patch ->  R.req R.PATCH (makeUrl $ chan++"/members/"++user)
+          ModifyGuildMember chan user patch ->  R.req R.PATCH (makeUrl $ show chan++"/members/"++show user)
                                                       (R.ReqBodyJson patch) R.lbsResponse opts
 
-          RemoveGuildMember chan user ->  R.req R.DELETE (makeUrl $ chan++"/members/"++user)
+          RemoveGuildMember chan user ->  R.req R.DELETE (makeUrl $ show chan++"/members/"++show user)
                                                 R.NoReqBody R.lbsResponse opts
 
-          GetGuildBans chan -> get (chan++"/bans")
+          GetGuildBans chan -> get (show chan++"/bans")
 
           CreateGuildBan chan user msg -> let payload = object ["delete-message-days" .= msg]
-                                          in R.req R.PUT (makeUrl $ chan++"/bans/"++user)
+                                          in R.req R.PUT (makeUrl $ show chan++"/bans/"++show user)
                                                    (R.ReqBodyJson payload) R.lbsResponse opts
 
-          RemoveGuildBan chan user ->  R.req R.DELETE (makeUrl $ chan++"/bans/"++user)
+          RemoveGuildBan chan user ->  R.req R.DELETE (makeUrl $ show chan++"/bans/"++show user)
                                              R.NoReqBody R.lbsResponse opts
 
-          GetGuildRoles chan -> get (chan++"/roles")
+          GetGuildRoles chan -> get (show chan++"/roles")
 
-          CreateGuildRole chan -> R.req R.POST (makeUrl $ chan++"/roles")
+          CreateGuildRole chan -> R.req R.POST (makeUrl $ show chan++"/roles")
                                         emptyJsonBody R.lbsResponse opts
 
-          ModifyGuildRolePositions chan pos -> R.req R.POST (makeUrl $ chan++"/roles")
+          ModifyGuildRolePositions chan pos -> R.req R.POST (makeUrl $ show chan++"/roles")
                                                      (R.ReqBodyJson pos) R.lbsResponse opts
 
-          ModifyGuildRole chan role patch -> R.req R.POST (makeUrl $ chan++"/roles/"++role)
+          ModifyGuildRole chan role patch -> R.req R.POST (makeUrl $ show chan++"/roles/"++show role)
                                                    (R.ReqBodyJson patch) R.lbsResponse opts
 
-          DeleteGuildRole chan role ->  R.req R.DELETE (makeUrl $ chan++"/roles/"++role)
+          DeleteGuildRole chan role ->  R.req R.DELETE (makeUrl $ show chan++"/roles/"++show role)
                                               R.NoReqBody R.lbsResponse opts
 
-          GetGuildPruneCount chan days -> get (chan++"/prune?days="++show days)
+          GetGuildPruneCount chan days -> get (show chan++"/prune?days="++show days)
 
-          BeginGuildPrune chan days -> R.req R.POST (makeUrl $ chan++"/prune?days="++show days)
+          BeginGuildPrune chan days -> R.req R.POST (makeUrl $ show chan++"/prune?days="++show days)
                                              emptyJsonBody R.lbsResponse opts
 
-          GetGuildVoiceRegions chan -> get (chan++"/regions")
+          GetGuildVoiceRegions chan -> get (show chan++"/regions")
 
-          GetGuildInvites chan -> get (chan++"/invites")
+          GetGuildInvites chan -> get (show chan++"/invites")
 
-          GetGuildIntegrations chan -> get (chan++"/integrations")
+          GetGuildIntegrations chan -> get (show chan++"/integrations")
 
-          CreateGuildIntegration chan patch -> R.req R.POST (makeUrl $ chan++"/integrations")
+          CreateGuildIntegration chan patch -> R.req R.POST (makeUrl $ show chan++"/integrations")
                                                      (R.ReqBodyJson patch) R.lbsResponse opts
 
-          ModifyGuildIntegration chan integ patch ->  R.req R.PATCH (makeUrl $ chan++"/integrations/"++integ)
+          ModifyGuildIntegration chan integ patch ->  R.req R.PATCH (makeUrl $ show chan++"/integrations/"++show integ)
                                                             (R.ReqBodyJson patch) R.lbsResponse opts
 
-          DeleteGuildIntegration chan integ ->  R.req R.DELETE (makeUrl $ chan++"/integrations/"++integ)
+          DeleteGuildIntegration chan integ ->  R.req R.DELETE (makeUrl $ show chan++"/integrations/"++show integ)
                                                       R.NoReqBody R.lbsResponse opts
 
-          SyncGuildIntegration chan integ -> R.req R.POST (makeUrl $ chan++"/integrations/"++integ)
+          SyncGuildIntegration chan integ -> R.req R.POST (makeUrl $ show chan++"/integrations/"++show integ)
                                                    emptyJsonBody R.lbsResponse opts
 
-          GetGuildEmbed chan -> get (chan++"/embed")
+          GetGuildEmbed chan -> get (show chan++"/embed")
 
-          ModifyGuildEmbed chan embed -> R.req R.PATCH (makeUrl $ chan++"/embed")
+          ModifyGuildEmbed chan embed -> R.req R.PATCH (makeUrl $ show chan++"/embed")
                                                (R.ReqBodyJson embed) R.lbsResponse opts
 
         let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value

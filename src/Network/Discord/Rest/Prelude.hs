@@ -11,13 +11,11 @@ module Network.Discord.Rest.Prelude where
   import qualified Network.HTTP.Req as R
 
   import Data.Semigroup ((<>))
-  import Control.Lens
   import Data.Aeson
   import Data.ByteString.Char8 (pack)
   import Data.Default
   import Data.Hashable
   import Data.Time.Clock.POSIX
-  import Network.Wreq
   import System.Log.Logger
   import qualified Control.Monad.State as St
 
@@ -41,26 +39,14 @@ module Network.Discord.Rest.Prelude where
   baseRequestOptions :: DiscordM (R.Option 'R.Https)
   baseRequestOptions = do
     DiscordState {getClient=client} <- St.get
-    return $ R.header "Authorization" (append "Bot " . pack $ getAuth client)
+    return $ R.header "Authorization" (pack . show $ getAuth client)
           <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
                                         ++ showVersion version ++ ")")
-          <> R.header "Content-Type" "application/json"
+          <> R.header "Content-Type" "application/json" -- FIXME: I think Req appends it
 
   -- | The base url for API requests
   baseURL :: String
   baseURL = "https://discordapp.com/api/v6"
-
-  -- | Construct base request with auth from Discord state
-  baseRequest :: DiscordM Options
-  baseRequest = do
-    DiscordState {getClient=client} <- St.get
-    return $ defaults
-      & header "Authorization" .~ [pack . show $ getAuth client]
-      & header "User-Agent"    .~
-        [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-          ++ showVersion version
-          ++ ")"]
-      & header "Content-Type" .~ ["application/json"]
 
   -- | Class for rate-limitable actions
   class RateLimit a where

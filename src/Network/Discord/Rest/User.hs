@@ -10,7 +10,6 @@ module Network.Discord.Rest.User
 
     import Control.Concurrent.STM
     import Control.Monad.Morph (lift)
-    import Control.Lens
     import Data.Aeson
     import Data.Hashable
 
@@ -89,15 +88,15 @@ module Network.Discord.Rest.User
 
           GetCurrentUser -> get "@me"
 
-          GetUser user -> get user
+          GetUser user -> get $ show user
 
           ModifyCurrentUser patch -> R.req R.PATCH (makeUrl "@me")
                                            (R.ReqBodyJson patch) R.lbsResponse opts
 
           GetCurrentUserGuilds range -> get $ "@me/guilds?" ++ toQueryString range
 
-          LeaveGuild guild -> R.req R.DELETE (makeUrl $ "@me/guilds/" ++ guild)
-                                    R.NoReqBody R.lbsResponse opts
+          LeaveGuild guild -> R.req R.DELETE (makeUrl $ "@me/guilds/" ++ show guild)
+                                                R.NoReqBody R.lbsResponse opts
 
           GetUserDMs -> get "@me/channels"
 

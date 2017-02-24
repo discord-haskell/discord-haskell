@@ -14,10 +14,7 @@ module Network.Discord.Rest
     import Control.Monad (void)
     import Data.Maybe (fromJust)
 
-    import Network.Discord.Types as Dc
-    import Network.URL
     import qualified Network.HTTP.Req as R
-    import Control.Lens
     import Control.Monad.Morph (lift)
     import Data.Aeson.Types
     import Data.Hashable

@@ -11,17 +11,15 @@ module Network.Discord.Rest.Channel
     import Control.Monad (when)
 
     import Control.Concurrent.STM
-    import Control.Lens
     import Control.Monad.Morph (lift)
     import Data.Aeson
-    import Data.ByteString.Lazy
     import Data.Hashable
 
     import Data.Semigroup ((<>))
     import qualified Network.HTTP.Req as R
     import qualified Data.ByteString.Char8 as B (unpack)
     import qualified Data.ByteString.Lazy as LBS
-    import qualified Data.Text as T
+    import Data.Text as T
 
     import Data.Time.Clock.POSIX
     import qualified Control.Monad.State as ST (get, liftIO)
@@ -124,67 +122,67 @@ module Network.Discord.Rest.Channel
       (resp, rlRem, rlNext) <- lift $ do
         resp :: R.LbsResponse <- case request of
 
-          GetChannel chan -> get chan
+          GetChannel chan -> get $ show chan
 
-          ModifyChannel chan patch ->  R.req R.PATCH (makeUrl chan)
+          ModifyChannel chan patch ->  R.req R.PATCH (makeUrl $ show chan)
                                              (R.ReqBodyJson patch) R.lbsResponse opts
 
 
-          DeleteChannel chan ->  R.req R.DELETE (makeUrl chan)
+          DeleteChannel chan ->  R.req R.DELETE (makeUrl $ show chan)
                                        R.NoReqBody R.lbsResponse opts
 
-          GetChannelMessages chan patch -> let opts' :: R.Option 'R.Https = Prelude.foldr (<>) opts (map option patch)
+          GetChannelMessages chan patch -> let opts' :: R.Option 'R.Https = Prelude.foldr (<>) opts (Prelude.map option patch)
                                                option (k,v) = (k R.=: v) :: R.Option 'R.Https
-                                           in R.req R.GET (makeUrl $ chan++"/messages") R.NoReqBody R.lbsResponse opts'
+                                           in R.req R.GET (makeUrl $ show chan++"/messages") R.NoReqBody R.lbsResponse opts'
 
-          GetChannelMessage chan msg -> get (chan++"/messages/"++msg)
+          GetChannelMessage chan msg -> get (show chan++"/messages/"++show msg)
 
-          CreateMessage chan msg em -> let payload = object $ [("content" .= msg) <> maybeEmbed em]
-                                       in R.req R.POST (makeUrl $ chan++"/messages")
+          CreateMessage chan msg em -> let payload = object $ ["content" .= msg] <> maybeEmbed em
+                                       in R.req R.POST (makeUrl $ show chan++"/messages")
                                                 (R.ReqBodyJson payload) R.lbsResponse opts
 
           -- TODO: pass json as form, construct proper form-data
           -- https://hackage.haskell.org/package/req-0.2.0/docs/Network-HTTP-Req.html#t:ReqBodyMultipart
           UploadFile chan msg file -> let payload = object ["content" .= msg, "file" .= file]
                                           --mpd = R.header "Content-Type" "multipart/form-data"
-                                      in R.req R.POST (makeUrl $ chan++"/messages")
+                                      in R.req R.POST (makeUrl $ show chan++"/messages")
                                              (R.ReqBodyJson payload) R.lbsResponse opts -- (opts<>mpd)
 
           EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new em ->
             let payload = object $ ["content" .= new] <> maybeEmbed em
-            in R.req R.PATCH (makeUrl $ chan++"/messages/"++msg)
+            in R.req R.PATCH (makeUrl $ show chan++"/messages/"++show msg)
                      (R.ReqBodyJson payload) R.lbsResponse opts
 
 
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-             R.req R.DELETE (makeUrl $ chan++"/messages/"++msg) R.NoReqBody R.lbsResponse opts
+             R.req R.DELETE (makeUrl $ show chan++"/messages/"++show msg) R.NoReqBody R.lbsResponse opts
 
           BulkDeleteMessage chan msgs -> let payload = object ["messages" .= msgs']
                                              msgs' = Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
-                                         in R.req R.POST (makeUrl $ chan++"/messages/bulk-delete")
+                                         in R.req R.POST (makeUrl $ show chan++"/messages/bulk-delete")
                                                   (R.ReqBodyJson payload) R.lbsResponse opts
 
 
-          EditChannelPermissions chan perm patch -> R.req R.PUT (makeUrl $ chan++"/permissions/"++perm)
+          EditChannelPermissions chan perm patch -> R.req R.PUT (makeUrl $ show chan++"/permissions/"++show perm)
                                                           (R.ReqBodyJson patch) R.lbsResponse opts
 
-          GetChannelInvites chan -> get (chan++"/invites")
+          GetChannelInvites chan -> get (show chan++"/invites")
 
-          CreateChannelInvite chan patch -> R.req R.POST (makeUrl $ chan++"/invites")
+          CreateChannelInvite chan patch -> R.req R.POST (makeUrl $ show chan++"/invites")
                                                   (R.ReqBodyJson patch) R.lbsResponse opts
 
-          DeleteChannelPermission chan perm ->  R.req R.DELETE (makeUrl $ chan++"/permissions/"++perm)
+          DeleteChannelPermission chan perm ->  R.req R.DELETE (makeUrl $ show chan++"/permissions/"++show perm)
                                                       R.NoReqBody R.lbsResponse opts
 
-          TriggerTypingIndicator chan -> R.req R.POST (makeUrl $ chan++"/typing")
+          TriggerTypingIndicator chan -> R.req R.POST (makeUrl $ show chan++"/typing")
                                                emptyJsonBody R.lbsResponse opts
 
-          GetPinnedMessages chan -> get (chan++"/pins")
+          GetPinnedMessages chan -> get (show chan++"/pins")
 
-          AddPinnedMessage chan msg -> R.req R.PUT (makeUrl $ chan++"/pins/"++msg)
+          AddPinnedMessage chan msg -> R.req R.PUT (makeUrl $ show chan++"/pins/"++show msg)
                                              emptyJsonBody R.lbsResponse opts
 
-          DeletePinnedMessage chan msg ->  R.req R.DELETE (makeUrl $ chan++"/pins/"++msg)
+          DeletePinnedMessage chan msg ->  R.req R.DELETE (makeUrl $ show chan++"/pins/"++show msg)
                                            R.NoReqBody R.lbsResponse opts
 
         let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
