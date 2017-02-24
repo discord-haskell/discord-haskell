@@ -1,0 +1,22 @@
+sudo: false
+language: nix
+cache:
+  directories:
+  - "$HOME/.stack"
+  - "./.stack-work"
+install:
+- travis_wait nix-env -i stack cabal2nix
+- cabal2nix --shell . > shell.nix
+- git config --global user.email "travis@travis-ci.org"
+- git config --global user.name  "Travis CI"
+- stack --nix --no-terminal --skip-ghc-check setup
+script:
+- stack --nix --no-terminal haddock
+- git clone https://$GIT_USER:$GIT_PASS@github.com/jano017/Discord.hs.git -b gh-pages
+  _site/
+- cp -r $(stack path --local-doc-root --nix)/discord-* docs/build
+- stack exec --nix docs build
+- cd _site && git add . && git commit --allow-empty -m "Auto build docs for $TRAVIS_COMMIT"
+  && git push --quiet
+after_success:
+  - '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'

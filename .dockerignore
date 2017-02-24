@@ -1,11 +1,6 @@
 .cabal-sandbox/*
 .stack-work/*
-.stack/*
 cabal.sandbox.config
 dist/*
-docs/build
-shell.nix
-_cache
-_site
 *.hi
 *.o

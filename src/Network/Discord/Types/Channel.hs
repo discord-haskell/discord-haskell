@@ -1,38 +1,36 @@
 {-# LANGUAGE OverloadedStrings, MultiWayIf #-}
+{-# LANGUAGE RecordWildCards #-}
+-- | Data structures pertaining to Discord Channels
 module Network.Discord.Types.Channel where
   import Control.Monad (mzero)
   import Data.Text as Text (pack, Text)
 
-  import Data.Time.Clock
   import Data.Aeson
   import Data.Aeson.Types (Parser)
+  import Data.Time.Clock
   import Data.Vector (toList)
   import qualified Data.HashMap.Strict as HM
+  import qualified Data.Vector as V
 
   import Network.Discord.Types.Prelude
 
   -- |Represents information about a user.
-  data User = User {
-      -- |A unique, timestamp based id.
-      userId :: Snowflake,
-      -- |The account's username. If changed, may cause discriminator to change.
-      userName:: String,
-      -- |A unique discriminator consisting of four numbers.
-      userDiscrim:: String,
-      -- |An optional avatar hash that's a part of url.
-      userAvatar:: Maybe String,
-      -- |True if a user is a bot account.
-      userIsBot:: Bool,
-      -- |If current user, true if 2-factor authentication is enabled.
-      userMfa:: Maybe Bool,
-      -- |If current user, true if current e-mail is verified.
-      userVerified:: Maybe Bool,
-      -- |If current user, a string containing e-mail.
-      userEmail:: Maybe String
+  data User = User
+    { userId       :: {-# UNPACK #-} !Snowflake -- ^ The user's id.
+    , userName     :: String                    -- ^ The user's username, not unique across
+                                                --   the platform.
+    , userDiscrim  :: String                    -- ^ The user's 4-digit discord-tag.
+    , userAvatar   :: Maybe String              -- ^ The user's avatar hash.
+    , userIsBot    :: Bool                      -- ^ Whether the user belongs to an OAuth2
+                                                --   application.
+    , userMfa      :: Maybe Bool                -- ^ Whether the user has two factor
+                                                --   authentication enabled on the account.
+    , userVerified :: Maybe Bool                -- ^ Whether the email on this account has
+                                                --   been verified.
+    , userEmail    :: Maybe String              -- ^ The user's email.
     } 
     | Webhook deriving (Show, Eq)
 
-  -- |Allows a user datatype to be generated using a JSON response by Discord.
   instance FromJSON User where
     parseJSON (Object o) =
       User <$> o .:  "id"
@@ -45,92 +43,72 @@ module Network.Discord.Types.Channel where
            <*> o .:? "email"
     parseJSON _ = mzero
 
-  -- |Represents information about possible variants of a Discord channel.
-  -- TODO: group DM support.
-  data Channel =
-      -- |A text channel in a guild.
-      Text{
-        -- |A unique, timestamp based id.
-        channelId:: Snowflake,
-        -- |An id of guild that holds the channel.
-        channelGuild:: Snowflake,
-        -- |A name of the channel.
-        channelName:: String,
-        -- |A position of the channel.
-        channelPosition:: Integer,
-        -- |Permission overwrites of the channel.
-        channelPermissions:: [Overwrite],
-        -- |The channel's topic.
-        channelTopic:: String,
-        -- |The snowflake of last message sent, used by client to check for unread messages.
-        channelLastMessage:: Snowflake }
+  -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
+  data Channel
+    -- | A text channel in a guild.
+    = Text
+        { channelId          :: Snowflake   -- ^ The id of the channel (Will be equal to
+                                            --   the guild if it's the "general" channel).
+        , channelGuild       :: Snowflake   -- ^ The id of the guild.
+        , channelName        :: String      -- ^ The name of the guild (2 - 1000 characters).
+        , channelPosition    :: Integer     -- ^ The storing position of the channel.
+        , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
+        , channelTopic       :: String      -- ^ The topic of the channel. (0 - 1024 chars).
+        , channelLastMessage :: Snowflake   -- ^ The id of the last message sent in the
+                                            --   channel
+        }
     -- |A voice channel in a guild.
-    | Voice{
-        -- |A unique, timestamp based id.
-        channelId:: Snowflake,
-        -- |An id of guild that holds the channel.
-        channelGuild:: Snowflake,
-        -- |A name of the voice channel.
-        channelName:: String,
-        -- |A position of the channel.
-        channelPosition:: Integer,
-        -- |Permission overwrites of the channel.
-        channelPermissions:: [Overwrite],
-        -- |Bitrate of the channel.
-        channelBitRate:: Integer,
-        -- |Determines when discord should not allow a user to join this channel.
-        channelUserLimit:: Integer }
-    -- |A direct message channel between two users.
-    | DirectMessage {
-        -- |A unique, timestamp based id.
-        channelId:: Snowflake,
-        -- |The target user of a direct message.
-        channelRecipient:: User,
-        -- |The snowflake of last message sent, used by client to check for unread messages.
-        channelLastMessage:: Snowflake
-    } deriving (Show, Eq)
+    | Voice
+        { channelId:: Snowflake
+        , channelGuild:: Snowflake
+        , channelName:: String
+        , channelPosition:: Integer
+        , channelPermissions:: [Overwrite]
+        , channelBitRate:: Integer   -- ^ The bitrate (in bits) of the channel.
+        , channelUserLimit:: Integer -- ^ The user limit of the voice channel.
+        }
+    -- | DM Channels represent a one-to-one conversation between two users, outside the scope
+    --   of guilds
+    | DirectMessage 
+        { channelId          :: Snowflake
+        , channelRecipients  :: [User]    -- ^ The 'User' object(s) of the DM recipient(s).
+        , channelLastMessage :: Snowflake
+        } deriving (Show, Eq)
 
-  -- |Allows a channel datatype to be generated using a JSON response by Discord.
   instance FromJSON Channel where
     parseJSON = withObject "text or voice" $ \o -> do
-      private <- o .:? "is_private" .!= False
-      if not private then do
-        type' <- (o .: "type") :: Parser Text
-        case type' of
-          "text" ->
-              Text  <$> o .: "id"
-                    <*> o .: "guild_id"
-                    <*> o .: "name"
-                    <*> o .: "position"
-                    <*> o .: "permission_overwrites"
-                    <*> o .: "topic"
-                    <*> o .: "last_message_id"
-          "voice" ->
-              Voice <$> o .: "id"
-                    <*> o .: "guild_id"
-                    <*> o .: "name"
-                    <*> o .: "position"
-                    <*> o .: "permission_overwrites"
-                    <*> o .: "bitrate"
-                    <*> o .: "user_limit"
-          _ -> mzero
+      type' <- (o .: "type") :: Parser Int
+      case type' of
+        0 ->
+            Text  <$> o .:  "id"
+                  <*> o .:  "guild_id"
+                  <*> o .:  "name"
+                  <*> o .:  "position"
+                  <*> o .:  "permission_overwrites"
+                  <*> o .:? "topic" .!= ""
+                  <*> o .:? "last_message_id" .!= 0
+        1 ->
+            DirectMessage <$> o .:  "id"
+                          <*> o .:  "recipients"
+                          <*> o .:? "last_message_id" .!= 0
+        2 ->
+            Voice <$> o .: "id"
+                  <*> o .: "guild_id"
+                  <*> o .: "name"
+                  <*> o .: "position"
+                  <*> o .: "permission_overwrites"
+                  <*> o .: "bitrate"
+                  <*> o .: "user_limit"
+        _ -> mzero
 
-      else DirectMessage <$> o .: "id"
-                         <*> o .: "recipients"
-                         <*> o .: "last_message_id"
   -- | Permission overwrites for a channel.
-  data Overwrite = Overwrite {
-    -- |An id of an overwrite's target which is a role or a member.
-    overwriteId:: Snowflake,
-    -- |A type of an overwrite target.
-    overWriteType:: String,
-    -- |Allowed permission bits for a channel.
-    overwriteAllow:: Integer,
-    -- |Denied permission bits for a channel.
-    overwriteDeny:: Integer
+  data Overwrite = Overwrite 
+    { overwriteId:: {-# UNPACK #-} !Snowflake -- ^ 'Role' or 'User' id
+    , overWriteType:: String                  -- ^ Either "role" or "member
+    , overwriteAllow:: Integer                -- ^ Allowed permission bit set
+    , overwriteDeny:: Integer                 -- ^ Denied permission bit set
     } deriving (Show, Eq)
 
-  -- |Allows a channel's permissions datatype to be generated using a JSON response by Discord.
   instance FromJSON Overwrite where
     parseJSON (Object o) =
       Overwrite <$> o .: "id"
@@ -139,39 +117,31 @@ module Network.Discord.Types.Channel where
                 <*> o .: "deny"
     parseJSON _ = mzero
 
-  -- |Represents information about a message in a Discord channel.
-  data Message = Message{
-    -- |A unique, timestamp based id.
-    messageId:: Snowflake,
-    -- |The Id of a target channel.
-    messageChannel:: Snowflake,
-    -- |The person that sent the message.
-    messageAuthor:: User,
-    -- |The content of message.
-    messageContent:: Text,
-    -- |Time when the message was sent.
-    messageTimestamp:: UTCTime,
-    -- |Time when the message was edited.
-    messageEdited:: Maybe UTCTime,
-    -- |True if message was sent with tts command.
-    messageTts:: Bool,
-    -- |True if message mentions here or everyone.
-    messageEveryone:: Bool,
-    -- |List of users mentioned by message.
-    messageMentions:: [User],
-    -- |List of roles mentioned by message.
-    messageMentionRoles:: [Snowflake],
-    -- |List of attached to message files.
-    messageAttachments:: [Attachment],
-    -- |List of embeds that the message contains.
-    messageEmbeds:: [Embed],
-    -- |A timestamp used to clarify message order.
-    messageNonce:: Maybe Snowflake,
-    -- |True if message is pinned in current channel.
-    messagePinned:: Bool
+  -- | Represents information about a message in a Discord channel.
+  data Message = Message
+    { messageId           :: {-# UNPACK #-} !Snowflake -- ^ The id of the message
+    , messageChannel      :: {-# UNPACK #-} !Snowflake -- ^ Id of the channel the message
+                                                       --   was sent in
+    , messageAuthor       :: User                      -- ^ The 'User' the message was sent
+                                                       --   by
+    , messageContent      :: Text                      -- ^ Contents of the message
+    , messageTimestamp    :: UTCTime                   -- ^ When the message was sent
+    , messageEdited       :: Maybe UTCTime             -- ^ When/if the message was edited
+    , messageTts          :: Bool                      -- ^ Whether this message was a TTS
+                                                       --   message
+    , messageEveryone     :: Bool                      -- ^ Whether this message mentions
+                                                       --   everyone
+    , messageMentions     :: [User]                    -- ^ 'User's specifically mentioned in
+                                                       --   the message
+    , messageMentionRoles :: [Snowflake]               -- ^ 'Role's specifically mentioned in
+                                                       --   the message
+    , messageAttachments  :: [Attachment]              -- ^ Any attached files
+    , messageEmbeds       :: [Embed]                   -- ^ Any embedded content
+    , messageNonce        :: Maybe Snowflake           -- ^ Used for validating if a message
+                                                       --   was sent
+    , messagePinned       :: Bool                      -- ^ Whether this message is pinned
     } deriving (Show, Eq)
 
-  -- |Allows a message datatype to be generated using a JSON response by Discord.
   instance FromJSON Message where
     parseJSON (Object o) =
       Message <$> o .:  "id"
@@ -191,24 +161,16 @@ module Network.Discord.Types.Channel where
     parseJSON _ = mzero
 
   -- |Represents an attached to a message file.
-  data Attachment = Attachment{
-    -- |A unique, timestamp based id.
-    attachmentId:: Snowflake,
-    -- |The attachment's filename.
-    attachmentFilename:: String,
-    -- |The attachment's file size in bytes.
-    attachmentSize:: Integer,
-    -- |The CDN URL this attachment can be downloaded at.
-    attachmentUrl:: String,
-    -- |The attachment's proxy URL.
-    attachmentProxy:: String,
-    -- |If an image, the height of it, in pixels
-    attachmentHeight:: Maybe Integer,
-    -- |If an image, the width of it, in pixels
-    attachmentWidth:: Maybe Integer
+  data Attachment = Attachment
+    { attachmentId       :: {-# UNPACK #-} !Snowflake -- ^ Attachment id
+    , attachmentFilename :: String                    -- ^ Name of attached file
+    , attachmentSize     :: Integer                   -- ^ Size of file (in bytes)
+    , attachmentUrl      :: String                    -- ^ Source of file
+    , attachmentProxy    :: String                    -- ^ Proxied url of file
+    , attachmentHeight   :: Maybe Integer             -- ^ Height of file (if image)
+    , attachmentWidth    :: Maybe Integer             -- ^ Width of file (if image)
     } deriving (Show, Eq)
 
-  -- |Allows a message's attachment to be generated using a JSON response by Discord.
   instance FromJSON Attachment where
     parseJSON (Object o) =
       Attachment <$> o .:  "id"
@@ -222,20 +184,23 @@ module Network.Discord.Types.Channel where
 
   -- |An embed attached to a message.
   data Embed = Embed
-    String
-    String
-    String
-    String
-    [SubEmbed]
-    deriving (Show, Eq)
+    { embedTitle  :: String     -- ^ Title of the embed
+    , embedType   :: String     -- ^ Type of embed (Always "rich" for webhooks)
+    , embedDesc   :: String     -- ^ Description of embed
+    , embedUrl    :: String     -- ^ URL of embed
+    , embedTime   :: UTCTime    -- ^ The time of the embed content
+    , embedColor  :: Integer    -- ^ The embed color
+    , embedFields ::[SubEmbed]  -- ^ Fields of the embed
+    } deriving (Show, Read, Eq)
 
-  -- |Allows a message's embed to be generated using a JSON response by Discord.
   instance FromJSON Embed where
     parseJSON (Object o) = 
       Embed <$> o .:? "title" .!= "Untitled"
             <*> o .:  "type"
             <*> o .:? "description" .!= ""
             <*> o .:? "url" .!= ""
+            <*> o .:? "timestamp" .!= epochTime
+            <*> o .:? "color" .!= 0
             <*> sequence (HM.foldrWithKey to_embed [] o)
       where
         to_embed k (Object v) a
@@ -275,13 +240,66 @@ module Network.Discord.Types.Channel where
 
     parseJSON _ = mzero
 
+  instance ToJSON Embed where
+    toJSON (Embed {..}) = object 
+      [ "title"       .= embedTitle
+      , "type"        .= embedType
+      , "description" .= embedDesc
+      , "url"         .= embedUrl
+      , "timestamp"   .= embedTime
+      , "color"       .= embedColor
+      ] |> makeSubEmbeds embedFields
+      where
+        (Object o) |> hm = Object $ HM.union o hm
+        _ |> _ = error "Type mismatch"
+        makeSubEmbeds = foldr embed HM.empty
+        embed (Thumbnail url _ height width) =
+          HM.alter (\_ -> Just $ object
+            [ "url"    .= url
+            , "height" .= height
+            , "width"  .= width
+            ]) "thumbnail"
+        embed (Image url _ height width) = 
+          HM.alter (\_ -> Just $ object
+            [ "url"    .= url
+            , "height" .= height
+            , "width"  .= width
+            ]) "image"
+        embed (Author name url icon _) =
+          HM.alter (\_ -> Just $ object
+            [ "name"     .= name
+            , "url"      .= url
+            , "icon_url" .= icon
+            ]) "author"
+        embed (Footer text icon _) = 
+          HM.alter (\_ -> Just $ object
+            [ "text"     .= text
+            , "icon_url" .= icon
+            ]) "footer"
+        embed (Field name value inline) =
+          HM.alter (\val -> case val of
+            Just (Array a) -> Just . Array $ V.cons (object
+              [ "name"   .= name
+              , "value"  .= value
+              , "inline" .= inline
+              ]) a
+            _ -> Just $ toJSON [
+              object
+                [ "name"   .= name
+                , "value"  .= value
+                , "inline" .= inline
+                ]
+              ]
+          ) "fields"
+        embed _ = id
+
   -- |Represents a part of an embed.
-  data SubEmbed =
-      Thumbnail
-        String
-        String
-        Integer
-        Integer
+  data SubEmbed
+    = Thumbnail
+        String 
+        String 
+        Integer 
+        Integer 
     | Video
         String
         Integer
@@ -307,4 +325,4 @@ module Network.Discord.Types.Channel where
         String
         String
         Bool
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
