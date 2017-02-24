@@ -1,18 +1,12 @@
-{-# OPTIONS_GHC -Wno-orphans #-}
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings, FlexibleInstances, DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
-  import Data.Version     (showVersion)
 
-  import Control.Exception (throwIO)
-  import qualified Network.HTTP.Req as R
-
-  import Data.Semigroup ((<>))
   import Data.Aeson
-  import Data.ByteString.Char8 (pack)
+
   import Data.Default
   import Data.Hashable
   import Data.Time.Clock.POSIX
@@ -20,29 +14,6 @@ module Network.Discord.Rest.Prelude where
   import qualified Control.Monad.State as St
 
   import Network.Discord.Types
-  import Paths_discord_hs (version)
-
-  -- | Read function specialized for Integers
-  readInteger :: String -> Integer
-  readInteger = read
-
-  -- | Setup Req
-  instance R.MonadHttp IO where
-    handleHttpException = throwIO
-
-  -- | The base url (Req) for API requests
-  baseUrl :: R.Url 'R.Https
-  baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
-    where apiVersion = "v6"
-
-  -- | Construct base options with auth from Discord state
-  baseRequestOptions :: DiscordM (R.Option 'R.Https)
-  baseRequestOptions = do
-    DiscordState {getClient=client} <- St.get
-    return $ R.header "Authorization" (pack . show $ getAuth client)
-          <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-                                        ++ showVersion version ++ ")")
-          <> R.header "Content-Type" "application/json" -- FIXME: I think Req appends it
 
   -- | The base url for API requests
   baseURL :: String

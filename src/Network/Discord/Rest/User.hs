@@ -1,21 +1,17 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE DataKinds, ScopedTypeVariables #-}
 -- | Provide actions for User API interactions.
 module Network.Discord.Rest.User
   (
     UserRequest(..)
   ) where
-    import Control.Monad (when)
-    import Data.Maybe (fromMaybe)
 
     import Control.Concurrent.STM
-    import Control.Monad.Morph (lift)
     import Data.Aeson
     import Data.Hashable
 
     import qualified Network.HTTP.Req as R
-    import Data.ByteString.Char8 as B (unpack)
-    import Data.ByteString.Lazy as LBS
     import Data.Text as T
 
     import Data.Time.Clock.POSIX
@@ -23,6 +19,7 @@ module Network.Discord.Rest.User
 
     import Network.Discord.Rest.Prelude
     import Network.Discord.Types as Dc
+    import qualified Network.Discord.Rest.HTTP as HTTP
 
     -- | Data constructor for User requests. See
     --   <https://discordapp.com/developers/docs/resources/user User API>
@@ -78,36 +75,17 @@ module Network.Discord.Rest.User
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    fetch :: FromJSON a => UserRequest a -> DiscordM a
-    fetch request = do
-      opts <- baseRequestOptions
-      let makeUrl c = baseUrl R./: "users" R./~ (T.pack c)
-      let get c = (R.req R.GET (makeUrl c) R.NoReqBody R.lbsResponse opts) :: IO R.LbsResponse
-      (resp, rlRem, rlNext) <- lift $ do
-        resp :: R.LbsResponse <- case request of
-
+    doRequest :: (ToJSON a, FromJSON b) => HTTP.Methods a -> UserRequest b -> IO HTTP.Response
+    doRequest (get, post, patch, _, delete) request = return =<< case request of
           GetCurrentUser -> get "@me"
-
           GetUser user -> get $ show user
-
-          ModifyCurrentUser patch -> R.req R.PATCH (makeUrl "@me")
-                                           (R.ReqBodyJson patch) R.lbsResponse opts
-
+          ModifyCurrentUser p -> patch "@me" p
           GetCurrentUserGuilds range -> get $ "@me/guilds?" ++ toQueryString range
-
-          LeaveGuild guild -> R.req R.DELETE (makeUrl $ "@me/guilds/" ++ show guild)
-                                                R.NoReqBody R.lbsResponse opts
-
+          LeaveGuild guild -> delete $ "@me/guilds/" ++ show guild
           GetUserDMs -> get "@me/channels"
-
           CreateDM (Snowflake user) -> let payload = object ["recipient_id" .= user]
-                                       in R.req R.POST (makeUrl $ "@me/channels")
-                                            (R.ReqBodyJson payload) R.lbsResponse opts
+                                       in post "@me/channels" (Just payload)
 
-        let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
-            -- justRight . eitherDecodeStrict $
-        return (justRight $ eitherDecode $ (R.responseBody resp :: LBS.ByteString),
-                parseIntFrom "X-RateLimit-Remaining", parseIntFrom "X-RateLimit-Reset")
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp
+    fetch :: (FromJSON b, ToJSON a) => UserRequest b -> DiscordM b
+    fetch = HTTP.fetch HTTP.User doRequest
 

@@ -112,6 +112,16 @@ module Network.Discord.Rest.Channel
         waitRateLimit req
         SyncFetched <$> fetch req
 
+  -- | Construct base options with auth from Discord state
+  baseRequestOptions :: DiscordM (R.Option 'R.Https)
+  baseRequestOptions = do
+    DiscordState {getClient=client} <- St.get
+    return $ R.header "Authorization" (pack . show $ getAuth client)
+          <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
+                                        ++ showVersion version ++ ")")
+          <> R.header "Content-Type" "application/json" -- FIXME: I think Req appends it
+
+
     -- |Sends a request, used by doFetch.
     fetch :: FromJSON a => ChannelRequest a -> DiscordM a
     fetch request = do

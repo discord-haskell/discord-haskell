@@ -32,6 +32,7 @@ library
   other-modules:       Paths_discord_hs
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Prelude
+                     , Network.Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base==4.*
                      , aeson==1.0.*

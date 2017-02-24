@@ -182,6 +182,16 @@ module Network.Discord.Rest.Guild
         waitRateLimit req
         SyncFetched <$> fetch req
 
+  -- | Construct base options with auth from Discord state
+  baseRequestOptions :: DiscordM (R.Option 'R.Https)
+  baseRequestOptions = do
+    DiscordState {getClient=client} <- St.get
+    return $ R.header "Authorization" (pack . show $ getAuth client)
+          <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
+                                        ++ showVersion version ++ ")")
+          <> R.header "Content-Type" "application/json" -- FIXME: I think Req appends it
+
+
     fetch :: FromJSON a => GuildRequest a -> DiscordM a
     fetch request = do
       opts <- baseRequestOptions
