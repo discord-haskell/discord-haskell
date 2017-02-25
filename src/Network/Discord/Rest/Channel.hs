@@ -5,22 +5,20 @@ module Network.Discord.Rest.Channel
   (
     ChannelRequest(..)
   ) where
-    import Control.Monad (when)
 
     import Control.Concurrent.STM
-    import Control.Lens
-    import Control.Monad.Morph (lift)
     import Data.Aeson
-    import Data.ByteString.Lazy
     import Data.Hashable
-    import Data.Monoid ((<>))
-    import Data.Text
+
+    import Data.Semigroup ((<>))
+    import Data.Text as T hiding (map, foldr)
+
     import Data.Time.Clock.POSIX
-    import Network.Wreq
     import qualified Control.Monad.State as ST (get, liftIO)
 
     import Network.Discord.Rest.Prelude
     import Network.Discord.Types as Dc
+    import qualified Network.Discord.Rest.HTTP as HTTP
 
     -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
     data ChannelRequest a where
@@ -37,7 +35,7 @@ module Network.Discord.Rest.Channel
       -- | Sends a message to a channel.
       CreateMessage           :: Snowflake -> Text -> Maybe Embed -> ChannelRequest Message
       -- | Sends a message with a file to a channel.
-      UploadFile              :: Snowflake -> Text -> ByteString -> ChannelRequest Message
+      UploadFile              :: Snowflake -> Text -> FilePath -> ChannelRequest Message
       -- | Edits a message content.
       EditMessage             :: Message   -> Text -> Maybe Embed -> ChannelRequest Message
       -- | Deletes a message.
@@ -107,85 +105,45 @@ module Network.Discord.Rest.Channel
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    -- |Sends a request, used by doFetch.
-    fetch :: FromJSON a => ChannelRequest a -> DiscordM a
-    fetch request = do
-      req  <- baseRequest
-      (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetChannel chan -> getWith req
-            (baseURL ++ "/channels/" ++ show chan)
 
-          ModifyChannel chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/channels/" ++ show chan)
-            (toJSON patch)
+    doRequest :: (FromJSON b) => HTTP.Methods -> ChannelRequest b -> IO HTTP.Response
+    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = return =<< case request of
+          GetChannel chan -> get $ show chan
+          ModifyChannel chan patch' ->  patch (show chan) patch'
+          DeleteChannel chan ->  delete' (show chan)
+          GetChannelMessages chan patch' -> let args = patch' >>= arg
+                                                arg (k,v) = (T.unpack k ++ "=" ++ show v) --FIXME: escape
+                                           in get (show chan++"/messages?"++args)
+          GetChannelMessage chan msg -> get (show chan++"/messages/"++show msg)
+          CreateMessage chan msg em -> let payload = object $ ["content" .= msg] <> maybeEmbed em
+                                       in post (show chan++"/messages") payload
+          -- TODO: pass json as form, construct proper form-data
+          -- https://hackage.haskell.org/package/req-0.2.0/docs/Network-HTTP-Req.html#t:ReqBodyMultipart
+          UploadFile chan msg file -> let payload = object ["content" .= msg, "file" .= file]
+                                          --mpd = R.header "Content-Type" "multipart/form-data"
+                                      in post (show chan++"/messages") payload
+          EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new em ->
+            let payload = object $ ["content" .= new] <> maybeEmbed em
+            in patch (show chan++"/messages/"++show msg) payload
+          DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) -> delete' (show chan++"/messages/"++show msg)
+          BulkDeleteMessage chan msgs -> let payload = object ["messages" .= msgs']
+                                             msgs' = Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
+                                         in post (show chan++"/messages/bulk-delete") payload
+          EditChannelPermissions chan perm patch' -> put (show chan++"/permissions/"++show perm) patch'
+          GetChannelInvites chan -> get (show chan++"/invites")
+          CreateChannelInvite chan patch' -> post (show chan++"/invites") patch'
+          DeleteChannelPermission chan perm ->  delete' (show chan++"/permissions/"++show perm)
+          TriggerTypingIndicator chan -> post (show chan++"/typing") noPayload
+          GetPinnedMessages chan -> get (show chan++"/pins")
+          AddPinnedMessage chan msg -> put (show chan++"/pins/"++show msg) noPayload
+          DeletePinnedMessage chan msg ->  delete' (show chan++"/pins/"++show msg)
 
-          DeleteChannel chan -> deleteWith req
-            (baseURL ++ "/channels/" ++ show chan)
-
-          GetChannelMessages chan patch -> getWith
-            (Prelude.foldr (\(k, v) -> param k .~ [v]) req patch)
-            (baseURL ++ "/channels/" ++ show chan ++ "/messages")
-
-          GetChannelMessage chan msg -> getWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
-
-          CreateMessage chan msg embed -> postWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/messages")
-            (object $ [("content", toJSON msg)] <> maybeEmbed embed)
-
-          UploadFile chan msg file -> postWith
-            (req & header "Content-Type" .~ ["multipart/form-data"])
-            (baseURL ++ "/channels/" ++ show chan ++ "/messages")
-            ["content" := msg, "file" := file]
-
-          EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
-            customPayloadMethodWith "PATCH" req
-              (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
-              (object $ [("content", toJSON new)] <> maybeEmbed embed)
-
-          DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-            deleteWith req
-              (baseURL ++ "/channels/" ++ show chan ++ "/messages/" ++ show msg)
-
-          BulkDeleteMessage chan msgs -> postWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/messages/bulk-delete")
-            (object
-              [("messages", toJSON
-                $ Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs)])
-
-          EditChannelPermissions chan perm patch -> putWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/permissions/" ++ show perm)
-            (toJSON patch)
-
-          GetChannelInvites chan -> getWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/invites")
-
-          CreateChannelInvite chan patch -> postWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/invites")
-            (toJSON patch)
-
-          DeleteChannelPermission chan perm -> deleteWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/permissions/" ++ show perm)
-
-          TriggerTypingIndicator chan -> postWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/typing")
-            (toJSON ([]::[Int]))
-
-          GetPinnedMessages chan -> getWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/pins")
-
-          AddPinnedMessage chan msg -> putWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/pins/" ++ show msg)
-            (toJSON ([]::[Int]))
-
-          DeletePinnedMessage chan msg -> deleteWith req
-            (baseURL ++ "/channels/" ++ show chan ++ "/pins/" ++ show msg)
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp
       where
         maybeEmbed :: Maybe Embed -> [(Text, Value)]
-        maybeEmbed = maybe [] $ \embed -> [("embed", toJSON embed)]
+        maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
+        noPayload = []::[Int]
+
+    -- |Sends a request, used by doFetch.
+    fetch :: (FromJSON b) => ChannelRequest b -> DiscordM b
+    fetch = HTTP.fetch HTTP.Channel doRequest
+

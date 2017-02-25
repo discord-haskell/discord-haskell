@@ -1,43 +1,23 @@
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
-  import Data.Version     (showVersion)
 
-  import Control.Lens
   import Data.Aeson
-  import Data.ByteString.Char8 (pack)
+
   import Data.Default
   import Data.Hashable
   import Data.Time.Clock.POSIX
-  import Network.Wreq
   import System.Log.Logger
   import qualified Control.Monad.State as St
 
   import Network.Discord.Types
-  import Paths_discord_hs (version)
-
-  -- | Read function specialized for Integers
-  readInteger :: String -> Integer
-  readInteger = read
 
   -- | The base url for API requests
   baseURL :: String
   baseURL = "https://discordapp.com/api/v6"
-
-  -- | Construct base request with auth from Discord state
-  baseRequest :: DiscordM Options
-  baseRequest = do
-    DiscordState {getClient=client} <- St.get
-    return $ defaults
-      & header "Authorization" .~ [pack . show $ getAuth client]
-      & header "User-Agent"    .~
-        [pack  $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-          ++ showVersion version
-          ++ ")"]
-      & header "Content-Type" .~ ["application/json"]
 
   -- | Class for rate-limitable actions
   class RateLimit a where
@@ -90,3 +70,4 @@ module Network.Discord.Rest.Prelude where
   toQueryString :: Range -> String
   toQueryString (Range a b l) = 
     "after=" ++ show a ++ "&before=" ++ show b ++ "&limit=" ++ show l
+

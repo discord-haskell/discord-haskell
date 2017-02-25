@@ -27,12 +27,12 @@ library
                      , Network.Discord.Types
                      , Network.Discord.Types.Channel
                      , Network.Discord.Types.Guild
+                     , Network.Discord.Types.Prelude
                      , Network.Discord.Types.Events
                      , Network.Discord.Types.Gateway
   other-modules:       Paths_discord_hs
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Prelude
-                     , Network.Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base==4.*
                      , aeson==1.0.*
@@ -42,6 +42,7 @@ library
                      , data-default==0.7.*
                      , hashable==1.2.*
                      , hslogger==1.2.*
+                     , lens==4.15.*
                      , mmorph==1.0.*
                      , mtl==2.2.*
                      , pipes==4.3.*
@@ -54,7 +55,7 @@ library
                      , url==2.1.*
                      , vector==0.11.*
                      , websockets==0.10.*
-                     , req==0.2.*
+                     , req==0.5.*
                      , wuss==1.1.*
   ghc-options:         -Wall
   hs-source-dirs:      src

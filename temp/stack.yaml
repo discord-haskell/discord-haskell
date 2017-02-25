@@ -3,6 +3,7 @@ resolver: lts-8.0
 flags:
   time-locale-compat:
     old-locale: false
+flags: {}
 extra-package-dbs: []
 packages:
 - '.'

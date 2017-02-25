@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies, ExistentialQuantification, RankNTypes, MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ScopedTypeVariables, DatatypeContexts #-}
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
 module Network.Discord.Framework where
   import Control.Concurrent
@@ -27,7 +27,7 @@ module Network.Discord.Framework where
       undefined
       undefined
       limits
- 
+
   -- | Basic client implementation. Most likely suitable for most bots.
   data BotClient = BotClient Auth
   instance D.Client BotClient where
@@ -51,7 +51,7 @@ module Network.Discord.Framework where
   runAsync c effect = do
       client <- liftIO . atomically $ getSTMClient c
       st <- asyncState client
-      liftIO . void $ forkFinally 
+      liftIO . void $ forkFinally
         (execStateT (runEffect effect) st)
         finish
     where
@@ -63,7 +63,7 @@ module Network.Discord.Framework where
 
   -- | Event handlers for 'Gateway' events. These correspond to events listed in
   --   'Event'
-  data D.Client c => Handle c = Null                         
+  data D.Client c => Handle c = Null
                               | Misc                         (Event   -> Effect DiscordM ())
                               | ReadyEvent                   (Init    -> Effect DiscordM ())
                               | ResumedEvent                 (Object  -> Effect DiscordM ())

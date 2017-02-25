@@ -5,20 +5,18 @@ module Network.Discord.Rest.Guild
   (
     GuildRequest(..)
   ) where
-    import Control.Monad (when)
 
     import Control.Concurrent.STM
-    import Control.Lens
-    import Control.Monad.Morph (lift)
     import Data.Aeson
     import Data.Hashable
-    import Data.Text
+
+    import Data.Text as T
     import Data.Time.Clock.POSIX
-    import Network.Wreq
     import qualified Control.Monad.State as ST (get, liftIO)
 
     import Network.Discord.Rest.Prelude
     import Network.Discord.Types as Dc
+    import qualified Network.Discord.Rest.HTTP as HTTP
 
 
     -- | Data constructor for Guild requests. See 
@@ -29,7 +27,7 @@ module Network.Discord.Rest.Guild
       -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
       --   Guild Update 'Event'.
       ModifyGuild              :: ToJSON a => Snowflake -> a -> GuildRequest Guild
-      -- | Delete a guild permanently. User must be owner. Fires a Guild Delete 'Event'.
+      -- | delete' a guild permanently. User must be owner. Fires a Guild delete' 'Event'.
       DeleteGuild              :: Snowflake -> GuildRequest Guild
       -- | Returns a list of guild 'Channel' objects
       GetGuildChannels         :: Snowflake -> GuildRequest [Channel]
@@ -60,7 +58,7 @@ module Network.Discord.Rest.Guild
       -- | Returns a list of 'User' objects that are banned from this guild. Requires the
       --   'BAN_MEMBERS' permission
       GetGuildBans             :: Snowflake -> GuildRequest [User]
-      -- | Create a guild ban, and optionally delete previous messages sent by the banned
+      -- | Create a guild ban, and optionally delete' previous messages sent by the banned
       --   user. Requires the 'BAN_MEMBERS' permission. Fires a Guild Ban Add 'Event'.
       CreateGuildBan           :: Snowflake -> Snowflake -> Integer -> GuildRequest ()
       -- | Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions. 
@@ -80,8 +78,8 @@ module Network.Discord.Rest.Guild
       --   updated 'Role' on success. Fires a Guild Role Update 'Event's.
       ModifyGuildRole          :: ToJSON a => Snowflake -> Snowflake -> a 
                                     -> GuildRequest Role
-      -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
-      --   Delete 'Event'.
+      -- | delete' a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
+      --   delete' 'Event'.
       DeleteGuildRole          :: Snowflake -> Snowflake -> GuildRequest Role
       -- | Returns an object with one 'pruned' key indicating the number of members 
       --   that would be removed in a prune operation. Requires the 'KICK_MEMBERS' 
@@ -106,7 +104,7 @@ module Network.Discord.Rest.Guild
       -- | Modify the behavior and settings of a 'Integration' object for the guild.
       --   Requires the 'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
       ModifyGuildIntegration   :: ToJSON a => Snowflake -> Snowflake -> a -> GuildRequest ()
-      -- | Delete the attached 'Integration' object for the guild. Requires the 
+      -- | delete' the attached 'Integration' object for the guild. Requires the 
       --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
       DeleteGuildIntegration   :: Snowflake -> Snowflake -> GuildRequest ()
       -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
@@ -179,117 +177,44 @@ module Network.Discord.Rest.Guild
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    fetch :: FromJSON a => GuildRequest a -> DiscordM a
-    fetch request = do
-      req <- baseRequest
-      (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetGuild chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan)
-          
-          ModifyGuild chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/guilds/" ++ show chan)
-            (toJSON patch)
 
-          DeleteGuild chan -> deleteWith req
-            (baseURL ++ "/guilds/" ++ show chan)
+    doRequest :: (FromJSON b) => HTTP.Methods -> GuildRequest b -> IO HTTP.Response
+    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = return =<< case request of
+          GetGuild chan -> get $ show chan
+          ModifyGuild chan patch' -> patch (show chan) patch'
+          DeleteGuild chan -> delete' $ show chan
+          GetGuildChannels chan -> get (show chan++"/channels")
+          CreateGuildChannel chan patch' -> post (show chan++"/channels") patch'
+          ModifyChanPosition chan patch' -> patch (show chan ++ "/channels") patch'
+          GetGuildMember chan user -> get (show chan++"/members/"++show user)
+          ListGuildMembers chan range -> get (show chan++"/members?limit="++toQueryString range)
+          AddGuildMember chan user patch' -> put (show chan++"/members/"++show user) patch'
+          ModifyGuildMember chan user patch' ->  patch (show chan++"/members/"++show user) patch'
+          RemoveGuildMember chan user ->  delete' $ show chan++"/members/"++show user
+          GetGuildBans chan -> get (show chan++"/bans")
+          CreateGuildBan chan user msg -> let payload = object ["delete-message-days" .= msg]
+                                          in put (show chan++"/bans/"++show user) payload
+          RemoveGuildBan chan user ->  delete' (show chan++"/bans/"++show user)
+          GetGuildRoles chan -> get (show chan++"/roles")
+          CreateGuildRole chan -> post (show chan++"/roles") noPayload
+          ModifyGuildRolePositions chan pos -> post (show chan++"/roles") pos
+          ModifyGuildRole chan role patch' -> post (show chan++"/roles/"++show role) patch'
+          DeleteGuildRole chan role ->  delete' (show chan++"/roles/"++show role)
+          GetGuildPruneCount chan days -> get (show chan++"/prune?days="++show days)
+          BeginGuildPrune chan days -> post (show chan++"/prune?days="++show days) noPayload
+          GetGuildVoiceRegions chan -> get (show chan++"/regions")
+          GetGuildInvites chan -> get (show chan++"/invites")
+          GetGuildIntegrations chan -> get (show chan++"/integrations")
+          CreateGuildIntegration chan patch' -> post (show chan++"/integrations") patch'
+          ModifyGuildIntegration chan integ patch' -> patch (show chan++"/integrations/"++show integ) patch'
+          DeleteGuildIntegration chan integ -> delete' (show chan++"/integrations/"++show integ)
+          SyncGuildIntegration chan integ -> post (show chan++"/integrations/"++show integ) noPayload
+          GetGuildEmbed chan -> get (show chan++"/embed")
+          ModifyGuildEmbed chan embed -> patch (show chan++"/embed") embed
+      where
+        noPayload = []::[Int]
 
-          GetGuildChannels chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
 
-          CreateGuildChannel chan patch -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
-            (toJSON patch)
+    fetch :: (FromJSON b) => GuildRequest b -> DiscordM b
+    fetch = HTTP.fetch HTTP.Guild doRequest
 
-          ModifyChanPosition chan patch -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/channels")
-            (toJSON patch)
-
-          GetGuildMember chan user -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
-
-          ListGuildMembers chan range -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++"/members?" ++ toQueryString range)
-
-          AddGuildMember chan user patch -> customPayloadMethodWith "PUT" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
-            (toJSON patch)
-
-          ModifyGuildMember chan user patch -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/members/" ++ show user)
-            (toJSON patch)
-
-          RemoveGuildMember chan user -> deleteWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/members/"++ show user)
-
-          GetGuildBans chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/bans")
-
-          CreateGuildBan chan user msg -> customPayloadMethodWith "PUT" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/bans/" ++ show user)
-            ["delete-message-days" := msg]
-
-          RemoveGuildBan chan user -> deleteWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/bans/" ++ show user)
-
-          GetGuildRoles chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
-
-          CreateGuildRole chan -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
-            (toJSON (""::Text))
-
-          ModifyGuildRolePositions chan pos -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/roles")
-            (toJSON pos)
-
-          ModifyGuildRole chan role patch -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/roles/" ++ show role)
-            (toJSON patch)
-
-          DeleteGuildRole chan role -> deleteWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/roles/" ++ show role)
-
-          GetGuildPruneCount chan days -> getWith req
-            (baseURL++"/guilds/"++ show chan ++"/prune?days="++show days)
-
-          BeginGuildPrune chan days -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/prune?days=" ++ show days)
-            (toJSON (""::Text))
-
-          GetGuildVoiceRegions chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/regions")
-
-          GetGuildInvites chan -> getWith req 
-            (baseURL ++ "/guilds/" ++ show chan ++ "/invites")
-
-          GetGuildIntegrations chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations")
-
-          CreateGuildIntegration chan patch -> postWith req
-            (baseURL ++ "/guilds/"++ show chan ++ "/integrations")
-            (toJSON patch)
-
-          ModifyGuildIntegration chan integ patch -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
-            (toJSON patch)
-
-          DeleteGuildIntegration chan integ -> deleteWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
-
-          SyncGuildIntegration chan integ -> postWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/integrations/" ++ show integ)
-            (toJSON (""::Text))
-
-          GetGuildEmbed chan -> getWith req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/embed")
-          
-          ModifyGuildEmbed chan embed -> customPayloadMethodWith "PATCH" req
-            (baseURL ++ "/guilds/" ++ show chan ++ "/embed")
-            (toJSON embed)
-
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp

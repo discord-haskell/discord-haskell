@@ -94,3 +94,4 @@ module Network.Discord.Gateway where
   --   'Connection' to a stream of gateway 'Event's
   eventCore :: Connection -> Producer Event DiscordM ()
   eventCore conn = makeWebsocketSource conn >-> makeEvents
+

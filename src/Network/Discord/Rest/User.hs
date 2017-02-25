@@ -5,20 +5,19 @@ module Network.Discord.Rest.User
   (
     UserRequest(..)
   ) where
-    import Control.Monad (when)
 
     import Control.Concurrent.STM
-    import Control.Monad.Morph (lift)
-    import Control.Lens
     import Data.Aeson
     import Data.Hashable
-    import Data.Text
+
+    import Data.Text as T
+
     import Data.Time.Clock.POSIX
-    import Network.Wreq
     import qualified Control.Monad.State as ST (get, liftIO)
 
     import Network.Discord.Rest.Prelude
     import Network.Discord.Types as Dc
+    import qualified Network.Discord.Rest.HTTP as HTTP
 
     -- | Data constructor for User requests. See
     --   <https://discordapp.com/developers/docs/resources/user User API>
@@ -74,29 +73,17 @@ module Network.Discord.Rest.User
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    fetch :: FromJSON a => UserRequest a -> DiscordM a
-    fetch request = do
-      req <- baseRequest
-      (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetCurrentUser -> getWith req
-            "/users/@me"
-          GetUser user -> getWith req
-            ("/users/" ++ show user)
-          ModifyCurrentUser patch -> customPayloadMethodWith "PATCH" req
-            "/users/@me"
-            (toJSON patch)
-          GetCurrentUserGuilds range -> getWith req
-            ("/users/@me/guilds?" ++ toQueryString range)
-          LeaveGuild guild -> deleteWith req
-            ("/users/@me/guilds/" ++ show guild)
-          GetUserDMs -> getWith req
-            "/users/@me/channels"
-          CreateDM (Snowflake user) -> postWith req
-            "/users/@me/channels"
-            ["recipient_id" := user]
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp
+    doRequest :: (FromJSON b) => HTTP.Methods -> UserRequest b -> IO HTTP.Response
+    doRequest (get, HTTP.Post post, _, HTTP.Patch patch, delete') request = return =<< case request of
+          GetCurrentUser -> get "@me"
+          GetUser user -> get $ show user
+          ModifyCurrentUser p -> patch "@me" p
+          GetCurrentUserGuilds range -> get $ "@me/guilds?" ++ toQueryString range
+          LeaveGuild guild -> delete' $ "@me/guilds/" ++ show guild
+          GetUserDMs -> get "@me/channels"
+          CreateDM (Snowflake user) -> let payload = object ["recipient_id" .= user]
+                                       in post "@me/channels" payload
+
+    fetch :: (FromJSON b) => UserRequest b -> DiscordM b
+    fetch = HTTP.fetch HTTP.User doRequest
+
