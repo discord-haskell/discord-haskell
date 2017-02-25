@@ -74,7 +74,7 @@ module Network.Discord.Rest.User
         SyncFetched <$> fetch req
 
     doRequest :: (FromJSON b) => HTTP.Methods -> UserRequest b -> IO HTTP.Response
-    doRequest (get, HTTP.Post post, _, HTTP.Patch patch, delete') request = return =<< case request of
+    doRequest (get, HTTP.Post post, _, HTTP.Patch patch, delete') request = case request of
           GetCurrentUser -> get "@me"
           GetUser user -> get $ show user
           ModifyCurrentUser p -> patch "@me" p
