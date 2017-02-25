@@ -5,7 +5,7 @@
 -- | Provide actions for User API interactions.
 module Network.Discord.Rest.HTTP
   (
-    fetch, Resource(..), Methods, Response
+    fetch, Resource(..), Methods, Response, Post(..), Patch(..), Put(..), baseUrl
   ) where
     import Control.Monad (when)
     import Data.Maybe (fromMaybe)
@@ -59,24 +59,25 @@ module Network.Discord.Rest.HTTP
     type Option = R.Option 'R.Https
     type Response = R.LbsResponse
     type Get = String -> IO Response
-    type Post = forall a. ToJSON a => String -> Maybe a -> IO Response
-    type Put = forall a. ToJSON a => String -> Maybe a -> IO Response
-    type Patch = forall a. ToJSON a => String -> Maybe a -> IO Response
+    newtype Post = Post {unPost :: forall a. ToJSON a => String -> a -> IO Response}
+    newtype Put = Put {unPut :: forall a. ToJSON a => String -> a -> IO Response}
+    newtype Patch = Patch {unPatch :: forall a. ToJSON a => String -> a -> IO Response}
     type Delete = String -> IO Response
-    newtype Methods = Methods (Get, Post, Put, Patch, Delete)
+    type Methods = (Get, Post, Put, Patch, Delete)
+    -- see https://ghc.haskell.org/trac/ghc/wiki/ImpredicativePolymorphism for unP*
 
     composeMethods :: Resource -> Option -> Methods
-    composeMethods res opts = (get, post, put, patch, delete)
+    composeMethods res opts = (get, Post post, Put put, Patch patch, delete)
       where get item = (R.req R.GET (makeUrl item) R.NoReqBody R.lbsResponse opts)
             post item payload = p R.POST item payload
             put item payload = p R.PUT item payload
             patch item payload = p R.PATCH item payload
-            p :: (R.HttpMethod m, R.HttpBodyAllowed (R.AllowsBody m) 'R.CanHaveBody, ToJSON q) => m -> String -> Maybe q -> IO Response
-            p m item Nothing = R.req m (makeUrl item) emptyJsonBody R.lbsResponse opts
-            p m item (Just payload) = R.req m (makeUrl item) (R.ReqBodyJson payload) R.lbsResponse opts
+            p :: (R.HttpMethod m, R.HttpBodyAllowed (R.AllowsBody m) 'R.CanHaveBody, ToJSON q) => m -> String -> q -> IO Response
+            p m item payload = R.req m (makeUrl item) (R.ReqBodyJson payload) R.lbsResponse opts
             delete item = R.req R.DELETE (makeUrl item) R.NoReqBody R.lbsResponse opts
-            emptyJsonBody = R.ReqBodyJson "" :: R.ReqBodyJson T.Text
             makeUrl c = baseUrl R./: urlPart res R./~ (T.pack c)
+
+
 
     fetch :: (FromJSON b, RateLimit r) => Resource -> (Methods -> r -> IO Response) -> r -> DiscordM b
     fetch res doRequest request = do

@@ -1,31 +1,24 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, ScopedTypeVariables, DataKinds #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 -- | Provides actions for Channel API interactions
 module Network.Discord.Rest.Channel
   (
     ChannelRequest(..)
   ) where
 
-    import Data.Maybe (fromMaybe)
-
-    import Control.Monad (when)
-
     import Control.Concurrent.STM
-    import Control.Monad.Morph (lift)
     import Data.Aeson
     import Data.Hashable
 
     import Data.Semigroup ((<>))
-    import qualified Network.HTTP.Req as R
-    import qualified Data.ByteString.Char8 as B (unpack)
-    import qualified Data.ByteString.Lazy as LBS
-    import Data.Text as T
+    import Data.Text as T hiding (map, foldr)
 
     import Data.Time.Clock.POSIX
     import qualified Control.Monad.State as ST (get, liftIO)
 
     import Network.Discord.Rest.Prelude
     import Network.Discord.Types as Dc
+    import qualified Network.Discord.Rest.HTTP as HTTP
 
     -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
     data ChannelRequest a where
@@ -112,95 +105,45 @@ module Network.Discord.Rest.Channel
         waitRateLimit req
         SyncFetched <$> fetch req
 
-  -- | Construct base options with auth from Discord state
-  baseRequestOptions :: DiscordM (R.Option 'R.Https)
-  baseRequestOptions = do
-    DiscordState {getClient=client} <- St.get
-    return $ R.header "Authorization" (pack . show $ getAuth client)
-          <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-                                        ++ showVersion version ++ ")")
-          <> R.header "Content-Type" "application/json" -- FIXME: I think Req appends it
 
-
-    -- |Sends a request, used by doFetch.
-    fetch :: FromJSON a => ChannelRequest a -> DiscordM a
-    fetch request = do
-      opts <- baseRequestOptions
-      let makeUrl c = baseUrl R./: "channels" R./~ (T.pack c)
-      let emptyJsonBody = R.ReqBodyJson "" :: R.ReqBodyJson Text
-      let get c = (R.req R.GET (makeUrl c) R.NoReqBody R.lbsResponse opts) :: IO R.LbsResponse
-      (resp, rlRem, rlNext) <- lift $ do
-        resp :: R.LbsResponse <- case request of
-
+    doRequest :: (FromJSON b) => HTTP.Methods -> ChannelRequest b -> IO HTTP.Response
+    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = return =<< case request of
           GetChannel chan -> get $ show chan
-
-          ModifyChannel chan patch ->  R.req R.PATCH (makeUrl $ show chan)
-                                             (R.ReqBodyJson patch) R.lbsResponse opts
-
-
-          DeleteChannel chan ->  R.req R.DELETE (makeUrl $ show chan)
-                                       R.NoReqBody R.lbsResponse opts
-
-          GetChannelMessages chan patch -> let opts' :: R.Option 'R.Https = Prelude.foldr (<>) opts (Prelude.map option patch)
-                                               option (k,v) = (k R.=: v) :: R.Option 'R.Https
-                                           in R.req R.GET (makeUrl $ show chan++"/messages") R.NoReqBody R.lbsResponse opts'
-
+          ModifyChannel chan patch' ->  patch (show chan) patch'
+          DeleteChannel chan ->  delete' (show chan)
+          GetChannelMessages chan patch' -> let args = patch' >>= arg
+                                                arg (k,v) = (T.unpack k ++ "=" ++ show v) --FIXME: escape
+                                           in get (show chan++"/messages?"++args)
           GetChannelMessage chan msg -> get (show chan++"/messages/"++show msg)
-
           CreateMessage chan msg em -> let payload = object $ ["content" .= msg] <> maybeEmbed em
-                                       in R.req R.POST (makeUrl $ show chan++"/messages")
-                                                (R.ReqBodyJson payload) R.lbsResponse opts
-
+                                       in post (show chan++"/messages") payload
           -- TODO: pass json as form, construct proper form-data
           -- https://hackage.haskell.org/package/req-0.2.0/docs/Network-HTTP-Req.html#t:ReqBodyMultipart
           UploadFile chan msg file -> let payload = object ["content" .= msg, "file" .= file]
                                           --mpd = R.header "Content-Type" "multipart/form-data"
-                                      in R.req R.POST (makeUrl $ show chan++"/messages")
-                                             (R.ReqBodyJson payload) R.lbsResponse opts -- (opts<>mpd)
-
+                                      in post (show chan++"/messages") payload
           EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new em ->
             let payload = object $ ["content" .= new] <> maybeEmbed em
-            in R.req R.PATCH (makeUrl $ show chan++"/messages/"++show msg)
-                     (R.ReqBodyJson payload) R.lbsResponse opts
-
-
-          DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) ->
-             R.req R.DELETE (makeUrl $ show chan++"/messages/"++show msg) R.NoReqBody R.lbsResponse opts
-
+            in patch (show chan++"/messages/"++show msg) payload
+          DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) -> delete' (show chan++"/messages/"++show msg)
           BulkDeleteMessage chan msgs -> let payload = object ["messages" .= msgs']
                                              msgs' = Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
-                                         in R.req R.POST (makeUrl $ show chan++"/messages/bulk-delete")
-                                                  (R.ReqBodyJson payload) R.lbsResponse opts
-
-
-          EditChannelPermissions chan perm patch -> R.req R.PUT (makeUrl $ show chan++"/permissions/"++show perm)
-                                                          (R.ReqBodyJson patch) R.lbsResponse opts
-
+                                         in post (show chan++"/messages/bulk-delete") payload
+          EditChannelPermissions chan perm patch' -> put (show chan++"/permissions/"++show perm) patch'
           GetChannelInvites chan -> get (show chan++"/invites")
-
-          CreateChannelInvite chan patch -> R.req R.POST (makeUrl $ show chan++"/invites")
-                                                  (R.ReqBodyJson patch) R.lbsResponse opts
-
-          DeleteChannelPermission chan perm ->  R.req R.DELETE (makeUrl $ show chan++"/permissions/"++show perm)
-                                                      R.NoReqBody R.lbsResponse opts
-
-          TriggerTypingIndicator chan -> R.req R.POST (makeUrl $ show chan++"/typing")
-                                               emptyJsonBody R.lbsResponse opts
-
+          CreateChannelInvite chan patch' -> post (show chan++"/invites") patch'
+          DeleteChannelPermission chan perm ->  delete' (show chan++"/permissions/"++show perm)
+          TriggerTypingIndicator chan -> post (show chan++"/typing") noPayload
           GetPinnedMessages chan -> get (show chan++"/pins")
+          AddPinnedMessage chan msg -> put (show chan++"/pins/"++show msg) noPayload
+          DeletePinnedMessage chan msg ->  delete' (show chan++"/pins/"++show msg)
 
-          AddPinnedMessage chan msg -> R.req R.PUT (makeUrl $ show chan++"/pins/"++show msg)
-                                             emptyJsonBody R.lbsResponse opts
-
-          DeletePinnedMessage chan msg ->  R.req R.DELETE (makeUrl $ show chan++"/pins/"++show msg)
-                                           R.NoReqBody R.lbsResponse opts
-
-        let parseIntFrom header = read $ B.unpack $ fromMaybe "0" $ R.responseHeader resp header -- FIXME: default int value
-            -- justRight . eitherDecodeStrict $
-        return (justRight $ eitherDecode $ (R.responseBody resp :: LBS.ByteString),
-                parseIntFrom "X-RateLimit-Remaining", parseIntFrom "X-RateLimit-Reset")
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp
       where
         maybeEmbed :: Maybe Embed -> [(Text, Value)]
         maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
+        noPayload = []::[Int]
+
+    -- |Sends a request, used by doFetch.
+    fetch :: (FromJSON b) => ChannelRequest b -> DiscordM b
+    fetch = HTTP.fetch HTTP.Channel doRequest
+

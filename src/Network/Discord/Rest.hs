@@ -26,6 +26,7 @@ module Network.Discord.Rest
     import Network.Discord.Rest.Guild
     import Network.Discord.Rest.Prelude
     import Network.Discord.Rest.User
+    import Network.Discord.Rest.HTTP (baseUrl)
 
     -- | Perform an API request.
     fetch :: (DoFetch a, Hashable a)

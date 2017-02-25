@@ -1,6 +1,5 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
-{-# LANGUAGE DataKinds, ScopedTypeVariables #-}
 -- | Provide actions for User API interactions.
 module Network.Discord.Rest.User
   (
@@ -11,7 +10,6 @@ module Network.Discord.Rest.User
     import Data.Aeson
     import Data.Hashable
 
-    import qualified Network.HTTP.Req as R
     import Data.Text as T
 
     import Data.Time.Clock.POSIX
@@ -75,17 +73,17 @@ module Network.Discord.Rest.User
         waitRateLimit req
         SyncFetched <$> fetch req
 
-    doRequest :: (ToJSON a, FromJSON b) => HTTP.Methods a -> UserRequest b -> IO HTTP.Response
-    doRequest (get, post, put, patch, delete) request = return =<< case request of
+    doRequest :: (FromJSON b) => HTTP.Methods -> UserRequest b -> IO HTTP.Response
+    doRequest (get, HTTP.Post post, _, HTTP.Patch patch, delete') request = return =<< case request of
           GetCurrentUser -> get "@me"
           GetUser user -> get $ show user
           ModifyCurrentUser p -> patch "@me" p
           GetCurrentUserGuilds range -> get $ "@me/guilds?" ++ toQueryString range
-          LeaveGuild guild -> delete $ "@me/guilds/" ++ show guild
+          LeaveGuild guild -> delete' $ "@me/guilds/" ++ show guild
           GetUserDMs -> get "@me/channels"
           CreateDM (Snowflake user) -> let payload = object ["recipient_id" .= user]
-                                       in post "@me/channels" (Just payload)
+                                       in post "@me/channels" payload
 
-    fetch :: (FromJSON b, ToJSON a) => UserRequest b -> DiscordM b
+    fetch :: (FromJSON b) => UserRequest b -> DiscordM b
     fetch = HTTP.fetch HTTP.User doRequest
 
