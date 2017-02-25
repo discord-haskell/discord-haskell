@@ -11,7 +11,7 @@ module Network.Discord.Rest.Channel
     import Data.Hashable
 
     import Data.Semigroup ((<>))
-    import Data.Text as T hiding (map, foldr)
+    import Data.Text as T hiding (map, tail)
 
     import Data.Time.Clock.POSIX
     import qualified Control.Monad.State as ST (get, liftIO)
@@ -107,12 +107,12 @@ module Network.Discord.Rest.Channel
 
 
     doRequest :: (FromJSON b) => HTTP.Methods -> ChannelRequest b -> IO HTTP.Response
-    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = return =<< case request of
+    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = case request of
           GetChannel chan -> get $ show chan
           ModifyChannel chan patch' ->  patch (show chan) patch'
           DeleteChannel chan ->  delete' (show chan)
-          GetChannelMessages chan patch' -> let args = patch' >>= arg
-                                                arg (k,v) = (T.unpack k ++ "=" ++ show v) --FIXME: escape
+          GetChannelMessages chan patch' -> let args = tail $ patch' >>= arg
+                                                arg (k,v) = ("&" ++ T.unpack k ++ "=" ++ show v) --FIXME: escape
                                            in get (show chan++"/messages?"++args)
           GetChannelMessage chan msg -> get (show chan++"/messages/"++show msg)
           CreateMessage chan msg em -> let payload = object $ ["content" .= msg] <> maybeEmbed em
@@ -127,7 +127,7 @@ module Network.Discord.Rest.Channel
             in patch (show chan++"/messages/"++show msg) payload
           DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) -> delete' (show chan++"/messages/"++show msg)
           BulkDeleteMessage chan msgs -> let payload = object ["messages" .= msgs']
-                                             msgs' = Prelude.map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
+                                             msgs' = map (\(Message msg _ _ _ _ _ _ _ _ _ _ _ _ _) -> msg) msgs
                                          in post (show chan++"/messages/bulk-delete") payload
           EditChannelPermissions chan perm patch' -> put (show chan++"/permissions/"++show perm) patch'
           GetChannelInvites chan -> get (show chan++"/invites")

@@ -179,7 +179,7 @@ module Network.Discord.Rest.Guild
 
 
     doRequest :: (FromJSON b) => HTTP.Methods -> GuildRequest b -> IO HTTP.Response
-    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = return =<< case request of
+    doRequest (get, HTTP.Post post, HTTP.Put put, HTTP.Patch patch, delete') request = case request of
           GetGuild chan -> get $ show chan
           ModifyGuild chan patch' -> patch (show chan) patch'
           DeleteGuild chan -> delete' $ show chan
