@@ -2,7 +2,7 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 {-# LANGUAGE DataKinds, ScopedTypeVariables, Rank2Types #-}
--- | Provide actions for User API interactions.
+-- | Provide HTTP primitives
 module Network.Discord.Rest.HTTP
   (
     fetch, Resource(..), Methods, Response, Post(..), Patch(..), Put(..), baseUrl
@@ -66,19 +66,20 @@ module Network.Discord.Rest.HTTP
     type Methods = (Get, Post, Put, Patch, Delete)
     -- see https://ghc.haskell.org/trac/ghc/wiki/ImpredicativePolymorphism for unP*
 
+    -- | Set baseUrl, auth etc and specify body/response types
     composeMethods :: Resource -> Option -> Methods
     composeMethods res opts = (get, Post post, Put put, Patch patch, delete)
       where get item = (R.req R.GET (makeUrl item) R.NoReqBody R.lbsResponse opts)
             post item payload = p R.POST item payload
             put item payload = p R.PUT item payload
             patch item payload = p R.PATCH item payload
-            p :: (R.HttpMethod m, R.HttpBodyAllowed (R.AllowsBody m) 'R.CanHaveBody, ToJSON q) => m -> String -> q -> IO Response
+            p :: (R.HttpMethod m, R.HttpBodyAllowed (R.AllowsBody m) 'R.CanHaveBody, ToJSON q)
+                  => m -> String -> q -> IO Response
             p m item payload = R.req m (makeUrl item) (R.ReqBodyJson payload) R.lbsResponse opts
             delete item = R.req R.DELETE (makeUrl item) R.NoReqBody R.lbsResponse opts
             makeUrl c = baseUrl R./: urlPart res R./~ (T.pack c)
 
-
-
+    -- | Generic fetch, supplies doRequset with method implementations
     fetch :: (FromJSON b, RateLimit r) => Resource -> (Methods -> r -> IO Response) -> r -> DiscordM b
     fetch res doRequest request = do
       opts <- baseRequestOptions
@@ -88,7 +89,6 @@ module Network.Discord.Rest.HTTP
         let parseInt = justRight . eitherDecodeStrict . fromMaybe "0" . R.responseHeader resp
         return (justRight $ eitherDecode $ R.responseBody resp,
                 parseInt "X-RateLimit-Remaining", parseInt "X-RateLimit-Reset")
-
       when (rlRem == 0) $ setRateLimit request rlNext
       return resp
 
