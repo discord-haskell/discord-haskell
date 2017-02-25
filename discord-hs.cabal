@@ -16,6 +16,11 @@ build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 
+Flag disable-docs
+  Description: Disable documentation generation
+  Manual: True
+  Default: False
+
 library
   exposed-modules:     Network.Discord
                      , Network.Discord.Framework
@@ -59,13 +64,16 @@ library
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010
-  
+
 executable docs
   main-is:             Site.hs
   hs-source-dirs:      docs
-  build-depends:       base==4.*
+  If !flag(disable-docs)
+    build-depends:     base==4.*
                      , hakyll
                      , split
+  Else
+    Buildable:         False
   ghc-options:         -Wall
   default-language:    Haskell2010
 
