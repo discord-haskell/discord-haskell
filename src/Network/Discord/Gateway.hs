@@ -37,7 +37,7 @@ module Network.Discord.Gateway where
   runWebsocket (URL (Absolute h) path _) client inner = do
     rl <- newTVarIO []
     runSecureClient (host h) 443 (path++"/?v=6")
-      $ \conn -> evalStateT (runEffect inner)
+      $ \conn -> evalDiscordM (runEffect inner)
         (DiscordState Create client conn undefined rl)
   runWebsocket _ _ _ = mzero
 

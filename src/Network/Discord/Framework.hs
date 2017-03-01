@@ -1,5 +1,5 @@
 {-# LANGUAGE TypeFamilies, ExistentialQuantification, RankNTypes, MultiParamTypeClasses #-}
-{-# LANGUAGE ScopedTypeVariables, DatatypeContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
 module Network.Discord.Framework where
   import Control.Concurrent
@@ -7,7 +7,7 @@ module Network.Discord.Framework where
   import Data.Proxy
 
   import Control.Concurrent.STM
-  import Control.Monad.State (execStateT, get)
+  import Control.Monad.State (get)
   import Data.Aeson (Object)
   import Pipes ((~>))
   import Pipes.Core hiding (Proxy)
@@ -52,7 +52,7 @@ module Network.Discord.Framework where
       client <- liftIO . atomically $ getSTMClient c
       st <- asyncState client
       liftIO . void $ forkFinally
-        (execStateT (runEffect effect) st)
+        (execDiscordM (runEffect effect) st)
         finish
     where
       finish (Right DiscordState{getClient = st}) = atomically $ mergeClient st

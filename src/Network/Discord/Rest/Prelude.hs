@@ -1,15 +1,17 @@
 {-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, DataKinds #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
-
+ 
+  import Control.Concurrent.STM
   import Data.Aeson
-
   import Data.Default
   import Data.Hashable
+  import Data.Monoid ((<>))
   import Data.Time.Clock.POSIX
+  import Network.HTTP.Req (Option, Scheme(..), (=:))
   import System.Log.Logger
   import qualified Control.Monad.State as St
 
@@ -20,13 +22,26 @@ module Network.Discord.Rest.Prelude where
   baseURL = "https://discordapp.com/api/v6"
 
   -- | Class for rate-limitable actions
-  class RateLimit a where
+  class Hashable a => RateLimit a where
     -- | Return seconds to expiration if we're waiting
     --   for a rate limit to reset
     getRateLimit  :: a -> DiscordM (Maybe Int)
+    getRateLimit req = do
+      DiscordState {getRateLimits=rl} <- St.get
+      now <- St.liftIO (fmap round getPOSIXTime :: IO Int)
+      St.liftIO . atomically $ do
+        rateLimits <- readTVar rl
+        case lookup (hash req) rateLimits of
+          Nothing -> return Nothing
+          Just a
+            | a >= now  -> return $ Just a
+            | otherwise -> modifyTVar' rl (delete $ hash req) >> return Nothing
     -- | Set seconds to the next rate limit reset when
     --   we hit a rate limit
     setRateLimit  :: a -> Int -> DiscordM ()
+    setRateLimit req reset = do
+      DiscordState {getRateLimits=rl} <- St.get
+      St.liftIO . atomically . modifyTVar rl $ insert (hash req) reset
     -- | If we hit a rate limit, wait for it to reset
     waitRateLimit :: a -> DiscordM ()
     waitRateLimit endpoint = do
@@ -67,7 +82,8 @@ module Network.Discord.Rest.Prelude where
     def = Range 0 18446744073709551615 100
   
   -- | Convert a Range to a query string
-  toQueryString :: Range -> String
-  toQueryString (Range a b l) = 
-    "after=" ++ show a ++ "&before=" ++ show b ++ "&limit=" ++ show l
-
+  toQueryString :: Range -> Option 'Https
+  toQueryString (Range a b l)
+    =  "after"  =: show a 
+    <> "before" =: show b 
+    <> "limit"  =: show l
