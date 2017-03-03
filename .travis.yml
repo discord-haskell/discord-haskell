@@ -5,6 +5,7 @@ cache:
   - "$HOME/.stack"
   - "./.stack-work"
 install:
+- nix-channel --update
 - travis_wait nix-env -i stack cabal2nix
 - cabal2nix --shell . > shell.nix
 - git config --global user.email "travis@travis-ci.org"
