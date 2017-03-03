@@ -90,3 +90,4 @@ module Network.Discord.Types.Events where
     _                           -> UnknownEvent ev         <$> reparse o
     where o = Object ob
   parseDispatch _ = error "Tried to parse non-Dispatch payload"
+

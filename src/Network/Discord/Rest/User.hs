@@ -5,20 +5,15 @@ module Network.Discord.Rest.User
   (
     UserRequest(..)
   ) where
-    import Control.Monad (when)
-
-    import Control.Concurrent.STM
-    import Control.Monad.Morph (lift)
-    import Control.Lens
+    
     import Data.Aeson
     import Data.Hashable
-    import Data.Text
-    import Data.Time.Clock.POSIX
-    import Network.Wreq
-    import qualified Control.Monad.State as ST (get, liftIO)
-
+    import Data.Monoid (mempty)
+    import Data.Text as T
+    
     import Network.Discord.Rest.Prelude
-    import Network.Discord.Types as Dc
+    import Network.Discord.Types
+    import Network.Discord.Rest.HTTP
 
     -- | Data constructor for User requests. See
     --   <https://discordapp.com/developers/docs/resources/user User API>
@@ -46,57 +41,36 @@ module Network.Discord.Rest.User
       hashWithSalt s (GetUser _)              = hashWithSalt s  ("user"::Text)
       hashWithSalt s (ModifyCurrentUser _)    = hashWithSalt s  ("modify_user"::Text)
       hashWithSalt s (GetCurrentUserGuilds _) = hashWithSalt s  ("get_user_guilds"::Text)
-      hashWithSalt s (LeaveGuild g)           = hashWithSalt s  ("leaveGuild"::Text, g)
+      hashWithSalt s (LeaveGuild g)           = hashWithSalt s  ("leave_guild"::Text, g)
       hashWithSalt s (GetUserDMs)             = hashWithSalt s  ("get_dms"::Text)
       hashWithSalt s (CreateDM _)             = hashWithSalt s  ("make_dm"::Text)
 
-    instance Eq (UserRequest a) where
-      a == b = hash a == hash b
-
-    instance RateLimit (UserRequest a) where
-      getRateLimit req = do
-        DiscordState {getRateLimits=rl} <- ST.get
-        now <- ST.liftIO (fmap round getPOSIXTime :: IO Int)
-        ST.liftIO . atomically $ do
-          rateLimits <- readTVar rl
-          case lookup (hash req) rateLimits of
-            Nothing -> return Nothing
-            Just a
-              | a >= now  -> return $ Just a
-              | otherwise -> modifyTVar' rl (Dc.delete $ hash req) >> return Nothing
-
-      setRateLimit req reset = do
-        DiscordState {getRateLimits=rl} <- ST.get
-        ST.liftIO . atomically . modifyTVar rl $ Dc.insert (hash req) reset
+    instance RateLimit (UserRequest a)
 
     instance (FromJSON a) => DoFetch (UserRequest a) where
-      doFetch req = do
-        waitRateLimit req
-        SyncFetched <$> fetch req
+      doFetch req = SyncFetched <$> go req
+        where
+          url = baseUrl /: "users"
+          go :: UserRequest a -> DiscordM a
+          go r@(GetCurrentUser) = makeRequest r
+            $ Get (url /: "@me") mempty
 
-    fetch :: FromJSON a => UserRequest a -> DiscordM a
-    fetch request = do
-      req <- baseRequest
-      (resp, rlRem, rlNext) <- lift $ do
-        resp <- case request of
-          GetCurrentUser -> getWith req
-            "/users/@me"
-          GetUser user -> getWith req
-            ("/users/" ++ show user)
-          ModifyCurrentUser patch -> customPayloadMethodWith "PATCH" req
-            "/users/@me"
-            (toJSON patch)
-          GetCurrentUserGuilds range -> getWith req
-            ("/users/@me/guilds?" ++ toQueryString range)
-          LeaveGuild guild -> deleteWith req
-            ("/users/@me/guilds/" ++ show guild)
-          GetUserDMs -> getWith req
-            "/users/@me/channels"
-          CreateDM (Snowflake user) -> postWith req
-            "/users/@me/channels"
-            ["recipient_id" := user]
-        return (justRight . eitherDecode $ resp ^. responseBody
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Remaining"::Int
-          , justRight . eitherDecodeStrict $ resp ^. responseHeader "X-RateLimit-Reset"::Int)
-      when (rlRem == 0) $ setRateLimit request rlNext
-      return resp
+          go r@(GetUser user) = makeRequest r 
+            $ Get (url // user ) mempty
+
+          go r@(ModifyCurrentUser patch) = makeRequest r 
+            $ Patch (url /: "@me")  (ReqBodyJson patch) mempty
+
+          go r@(GetCurrentUserGuilds range) = makeRequest r 
+            $ Get url $ toQueryString range
+
+          go r@(LeaveGuild guild) = makeRequest r
+            $ Delete (url /: "@me" /: "guilds" // guild) mempty
+
+          go r@(GetUserDMs) = makeRequest r
+            $ Get (url /: "@me" /: "channels") mempty
+
+          go r@(CreateDM user) = makeRequest r
+            $ Post (url /: "@me" /: "channels")
+            (ReqBodyJson $ object ["recipient_id" .= user])
+            mempty
