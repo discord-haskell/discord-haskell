@@ -1,4 +1,4 @@
-{-# LANGUAGE RankNTypes, ExistentialQuantification #-}
+{-# LANGUAGE RankNTypes, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
 -- | Provides types and encoding/decoding code. Types should be identical to those provided
 --   in the Discord API documentation.
@@ -11,12 +11,14 @@ module Network.Discord.Types
   , module Network.Discord.Types.Guild
   ) where
 
-    import Data.Proxy
-    import Control.Monad.State (StateT)
+    import Data.Proxy (Proxy)
+    import Control.Monad.State (StateT, MonadState, evalStateT, execStateT)
 
     import Control.Concurrent.STM
+    import Control.Monad.IO.Class (MonadIO)
     import Network.WebSockets (Connection)
     import System.IO.Unsafe (unsafePerformIO)
+    import qualified Network.HTTP.Req as R (MonadHttp(..))
 
     import Network.Discord.Types.Channel
     import Network.Discord.Types.Events
@@ -28,8 +30,8 @@ module Network.Discord.Types
     data StateEnum = Create | Start | Running | InvalidReconnect | InvalidDead
 
     -- | Stores details needed to manage the gateway and bot
-    data DiscordState = forall a . (Client a) => DiscordState {
-        getState       :: StateEnum         -- ^ Current state of the gateway
+    data DiscordState = forall a . (Client a) => DiscordState
+      { getState       :: StateEnum         -- ^ Current state of the gateway
       , getClient      :: a                 -- ^ Currently running bot client
       , getWebSocket   :: Connection        -- ^ Stored WebSocket gateway
       , getSequenceNum :: TMVar Integer     -- ^ Heartbeat sequence number
@@ -37,7 +39,20 @@ module Network.Discord.Types
       }
 
     -- | Convenience type alias for the monad most used throughout most Discord.hs operations
-    type DiscordM = StateT DiscordState IO
+    newtype DiscordM a = DiscordM (StateT DiscordState IO a)
+      deriving (MonadIO, MonadState DiscordState, Monad, Applicative, Functor)
+   
+    -- | Allow HTTP requests to be made from the DiscordM monad
+    instance R.MonadHttp DiscordM where
+      handleHttpException e = error $ show e
+    
+    -- | Unwrap and eval a 'DiscordM'
+    evalDiscordM :: DiscordM a -> DiscordState -> IO a
+    evalDiscordM (DiscordM inner) = evalStateT inner
+
+    -- | Unwrap and exec a 'DiscordM'
+    execDiscordM :: DiscordM a -> DiscordState -> IO DiscordState
+    execDiscordM (DiscordM inner) = execStateT inner
     
     -- | The Client typeclass holds the majority of the user-customizable state,
     --   including merging states resulting from async operations.
