@@ -1,8 +1,8 @@
 name:                discord-hs
-version:             0.1.3
+version:             0.2.1
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
-                     bots against the Discord <https://discordapp.com/> API.  
+                     bots against the Discord <https://discordapp.com/> API.
                      If for some reason hackage/stackage is failing to build
                      documentation, a backup set is hosted at <https://jano017.github.io/Discord.hs/>
 homepage:            https://github.com/jano017/Discord.hs
@@ -23,20 +23,21 @@ Flag disable-docs
 
 library
   exposed-modules:     Network.Discord
-                     , Network.Discord.Framework
-                     , Network.Discord.Gateway
                      , Network.Discord.Rest
                      , Network.Discord.Rest.Channel
                      , Network.Discord.Rest.Guild
                      , Network.Discord.Rest.User
+                     , Network.Discord.Framework
+                     , Network.Discord.Gateway
                      , Network.Discord.Types
                      , Network.Discord.Types.Channel
+                     , Network.Discord.Types.Guild
                      , Network.Discord.Types.Events
                      , Network.Discord.Types.Gateway
-                     , Network.Discord.Types.Guild
   other-modules:       Paths_discord_hs
                      , Network.Discord.Rest.Prelude
                      , Network.Discord.Types.Prelude
+                     , Network.Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base==4.*
                      , aeson==1.0.*
@@ -46,7 +47,7 @@ library
                      , data-default==0.7.*
                      , hashable==1.2.*
                      , hslogger==1.2.*
-                     , lens==4.15.*
+                     , http-client==0.5.*
                      , mmorph==1.0.*
                      , mtl==2.2.*
                      , pipes==4.3.*
@@ -59,7 +60,7 @@ library
                      , url==2.1.*
                      , vector==0.11.*
                      , websockets==0.10.*
-                     , wreq==0.5.*
+                     , req==0.2.*
                      , wuss==1.1.*
   ghc-options:         -Wall
   hs-source-dirs:      src
