@@ -18,5 +18,4 @@ script:
 - stack exec --nix docs build
 - cd _site && git add . && git commit --allow-empty -m "Auto build docs for $TRAVIS_COMMIT"
   && git push --quiet
-after_success:
-  - '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'
+- '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'
