@@ -1,5 +1,5 @@
 name:                discord-hs
-version:             0.2.1
+version:             0.2.2
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
                      bots against the Discord <https://discordapp.com/> API.
@@ -40,7 +40,7 @@ library
                      , Network.Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base==4.*
-                     , aeson==1.0.*
+                     , aeson>=1.0 && <1.2
                      , bytestring==0.10.*
                      , case-insensitive==1.2.*
                      , containers==0.5.*
@@ -54,11 +54,11 @@ library
                      , stm-conduit==3.0.*
                      , stm==2.4.*
                      , text==1.2.*
-                     , time==1.6.*
+                     , time>=1.6 && <1.9 
                      , transformers==0.5.*
                      , unordered-containers==0.2.*
                      , url==2.1.*
-                     , vector==0.11.*
+                     , vector>=0.10 && <0.13
                      , websockets==0.10.*
                      , req==0.2.*
                      , wuss==1.1.*
