@@ -4,4 +4,3 @@ packages:
 resolver: lts-8.5
 nix:
   shell-file: shell.nix
-

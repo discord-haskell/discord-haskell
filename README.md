@@ -8,16 +8,18 @@ A Haskell wrapper for the Discord API
 ## Using in a project
 
 The preferred (and only supported) method of using discord.hs is through [stack](https://docs.haskellstack.org/en/stable/README/). Open your `stack.yaml`
-and find the `packages` section. Replace it with the following:
+and find the `extra-deps` section. Add the following:
 
 ```yaml
-packages:
-  - '.'
-  - discord-hs-0.1.3
+extra-deps:
+  - discord-hs-0.2.1
 ```
 
 Then open your project.cabal file and add `discord-hs` to your build-depends.
 
+Alternatively, you can add `discord-hs` to your project.cabal file, and run
+`stack solver --update-config`. This will let stack catch other missing dependencies
+in your project and is most likely the better option.
 
 ## PingPong
 ```haskell
