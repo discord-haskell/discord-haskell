@@ -1,7 +1,6 @@
 # Discord.hs
 
 ## REWORK TIME!!!
----
 
 A majority of d.hs was hastily thrown together, and was honestly intended as a proof of
 concept. Now that the code base is in a semi-stable state, and there is a product that I
@@ -9,7 +8,6 @@ can fall back on, it's time to go through and make everything properly polymorph
 modular.
 
 ## Roadmap
----
 
 Discord-hs will consist of ~4 modules
 
