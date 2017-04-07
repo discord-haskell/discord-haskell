@@ -1,55 +1,28 @@
 # Discord.hs
-A Haskell wrapper for the Discord API
 
-[![Hackage](https://img.shields.io/hackage/v/discord-hs.svg?style=flat-square)](http://hackage.haskell.org/package/discord-hs)
-[![Hackage-Deps](https://img.shields.io/hackage-deps/v/discord-hs.svg?style=flat-square)](http://packdeps.haskellers.com/feed?needle=discord-hs)
-[![Travis](https://img.shields.io/travis/jano017/Discord.hs.svg?style=flat-square)](https://travis-ci.org/jano017/Discord.hs)
+## REWORK TIME!!!
+---
 
-## Using in a project
+A majority of d.hs was hastily thrown together, and was honestly intended as a proof of
+concept. Now that the code base is in a semi-stable state, and there is a product that I
+can fall back on, it's time to go through and make everything properly polymorphic and
+modular.
 
-The preferred (and only supported) method of using discord.hs is through [stack](https://docs.haskellstack.org/en/stable/README/). Open your `stack.yaml`
-and find the `extra-deps` section. Add the following:
+## Roadmap
+---
 
-```yaml
-extra-deps:
-  - discord-hs-0.2.1
-```
+Discord-hs will consist of ~4 modules
 
-Then open your project.cabal file and add `discord-hs` to your build-depends.
+- discord-types: Currently Discord.Types. Splitting this off into another package will
+  allow code components to be written for Discord without actually importing code for
+  running bots.
 
-Alternatively, you can add `discord-hs` to your project.cabal file, and run
-`stack solver --update-config`. This will let stack catch other missing dependencies
-in your project and is most likely the better option.
+- discord-rest: Currently Discord.Rest. Splitting this off will allow code to be written
+  that interfaces with the Discord api that doesn't actually need a gateway.
 
-## PingPong
-```haskell
-{-# LANGUAGE OverloadedStrings, RecordWildCards #-}
-import Data.Text
-import Pipes
+- discord-core: Currently (mostly) Discord.Gateway. Gateway code needs to exist somewhere.
+  This code will be made polymorphic over a new typeclass defined in discord-types.
 
-import Network.Discord
-
-reply :: Message -> Text -> Effect DiscordM ()
-reply Message{messageChannel=chan} cont = fetch' $ CreateMessage chan cont Nothing
-
-main :: IO ()
-main = runBot (Bot "TOKEN") $ do
-  with ReadyEvent $ \(Init v u _ _ _) ->
-    liftIO . putStrLn $ "Connected to gateway v" ++ show v ++ " as user " ++ show u
-
-  with MessageCreateEvent $ \msg@Message{..} -> do
-    when ("Ping" `isPrefixOf` messageContent && (not . userIsBot $ messageAuthor)) $
-      reply msg "Pong!"
-```
-
-## Known issues:
-- Init isn't parsing correctly
-- Client doesn't close correctly
-- Missing voice support
-
-## Future goals:
-- [Eta](https://github.com/typelead/eta) compatibility
-- [HaLVM](https://github.com/GaloisInc/HaLVM) compatibility (maybe)
-- Command framework (Posibly through compat layer with marvin?)
-- Ditch wreq (not included in stack lts-8.2)
-- Upload to stackage
+- discord-hs: Currently Discord.Framework (and others). Framework code allowing discord bots
+  to be created. Will use a typesafe combinator system inspired by Servant. Will additionally
+  export all of the above code.
