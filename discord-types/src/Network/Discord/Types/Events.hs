@@ -54,6 +54,7 @@ module Network.Discord.Types.Events where
     | VoiceStateUpdate        Object
     | VoiceServerUpdate       Object
     | UnknownEvent     String Object
+    | Nil
     deriving Show
 
   -- |Parses JSON stuff by Discord to an event type.

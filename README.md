@@ -11,16 +11,16 @@ modular.
 
 Discord-hs will consist of ~4 modules
 
-- discord-types: Currently Discord.Types. Splitting this off into another package will
-  allow code components to be written for Discord without actually importing code for
-  running bots.
+[X] discord-types: Currently Discord.Types. Splitting this off into another package will
+    allow code components to be written for Discord without actually importing code for
+    running bots.
 
-- discord-rest: Currently Discord.Rest. Splitting this off will allow code to be written
-  that interfaces with the Discord api that doesn't actually need a gateway.
+[X]  discord-rest: Currently Discord.Rest. Splitting this off will allow code to be written
+     that interfaces with the Discord api that doesn't actually need a gateway.
 
-- discord-core: Currently (mostly) Discord.Gateway. Gateway code needs to exist somewhere.
-  This code will be made polymorphic over a new typeclass defined in discord-types.
+[X]  discord-core: Currently (mostly) Discord.Gateway. Gateway code needs to exist somewhere.
+     This code will be made polymorphic over a new typeclass defined in discord-types.
 
-- discord-hs: Currently Discord.Framework (and others). Framework code allowing discord bots
-  to be created. Will use a typesafe combinator system inspired by Servant. Will additionally
-  export all of the above code.
+[ ]  discord-hs: Currently Discord.Framework (and others). Framework code allowing discord
+     bots to be created. Will use a typesafe combinator system inspired by Servant. Will
+     additionally export all of the above code.

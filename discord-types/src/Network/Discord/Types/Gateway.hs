@@ -11,39 +11,40 @@ module Network.Discord.Types.Gateway where
   import Network.Discord.Types.Prelude
 
   -- |Represents all sorts of things that we can send to Discord.
-  data Payload = Dispatch
-    Object
-    Integer
-    String
-               | Heartbeat
-    Integer
-               | Identify
-    Auth
-    Bool
-    Integer
-   (Int, Int)
-               | StatusUpdate
-   (Maybe Integer)
-   (Maybe String)
-               | VoiceStatusUpdate
-   {-# UNPACK #-} !Snowflake
-   !(Maybe Snowflake)
-    Bool
-    Bool
-               | Resume
-    String
-    String
-    Integer
-               | Reconnect
-               | RequestGuildMembers
-    {-# UNPACK #-} !Snowflake
-    String
-    Integer
-               | InvalidSession
-               | Hello
-    Int
-               | HeartbeatAck
-               | ParseError String
+  data Payload
+    = Dispatch
+      Object
+      Integer
+      String
+    | Heartbeat
+      Integer
+    | Identify
+      Auth
+      Bool
+      Integer
+      (Int, Int)
+    | StatusUpdate
+      (Maybe Integer)
+      (Maybe String)
+    | VoiceStatusUpdate
+      {-# UNPACK #-} !Snowflake
+      !(Maybe Snowflake)
+      Bool
+      Bool
+    | Resume
+      String
+      String
+      Integer
+    | Reconnect
+    | RequestGuildMembers
+      {-# UNPACK #-} !Snowflake
+      String
+      Integer
+    | InvalidSession
+    | Hello
+      Int
+    | HeartbeatAck
+    | ParseError String
     deriving Show
 
   instance FromJSON Payload where

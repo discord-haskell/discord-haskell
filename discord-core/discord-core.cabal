@@ -1,4 +1,4 @@
-name:                discord-hs
+name:                discord-core
 version:             0.2.2
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
@@ -16,33 +16,18 @@ build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 
-Flag disable-docs
-  Description: Disable documentation generation
-  Manual: True
-  Default: False
-
 library
-  -- exposed-modules:     
-  other-modules:       Paths_discord_hs
-  -- other-extensions:
+  exposed-modules:     Network.Discord.Gateway
   build-depends:       base==4.*
+                     , aeson>=1.0 && <1.2
+                     , hslogger==1.2.*
+                     , transformers==0.5.*
+                     , url==2.1.*
+                     , websockets==0.10.*
+                     , wuss==1.1.*
                      , discord-types
-                     , discord-rest
-                     , discord-core
   ghc-options:         -Wall
   hs-source-dirs:      src
-  default-language:    Haskell2010
-
-executable docs
-  main-is:             Site.hs
-  hs-source-dirs:      docs
-  If !flag(disable-docs)
-    build-depends:     base==4.*
-                     , hakyll
-                     , split
-  Else
-    Buildable:         False
-  ghc-options:         -Wall
   default-language:    Haskell2010
 
 source-repository head

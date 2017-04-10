@@ -3,6 +3,7 @@ packages:
 - '.'
 - 'discord-types'
 - 'discord-rest'
+- 'discord-core'
 resolver: lts-8.5
 nix:
-  shell-file: shell.nix
+  packages: [ zlib ]
