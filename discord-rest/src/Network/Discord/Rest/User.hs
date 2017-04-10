@@ -45,13 +45,11 @@ module Network.Discord.Rest.User
       hashWithSalt s (GetUserDMs)             = hashWithSalt s  ("get_dms"::Text)
       hashWithSalt s (CreateDM _)             = hashWithSalt s  ("make_dm"::Text)
 
-    instance RateLimit (UserRequest a)
-
     instance (FromJSON a) => DoFetch (UserRequest a) where
       doFetch req = SyncFetched <$> go req
         where
           url = baseUrl /: "users"
-          go :: UserRequest a -> DiscordM a
+          go :: DiscordRest m => UserRequest a -> m a
           go r@(GetCurrentUser) = makeRequest r
             $ Get (url /: "@me") mempty
 

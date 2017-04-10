@@ -1,4 +1,4 @@
-name:                discord-hs
+name:                discord-rest
 version:             0.2.2
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
@@ -16,56 +16,30 @@ build-type:          Simple
 -- extra-source-files:
 cabal-version:       >=1.10
 
-Flag disable-docs
-  Description: Disable documentation generation
-  Manual: True
-  Default: False
-
 library
-  exposed-modules:     Network.Discord
-                     , Network.Discord.Framework
-                     , Network.Discord.Gateway
-  other-modules:       Paths_discord_hs
+  exposed-modules:     Network.Discord.Rest
+                     , Network.Discord.Rest.Channel
+                     , Network.Discord.Rest.Guild
+                     , Network.Discord.Rest.User
+  other-modules:       Network.Discord.Rest.Prelude
+                     , Network.Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base==4.*
+                     , discord-types
                      , aeson>=1.0 && <1.2
                      , bytestring==0.10.*
-                     , case-insensitive==1.2.*
-                     , containers==0.5.*
                      , data-default==0.7.*
                      , hashable==1.2.*
                      , hslogger==1.2.*
                      , http-client==0.5.*
-                     , mmorph==1.0.*
                      , mtl==2.2.*
-                     , pipes==4.3.*
-                     , stm-conduit==3.0.*
+                     , req==0.2.*
                      , stm==2.4.*
                      , text==1.2.*
-                     , time>=1.6 && <1.9 
-                     , transformers==0.5.*
-                     , unordered-containers==0.2.*
+                     , time>=1.6 && <1.9
                      , url==2.1.*
-                     , vector>=0.10 && <0.13
-                     , websockets==0.10.*
-                     , req==0.2.*
-                     , wuss==1.1.*
-                     , discord-types
-                     , discord-rest
   ghc-options:         -Wall
   hs-source-dirs:      src
-  default-language:    Haskell2010
-
-executable docs
-  main-is:             Site.hs
-  hs-source-dirs:      docs
-  If !flag(disable-docs)
-    build-depends:     base==4.*
-                     , hakyll
-                     , split
-  Else
-    Buildable:         False
-  ghc-options:         -Wall
   default-language:    Haskell2010
 
 source-repository head

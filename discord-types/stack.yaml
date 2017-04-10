@@ -1,0 +1,4 @@
+extra-package-dbs: []
+packages:
+- '.'
+resolver: lts-8.5

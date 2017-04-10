@@ -1,6 +1,8 @@
 .cabal-sandbox/*
 .stack-work/*
 .stack/*
+**/.stack/*
+**/.stack-work/*
 cabal.sandbox.config
 dist/*
 docs/build

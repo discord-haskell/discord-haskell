@@ -149,13 +149,11 @@ module Network.Discord.Rest.Guild
       hashWithSalt s (GetGuildEmbed g)         = hashWithSalt s ("guild_embed"::Text, g)
       hashWithSalt s (ModifyGuildEmbed g _)    = hashWithSalt s ("guild_embed"::Text, g)
 
-    instance RateLimit (GuildRequest a)
-
     instance (FromJSON a) => DoFetch (GuildRequest a) where
       doFetch req = SyncFetched <$> go req
         where
           url = baseUrl /: "guilds"
-          go :: GuildRequest a -> DiscordM a
+          go :: DiscordRest m => GuildRequest a -> m a
           go r@(GetGuild guild) = makeRequest r
             $ Get (url // guild) mempty
           go r@(ModifyGuild guild patch) = makeRequest r

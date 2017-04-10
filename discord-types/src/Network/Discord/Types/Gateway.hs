@@ -7,7 +7,6 @@ module Network.Discord.Types.Gateway where
 
   import Data.Aeson
   import Data.Aeson.Types
-  import Network.WebSockets
 
   import Network.Discord.Types.Prelude
 
@@ -112,9 +111,3 @@ module Network.Discord.Types.Gateway where
         ]
       ]
     toJSON _ = object []
-
-  instance WebSocketsData Payload where
-    fromLazyByteString bs = case eitherDecode bs of
-        Right payload -> payload
-        Left  reason  -> ParseError reason
-    toLazyByteString   = encode

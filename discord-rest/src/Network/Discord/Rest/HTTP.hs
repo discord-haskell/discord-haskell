@@ -15,17 +15,15 @@ module Network.Discord.Rest.HTTP
 
     import Data.Semigroup ((<>))
 
-    import Control.Monad.State (get, when)
+    import Control.Monad (when)
     import Data.Aeson
     import Data.ByteString.Char8 (pack, ByteString)
     import Data.Maybe (fromMaybe)
     import qualified Data.Text as T (pack)
     import qualified Network.HTTP.Req as R
 
-    import Data.Version (showVersion)
     import Network.Discord.Rest.Prelude
-    import Network.Discord.Types (DiscordM, getClient, DiscordState(..), getAuth)
-    import Paths_discord_hs (version)
+    import Network.Discord.Types
 
     -- | The base url (Req) for API requests
     baseUrl :: R.Url 'R.Https
@@ -33,12 +31,13 @@ module Network.Discord.Rest.HTTP
       where apiVersion = "v6"
 
     -- | Construct base options with auth from Discord state
-    baseRequestOptions :: DiscordM Option
+    baseRequestOptions :: DiscordRest m => m Option
     baseRequestOptions = do
-      DiscordState {getClient=client} <- get
-      return $ R.header "Authorization" (pack . show $ getAuth client)
+      a <- auth
+      v <- version
+      return $ R.header "Authorization" (pack . show $ a)
             <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-                                          ++ showVersion version ++ ")")
+                                          ++ v ++ ")")
     infixl 5 //
     (//) :: Show a => R.Url scheme -> a -> R.Url scheme
     url // part = url R./: (T.pack $ show part)
@@ -53,14 +52,15 @@ module Network.Discord.Rest.HTTP
       Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
       Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
 
-    fetch :: FromJSON r => JsonRequest r -> DiscordM (R.JsonResponse r)
+    fetch :: (FromJSON r, DiscordRest m) => JsonRequest r -> m (R.JsonResponse r)
     fetch (Delete url      opts) = R.req R.DELETE url R.NoReqBody R.jsonResponse =<< (<> opts) <$> baseRequestOptions
     fetch (Get    url      opts) = R.req R.GET    url R.NoReqBody R.jsonResponse =<< (<> opts) <$> baseRequestOptions
     fetch (Patch  url body opts) = R.req R.PATCH  url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
     fetch (Post   url body opts) = R.req R.POST   url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
     fetch (Put    url body opts) = R.req R.PUT    url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
 
-    makeRequest :: (RateLimit a, FromJSON r) => a -> JsonRequest r -> DiscordM r
+    makeRequest :: (FromJSON r, DiscordRest m, DoFetch f) 
+      => f -> JsonRequest r -> m r
     makeRequest req action = do
       waitRateLimit req
       resp <- fetch action

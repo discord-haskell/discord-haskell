@@ -80,15 +80,15 @@ module Network.Discord.Rest.Channel
       hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
       hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
 
-    instance RateLimit (ChannelRequest a)
-
     instance (FromJSON a) => DoFetch (ChannelRequest a) where
       doFetch req = SyncFetched <$> go req
         where
           maybeEmbed :: Maybe Embed -> [(Text, Value)]
           maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
+
           url = baseUrl /: "channels"
-          go :: ChannelRequest a -> DiscordM a
+
+          go :: DiscordRest m => ChannelRequest a -> m a
           go r@(GetChannel chan) = makeRequest r
             $ Get (url // chan) mempty
           go r@(ModifyChannel chan patch) = makeRequest r

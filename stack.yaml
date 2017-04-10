@@ -1,6 +1,8 @@
 extra-package-dbs: []
 packages:
 - '.'
+- 'discord-types'
+- 'discord-rest'
 resolver: lts-8.5
 nix:
   shell-file: shell.nix
