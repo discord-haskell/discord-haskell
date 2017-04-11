@@ -28,6 +28,7 @@ library
                      , discord-types
                      , aeson>=1.0 && <1.2
                      , bytestring==0.10.*
+                     , comonad==5.*
                      , data-default==0.7.*
                      , hashable==1.2.*
                      , hslogger==1.2.*

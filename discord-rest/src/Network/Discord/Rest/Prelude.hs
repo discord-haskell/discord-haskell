@@ -1,16 +1,15 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-{-# LANGUAGE FlexibleInstances, ExistentialQuantification, UndecidableInstances #-}
-{-# LANGUAGE DataKinds, OverloadedStrings #-}
+{-# LANGUAGE DataKinds, OverloadedStrings, MultiParamTypeClasses #-}
+{-# LANGUAGE AllowAmbiguousTypes, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE FunctionalDependencies, KindSignatures #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where
   import Control.Concurrent (threadDelay)
   import Control.Monad (when)
   import Control.Exception (throwIO)
-  
-  import Data.Aeson
+
   import Data.Default
-  import Data.Hashable
   import Data.Monoid ((<>))
   import Data.Time.Clock.POSIX
   import Network.HTTP.Req (Option, Scheme(..), (=:), MonadHttp(..))
@@ -24,11 +23,11 @@ module Network.Discord.Rest.Prelude where
   baseURL = "https://discordapp.com/api/v6"
 
   class (MonadIO m, DiscordAuth m) => DiscordRest m where
-    getRateLimit  :: DoFetch f => f -> m (Maybe Int)
+    getRateLimit  :: DoFetch f a => f a -> m (Maybe Int)
 
-    setRateLimit  :: DoFetch f => f -> Int -> m ()
+    setRateLimit  :: DoFetch f a => f a -> Int -> m ()
 
-    waitRateLimit :: DoFetch f => f -> m ()
+    waitRateLimit :: DoFetch f a => f a -> m ()
     waitRateLimit endpoint = do
       rl <- getRateLimit endpoint
       case rl of
@@ -45,23 +44,8 @@ module Network.Discord.Rest.Prelude where
     handleHttpException = liftIO . throwIO
 
   -- | Class over which performing a data retrieval action is defined
-  class DoFetch a where
-    doFetch :: DiscordRest m => a -> m Fetched
-
-  -- | Polymorphic type for all DoFetch types
-  data Fetchable = forall a. (DoFetch a, Hashable a) => Fetch a
-
-  instance DoFetch Fetchable where
-    doFetch (Fetch a) = doFetch a
-
-  instance Hashable Fetchable where
-    hashWithSalt s (Fetch a) = hashWithSalt s a
-
-  instance Eq Fetchable where
-    (Fetch a) == (Fetch b) = hash a == hash b
-
-  -- | Result of a data retrieval action
-  data Fetched = forall a. (FromJSON a) => SyncFetched a
+  class DoFetch (a :: * -> *) b | a b -> b where
+    doFetch :: DiscordRest m => a b -> m b
   
   -- | Represents a range of 'Snowflake's
   data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}

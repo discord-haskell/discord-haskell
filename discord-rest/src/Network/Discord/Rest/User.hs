@@ -45,8 +45,8 @@ module Network.Discord.Rest.User
       hashWithSalt s (GetUserDMs)             = hashWithSalt s  ("get_dms"::Text)
       hashWithSalt s (CreateDM _)             = hashWithSalt s  ("make_dm"::Text)
 
-    instance (FromJSON a) => DoFetch (UserRequest a) where
-      doFetch req = SyncFetched <$> go req
+    instance (FromJSON a) => DoFetch UserRequest a where
+      doFetch = go
         where
           url = baseUrl /: "users"
           go :: DiscordRest m => UserRequest a -> m a

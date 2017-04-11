@@ -59,8 +59,8 @@ module Network.Discord.Rest.HTTP
     fetch (Post   url body opts) = R.req R.POST   url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
     fetch (Put    url body opts) = R.req R.PUT    url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
 
-    makeRequest :: (FromJSON r, DiscordRest m, DoFetch f) 
-      => f -> JsonRequest r -> m r
+    makeRequest :: (FromJSON r, DiscordRest m, DoFetch f r) 
+      => f r -> JsonRequest r -> m r
     makeRequest req action = do
       waitRateLimit req
       resp <- fetch action
@@ -72,5 +72,5 @@ module Network.Discord.Rest.HTTP
         parseHeader resp header def = fromMaybe def $ decodeStrict =<< R.responseHeader resp header
     
     -- | Base implementation of DoFetch, allows arbitrary HTTP requests to be performed
-    instance (FromJSON r) => DoFetch (JsonRequest r) where
-      doFetch req = SyncFetched . R.responseBody <$> fetch req
+    instance (FromJSON r) => DoFetch JsonRequest r where
+      doFetch req = R.responseBody <$> fetch req

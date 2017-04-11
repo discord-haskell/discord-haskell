@@ -80,8 +80,8 @@ module Network.Discord.Rest.Channel
       hashWithSalt s (AddPinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
       hashWithSalt s (DeletePinnedMessage chan _) = hashWithSalt s ("pin"::Text, chan)
 
-    instance (FromJSON a) => DoFetch (ChannelRequest a) where
-      doFetch req = SyncFetched <$> go req
+    instance (FromJSON a) => DoFetch ChannelRequest a where
+      doFetch req = go req
         where
           maybeEmbed :: Maybe Embed -> [(Text, Value)]
           maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
