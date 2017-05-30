@@ -1,173 +1,280 @@
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
+{-# LANGUAGE TypeOperators, TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
+{-# LANGUAGE DataKinds, GADTs, RankNTypes, FlexibleContexts #-}
 module Network.Discord.Framework where
-  import Control.Concurrent
-  import Control.Monad.Writer
   import Data.Proxy
+  import GHC.TypeLits
 
-  import Control.Concurrent.STM
-  import Control.Monad.State (get)
-  import Data.Aeson (Object)
-  import Pipes ((~>))
-  import Pipes.Core hiding (Proxy)
-  import System.Log.Logger
+  import Network.Discord.Rest
+  import Network.Discord.Gateway
+  import Network.Discord.Types
 
-  import Network.Discord.Gateway as D
-  import Network.Discord.Rest    as D
-  import Network.Discord.Types   as D
+  class (DiscordRest m, DiscordGate m) => DiscordM m
 
-  -- | Isolated state representation for use with async event handling
-  asyncState :: D.Client a => a -> Effect DiscordM DiscordState
-  asyncState client = do
-    DiscordState { getRateLimits = limits } <- get
-    return $ DiscordState
-      Running
-      client
-      undefined
-      undefined
-      limits
+  type EventHandler api = forall m. DiscordM m => EventHandler' api m
 
-  -- | Basic client implementation. Most likely suitable for most bots.
-  data BotClient = BotClient Auth
-  instance D.Client BotClient where
-    getAuth (BotClient auth) = auth
+  data Context types where
+    EmptyContext :: Context '[]
+    (:.) :: x -> Context xs -> Context (x ': xs)
 
-  -- | This should be the entrypoint for most Discord bots.
-  runBot :: Auth -> DiscordBot BotClient () -> IO ()
-  runBot auth bot = runBotWith (BotClient auth) bot
+  data DiscordApp a where
+    Leaf   :: DiscordApp a
+    Map    :: (a -> b)       -> DiscordApp b -> DiscordApp a
+    Reduce :: (a -> Maybe b) -> DiscordApp b -> DiscordApp a
+    Filter :: (a -> Bool)    -> DiscordApp a -> DiscordApp a
+    Choose :: DiscordApp a   -> DiscordApp a -> DiscordApp a
 
-  -- | A variant of 'runBot' which allows the user to specify a custom client implementation.
-  runBotWith :: D.Client a => a -> DiscordBot a () -> IO ()
-  runBotWith client bot = do
-    gateway <- getGateway
-    atomically $ writeTVar getTMClient client
-    runWebsocket gateway client $ do
-      DiscordState {getWebSocket=ws} <- get
-      (eventCore ~> (handle $ execWriter bot)) ws
+  class HasEvent api event where
+    type EventHandler' api ( m :: * -> * )
+    makeApp :: Proxy api -> Context context -> DiscordApp event
 
-  -- | Utility function to split event handlers into a seperate thread
-  runAsync :: D.Client client => Proxy client -> Effect DiscordM () -> Effect DiscordM ()
-  runAsync c effect = do
-      client <- liftIO . atomically $ getSTMClient c
-      st <- asyncState client
-      liftIO . void $ forkFinally
-        (execDiscordM (runEffect effect) st)
-        finish
-    where
-      finish (Right DiscordState{getClient = st}) = atomically $ mergeClient st
-      finish (Left err) = errorM "Language.Discord.Events" $ show err
+  data a :> b
+  infixr 5 :> 
 
-  -- | Monad to compose event handlers
-  type DiscordBot c a = Writer (Handle c) a
+  data a :<>: b = a :<>: b
+  infixl 3 :<>:
 
-  -- | Event handlers for 'Gateway' events. These correspond to events listed in
-  --   'Event'
-  data D.Client c => Handle c = Null
-                              | Misc                         (Event   -> Effect DiscordM ())
-                              | ReadyEvent                   (Init    -> Effect DiscordM ())
-                              | ResumedEvent                 (Object  -> Effect DiscordM ())
-                              | ChannelCreateEvent           (Channel -> Effect DiscordM ())
-                              | ChannelUpdateEvent           (Channel -> Effect DiscordM ())
-                              | ChannelDeleteEvent           (Channel -> Effect DiscordM ())
-                              | GuildCreateEvent             (Guild   -> Effect DiscordM ())
-                              | GuildUpdateEvent             (Guild   -> Effect DiscordM ())
-                              | GuildDeleteEvent             (Guild   -> Effect DiscordM ())
-                              | GuildBanAddEvent             (Member  -> Effect DiscordM ())
-                              | GuildBanRemoveEvent          (Member  -> Effect DiscordM ())
-                              | GuildEmojiUpdateEvent        (Object  -> Effect DiscordM ())
-                              | GuildIntegrationsUpdateEvent (Object  -> Effect DiscordM ())
-                              | GuildMemberAddEvent          (Member  -> Effect DiscordM ())
-                              | GuildMemberRemoveEvent       (Member  -> Effect DiscordM ())
-                              | GuildMemberUpdateEvent       (Member  -> Effect DiscordM ())
-                              | GuildMemberChunkEvent        (Object  -> Effect DiscordM ())
-                              | GuildRoleCreateEvent         (Object  -> Effect DiscordM ())
-                              | GuildRoleUpdateEvent         (Object  -> Effect DiscordM ())
-                              | GuildRoleDeleteEvent         (Object  -> Effect DiscordM ())
-                              | MessageCreateEvent           (Message -> Effect DiscordM ())
-                              | MessageUpdateEvent           (Message -> Effect DiscordM ())
-                              | MessageDeleteEvent           (Object  -> Effect DiscordM ())
-                              | MessageDeleteBulkEvent       (Object  -> Effect DiscordM ())
-                              | PresenceUpdateEvent          (Object  -> Effect DiscordM ())
-                              | TypingStartEvent             (Object  -> Effect DiscordM ())
-                              | UserSettingsUpdateEvent      (Object  -> Effect DiscordM ())
-                              | UserUpdateEvent              (Object  -> Effect DiscordM ())
-                              | VoiceStateUpdateEvent        (Object  -> Effect DiscordM ())
-                              | VoiceServerUpdateEvent       (Object  -> Effect DiscordM ())
-                              | Event String                 (Object  -> Effect DiscordM ())
+  instance (HasEvent a e, HasEvent b e) => HasEvent (a :<>: b) e where
+    type EventHandler' (a :<>: b) m = EventHandler' a m :<>: EventHandler' b m
+    makeApp p c = Choose (makeApp a c) (makeApp b c)
+      where
+        (a, b) = split p
+        split :: Proxy (a :<>: b) -> (Proxy a, Proxy b)
+        split _ = (Proxy, Proxy)
 
-  -- | Provides a typehint for the correct 'D.Client' given an Event 'Handle'
-  clientProxy   :: Handle c -> Proxy c
-  clientProxy _ = Proxy
+  data EventHandle a
 
-  -- | Register an Event 'Handle' in the 'DiscordBot' monad
-  with :: D.Client c => (a -> Handle c) -> a -> DiscordBot c ()
-  with f a = tell $ f a
+  instance HasEvent (EventHandle a) a where
+    type EventHandler' (EventHandle a) m = a -> m ()
+    makeApp p _ = leaf p
+      where
+        leaf :: Proxy (EventHandle a) -> DiscordApp a
+        leaf _ = Leaf
+
+  class EventFilter a where
+    type Filtered a
+    reduce :: Proxy a -> Event -> Maybe (Filtered a)
+
+  instance (EventFilter a, HasEvent b (Filtered a)) => HasEvent (a :> b) Event where
+    type EventHandler' (a :> b) m = EventHandler' b m
+    makeApp p c = Reduce (reduce a) $ makeApp b c
+      where
+        (a, b) = split p
+        split :: Proxy (a :> b) -> (Proxy a, Proxy b)
+        split _ = (Proxy, Proxy)
+
+  data ReadyEvent
   
-  instance D.Client c => Monoid (Handle c) where
-    mempty = Null
-    a `mappend` b = Misc (\ev -> handle a ev <> handle b ev)
+  instance EventFilter ReadyEvent where
+    type Filtered ReadyEvent = Init
+    reduce _ (Ready e) = Just e
+    reduce _ _ = Nothing
 
-  -- | Asynchronously run an Event 'Handle' against a Gateway 'Event'
-  handle :: D.Client a => Handle a -> Event -> Effect DiscordM ()
-  handle a@(Misc p)                          ev                           
-    = runAsync (clientProxy a) $ p ev
-  handle a@(ReadyEvent p)                   (D.Ready o)                   
-    = runAsync (clientProxy a) $ p o
-  handle a@(ResumedEvent p)                 (D.Resumed o)                 
-    = runAsync (clientProxy a) $ p o
-  handle a@(ChannelCreateEvent p)           (D.ChannelCreate o)           
-    = runAsync (clientProxy a) $ p o
-  handle a@(ChannelUpdateEvent p)           (D.ChannelUpdate o)           
-    = runAsync (clientProxy a) $ p o
-  handle a@(ChannelDeleteEvent p)           (D.ChannelDelete o)           
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildCreateEvent p)             (D.GuildCreate o)             
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildUpdateEvent p)             (D.GuildUpdate o)             
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildDeleteEvent p)             (D.GuildDelete o)             
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildBanAddEvent p)             (D.GuildBanAdd o)             
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildBanRemoveEvent p)          (D.GuildBanRemove o)          
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildEmojiUpdateEvent p)        (D.GuildEmojiUpdate o)        
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildIntegrationsUpdateEvent p) (D.GuildIntegrationsUpdate o) 
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberAddEvent p)          (D.GuildMemberAdd o)          
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberRemoveEvent p)       (D.GuildMemberRemove o)      
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberUpdateEvent p)       (D.GuildMemberUpdate o)      
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildMemberChunkEvent p)        (D.GuildMemberChunk o)       
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleCreateEvent p)         (D.GuildRoleCreate o)        
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleUpdateEvent p)         (D.GuildRoleUpdate o)        
-    = runAsync (clientProxy a) $ p o
-  handle a@(GuildRoleDeleteEvent p)         (D.GuildRoleDelete o)        
-    = runAsync (clientProxy a) $ p o
-  handle a@(MessageCreateEvent p)           (D.MessageCreate o)          
-    = runAsync (clientProxy a) $ p o
-  handle a@(MessageUpdateEvent p)           (D.MessageUpdate o)          
-    = runAsync (clientProxy a) $ p o
-  handle a@(MessageDeleteEvent p)           (D.MessageDelete o)          
-    = runAsync (clientProxy a) $ p o
-  handle a@(MessageDeleteBulkEvent p)       (D.MessageDeleteBulk o)      
-    = runAsync (clientProxy a) $ p o
-  handle a@(PresenceUpdateEvent p)          (D.PresenceUpdate o)         
-    = runAsync (clientProxy a) $ p o
-  handle a@(TypingStartEvent p)             (D.TypingStart o)            
-    = runAsync (clientProxy a) $ p o
-  handle a@(UserSettingsUpdateEvent p)      (D.UserSettingsUpdate o)     
-    = runAsync (clientProxy a) $ p o
-  handle a@(UserUpdateEvent p)              (D.UserUpdate o)             
-    = runAsync (clientProxy a) $ p o
-  handle a@(VoiceStateUpdateEvent p)        (D.VoiceStateUpdate o)       
-    = runAsync (clientProxy a) $ p o
-  handle a@(VoiceServerUpdateEvent p)       (D.VoiceServerUpdate o)      
-    = runAsync (clientProxy a) $ p o
-  handle a@(Event s p)                      (D.UnknownEvent v o)
-    | s == v = runAsync (clientProxy a) $ p o
-  handle _ ev = liftIO $ debugM "Discord-hs.Language.Events" $ show ev
+  data ResumedEvent
+  
+  instance EventFilter ResumedEvent where
+    type Filtered ResumedEvent = Object
+    reduce _ (Resumed o) = Just o
+    reduce _ _ = Nothing
+
+  data ChannelCreateEvent
+
+  instance EventFilter ChannelCreateEvent where
+    type Filtered ChannelCreateEvent = Channel
+    reduce _ (ChannelCreate c) = Just c
+    reduce _ _ = Nothing
+
+  data ChannelUpdateEvent
+
+  instance EventFilter ChannelUpdateEvent where
+    type Filtered ChannelUpdateEvent = Channel
+    reduce _ (ChannelUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data ChannelDeleteEvent
+
+  instance EventFilter ChannelDeleteEvent where
+    type Filtered ChannelDeleteEvent = Channel
+    reduce _ (ChannelDelete c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildCreateEvent
+
+  instance EventFilter GuildCreateEvent where
+    type Filtered GuildCreateEvent = Guild
+    reduce _ (GuildCreate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildUpdateEvent
+
+  instance EventFilter GuildUpdateEvent where
+    type Filtered GuildUpdateEvent = Guild
+    reduce _ (GuildUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildDeleteEvent
+
+  instance EventFilter GuildDeleteEvent where
+    type Filtered GuildDeleteEvent = Guild
+    reduce _ (GuildDelete c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildBanAddEvent
+
+  instance EventFilter GuildBanAddEvent where
+    type Filtered GuildBanAddEvent = Member
+    reduce _ (GuildBanAdd c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildBanRemoveEvent
+
+  instance EventFilter GuildBanRemoveEvent where
+    type Filtered GuildBanRemoveEvent = Member
+    reduce _ (GuildBanRemove c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildEmojiUpdateEvent
+
+  instance EventFilter GuildEmojiUpdateEvent where
+    type Filtered GuildEmojiUpdateEvent = Object
+    reduce _ (GuildEmojiUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildIntegrationsUpdateEvent
+
+  instance EventFilter GuildIntegrationsUpdateEvent where
+    type Filtered GuildIntegrationsUpdateEvent = Object
+    reduce _ (GuildIntegrationsUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildMemberAddEvent
+
+  instance EventFilter GuildMemberAddEvent where
+    type Filtered GuildMemberAddEvent = Member
+    reduce _ (GuildMemberAdd c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildMemberRemoveEvent
+
+  instance EventFilter GuildMemberRemoveEvent where
+    type Filtered GuildMemberRemoveEvent = Member
+    reduce _ (GuildMemberRemove c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildMemberUpdateEvent
+
+  instance EventFilter GuildMemberUpdateEvent where
+    type Filtered GuildMemberUpdateEvent = Member
+    reduce _ (GuildMemberUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildMemberChunkEvent
+
+  instance EventFilter GuildMemberChunkEvent where
+    type Filtered GuildMemberChunkEvent = Object
+    reduce _ (GuildMemberChunk c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildRoleCreateEvent
+
+  instance EventFilter GuildRoleCreateEvent where
+    type Filtered GuildRoleCreateEvent = Object
+    reduce _ (GuildRoleCreate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildRoleUpdateEvent
+
+  instance EventFilter GuildRoleUpdateEvent where
+    type Filtered GuildRoleUpdateEvent = Object
+    reduce _ (GuildRoleUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data GuildRoleDeleteEvent
+
+  instance EventFilter GuildRoleDeleteEvent where
+    type Filtered GuildRoleDeleteEvent = Object
+    reduce _ (GuildRoleDelete c) = Just c
+    reduce _ _ = Nothing
+
+  data MessageCreateEvent
+
+  instance EventFilter MessageCreateEvent where
+    type Filtered MessageCreateEvent = Message
+    reduce _ (MessageCreate c) = Just c
+    reduce _ _ = Nothing
+
+  data MessageUpdateEvent
+
+  instance EventFilter MessageUpdateEvent where
+    type Filtered MessageUpdateEvent = Message
+    reduce _ (MessageUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data MessageDeleteEvent
+
+  instance EventFilter MessageDeleteEvent where
+    type Filtered MessageDeleteEvent = Object
+    reduce _ (MessageDelete c) = Just c
+    reduce _ _ = Nothing
+
+  data MessageDeleteBulkEvent
+
+  instance EventFilter MessageDeleteBulkEvent where
+    type Filtered MessageDeleteBulkEvent = Object
+    reduce _ (MessageDeleteBulk c) = Just c
+    reduce _ _ = Nothing
+
+  data PresenceUpdateEvent
+
+  instance EventFilter PresenceUpdateEvent where
+    type Filtered PresenceUpdateEvent = Object
+    reduce _ (PresenceUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data TypingStartEvent
+
+  instance EventFilter TypingStartEvent where
+    type Filtered TypingStartEvent = Object
+    reduce _ (TypingStart c) = Just c
+    reduce _ _ = Nothing
+
+  data UserSettingsUpdateEvent
+  
+  instance EventFilter UserSettingsUpdateEvent where
+    type Filtered UserSettingsUpdateEvent = Object
+    reduce _ (UserSettingsUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data UserUpdateEvent
+
+  instance EventFilter UserUpdateEvent where
+    type Filtered UserUpdateEvent = Object
+    reduce _ (UserUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data VoiceStateUpdateEvent
+
+  instance EventFilter VoiceStateUpdateEvent where
+    type Filtered VoiceStateUpdateEvent = Object
+    reduce _ (VoiceStateUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data VoiceServerUpdateEvent
+
+  instance EventFilter VoiceServerUpdateEvent where
+    type Filtered VoiceServerUpdateEvent = Object
+    reduce _ (VoiceServerUpdate c) = Just c
+    reduce _ _ = Nothing
+
+  data SomeEvent (a :: Symbol)
+
+  instance KnownSymbol a => EventFilter (SomeEvent a) where
+    type Filtered (SomeEvent a) = Object
+    reduce p (UnknownEvent s e)
+      | s == eventName = Just e
+      | otherwise    = Nothing
+      where
+        eventName = symbolVal $ event p
+        event :: Proxy (SomeEvent a) -> Proxy a
+        event _ = Proxy
+    reduce _ _ = Nothing
