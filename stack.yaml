@@ -3,7 +3,7 @@ packages:
 - '.'
 - 'discord-types'
 - 'discord-rest'
-- 'discord-core'
+- 'discord-gateway'
 resolver: lts-8.5
 nix:
   packages: [ zlib ]

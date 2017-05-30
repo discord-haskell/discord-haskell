@@ -40,7 +40,7 @@ module Network.Discord.Rest.Prelude where
             infoM "Discord-hs.Rest" "Done waiting"
           return ()
 
-  instance (DiscordRest m, MonadIO m) => MonadHttp m where
+  instance (MonadIO m, DiscordRest m) => MonadHttp m where
     handleHttpException = liftIO . throwIO
 
   -- | Class over which performing a data retrieval action is defined

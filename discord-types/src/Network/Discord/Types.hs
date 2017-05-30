@@ -9,7 +9,9 @@ module Network.Discord.Types
   , module Network.Discord.Types.Events
   , module Network.Discord.Types.Gateway
   , module Network.Discord.Types.Guild
+  , module Data.Aeson
   ) where
+    import Control.Monad (MonadPlus)
 
     import Network.Discord.Types.Channel
     import Network.Discord.Types.Events
@@ -18,7 +20,8 @@ module Network.Discord.Types
     import Network.Discord.Types.Prelude
 
     import Control.Monad.IO.Class
+    import Data.Aeson (Object)
 
-    class MonadIO m => DiscordAuth m where
+    class (MonadIO m, MonadPlus m) => DiscordAuth m where
       auth :: m Auth
       version :: m String

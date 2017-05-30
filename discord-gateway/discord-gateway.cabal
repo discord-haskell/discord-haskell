@@ -1,4 +1,4 @@
-name:                discord-core
+name:                discord-gateway
 version:             0.2.2
 synopsis:            An API wrapper for Discord in Haskell
 description:         Provides an api wrapper and framework for writing
