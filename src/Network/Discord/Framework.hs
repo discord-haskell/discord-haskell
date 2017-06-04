@@ -3,30 +3,101 @@
 {-# LANGUAGE DataKinds, GADTs, RankNTypes, FlexibleContexts #-}
 module Network.Discord.Framework where
   import Data.Proxy
-  import GHC.TypeLits
+  import GHC.TypeLits hiding ((:<>:))
+  import Control.Applicative
+  import Control.Concurrent
+  import System.IO.Unsafe (unsafePerformIO)
 
   import Network.Discord.Rest
   import Network.Discord.Gateway
   import Network.Discord.Types
 
-  class (DiscordRest m, DiscordGate m) => DiscordM m
+  import Control.Monad.Reader
+  import Network.WebSockets (Connection)
+  
+  newtype DiscordApp m a = DiscordApp 
+    { runApp :: DiscordRest m => Event -> ReaderT Connection m a }
 
-  type EventHandler api = forall m. DiscordM m => EventHandler' api m
+  instance Alternative (DiscordApp m) where
+    empty = DiscordApp (\_ -> empty)
+    DiscordApp f <|> DiscordApp g = DiscordApp (\e -> f e <|> g e)
+
+  instance Applicative (DiscordApp m) where
+    pure a = DiscordApp (\_ -> return a)
+    DiscordApp f <*> DiscordApp a =
+      DiscordApp (\e -> (f e) <*> (a e))
+
+  instance DiscordAuth (DiscordApp m) where
+    auth    = DiscordApp (\_ -> lift auth)
+    version = DiscordApp (\_ -> lift version)
+    runIO   = fail "DiscordApp cannot be lifted to IO"
+
+  instance DiscordRest m => DiscordGate (DiscordApp m) where
+    type Vault (DiscordApp m) = MVar
+
+    data VaultKey (DiscordApp m) a = Store (MVar a)
+    get = liftIO . readMVar
+    put s v = liftIO $ putMVar s v
+
+    sequenceKey = Store $ unsafePerformIO newEmptyMVar
+    {-# NOINLINE sequenceKey #-}
+    storeFor (Store var) = return var
+
+    connection = DiscordApp (\_ -> ask)
+    feed m event = do
+      c <- connection
+      _ <- liftIO . forkIO . runIO $ runReaderT ((runApp m) event) c
+      return ()
+
+    run m conn =
+      runIO $ runReaderT ((runApp $ eventStream Create m) Nil) conn
+    fork m = do
+      c <- connection
+      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ runReaderT ((runApp m) e) c
+      return ()
+
+  instance Functor (DiscordApp m) where
+    f `fmap` DiscordApp a = DiscordApp (\e -> f `fmap` a e)
+
+  instance Monad (DiscordApp m) where
+    m >>= k = DiscordApp $ \e -> do
+      a <- runApp m e
+      runApp (k a) e
+
+  instance MonadIO (DiscordApp m) where
+    liftIO f = DiscordApp (\_ -> liftIO f)
+
+  instance MonadPlus (DiscordApp m)
+
+  class (Monad m, HasEvent api Event, Step (EventHandler' api m) Event (m ()))
+    => EventHandler api app m
 
   data Context types where
     EmptyContext :: Context '[]
     (:.) :: x -> Context xs -> Context (x ': xs)
 
-  data DiscordApp a where
-    Leaf   :: DiscordApp a
-    Map    :: (a -> b)       -> DiscordApp b -> DiscordApp a
-    Reduce :: (a -> Maybe b) -> DiscordApp b -> DiscordApp a
-    Filter :: (a -> Bool)    -> DiscordApp a -> DiscordApp a
-    Choose :: DiscordApp a   -> DiscordApp a -> DiscordApp a
+  data DiscordApp' a where
+    Leaf   :: DiscordApp' a
+    Map    :: (a -> b)       -> DiscordApp' b -> DiscordApp' a
+    Reduce :: (a -> Maybe b) -> DiscordApp' b -> DiscordApp' a
+    Filter :: (a -> Bool)    -> DiscordApp' a -> DiscordApp' a
+    Choose :: DiscordApp' a   -> DiscordApp' a -> DiscordApp' a
 
   class HasEvent api event where
     type EventHandler' api ( m :: * -> * )
-    makeApp :: Proxy api -> Context context -> DiscordApp event
+    makeApp :: Proxy api -> Context context -> DiscordApp' event
+
+  class Step f pre image where
+    go :: f -> pre -> image
+
+  instance Step (a -> b) a b where
+    go = ($)
+
+  instance (DiscordRest m, Step f a (m ()), Step g a (m ())) => Step (f :<>: g) a (m ()) where
+    go (f :<>: g) pre = seq' (go f pre) (go g pre)
+      where
+        seq' :: DiscordRest m => m () -> m () -> m ()
+        seq' = (>>)
 
   data a :> b
   infixr 5 :> 
@@ -48,7 +119,7 @@ module Network.Discord.Framework where
     type EventHandler' (EventHandle a) m = a -> m ()
     makeApp p _ = leaf p
       where
-        leaf :: Proxy (EventHandle a) -> DiscordApp a
+        leaf :: Proxy (EventHandle a) -> DiscordApp' a
         leaf _ = Leaf
 
   class EventFilter a where
