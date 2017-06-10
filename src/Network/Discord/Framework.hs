@@ -1,6 +1,6 @@
 -- | Provides a convenience framework for writing Discord bots without dealing with Pipes
-{-# LANGUAGE DataKinds, TypeOperators, KindSignatures, RankNTypes, FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses, GADTs, TypeFamilies, FlexibleContexts #-}
+{-# LANGUAGE TypeOperators, RankNTypes, TypeFamilies, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 module Network.Discord.Framework where
   import Data.Proxy
   import Control.Applicative
@@ -13,9 +13,12 @@ module Network.Discord.Framework where
 
   import Control.Monad.Reader
   import Network.WebSockets (Connection)
+  import Network.URL (URL)
+
+  class (DiscordRest m, MonadReader Connection m) => DiscordM m
   
   newtype DiscordApp m a = DiscordApp 
-    { runApp :: DiscordRest m => Event -> ReaderT Connection m a }
+    { runEvent :: DiscordM m => Event -> m a }
 
   instance Alternative (DiscordApp m) where
     empty = DiscordApp (\_ -> empty)
@@ -27,11 +30,11 @@ module Network.Discord.Framework where
       DiscordApp (\e -> (f e) <*> (a e))
 
   instance DiscordAuth (DiscordApp m) where
-    auth    = DiscordApp (\_ -> lift auth)
-    version = DiscordApp (\_ -> lift version)
+    auth    = DiscordApp (\_ -> auth)
+    version = DiscordApp (\_ -> version)
     runIO   = fail "DiscordApp cannot be lifted to IO"
 
-  instance DiscordRest m => DiscordGate (DiscordApp m) where
+  instance DiscordM m => DiscordGate (DiscordApp m) where
     type Vault (DiscordApp m) = MVar
 
     data VaultKey (DiscordApp m) a = Store (MVar a)
@@ -45,14 +48,14 @@ module Network.Discord.Framework where
     connection = DiscordApp (\_ -> ask)
     feed m event = do
       c <- connection
-      _ <- liftIO . forkIO . runIO $ runReaderT ((runApp m) event) c
+      _ <- liftIO . forkIO . runIO $ local (\_ -> c) (runEvent m event)
       return ()
 
     run m conn =
-      runIO $ runReaderT ((runApp $ eventStream Create m) Nil) conn
+      runIO $ local (\_ -> conn) ((runEvent $ eventStream Create m) Nil)
     fork m = do
       c <- connection
-      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ runReaderT ((runApp m) e) c
+      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ local (\_ -> c) ((runEvent m) e)
       return ()
 
   instance Functor (DiscordApp m) where
@@ -60,23 +63,53 @@ module Network.Discord.Framework where
 
   instance Monad (DiscordApp m) where
     m >>= k = DiscordApp $ \e -> do
-      a <- runApp m e
-      runApp (k a) e
+      a <- runEvent m e
+      runEvent (k a) e
 
   instance MonadIO (DiscordApp m) where
     liftIO f = DiscordApp (\_ -> liftIO f)
 
   instance MonadPlus (DiscordApp m)
 
-  class (DiscordRest m, HasEvent api m Event)
-    => EventHandler api app m
+  class DiscordRest m => EventMap f m where
+    type Domain f
+    type Codomain f
+    mapEvent :: Proxy f -> Domain f -> m (Codomain f)
 
-  data DiscordApp' m a where
-    Leaf      :: DiscordApp' m a
-    Transform :: (a -> m b)    -> DiscordApp' m b -> DiscordApp' m a
-    Choose    :: DiscordApp' m a -> DiscordApp' m a -> DiscordApp' m a
+  class (DiscordM m, Event ~ Domain f,  () ~ Codomain f, EventMap f m) => EventHandler f m
 
-  class DiscordRest m => HasEvent api m event where
-    type EventHandler' api m
-    makeApp :: Proxy api -> DiscordApp' m event
-    stepApp :: Proxy api -> DiscordApp' m event -> EventHandler' api m -> event -> m ()
+  data a :> b
+  data a :<>: b
+
+  instance (DiscordRest m, EventMap f m, EventMap g m, Codomain f ~ Domain g)
+     => EventMap (f :> g) m where
+
+     type Domain   (f :> g) = Domain f
+     type Codomain (f :> g) = Codomain g
+
+     mapEvent p event = mapEvent b =<< (mapEvent a event)
+      where
+        (a, b) = split p
+        split :: Proxy (a :> b) -> (Proxy a, Proxy b)
+        split _ = (Proxy, Proxy)
+
+  instance (DiscordRest m, EventMap f m, EventMap g m
+    , Domain f ~ Domain g, Codomain f ~ Codomain g)
+    => EventMap (f :<>: g) m where
+    
+    type Domain   (f :<>: g) = Domain f
+    type Codomain (f :<>: g) = Codomain f
+
+    mapEvent p event = mapEvent a event <|> mapEvent b event
+      where
+        (a, b) = split p
+        split :: Proxy (a :<>: b) -> (Proxy a, Proxy b)
+        split _ = (Proxy, Proxy)
+
+  runBot :: (DiscordM m, EventHandler f m) => Proxy (m f) -> URL -> IO ()
+  runBot p url = runGateway url (DiscordApp $ go p)
+    where
+      split :: Proxy (a b) -> (Proxy a, Proxy b)
+      split _ = (Proxy, Proxy)
+      go :: EventHandler f m => Proxy (m f) -> Event -> m ()
+      go p' = let (_, b) = split p' in mapEvent b

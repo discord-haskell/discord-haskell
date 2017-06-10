@@ -12,59 +12,283 @@ module Network.Discord
   import Network.Discord.Types
   import Network.Discord.Gateway
 
+  import Control.Monad (mzero)
   import Data.Proxy
-  import Data.Type.Equality
   import GHC.TypeLits hiding ((:<>:))
-
-  data a :> b
-  infixr 5 :> 
-
-  data a :<>: b = a :<>: b
-  infixl 3 :<>:
-
-  instance (HasEvent a m e, HasEvent b m e) => HasEvent (a :<>: b) m e where
-    type EventHandler' (a :<>: b) m = EventHandler' a m :<>: EventHandler' b m
-    makeApp p = Choose (makeApp a) (makeApp b)
-      where
-        (a, b) = split p
-        split :: Proxy (a :<>: b) -> (Proxy a, Proxy b)
-        split _ = (Proxy, Proxy)
-    stepApp p (Choose a b) (f :<>: g) event = do
-      stepApp pa a f event
-      stepApp pb b g event
-      where
-        (pa, pb) = split p
-        split :: Proxy (a :<>: b) -> (Proxy a, Proxy b)
-        split _ = (Proxy, Proxy)
-    stepApp _ _ _ _ = return ()
-
-  data EventHandle a
-
-  instance DiscordRest m => HasEvent (EventHandle a) m a where
-    type EventHandler' (EventHandle a) m = a -> m ()
-    makeApp p = leaf p
-      where
-        leaf :: Proxy (EventHandle a) -> DiscordApp' m a
-        leaf _ = Leaf
-    stepApp _ Leaf f event = f event
-    stepApp _ _ _ _ = return ()
-
-  class DiscordRest m => EventMap f m where
-    type Domain f
-    type Codomain f
-    mapEvent :: Proxy f -> Domain f -> m (Codomain f)
   
-  instance (a ~ Domain f, EventMap f m, HasEvent g m (Codomain f)) 
-    => HasEvent (f :> g) m a where
-    type EventHandler' (f :> g) m = EventHandler' g m
-    makeApp p = Transform (mapEvent a) (makeApp b)
+  data ReadyEvent
+  
+  instance DiscordM m => EventMap ReadyEvent m where
+    type Domain   ReadyEvent = Event
+    type Codomain ReadyEvent = Init
+
+    mapEvent _ (Ready e) = return e
+    mapEvent _ _ = mzero
+
+  data ResumedEvent
+
+  instance DiscordM m => EventMap ResumedEvent m where
+    type Domain   ResumedEvent = Event
+    type Codomain ResumedEvent = Object
+
+    mapEvent _ (Resumed e) = return e
+    mapEvent _ _ = mzero
+
+  data ChannelCreateEvent
+
+  instance DiscordM m => EventMap ChannelCreateEvent m where
+    type Domain   ChannelCreateEvent = Event
+    type Codomain ChannelCreateEvent = Channel
+
+    mapEvent _ (ChannelCreate e) = return e
+    mapEvent _ _ = mzero
+  
+  data ChannelUpdateEvent
+  
+  instance DiscordM m => EventMap ChannelUpdateEvent m where
+    type Domain   ChannelUpdateEvent = Event
+    type Codomain ChannelUpdateEvent = Channel
+
+    mapEvent _ (ChannelUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data ChannelDeleteEvent
+
+  instance DiscordM m => EventMap ChannelDeleteEvent m where
+    type Domain   ChannelDeleteEvent = Event
+    type Codomain ChannelDeleteEvent = Channel
+
+    mapEvent _ (ChannelDelete e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildCreateEvent
+
+  instance DiscordM m => EventMap GuildCreateEvent m where
+    type Domain   GuildCreateEvent = Event
+    type Codomain GuildCreateEvent = Guild
+
+    mapEvent _ (GuildCreate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildUpdateEvent
+
+  instance DiscordM m => EventMap GuildUpdateEvent m where
+    type Domain   GuildUpdateEvent = Event
+    type Codomain GuildUpdateEvent = Guild
+
+    mapEvent _ (GuildUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildDeleteEvent
+
+  instance DiscordM m => EventMap GuildDeleteEvent m where
+    type Domain   GuildDeleteEvent = Event
+    type Codomain GuildDeleteEvent = Guild
+
+    mapEvent _ (GuildDelete e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildBanAddEvent
+
+  instance DiscordM m => EventMap GuildBanAddEvent m where
+    type Domain   GuildBanAddEvent = Event
+    type Codomain GuildBanAddEvent = Member
+
+    mapEvent _ (GuildBanAdd e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildBanRemoveEvent
+
+  instance DiscordM m => EventMap GuildBanRemoveEvent m where
+    type Domain   GuildBanRemoveEvent = Event
+    type Codomain GuildBanRemoveEvent = Member
+
+    mapEvent _ (GuildBanRemove e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildEmojiUpdateEvent
+
+  instance DiscordM m => EventMap GuildEmojiUpdateEvent m where
+    type Domain   GuildEmojiUpdateEvent = Event
+    type Codomain GuildEmojiUpdateEvent = Object
+
+    mapEvent _ (GuildEmojiUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildIntegrationsUpdateEvent
+
+  instance DiscordM m => EventMap GuildIntegrationsUpdateEvent m where
+    type Domain   GuildIntegrationsUpdateEvent = Event
+    type Codomain GuildIntegrationsUpdateEvent = Object
+
+    mapEvent _ (GuildIntegrationsUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildMemberAddEvent
+
+  instance DiscordM m => EventMap GuildMemberAddEvent m where
+    type Domain   GuildMemberAddEvent = Event
+    type Codomain GuildMemberAddEvent = Member
+
+    mapEvent _ (GuildMemberAdd e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildMemberRemoveEvent
+
+  instance DiscordM m => EventMap GuildMemberRemoveEvent m where
+    type Domain   GuildMemberRemoveEvent = Event
+    type Codomain GuildMemberRemoveEvent = Member
+
+    mapEvent _ (GuildMemberRemove e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildMemberUpdateEvent
+
+  instance DiscordM m => EventMap GuildMemberUpdateEvent m where
+    type Domain   GuildMemberUpdateEvent = Event
+    type Codomain GuildMemberUpdateEvent = Member
+
+    mapEvent _ (GuildMemberUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildMemberChunkEvent
+
+  instance DiscordM m => EventMap GuildMemberChunkEvent m where
+    type Domain   GuildMemberChunkEvent = Event
+    type Codomain GuildMemberChunkEvent = Object
+
+    mapEvent _ (GuildMemberChunk e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildRoleCreateEvent
+
+  instance DiscordM m => EventMap GuildRoleCreateEvent m where
+    type Domain   GuildRoleCreateEvent = Event
+    type Codomain GuildRoleCreateEvent = Object
+
+    mapEvent _ (GuildRoleCreate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildRoleUpdateEvent
+
+  instance DiscordM m => EventMap GuildRoleUpdateEvent m where
+    type Domain   GuildRoleUpdateEvent = Event
+    type Codomain GuildRoleUpdateEvent = Object
+
+    mapEvent _ (GuildRoleUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data GuildRoleDeleteEvent
+
+  instance DiscordM m => EventMap GuildRoleDeleteEvent m where
+    type Domain   GuildRoleDeleteEvent = Event
+    type Codomain GuildRoleDeleteEvent = Object
+
+    mapEvent _ (GuildRoleDelete e) = return e
+    mapEvent _ _ = mzero
+
+  data MessageCreateEvent
+
+  instance DiscordM m => EventMap MessageCreateEvent m where
+    type Domain   MessageCreateEvent = Event
+    type Codomain MessageCreateEvent = Message
+
+    mapEvent _ (MessageCreate e) = return e
+    mapEvent _ _ = mzero
+  
+  data MessageUpdateEvent
+
+  instance DiscordM m => EventMap MessageUpdateEvent m where
+    type Domain   MessageUpdateEvent = Event
+    type Codomain MessageUpdateEvent = Message
+
+    mapEvent _ (MessageUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data MessageDeleteEvent
+
+  instance DiscordM m => EventMap MessageDeleteEvent m where
+    type Domain   MessageDeleteEvent = Event
+    type Codomain MessageDeleteEvent = Object
+
+    mapEvent _ (MessageDelete e) = return e
+    mapEvent _ _ = mzero
+
+  data MessageDeleteBulkEvent
+
+  instance DiscordM m => EventMap MessageDeleteBulkEvent m where
+    type Domain   MessageDeleteBulkEvent = Event
+    type Codomain MessageDeleteBulkEvent = Object
+
+    mapEvent _ (MessageDeleteBulk e) = return e
+    mapEvent _ _ = mzero
+
+  data PresenceUpdateEvent
+
+  instance DiscordM m => EventMap PresenceUpdateEvent m where
+    type Domain   PresenceUpdateEvent = Event
+    type Codomain PresenceUpdateEvent = Object
+
+    mapEvent _ (PresenceUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data TypingStartEvent
+
+  instance DiscordM m => EventMap TypingStartEvent m where
+    type Domain   TypingStartEvent = Event
+    type Codomain TypingStartEvent = Object
+
+    mapEvent _ (TypingStart e) = return e
+    mapEvent _ _ = mzero
+
+  data UserSettingsUpdateEvent
+
+  instance DiscordM m => EventMap UserSettingsUpdateEvent m where
+    type Domain   UserSettingsUpdateEvent = Event
+    type Codomain UserSettingsUpdateEvent = Object
+
+    mapEvent _ (UserSettingsUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data UserUpdateEvent
+
+  instance DiscordM m => EventMap UserUpdateEvent m where
+    type Domain   UserUpdateEvent = Event
+    type Codomain UserUpdateEvent = Object
+
+    mapEvent _ (UserUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data VoiceStateUpdateEvent
+
+  instance DiscordM m => EventMap VoiceStateUpdateEvent m where
+    type Domain   VoiceStateUpdateEvent = Event
+    type Codomain VoiceStateUpdateEvent = Object
+
+    mapEvent _ (VoiceStateUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data VoiceServerUpdateEvent
+
+  instance DiscordM m => EventMap VoiceServerUpdateEvent m where
+    type Domain   VoiceServerUpdateEvent = Event
+    type Codomain VoiceServerUpdateEvent = Object
+
+    mapEvent _ (VoiceServerUpdate e) = return e
+    mapEvent _ _ = mzero
+
+  data OtherEvent (a :: Symbol)
+
+  instance (DiscordM m, KnownSymbol e) => EventMap (OtherEvent e) m where
+    type Domain   (OtherEvent e) = Event
+    type Codomain (OtherEvent e) = Object
+
+    mapEvent p (UnknownEvent s e)
+      | s == event p = return e
+      | otherwise    = mzero
       where
-        (a, b) = split p
-        split :: Proxy (a :> b) -> (Proxy a, Proxy b)
-        split _ = (Proxy, Proxy)
-    stepApp p (Transform f api) app e = f e >>=
-      stepApp b api app
-      where
-        (a, b) = split p
-        split :: Proxy (a :> b) -> (Proxy a, Proxy b)
-        split _ = (Proxy, Proxy)
+        event :: KnownSymbol a => Proxy (OtherEvent a) -> String
+        event op = symbolVal $ eventName op
+        eventName :: Proxy (OtherEvent a) -> Proxy a
+        eventName _ = Proxy
+    mapEvent _ _ = mzero

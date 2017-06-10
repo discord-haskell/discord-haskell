@@ -31,6 +31,7 @@ library
                      , discord-rest
                      , discord-gateway
                      , mtl
+                     , url
                      , websockets
   ghc-options:         -Wall
   hs-source-dirs:      src
