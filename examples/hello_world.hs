@@ -1,19 +1,28 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, TypeOperators, FlexibleInstances, MultiParamTypeClasses, TypeFamilies #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-import Data.Maybe
+import Data.Proxy
 
-import Network.URL
-import Pipes.Core ((+>>))
+import Network.Discord
 
-import Network.Discord.Types
-import Network.Discord.Gateway
-import Network.Discord.Rest
+instance DiscordAuth IO where
+  auth    = return "TOKEN"
+  version = "0.2.2"
+  runIO = id
 
-data LogClient = LClient
-instance Client LogClient where
-  getAuth _ = Bot "TOKEN"
+data HelloWorld
+
+instance EventMap HelloWorld (DiscordApp IO) where
+  type Domain   HelloWorld = Init
+  type Codomain HelloWorld = ()
+
+  mapEvent _ _ = do
+    _ <- doFetch $ CreateMessage "188134500411244545" "Hello, World!"
+    return ()
+
+type HelloWorldApp = ReadyEvent :> HelloWorld
+
+instance EventHandler HelloWorldApp (DiscordApp IO)
 
 main :: IO ()
-main = runWebsocket (fromJust $ importURL "wss://gateway.discord.gg") LClient $ do
-  fetch' (CreateMessage 188134500411244545 "Hello, World!" Nothing)
-  fetch' (CreateMessage 188134500411244545 "I'm running discord.hs!" Nothing)
+main = runBot (Proxy :: Proxy (DiscordApp IO HelloWorldApp))

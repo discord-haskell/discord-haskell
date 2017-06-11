@@ -30,6 +30,7 @@ library
                      , discord-types
                      , discord-rest
                      , discord-gateway
+                     , hashable
                      , mtl
                      , url
                      , websockets

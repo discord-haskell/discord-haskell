@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE DataKinds, OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE AllowAmbiguousTypes, FlexibleInstances, UndecidableInstances #-}
 {-# LANGUAGE FunctionalDependencies, KindSignatures #-}
@@ -9,12 +8,13 @@ module Network.Discord.Rest.Prelude where
   import Control.Monad (when)
   import Control.Exception (throwIO)
 
+  import Control.Monad.IO.Class
   import Data.Default
+  import Data.Hashable
   import Data.Monoid ((<>))
   import Data.Time.Clock.POSIX
   import Network.HTTP.Req (Option, Scheme(..), (=:), MonadHttp(..))
   import System.Log.Logger
-  import Control.Monad.IO.Class
 
   import Network.Discord.Types
 
@@ -44,7 +44,7 @@ module Network.Discord.Rest.Prelude where
     handleHttpException = liftIO . throwIO
 
   -- | Class over which performing a data retrieval action is defined
-  class DoFetch (a :: * -> *) b | a b -> b where
+  class Hashable (a b) => DoFetch (a :: * -> *) b | a b -> b where
     doFetch :: DiscordRest m => a b -> m b
   
   -- | Represents a range of 'Snowflake's

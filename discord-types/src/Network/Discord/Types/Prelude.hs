@@ -51,17 +51,6 @@ module Network.Discord.Types.Prelude where
   epochTime :: UTCTime
   epochTime = posixSecondsToUTCTime 0
 
-  -- | Delete a (key, value) pair if the key exists
-  delete :: Eq a => a -> [(a, b)] -> [(a, b)]
-  delete k ((x,y):xs)
-    | k == x = delete k xs
-    | otherwise = (x, y):delete k xs
-  delete _ [] = []
-  
-  -- | Insert or modify a (key, value) pair
-  insert :: Eq a => a -> b -> [(a, b)] -> [(a, b)]
-  insert k v s = (k, v):delete k s
-
   -- | Return only the Right vaule from an either
   justRight :: (Show a) => Either a b -> b
   justRight (Right b) = b

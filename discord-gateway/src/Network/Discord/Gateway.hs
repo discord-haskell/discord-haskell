@@ -7,6 +7,7 @@ module Network.Discord.Gateway where
   import Control.Concurrent (threadDelay)
   import Control.Monad (forever)
   import Control.Monad.IO.Class (liftIO)
+  import Data.Maybe (fromJust)
 
   import Data.Aeson
   import Network.WebSockets hiding (send)
@@ -105,3 +106,6 @@ module Network.Discord.Gateway where
           $  errorM "Discord-hs.Gateway.Parse" err
           >> infoM "Discord-hs.Gateway.Raw" (show msg')
         ) >> (return $ ParseError err)
+  
+  gatewayUrl :: URL
+  gatewayUrl = fromJust $ importURL "wss://gateway.discord.gg"

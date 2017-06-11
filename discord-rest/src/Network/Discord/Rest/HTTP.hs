@@ -18,6 +18,7 @@ module Network.Discord.Rest.HTTP
     import Control.Monad (when)
     import Data.Aeson
     import Data.ByteString.Char8 (pack, ByteString)
+    import Data.Hashable
     import Data.Maybe (fromMaybe)
     import qualified Data.Text as T (pack)
     import qualified Network.HTTP.Req as R
@@ -70,6 +71,13 @@ module Network.Discord.Rest.HTTP
       where
         parseHeader :: R.HttpResponse resp => resp -> ByteString -> Int -> Int
         parseHeader resp header def = fromMaybe def $ decodeStrict =<< R.responseHeader resp header
+
+    instance Hashable (JsonRequest r) where
+      hashWithSalt s (Delete url _)   = hashWithSalt s $ show url
+      hashWithSalt s (Get    url _)   = hashWithSalt s $ show url
+      hashWithSalt s (Patch  url _ _) = hashWithSalt s $ show url
+      hashWithSalt s (Post   url _ _) = hashWithSalt s $ show url
+      hashWithSalt s (Put    url _ _) = hashWithSalt s $ show url
     
     -- | Base implementation of DoFetch, allows arbitrary HTTP requests to be performed
     instance (FromJSON r) => DoFetch JsonRequest r where

@@ -12,27 +12,53 @@ module Network.Discord.Framework where
   import Network.Discord.Types
 
   import Control.Monad.Reader
+  import Data.Hashable
   import Network.WebSockets (Connection)
-  import Network.URL (URL)
 
-  class (DiscordRest m, MonadReader Connection m) => DiscordM m
+  class (DiscordAuth m, MonadReader Connection m) => DiscordM m
   
   newtype DiscordApp m a = DiscordApp 
     { runEvent :: DiscordM m => Event -> m a }
 
   instance Alternative (DiscordApp m) where
-    empty = DiscordApp (\_ -> empty)
+    empty = DiscordApp $ const empty
     DiscordApp f <|> DiscordApp g = DiscordApp (\e -> f e <|> g e)
 
   instance Applicative (DiscordApp m) where
     pure a = DiscordApp (\_ -> return a)
     DiscordApp f <*> DiscordApp a =
-      DiscordApp (\e -> (f e) <*> (a e))
+      DiscordApp (\e -> f e <*> a e)
 
   instance DiscordAuth (DiscordApp m) where
-    auth    = DiscordApp (\_ -> auth)
-    version = DiscordApp (\_ -> version)
+    auth    = DiscordApp $ const auth
+    version = DiscordApp $ const version
     runIO   = fail "DiscordApp cannot be lifted to IO"
+
+  rateLimits :: Vault (DiscordApp m) [(Int, Int)]
+  rateLimits = unsafePerformIO $ newMVar []
+  {-# NOINLINE rateLimits #-}
+
+  delete :: Eq a => [(a, b)] -> a -> [(a, b)]
+  delete ((a, b):xs) a'
+    | a == a'   = delete xs a'
+    | otherwise = (a, b):delete xs a'
+  delete [] _ = []
+
+  modify :: Eq a => a -> b -> [(a, b)] -> [(a, b)]
+  modify a' b' ((a, b):xs)
+    | a == a'   = (a', b'): delete xs a
+    | otherwise = (a, b): modify a' b' xs
+  modify a' b' [] = [(a', b')]
+
+  instance DiscordM m => DiscordRest (DiscordApp m) where
+    getRateLimit f = lookup (hash f) =<< get rateLimits
+      where
+        lookup :: (Eq a, Monad m) => a -> [(a, b)] -> m (Maybe b)
+        lookup a' ((a, b):xs)
+          | a' == a   = return (Just b)
+          | otherwise = lookup a' xs
+        lookup _ [] = return Nothing
+    setRateLimit f limit = put rateLimits =<< modify (hash f) limit `fmap` get rateLimits
 
   instance DiscordM m => DiscordGate (DiscordApp m) where
     type Vault (DiscordApp m) = MVar
@@ -45,17 +71,17 @@ module Network.Discord.Framework where
     {-# NOINLINE sequenceKey #-}
     storeFor (Store var) = return var
 
-    connection = DiscordApp (\_ -> ask)
+    connection = DiscordApp $ const ask
     feed m event = do
       c <- connection
-      _ <- liftIO . forkIO . runIO $ local (\_ -> c) (runEvent m event)
+      _ <- liftIO . forkIO . runIO $ local (const c) (runEvent m event)
       return ()
 
     run m conn =
-      runIO $ local (\_ -> conn) ((runEvent $ eventStream Create m) Nil)
+      runIO $ local (const conn) ((runEvent $ eventStream Create m) Nil)
     fork m = do
       c <- connection
-      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ local (\_ -> c) ((runEvent m) e)
+      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ local (const c) (runEvent m e)
       return ()
 
   instance Functor (DiscordApp m) where
@@ -76,8 +102,6 @@ module Network.Discord.Framework where
     type Codomain f
     mapEvent :: Proxy f -> Domain f -> m (Codomain f)
 
-  class (DiscordM m, Event ~ Domain f,  () ~ Codomain f, EventMap f m) => EventHandler f m
-
   data a :> b
   data a :<>: b
 
@@ -87,7 +111,7 @@ module Network.Discord.Framework where
      type Domain   (f :> g) = Domain f
      type Codomain (f :> g) = Codomain g
 
-     mapEvent p event = mapEvent b =<< (mapEvent a event)
+     mapEvent p event = mapEvent b =<< mapEvent a event
       where
         (a, b) = split p
         split :: Proxy (a :> b) -> (Proxy a, Proxy b)
@@ -106,10 +130,3 @@ module Network.Discord.Framework where
         split :: Proxy (a :<>: b) -> (Proxy a, Proxy b)
         split _ = (Proxy, Proxy)
 
-  runBot :: (DiscordM m, EventHandler f m) => Proxy (m f) -> URL -> IO ()
-  runBot p url = runGateway url (DiscordApp $ go p)
-    where
-      split :: Proxy (a b) -> (Proxy a, Proxy b)
-      split _ = (Proxy, Proxy)
-      go :: EventHandler f m => Proxy (m f) -> Event -> m ()
-      go p' = let (_, b) = split p' in mapEvent b

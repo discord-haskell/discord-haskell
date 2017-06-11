@@ -29,7 +29,6 @@ module Network.Discord.Rest
     getGateway = do
       r <- R.req R.GET (baseUrl R./: "gateway") R.NoReqBody R.jsonResponse mempty
       return . fromJust $ importURL =<< parseMaybe getURL (R.responseBody r)
-
       where
         getURL :: Value -> Parser String
         getURL = withObject "url" (.: "url")
