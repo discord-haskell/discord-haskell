@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds, OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE AllowAmbiguousTypes, FlexibleInstances, UndecidableInstances #-}
 {-# LANGUAGE FunctionalDependencies, KindSignatures #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Network.Discord.Rest.Prelude where

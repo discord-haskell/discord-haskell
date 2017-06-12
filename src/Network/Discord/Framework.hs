@@ -15,23 +15,22 @@ module Network.Discord.Framework where
   import Data.Hashable
   import Network.WebSockets (Connection)
 
-  class (DiscordAuth m, MonadReader Connection m) => DiscordM m
   
   newtype DiscordApp m a = DiscordApp 
-    { runEvent :: DiscordM m => Event -> m a }
+    { runEvent :: DiscordAuth m => Connection -> Event -> m a }
 
   instance Alternative (DiscordApp m) where
-    empty = DiscordApp $ const empty
-    DiscordApp f <|> DiscordApp g = DiscordApp (\e -> f e <|> g e)
+    empty = DiscordApp $ \_ _ -> empty
+    DiscordApp f <|> DiscordApp g = DiscordApp (\c e -> f c e <|> g c e)
 
   instance Applicative (DiscordApp m) where
-    pure a = DiscordApp (\_ -> return a)
+    pure a = DiscordApp (\_ _ -> return a)
     DiscordApp f <*> DiscordApp a =
-      DiscordApp (\e -> f e <*> a e)
+      DiscordApp (\c e -> f c e <*> a c e)
 
   instance DiscordAuth (DiscordApp m) where
-    auth    = DiscordApp $ const auth
-    version = DiscordApp $ const version
+    auth    = DiscordApp $ \_ _ -> auth
+    version = DiscordApp $ \_ _ -> version
     runIO   = fail "DiscordApp cannot be lifted to IO"
 
   rateLimits :: Vault (DiscordApp m) [(Int, Int)]
@@ -50,17 +49,17 @@ module Network.Discord.Framework where
     | otherwise = (a, b): modify a' b' xs
   modify a' b' [] = [(a', b')]
 
-  instance DiscordM m => DiscordRest (DiscordApp m) where
-    getRateLimit f = lookup (hash f) =<< get rateLimits
+  instance DiscordAuth m => DiscordRest (DiscordApp m) where
+    getRateLimit f = lookup' (hash f) =<< get rateLimits
       where
-        lookup :: (Eq a, Monad m) => a -> [(a, b)] -> m (Maybe b)
-        lookup a' ((a, b):xs)
+        lookup' :: (Eq a, Monad m) => a -> [(a, b)] -> m (Maybe b)
+        lookup' a' ((a, b):xs)
           | a' == a   = return (Just b)
-          | otherwise = lookup a' xs
-        lookup _ [] = return Nothing
-    setRateLimit f limit = put rateLimits =<< modify (hash f) limit `fmap` get rateLimits
+          | otherwise = lookup' a' xs
+        lookup' _ [] = return Nothing
+    setRateLimit f l = put rateLimits =<< modify (hash f) l `fmap` get rateLimits
 
-  instance DiscordM m => DiscordGate (DiscordApp m) where
+  instance DiscordAuth m => DiscordGate (DiscordApp m) where
     type Vault (DiscordApp m) = MVar
 
     data VaultKey (DiscordApp m) a = Store (MVar a)
@@ -71,29 +70,30 @@ module Network.Discord.Framework where
     {-# NOINLINE sequenceKey #-}
     storeFor (Store var) = return var
 
-    connection = DiscordApp $ const ask
+    connection = DiscordApp $ \c _ -> pure c
     feed m event = do
+      liftIO $ print "Running event handler"
       c <- connection
-      _ <- liftIO . forkIO . runIO $ local (const c) (runEvent m event)
-      return ()
+      _ <- return $! runEvent m c event
+      liftIO $ print "Returning from handler"
 
     run m conn =
-      runIO $ local (const conn) ((runEvent $ eventStream Create m) Nil)
+      runIO $ (runEvent $ eventStream Create m) conn Nil
     fork m = do
       c <- connection
-      _ <- DiscordApp $ \e -> liftIO . forkIO . runIO $ local (const c) (runEvent m e)
+      _ <- DiscordApp $ \_ e -> liftIO . forkIO . runIO $ runEvent m c e
       return ()
 
   instance Functor (DiscordApp m) where
-    f `fmap` DiscordApp a = DiscordApp (\e -> f `fmap` a e)
+    f `fmap` DiscordApp a = DiscordApp (\c e -> f `fmap` (a c e))
 
   instance Monad (DiscordApp m) where
-    m >>= k = DiscordApp $ \e -> do
-      a <- runEvent m e
-      runEvent (k a) e
+    m >>= k = DiscordApp $ \c e -> do
+      a <- runEvent m c e
+      runEvent (k a) c e
 
   instance MonadIO (DiscordApp m) where
-    liftIO f = DiscordApp (\_ -> liftIO f)
+    liftIO f = DiscordApp (\_ _ -> liftIO f)
 
   instance MonadPlus (DiscordApp m)
 
