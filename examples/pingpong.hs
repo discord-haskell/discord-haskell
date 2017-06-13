@@ -9,6 +9,7 @@ import GHC.TypeLits
 import Network.Discord
 
 import Control.Monad.IO.Class
+import Data.Text
 
 instance DiscordAuth IO where
   auth    = return $ Bot "TOKEN"
@@ -21,9 +22,16 @@ instance KnownSymbol a => EventMap (Command a) (DiscordApp IO) where
   type Domain   (Command a) = Message
   type Codomain (Command a) = Message
 
-  mapEvent p (m@Message{messageContent = c})
-    | show c == symbolVal (commandName p) = return m
-    | otherwise = mzero
+  mapEvent p (m@Message{messageContent = c,messageAuthor = User{userIsBot = bot}})
+    | bot = do
+      liftIO $ putStrLn "Ignoring Bot Message"
+      mzero
+    | unpack c == symbolVal (commandName p) = do
+      liftIO $ putStrLn "Command Match"
+      return m
+    | otherwise = do
+      liftIO . putStrLn $ "No Command Match: " ++ show c ++ "!=" ++ symbolVal (commandName p)
+      mzero
     where
       commandName :: Proxy (Command a) -> Proxy a
       commandName _ = Proxy
@@ -35,7 +43,7 @@ instance KnownSymbol a => EventMap (Reply a) (DiscordApp IO) where
   type Codomain (Reply a) = ()
 
   mapEvent p (Message{messageChannel = c}) = do
-    _ <- doFetch $ CreateMessage c (read . symbolVal $ replyText p) Nothing
+    _ <- doFetch $ CreateMessage c (pack . symbolVal $ replyText p) Nothing
     return ()
     where
       replyText :: Proxy (Reply a) -> Proxy a
@@ -51,10 +59,13 @@ instance Show a => EventMap (LogEvent a) (DiscordApp IO) where
     liftIO $ putStrLn "Logging Event"
     liftIO . putStrLn $ show e
 
-type PingPongApp = LogEvent Event :<>: ((MessageCreateEvent :<>: MessageUpdateEvent) :> 
-  (    (Command "ping" :> Reply "pong")
-  :<>: (Command "pong" :> Reply "ping")
-  ))
+type PingPongApp = 
+	(
+		(MessageCreateEvent :<>: MessageUpdateEvent) :> 
+			(    (Command "ping" :> Reply "pong")
+			:<>: (Command "pong" :> Reply "ping")
+			)
+	) :<>: LogEvent Event
 
 instance EventHandler PingPongApp IO
 

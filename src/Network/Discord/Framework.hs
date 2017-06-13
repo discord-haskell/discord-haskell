@@ -64,7 +64,9 @@ module Network.Discord.Framework where
 
     data VaultKey (DiscordApp m) a = Store (MVar a)
     get = liftIO . readMVar
-    put s v = liftIO $ putMVar s v
+    put s v = liftIO $ do
+      _ <- tryTakeMVar s
+      putMVar s v
 
     sequenceKey = Store $ unsafePerformIO newEmptyMVar
     {-# NOINLINE sequenceKey #-}
@@ -74,7 +76,7 @@ module Network.Discord.Framework where
     feed m event = do
       liftIO $ print "Running event handler"
       c <- connection
-      _ <- return $! runEvent m c event
+      _ <- liftIO . runIO $ runEvent m c event
       liftIO $ print "Returning from handler"
 
     run m conn =
@@ -85,7 +87,7 @@ module Network.Discord.Framework where
       return ()
 
   instance Functor (DiscordApp m) where
-    f `fmap` DiscordApp a = DiscordApp (\c e -> f `fmap` (a c e))
+    f `fmap` DiscordApp a = DiscordApp (\c e -> f `fmap` a c e)
 
   instance Monad (DiscordApp m) where
     m >>= k = DiscordApp $ \c e -> do
