@@ -60,12 +60,12 @@ instance Show a => EventMap (LogEvent a) (DiscordApp IO) where
     liftIO . putStrLn $ show e
 
 type PingPongApp = 
-	(
-		(MessageCreateEvent :<>: MessageUpdateEvent) :> 
-			(    (Command "ping" :> Reply "pong")
-			:<>: (Command "pong" :> Reply "ping")
-			)
-	) :<>: LogEvent Event
+  (
+    (MessageCreateEvent :<>: MessageUpdateEvent) :> 
+      (    (Command "ping" :> Reply "pong")
+      :<>: (Command "pong" :> Reply "ping")
+      )
+  ) :<>: LogEvent Event
 
 instance EventHandler PingPongApp IO
 
