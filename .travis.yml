@@ -4,6 +4,10 @@ cache:
   directories:
   - "$HOME/.stack"
   - "./.stack-work"
+addons:
+  apt:
+    packages:
+    - libgmp-dev
 install:
 - nix-channel --update
 - travis_wait nix-env -i stack cabal2nix
