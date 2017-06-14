@@ -10,5 +10,5 @@ install:
 - cabal2nix --shell . > shell.nix
 - stack --nix --no-terminal --skip-ghc-check setup
 script:
-- stack --nix --no-terminal haddock
+- stack --nix --no-terminal build
 - '[[ -n "$TRAVIS_TAG" ]] && echo -e "$HACKAGE_USER\n$HACKAGE_PASS" | stack upload --no-signature . || echo "Tag not set"'
