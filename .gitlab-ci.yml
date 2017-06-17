@@ -1,0 +1,24 @@
+image: haskell:latest
+
+variables:
+  STACK_ROOT: "${CI_PROJECT_DIR}/.stack"
+
+
+stages:
+- setup
+- build
+
+job_setup:
+  stage: setup
+  script:
+    - stack setup
+
+build_lib:
+  stage: build
+  script:
+    - stack build
+
+build_doc:
+  stage: build
+  script:
+  - stack haddock
