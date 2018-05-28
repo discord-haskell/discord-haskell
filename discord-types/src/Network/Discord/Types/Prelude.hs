@@ -15,7 +15,7 @@ module Network.Discord.Types.Prelude where
   data Auth = Bot    String
             | Client String
             | Bearer String
-  
+
   -- | Formats the token for use with the REST API
   instance Show Auth where
     show (Bot    token) = "Bot "    ++ token
@@ -29,7 +29,7 @@ module Network.Discord.Types.Prelude where
   authToken (Bearer token) = token
 
   -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
-  newtype Snowflake = Snowflake Word64 
+  newtype Snowflake = Snowflake Word64
     deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
 
   instance Show Snowflake where
