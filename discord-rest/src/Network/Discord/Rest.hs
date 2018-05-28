@@ -12,23 +12,24 @@ module Network.Discord.Rest
   , module Network.Discord.Rest.Guild
   , module Network.Discord.Rest.User
   ) where
-    import Data.Maybe (fromJust)
 
-    import qualified Network.HTTP.Req as R
-    import Data.Aeson.Types
-    import Network.URL
+import Data.Maybe (fromJust)
 
-    import Network.Discord.Rest.Channel
-    import Network.Discord.Rest.Guild
-    import Network.Discord.Rest.Prelude
-    import Network.Discord.Rest.User
-    import Network.Discord.Rest.HTTP (baseUrl)
+import qualified Network.HTTP.Req as R
+import Data.Aeson.Types
+import Network.URL
 
-    -- | Obtains a new gateway to connect to.
-    getGateway :: DiscordRest m => m URL
-    getGateway = do
-      r <- R.req R.GET (baseUrl R./: "gateway") R.NoReqBody R.jsonResponse mempty
-      return . fromJust $ importURL =<< parseMaybe getURL (R.responseBody r)
-      where
-        getURL :: Value -> Parser String
-        getURL = withObject "url" (.: "url")
+import Network.Discord.Rest.Channel
+import Network.Discord.Rest.Guild
+import Network.Discord.Rest.Prelude
+import Network.Discord.Rest.User
+import Network.Discord.Rest.HTTP (baseUrl)
+
+-- | Obtains a new gateway to connect to.
+getGateway :: DiscordRest m => m URL
+getGateway = do
+  r <- R.req R.GET (baseUrl R./: "gateway") R.NoReqBody R.jsonResponse mempty
+  return . fromJust $ importURL =<< parseMaybe getURL (R.responseBody r)
+  where
+    getURL :: Value -> Parser String
+    getURL = withObject "url" (.: "url")
