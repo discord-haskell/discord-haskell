@@ -58,6 +58,6 @@ instance Default Range where
 -- | Convert a Range to a query string
 toQueryString :: Range -> Option 'Https
 toQueryString (Range a b l)
-  =  "after"  =: show a 
-  <> "before" =: show b 
+  =  "after"  =: show a
+  <> "before" =: show b
   <> "limit"  =: show l
