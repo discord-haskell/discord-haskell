@@ -9,7 +9,6 @@ module Network.Discord.Rest.HTTP
   , baseUrl
   , fetch
   , makeRequest
-  , (//)
   , (R./:)
   ) where
 
@@ -39,9 +38,7 @@ baseRequestOptions = do
   return $ R.header "Authorization" (pack . show $ a)
         <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
                                       ++ v ++ ")")
-infixl 5 //
-(//) :: Show a => R.Url scheme -> a -> R.Url scheme
-url // part = url R./: (T.pack $ show part)
+--- use R./: instead of //
 
 type Option = R.Option 'R.Https
 
