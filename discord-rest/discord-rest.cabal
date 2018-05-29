@@ -24,21 +24,21 @@ library
   other-modules:       Network.Discord.Rest.Prelude
                      , Network.Discord.Rest.HTTP
   -- other-extensions:
-  build-depends:       base==4.*
+  build-depends:       base
                      , discord-types
-                     , aeson>=1.0 && <1.2
-                     , bytestring==0.10.*
-                     , comonad==5.*
-                     , data-default==0.7.*
-                     , hashable==1.2.*
-                     , hslogger==1.2.*
-                     , http-client==0.5.*
-                     , mtl==2.2.*
-                     , req==0.2.*
-                     , stm==2.4.*
-                     , text==1.2.*
-                     , time>=1.6 && <1.9
-                     , url==2.1.*
+                     , aeson
+                     , bytestring
+                     , comonad
+                     , data-default
+                     , hashable
+                     , hslogger
+                     , http-client
+                     , mtl
+                     , req
+                     , stm
+                     , text
+                     , time
+                     , url
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010

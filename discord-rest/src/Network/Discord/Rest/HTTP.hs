@@ -15,6 +15,7 @@ module Network.Discord.Rest.HTTP
 import Data.Semigroup ((<>))
 
 import Control.Monad (when)
+import Control.Concurrent.Chan
 import Data.Aeson
 import Data.ByteString.Char8 (pack, ByteString)
 import Data.Hashable
