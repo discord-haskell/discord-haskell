@@ -23,7 +23,8 @@ import Network.Discord.Types.Prelude
 import Control.Monad.IO.Class
 import Data.Aeson (Object)
 
-class (MonadIO m, MonadPlus m) => DiscordAuth m where
-  auth :: m Auth
-  version :: m String
-  runIO :: m a -> IO a
+data DiscordAuth = DiscordAuth {
+    authAuth :: Auth
+  , authVersion :: String
+  }
+
