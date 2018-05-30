@@ -29,6 +29,7 @@ library
                      , aeson
                      , bytestring
                      , comonad
+                     , containers
                      , data-default
                      , hashable
                      , hslogger

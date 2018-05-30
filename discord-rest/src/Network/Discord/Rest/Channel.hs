@@ -67,47 +67,62 @@ authHeader :: DiscordAuth -> R.Option R.Https
 authHeader (DiscordAuth auth version) = R.header "Authorization" auth
                                      <> R.header "User-Agent" agent
   where
-  url = "https://github.com/jano017/Discord.hs"
-  agent = "DiscordBot (" <> url <> ", " <> version <> ")"
+  srcurl = "https://github.com/jano017/Discord.hs"
+  agent = "DiscordBot (" <> srcurl <> ", " <> version <> ")"
 
 -- Append to an URL
 infixl 5 //
 (//) :: Show a => R.Url scheme -> a -> R.Url scheme
-url // part = url /: (T.pack $ show part)
+url // part = url /: T.pack (show part)
 
 executeRequest :: FromJSON a => DiscordAuth -> Request a -> IO (R.JsonResponse a)
 executeRequest auth r = do (m, u, b) <- extractReq
-                           R.req m u b R.jsonResponse (authHeader auth)
+                           R.req m (url // u) b R.jsonResponse (authHeader auth)
   where
   extractReq = case r of
-      GetChannel chan               -> pure (R.GET, url // chan, R.NoReqBody)
-      ModifyChannel chan            -> pure (R.GET, url // chan, R.NoReqBody)
-      GetChannel chan               -> pure (R.GET, url // chan, R.NoReqBody)
-      ModifyChannel chan patch      -> pure (R.PATH, url // chan, ReqBodyJson patch)
-      DeleteChannel chan            -> pure (R.Delete, url // chan, R.NoReqBody)
-      GetChannelMessages chan range -> pure (R.GET, url // chan /: "messages", toQueryString range)
-      GetChannelMessage chan msg    -> pure (R.GET, url // chan /: "messages" // msg, R.NoReqBody)
-      GetChannelInvites chan        -> pure (R.GET, url // chan /: "invites", R.NoReqBody)
-      CreateChannelInvite chan patch -> pure (R.POST, url // chan /: "invites", ReqBodyJson patch)
-      DeleteChannelPermission chan perm -> pure (R.DELETE, url // chan /: "permissions" // perm, R.NoReqBody)
-      TriggerTypingIndicator chan   -> pure (R.POST, url // chan /: "typing", R.NoReqBody)
-      GetPinnedMessages chan        -> pure (R.GET, url // chan /: "pins", R.NoReqBody)
-      AddPinnedMessage chan msg     -> pure (R.PUT, url // chan /: "pins" // msg, R.NoReqBody)
-      DeletePinnedMessage chan msg  -> pure (R.DELETE, url // chan /: "pins" // msg, R.NoReqBody)
-      CreateMessage chan msg embed  -> pure (R.POST, url // chan /: "messages",
-                                               ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed)
+      GetChannel chan ->
+                            pure (R.GET, chan, R.NoReqBody)
+      ModifyChannel chan ->
+                            pure (R.GET, chan, R.NoReqBody)
+      GetChannel chan ->
+                            pure (R.GET, chan, R.NoReqBody)
+      ModifyChannel chan patch ->
+                            pure (R.PATH, chan, ReqBodyJson patch)
+      DeleteChannel chan ->
+                            pure (R.DELETE, chan, R.NoReqBody)
+      GetChannelMessages chan range ->
+                            pure (R.GET, chan /: "messages", toQueryString range)
+      GetChannelMessage chan msg ->
+                            pure (R.GET, chan /: "messages" // msg, R.NoReqBody)
+      GetChannelInvites chan ->
+                            pure (R.GET, chan /: "invites", R.NoReqBody)
+      CreateChannelInvite chan patch ->
+                            pure (R.POST, chan /: "invites", ReqBodyJson patch)
+      DeleteChannelPermission chan perm ->
+                            pure (R.DELETE, chan /: "permissions" // perm, R.NoReqBody)
+      TriggerTypingIndicator chan ->
+                            pure (R.POST, chan /: "typing", R.NoReqBody)
+      GetPinnedMessages chan ->
+                            pure (R.GET, chan /: "pins", R.NoReqBody)
+      AddPinnedMessage chan msg ->
+                            pure (R.PUT, chan /: "pins" // msg, R.NoReqBody)
+      DeletePinnedMessage chan msg ->
+                            pure (R.DELETE, chan /: "pins" // msg, R.NoReqBody)
+      CreateMessage chan msg embed ->
+                            pure (R.POST, chan /: "messages",
+                                    ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed)
       UploadFile chan fileName file -> do
-          body <- reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
-          pure (R.POST, url // chan /: "messages", body)
-
-      EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed -> pure
-        (R.PATCH, url // chan /: "messages" // msg,
+                            let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
+                            body <- reqBodyMultipart [part]
+                            pure (R.POST, chan /: "messages", body)
+      EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
+                            pure (R.PATCH, chan /: "messages" // msg,
            ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed)
-      DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed) -> pure
-        (R.DELETE, url // chan /: "messages" // msg, R.NoReqBody)
-      BulkDeleteMessage chan msgs -> pure
-        (R.POST, url // chan /: "messages" /: "bulk-delete",
+      DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
+                            pure (R.DELETE, chan /: "messages" // msg, R.NoReqBody)
+      BulkDeleteMessage chan msgs ->
+                            pure (R.POST, chan /: "messages" /: "bulk-delete",
            ReqBodyJson $ object ["messages" .= map messageId msgs])
-      EditChannelPermissions chan perm patch -> pure (R.Put, url // chan /: "permissions" // perm,
-                                                       ReqBodyJson patch)
+      EditChannelPermissions chan perm patch ->
+                            pure (R.PUT, chan /: "permissions" // perm, ReqBodyJson patch)
 
