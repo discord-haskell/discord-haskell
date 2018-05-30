@@ -10,21 +10,23 @@ import Data.Hashable
 import Data.Text
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
+import Data.Monoid ((<>))
 import Control.Monad (mzero)
 
 -- | Authorization token for the Discord API
-data Auth = Bot    String
-          | Client String
-          | Bearer String
+data Auth = Bot    Text
+          | Client Text
+          | Bearer Text
+
 
 -- | Formats the token for use with the REST API
-instance Show Auth where
-  show (Bot    token) = "Bot "    ++ token
-  show (Client token) = token
-  show (Bearer token) = "Bearer " ++ token
+formatAuth :: Auth -> Text
+formatAuth (Bot    token) = "Bot "    <> token
+formatAuth (Client token) = token
+formatAuth (Bearer token) = "Bearer " <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
-authToken :: Auth -> String
+authToken :: Auth -> Text
 authToken (Bot    token) = token
 authToken (Client token) = token
 authToken (Bearer token) = token

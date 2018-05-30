@@ -22,9 +22,10 @@ import Network.Discord.Types.Prelude
 
 import Control.Monad.IO.Class
 import Data.Aeson (Object)
+import Data.Text (Text)
 
 data DiscordAuth = DiscordAuth {
     authAuth :: Auth
-  , authVersion :: String
+  , authVersion :: Text
   }
 
