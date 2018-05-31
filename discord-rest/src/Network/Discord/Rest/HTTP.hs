@@ -26,20 +26,6 @@ import qualified Network.HTTP.Req as R
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
--- | Construct base options with auth from Discord state
-baseRequestOptions :: DiscordRest m => m Option
-baseRequestOptions = do
-  a <- auth
-  v <- version
-  return $ R.header "Authorization" (pack . show $ a)
-        <> R.header "User-Agent" (pack $ "DiscordBot (https://github.com/jano017/Discord.hs,"
-                                      ++ v ++ ")")
---- use R./: instead of //
 
 type Option = R.Option 'R.Https
 

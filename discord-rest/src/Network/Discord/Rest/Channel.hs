@@ -1,6 +1,6 @@
 {-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings, DataKinds #-}
 -- | Provides actions for Channel API interactions
 module Network.Discord.Rest.Channel
   (
@@ -8,121 +8,135 @@ module Network.Discord.Rest.Channel
   ) where
 
 import Data.Aeson
-import Data.ByteString.Lazy
+import qualified Data.ByteString.Lazy as BL
 import Data.Hashable
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import Network.HTTP.Client (RequestBody (..))
 import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
-import Network.HTTP.Req (reqBodyMultipart)
+import Network.HTTP.Req (reqBodyMultipart, ReqBodyJson, (/:))
+import qualified Network.HTTP.Req as R
 
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
-import Network.Discord.Rest.HTTP
 
 -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
-data DiscordRequest a where
+data ChannelRequest a where
   -- | Gets a channel by its id.
-  GetChannel              :: Snowflake -> DiscordRequest Channel
+  GetChannel              :: Snowflake -> ChannelRequest Channel
   -- | Edits channels options.
-  ModifyChannel           :: ToJSON o  => Snowflake -> o -> DiscordRequest Channel
+  ModifyChannel           :: ToJSON o  => Snowflake -> o -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
-  DeleteChannel           :: Snowflake -> DiscordRequest Channel
+  DeleteChannel           :: Snowflake -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: Snowflake -> Range -> DiscordRequest [Message]
+  GetChannelMessages      :: Snowflake -> Range -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
-  GetChannelMessage       :: Snowflake -> Snowflake -> DiscordRequest Message
+  GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
   -- | Sends a message to a channel.
-  CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> DiscordRequest Message
+  CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
-  UploadFile              :: Snowflake -> FilePath -> ByteString -> DiscordRequest Message
+  UploadFile              :: Snowflake -> FilePath -> BL.ByteString -> ChannelRequest Message
   -- | Edits a message content.
-  EditMessage             :: Message   -> T.Text -> Maybe Embed -> DiscordRequest Message
+  EditMessage             :: Message   -> T.Text -> Maybe Embed -> ChannelRequest Message
   -- | Deletes a message.
-  DeleteMessage           :: Message   -> DiscordRequest ()
+  DeleteMessage           :: Message   -> ChannelRequest ()
   -- | Deletes a group of messages.
-  BulkDeleteMessage       :: Snowflake -> [Message] -> DiscordRequest ()
+  BulkDeleteMessage       :: Snowflake -> [Message] -> ChannelRequest ()
   -- | Edits a permission overrides for a channel.
-  EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> DiscordRequest ()
+  EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
-  GetChannelInvites       :: Snowflake -> DiscordRequest Object
+  GetChannelInvites       :: Snowflake -> ChannelRequest Object
   -- | Creates an instant invite to a channel.
-  CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> DiscordRequest Object
+  CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> ChannelRequest Object
   -- | Deletes a permission override from a channel.
-  DeleteChannelPermission :: Snowflake -> Snowflake -> DiscordRequest ()
+  DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
-  TriggerTypingIndicator  :: Snowflake -> DiscordRequest ()
+  TriggerTypingIndicator  :: Snowflake -> ChannelRequest ()
   -- | Gets all pinned messages of a channel.
-  GetPinnedMessages       :: Snowflake -> DiscordRequest [Message]
+  GetPinnedMessages       :: Snowflake -> ChannelRequest [Message]
   -- | Pins a message.
-  AddPinnedMessage        :: Snowflake -> Snowflake -> DiscordRequest ()
+  AddPinnedMessage        :: Snowflake -> Snowflake -> ChannelRequest ()
   -- | Unpins a message.
-  DeletePinnedMessage     :: Snowflake -> Snowflake -> DiscordRequest ()
+  DeletePinnedMessage     :: Snowflake -> Snowflake -> ChannelRequest ()
 
-maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
-maybeEmbed [] = []
-maybeEmbed em = ["embed" .= em]
+majorRouteChannel c = case c of
+  (GetChannel chan) ->              "get_chan" <> T.pack (show chan)
+  (ModifyChannel chan _) ->         "mod_chan" <> T.pack (show chan)
+  (DeleteChannel chan) ->           "mod_chan" <> T.pack (show chan)
+  (GetChannelMessages chan _) ->         "msg" <> T.pack (show chan)
+  (GetChannelMessage chan _) ->      "get_msg" <> T.pack (show chan)
+  (CreateMessage chan _ _) ->            "msg" <> T.pack (show chan)
+  (UploadFile chan _ _) ->               "msg" <> T.pack (show chan)
+  (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _ _) ->
+                                     "get_msg" <> T.pack (show chan)
+  (DeleteMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _)) =
+                                     "get_msg" <> T.pack (show chan)
+  (BulkDeleteMessage (chan _)) ->   "del_msgs" <> T.pack (show chan)
+  (EditChannelPermissions chan _ _) -> "perms" <> T.pack (show chan)
+  (GetChannelInvites chan) ->        "invites" <> T.pack (show chan)
+  (CreateChannelInvite chan _) ->    "invites" <> T.pack (show chan)
+  (DeleteChannelPermission chan _) ->  "perms" <> T.pack (show chan)
+  (TriggerTypingIndicator chan) ->       "tti" <> T.pack (show chan)
+  (GetPinnedMessages chan) ->           "pins" <> T.pack (show chan)
+  (AddPinnedMessage chan _) ->           "pin" <> T.pack (show chan)
+  (DeletePinnedMessage chan _) ->        "pin" <> T.pack (show chan)
 
-authHeader :: DiscordAuth -> R.Option R.Https
-authHeader (DiscordAuth auth version) = R.header "Authorization" auth
-                                     <> R.header "User-Agent" agent
-  where
-  srcurl = "https://github.com/jano017/Discord.hs"
-  agent = "DiscordBot (" <> srcurl <> ", " <> version <> ")"
+instance (FromJSON a) => DoFetch ChannelRequest a where
+  doFetch req = go req
+    where
+      maybeEmbed :: Maybe Embed -> [(Text, Value)]
+      maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
 
--- Append to an URL
-infixl 5 //
-(//) :: Show a => R.Url scheme -> a -> R.Url scheme
-url // part = url /: T.pack (show part)
+      url = baseUrl /: "channels"
 
-executeRequest :: FromJSON a => DiscordAuth -> Request a -> IO (R.JsonResponse a)
-executeRequest auth r = do (m, u, b) <- extractReq
-                           R.req m (url // u) b R.jsonResponse (authHeader auth)
-  where
-  extractReq = case r of
-      GetChannel chan ->
-                            pure (R.GET, chan, R.NoReqBody)
-      ModifyChannel chan ->
-                            pure (R.GET, chan, R.NoReqBody)
-      GetChannel chan ->
-                            pure (R.GET, chan, R.NoReqBody)
-      ModifyChannel chan patch ->
-                            pure (R.PATH, chan, ReqBodyJson patch)
-      DeleteChannel chan ->
-                            pure (R.DELETE, chan, R.NoReqBody)
-      GetChannelMessages chan range ->
-                            pure (R.GET, chan /: "messages", toQueryString range)
-      GetChannelMessage chan msg ->
-                            pure (R.GET, chan /: "messages" // msg, R.NoReqBody)
-      GetChannelInvites chan ->
-                            pure (R.GET, chan /: "invites", R.NoReqBody)
-      CreateChannelInvite chan patch ->
-                            pure (R.POST, chan /: "invites", ReqBodyJson patch)
-      DeleteChannelPermission chan perm ->
-                            pure (R.DELETE, chan /: "permissions" // perm, R.NoReqBody)
-      TriggerTypingIndicator chan ->
-                            pure (R.POST, chan /: "typing", R.NoReqBody)
-      GetPinnedMessages chan ->
-                            pure (R.GET, chan /: "pins", R.NoReqBody)
-      AddPinnedMessage chan msg ->
-                            pure (R.PUT, chan /: "pins" // msg, R.NoReqBody)
-      DeletePinnedMessage chan msg ->
-                            pure (R.DELETE, chan /: "pins" // msg, R.NoReqBody)
-      CreateMessage chan msg embed ->
-                            pure (R.POST, chan /: "messages",
-                                    ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed)
-      UploadFile chan fileName file -> do
-                            let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
-                            body <- reqBodyMultipart [part]
-                            pure (R.POST, chan /: "messages", body)
-      EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
-                            pure (R.PATCH, chan /: "messages" // msg,
-           ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed)
-      DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed ->
-                            pure (R.DELETE, chan /: "messages" // msg, R.NoReqBody)
-      BulkDeleteMessage chan msgs ->
-                            pure (R.POST, chan /: "messages" /: "bulk-delete",
-           ReqBodyJson $ object ["messages" .= map messageId msgs])
-      EditChannelPermissions chan perm patch ->
-                            pure (R.PUT, chan /: "permissions" // perm, ReqBodyJson patch)
+      go :: DiscordRest m => ChannelRequest a -> m a
+      go r@(GetChannel chan) = makeRequest r
+        $ Get (url // chan) mempty
+      go r@(ModifyChannel chan patch) = makeRequest r
+        $ Patch (url // chan)
+          (ReqBodyJson patch) mempty
+      go r@(DeleteChannel chan) = makeRequest r
+        $ Delete (url // chan) mempty
+      go r@(GetChannelMessages chan range) = makeRequest r
+        $ Get (url // chan /: "messages") (toQueryString range)
+      go r@(GetChannelMessage chan msg) = makeRequest r
+        $ Get (url // chan /: "messages" // msg) mempty
+      go r@(CreateMessage chan msg embed) = makeRequest r
+        $ Post (url // chan /: "messages")
+          (ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed)
+          mempty
+      go r@(UploadFile chan fileName file) = do
+        body <- reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
+        makeRequest r $ Post (url // chan /: "messages")
+          body mempty
+      go r@(EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed) = makeRequest r
+        $ Patch (url // chan /: "messages" // msg)
+          (ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed)
+          mempty
+      go r@(DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _)) = makeRequest r
+        $ Delete (url // chan /: "messages" // msg) mempty
+      go r@(BulkDeleteMessage chan msgs) = makeRequest r
+        $ Post (url // chan /: "messages" /: "bulk-delete")
+          (ReqBodyJson $ object ["messages" .= Prelude.map messageId msgs])
+          mempty
+      go r@(EditChannelPermissions chan perm patch) = makeRequest r
+        $ Put (url // chan /: "permissions" // perm)
+          (ReqBodyJson patch) mempty
+      go r@(GetChannelInvites chan) = makeRequest r
+        $ Get (url // chan /: "invites") mempty
+      go r@(CreateChannelInvite chan patch) = makeRequest r
+        $ Post (url // chan /: "invites")
+          (ReqBodyJson patch) mempty
+      go r@(DeleteChannelPermission chan perm) = makeRequest r
+        $ Delete (url // chan /: "permissions" // perm) mempty
+      go r@(TriggerTypingIndicator chan) = makeRequest r
+        $ Post (url // chan /: "typing")
+          NoReqBody mempty
+      go r@(GetPinnedMessages chan) = makeRequest r
+        $ Get (url // chan /: "pins") mempty
+      go r@(AddPinnedMessage chan msg) = makeRequest r
+        $ Put (url // chan /: "pins" // msg)
+          NoReqBody mempty
+      go r@(DeletePinnedMessage chan msg) = makeRequest r
+        $ Delete (url // chan /: "pins" // msg) mempty
 
