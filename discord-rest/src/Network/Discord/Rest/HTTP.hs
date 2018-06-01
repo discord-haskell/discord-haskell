@@ -23,46 +23,86 @@ import Data.Maybe (fromMaybe)
 import qualified Data.Text as T (pack)
 import qualified Network.HTTP.Req as R
 
+import Network.Discord.Rest.Channel
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
-
-type Option = R.Option 'R.Https
-
--- | Represtents a HTTP request made to an API that supplies a Json response
-data JsonRequest r where
-  Delete ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
-  Get    ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
-  Patch  :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
-  Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
-  Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
-
-fetch :: (FromJSON r, DiscordRest m) => JsonRequest r -> m (R.JsonResponse r)
-fetch (Delete url      opts) = R.req R.DELETE url R.NoReqBody R.jsonResponse =<< (<> opts) <$> baseRequestOptions
-fetch (Get    url      opts) = R.req R.GET    url R.NoReqBody R.jsonResponse =<< (<> opts) <$> baseRequestOptions
-fetch (Patch  url body opts) = R.req R.PATCH  url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
-fetch (Post   url body opts) = R.req R.POST   url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
-fetch (Put    url body opts) = R.req R.PUT    url body        R.jsonResponse =<< (<> opts) <$> baseRequestOptions
-
-makeRequest :: (FromJSON r, DiscordRest m, DoFetch f r)
-  => f r -> JsonRequest r -> m r
-makeRequest req action = do
-  waitRateLimit req
-  resp <- fetch action
-  when (parseHeader resp "X-RateLimit-Remaining" 1 < 1) $
-    setRateLimit req $ parseHeader resp "X-RateLimit-Reset" 0
-  return $ R.responseBody resp
+restHandler :: (FromJSON a, DiscordRequest req) =>
+        DiscordAuth -> Chan (req, MVar (Either String a)) -> IO ()
+restHandler auth urls = loop M.empty
   where
-    parseHeader :: R.HttpResponse resp => resp -> ByteString -> Int -> Int
-    parseHeader resp header def = fromMaybe def $ decodeStrict =<< R.responseHeader resp header
+  loop ratelocker = do
+    (request, thread) <- readChan urls
+    curtime <- round <$> getPOSIXTime
+    case compareRate ratelocker curtime (majorRoute request) of
+      Locked -> do writeChan urls (request, thread)
+                   loop ratelocker
+      Available -> do action <- compileJsonRequest request
+                      (resp, timeout) <- trytillsuccess action
+                      case resp of
+                        Resp r -> putMVar thread (Right r)
+                        BadResp r -> putMVar threaad (Left r)
+                        TryAgain -> writeChan urls (request, thread)
+                      case timeout of
+                        GlobalWait i -> threadDelay (i * 1000) >> loop ratelocker
+                        PathWait i -> loop $ M.insert (majorRoute request)
+                                                      (curtime + i)
+                                                      ratelocker
+                        NoLimit -> loop ratelocker
 
-instance Hashable (JsonRequest r) where
-  hashWithSalt s (Delete url _)   = hashWithSalt s $ show url
-  hashWithSalt s (Get    url _)   = hashWithSalt s $ show url
-  hashWithSalt s (Patch  url _ _) = hashWithSalt s $ show url
-  hashWithSalt s (Post   url _ _) = hashWithSalt s $ show url
-  hashWithSalt s (Put    url _ _) = hashWithSalt s $ show url
+compareRate ratelocker curtime route =
+    case M.lookup route ratelocker of
+      Just unlockTime -> if curtime < unlockTime then Locked else Available
+      Nothing -> Available
 
--- | Base implementation of DoFetch, allows arbitrary HTTP requests to be performed
-instance (FromJSON r) => DoFetch JsonRequest r where
-  doFetch req = R.responseBody <$> fetch req
+data RateLimited = Available | Locked
+
+data Timeout = GlobalWait Integer
+             | PathWait Integer
+             | NoLimit
+
+data Resp a = Resp a
+            | BadResp String
+            | TryAgain
+
+trytillsuccess :: DiscordRequest r => r -> IO (Resp a, Timeout)
+trytillsuccess action = do
+  resp <- action
+  let code   = R.responseStatusCode resp
+      status = R.responseStatusMessage resp
+      wait   = fromMaybe  2000 $ R.responseHeader resp "Retry-After"
+      global = fromMaybe False $ R.responseHeader resp "X-RateLimit-Global"
+      remain = fromMaybe     1 $ R.responseHeader resp "X-Ratelimit-Remaining"
+  case () of
+   _ | code == 429 -> pure (RateLimited, if global then GlobalWait wait else PathWait wait)
+     | code `elem` [500,502] -> pure (TryAgain, NoLimit)
+     | inRange (200,299) code -> pure ( Resp resp
+                                      , if remain > 0 then NoLimit else PathWait wait )
+     | inRange (400,499) code -> pure ( BadResp (Q.unpack status)
+                                      , if remain > 0 then NoLimit else PathWait wait )
+     | otherwise -> let err = "Unknown code: " ++ show cdoe ++ " - " ++ Q.unpack status
+                    in pure (BadResp err, NoLimit)
+
+fetch :: (FromJSON r) => DiscordAuth -> JsonRequest r -> IO (R.JsonResponse r)
+fetch auth request = case request of
+    (Delete url      opts) -> R.req R.DELETE url R.NoReqBody R.jsonResponse (authopt <> opts)
+    (Get    url      opts) -> R.req R.GET    url R.NoReqBody R.jsonResponse (authopt <> opts)
+    (Patch  url body opts) -> R.req R.PATCH  url body        R.jsonResponse (authopt <> opts)
+    (Post   url body opts) -> R.req R.POST   url body        R.jsonResponse (authopt <> opts)
+    (Put    url body opts) -> R.req R.PUT    url body        R.jsonResponse (authopt <> opts)
+  where
+  authopt = authHeader auth
+
+
+--makeRequest :: (FromJSON r, DiscordRest m, DoFetch f r)
+--  => f r -> JsonRequest r -> m r
+--makeRequest req action = do
+--  waitRateLimit req
+--  resp <- fetch action
+--  when (parseHeader resp "X-RateLimit-Remaining" 1 < 1) $
+--    setRateLimit req $ parseHeader resp "X-RateLimit-Reset" 0
+--  return $ R.responseBody resp
+--  where
+--    parseHeader :: R.HttpResponse resp => resp -> ByteString -> Int -> Int
+--    parseHeader resp header def = fromMaybe def $ decodeStrict =<< R.responseHeader resp header
+

@@ -12,15 +12,12 @@ module Network.Discord.Types
   , module Data.Aeson
   ) where
 
-import Control.Monad (MonadPlus)
-
 import Network.Discord.Types.Channel
 import Network.Discord.Types.Events
 import Network.Discord.Types.Gateway
 import Network.Discord.Types.Guild
 import Network.Discord.Types.Prelude
 
-import Control.Monad.IO.Class
 import Data.Aeson (Object)
 import Data.Text (Text)
 
