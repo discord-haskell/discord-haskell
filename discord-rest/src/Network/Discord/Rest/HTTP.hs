@@ -32,7 +32,7 @@ import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
 restHandler :: (FromJSON a, DiscordRequest req) =>
-        DiscordAuth -> Chan (req, MVar (Either String a)) -> IO ()
+        DiscordAuth -> Chan (req a, MVar (Either String a)) -> IO ()
 restHandler auth urls = loop M.empty
   where
   loop ratelocker = do
@@ -69,7 +69,7 @@ data Resp a = Resp a
             | BadResp String
             | TryAgain
 
-trytillsuccess :: DiscordRequest r => r -> IO (Resp a, Timeout)
+trytillsuccess :: DiscordRequest r => r a -> IO (Resp a, Timeout)
 trytillsuccess action = do
   resp <- action
   let code   = R.responseStatusCode resp
