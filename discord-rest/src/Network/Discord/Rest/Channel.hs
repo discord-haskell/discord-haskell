@@ -21,11 +21,12 @@ import Network.Discord.Types
 
 
 instance DiscordRequest ChannelRequest where
-  compileJsonRequest :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
-  compileJsonRequest = jsonRequestChannel
-
-  majorRoute     :: ChannelRequest a -> T.Text
+  majorRoute :: ChannelRequest a -> T.Text
   majorRoute = majorRouteChannel
+
+  createRequest :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
+  createRequest = jsonRequestChannel
+
 
 -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
 data ChannelRequest a where
