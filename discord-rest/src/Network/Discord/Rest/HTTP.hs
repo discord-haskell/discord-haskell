@@ -8,20 +8,24 @@ module Network.Discord.Rest.HTTP
   , R.NoReqBody(..)
   , baseUrl
   , fetch
-  , makeRequest
   , (R./:)
   ) where
 
 import Data.Semigroup ((<>))
 
+import Control.Concurrent.Chan
+import Control.Concurrent.MVar
+import Control.Concurrent (threadDelay)
 import Control.Monad (when)
+import Control.Monad.IO.Class
 import Control.Concurrent.Chan
 import Data.Aeson
-import Data.ByteString.Char8 (pack, ByteString)
+import qualified Data.ByteString.Char8 as Q
 import Data.Hashable
 import Data.Maybe (fromMaybe)
-import qualified Data.Text as T (pack)
+--import qualified Data.Text as T
 import qualified Network.HTTP.Req as R
+import qualified Data.Map.Strict as M
 
 import Network.Discord.Rest.Channel
 import Network.Discord.Rest.Prelude
