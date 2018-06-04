@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification, TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings #-}
 -- | Provides base types and utility functions needed for modules in Network.Discord.Types
 module Network.Discord.Types.Prelude where
 
