@@ -12,7 +12,6 @@ import Data.Maybe (fromJust)
 
 import Data.Aeson
 import Network.WebSockets hiding (send)
-import Network.URL
 import System.Log.Logger
 import Wuss
 

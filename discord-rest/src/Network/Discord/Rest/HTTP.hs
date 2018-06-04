@@ -12,6 +12,7 @@ import Data.Semigroup ((<>))
 import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan
+import Control.Exception (throwIO)
 import Data.Aeson
 import Data.Ix (inRange)
 import Data.Time
@@ -49,7 +50,7 @@ restHandler auth urls = loop M.empty
                         NoLimit -> loop ratelocker
 
 addSeconds :: Int -> UTCTime -> UTCTime
-addSeconds s = addUTCTime (secondsToDiffTime (fromIntegral s))
+addSeconds s = addUTCTime (fromIntegral s)
 
 compareRate :: (Ord a, Ord k) => M.Map k a -> a -> k -> RateLimited
 compareRate ratelocker curtime route =
