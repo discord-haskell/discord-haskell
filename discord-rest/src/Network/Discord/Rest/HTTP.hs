@@ -36,7 +36,7 @@ restHandler auth urls = loop M.empty
       Locked -> do writeChan urls (discReq, thread)
                    loop ratelocker
       Available -> do request <- createRequest discReq
-                      (resp, timeout) <- trytillsuccess (compileRequest auth request)
+                      (resp, timeout) <- tryRequest (compileRequest auth request)
                       case resp of
                         Resp r -> putMVar thread (Right r)
                         BadResp r -> putMVar thread (Left r)
@@ -67,8 +67,8 @@ data Resp a = Resp a
             | BadResp String
             | TryAgain
 
-trytillsuccess :: IO (R.JsonResponse a) -> IO (Resp a, Timeout)
-trytillsuccess action = do
+tryRequest :: FromJSON a => IO (R.JsonResponse a) -> IO (Resp a, Timeout)
+tryRequest action = do
   resp <- action
   let code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
