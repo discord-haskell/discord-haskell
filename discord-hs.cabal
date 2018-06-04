@@ -32,7 +32,6 @@ library
                      , discord-gateway
                      , hashable
                      , mtl
-                     , url
                      , websockets
   ghc-options:         -Wall
   hs-source-dirs:      src

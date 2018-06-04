@@ -23,14 +23,14 @@ library
                      , Network.Discord.Types.Events
                      , Network.Discord.Types.Gateway
   other-modules:       Network.Discord.Types.Prelude
-  build-depends:       base==4.*
-                     , aeson>=1.0 && <1.2
-                     , text==1.2.*
-                     , time>=1.6 && <1.9
-                     , hashable==1.2.*
-                     , vector>=0.10 && <0.13
-                     , unordered-containers==0.2.*
-                     , transformers==0.5.*
+  build-depends:       base
+                     , aeson
+                     , text
+                     , time
+                     , hashable
+                     , vector
+                     , unordered-containers
+                     , transformers
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010

@@ -39,7 +39,6 @@ library
                      , stm
                      , text
                      , time
-                     , url
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010

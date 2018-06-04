@@ -18,13 +18,12 @@ cabal-version:       >=1.10
 
 library
   exposed-modules:     Network.Discord.Gateway
-  build-depends:       base==4.*
-                     , aeson>=1.0 && <1.2
-                     , hslogger==1.2.*
-                     , transformers==0.5.*
-                     , url==2.1.*
-                     , websockets==0.10.*
-                     , wuss==1.1.*
+  build-depends:       base
+                     , aeson
+                     , hslogger
+                     , transformers
+                     , websockets
+                     , wuss
                      , discord-types
   ghc-options:         -Wall
   hs-source-dirs:      src
