@@ -7,31 +7,47 @@
 module Network.Discord.Rest.Prelude where
 
 import Data.Monoid ((<>))
+import Network.HTTP.Req ((=:))
 import Data.Aeson
 import qualified Data.Text as T
-
-import Network.HTTP.Simple
+import qualified Data.Text.Encoding as TE
+import qualified Network.HTTP.Req as R
 
 import Network.Discord.Types
 
 class DiscordRequest req where
   majorRoute    :: req a -> T.Text
-  modifyRequest :: FromJSON r => req r -> (Request -> Request)
+  createRequest :: FromJSON r => req r -> IO (JsonRequest r)
 
 
 -- | The base url (Req) for API requests
-baseUrl :: T.Text
-baseUrl = "https://discordapp.com/api/v6/"
+baseUrl :: R.Url 'R.Https
+baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+  where apiVersion = "v6"
 
-authHeader :: DiscordAuth -> (Request -> Request)
+authHeader :: DiscordAuth -> R.Option 'R.Https
 authHeader (DiscordAuth auth version) =
-          setRequestHeader "Authorization" [formatAuth auth]
-        . setRequestHeader "User-Agent" ["DiscordBot (" <> srcUrl <> ", "
-                                                        <> version <> ") "
-                                                        <> "Currently forking and rewriting"]
+          R.header "Authorization" (TE.encodeUtf8 (formatAuth auth))
+       <> R.header "User-Agent" agent
   where
-  srcUrl = "https://github.com/aquarial/Discord.hs"
+  srcUrl = "https://github.com/jano017/Discord.hs"
+  agent = "DiscordBot (" <> srcUrl <> ", " <> TE.encodeUtf8 version <> ")"
 
+-- Append to an URL
+infixl 5 //
+(//) :: Show a => R.Url scheme -> a -> R.Url scheme
+url // part = url R./: T.pack (show part)
+
+
+type Option = R.Option 'R.Https
+
+-- | Represtents a HTTP request made to an API that supplies a Json response
+data JsonRequest r where
+  Delete ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
+  Get    ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
+  Patch  :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
+  Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
+  Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
 
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
@@ -40,10 +56,11 @@ maxRange :: Range
 maxRange = Range 0 18446744073709551615 100
 --                       2^64 - 1
 
--- -- | Convert a Range to a query string
--- toQueryString :: Range -> Option
--- toQueryString (Range a b l)
---   =  "after"  =: show a
---   <> "before" =: show b
---   <> "limit"  =: show l
---
+-- | Convert a Range to a query string
+toQueryString :: Range -> Option
+toQueryString (Range a b l)
+  =  "after"  =: show a
+  <> "before" =: show b
+  <> "limit"  =: show l
+
+

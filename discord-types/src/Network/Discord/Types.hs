@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
 -- | Provides types and encoding/decoding code. Types should be identical to those provided
 --   in the Discord API documentation.
@@ -18,10 +19,10 @@ import Network.Discord.Types.Guild
 import Network.Discord.Types.Prelude
 
 import Data.Aeson (Object)
-import qualified Data.ByteString.Char8 as Q
+import Data.Text (Text)
 
 data DiscordAuth = DiscordAuth {
     authAuth :: Auth
-  , authVersion :: Q.ByteString
+  , authVersion :: Text
   }
 

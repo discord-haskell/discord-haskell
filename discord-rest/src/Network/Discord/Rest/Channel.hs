@@ -16,6 +16,10 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
+import Network.HTTP.Client (RequestBody (..))
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
+import Network.HTTP.Req ((/:))
+import qualified Network.HTTP.Req as R
 
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types

@@ -7,43 +7,43 @@ import Data.Bits
 import Data.Word
 
 import Data.Aeson.Types
+import Data.Hashable
+import Data.Text
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
-import qualified Data.ByteString.Char8 as Q
-import qualified Data.Text as T
 
 -- | Authorization token for the Discord API
-data Auth = Bot    Q.ByteString
-          | Client Q.ByteString
-          | Bearer Q.ByteString
+data Auth = Bot    Text
+          | Client Text
+          | Bearer Text
 
 
 -- | Formats the token for use with the REST API
-formatAuth :: Auth -> Q.ByteString
+formatAuth :: Auth -> Text
 formatAuth (Bot    token) = "Bot "    <> token
 formatAuth (Client token) = token
 formatAuth (Bearer token) = "Bearer " <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
-authToken :: Auth -> Q.ByteString
+authToken :: Auth -> Text
 authToken (Bot    token) = token
 authToken (Client token) = token
 authToken (Bearer token) = token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake Word64
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits, Hashable)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
 
 instance ToJSON Snowflake where
-  toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
+  toJSON (Snowflake snowflake) = String . pack $ show snowflake
 
 instance FromJSON Snowflake where
-  parseJSON (String snowflake) = pure (Snowflake (read (T.unpack snowflake)))
+  parseJSON (String snowflake) = Snowflake <$> (return . read $ unpack snowflake)
   parseJSON _ = mzero
 
 -- |Gets a creation date from a snowflake.
