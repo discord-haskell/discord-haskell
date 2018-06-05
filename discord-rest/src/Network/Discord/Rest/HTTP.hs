@@ -93,8 +93,9 @@ compileRequest auth request = case request of
     (Delete url      opts) -> R.req R.DELETE url R.NoReqBody R.jsonResponse (authopt <> opts)
     (Get    url      opts) -> R.req R.GET    url R.NoReqBody R.jsonResponse (authopt <> opts)
     (Patch  url body opts) -> R.req R.PATCH  url body        R.jsonResponse (authopt <> opts)
-    (Post   url body opts) -> R.req R.POST   url body        R.jsonResponse (authopt <> opts)
     (Put    url body opts) -> R.req R.PUT    url body        R.jsonResponse (authopt <> opts)
+    (Post   url body opts) -> do b <- body
+                                 R.req R.POST   url b        R.jsonResponse (authopt <> opts)
   where
   authopt = authHeader auth
 
