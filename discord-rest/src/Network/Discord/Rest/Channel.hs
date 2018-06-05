@@ -29,7 +29,7 @@ instance DiscordRequest ChannelRequest where
   majorRoute :: ChannelRequest a -> T.Text
   majorRoute = majorRouteChannel
 
-  createRequest :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
+  createRequest :: FromJSON r => ChannelRequest r -> JsonRequest r
   createRequest = jsonRequestChannel
 
 
@@ -42,7 +42,7 @@ data ChannelRequest a where
   -- | Deletes a channel if its id doesn't equal to the id of guild.
   DeleteChannel           :: Snowflake -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: Snowflake -> Range -> ChannelRequest [Message]
+  GetChannelMessages      :: Snowflake -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
   GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
   -- | Sends a message to a channel.
@@ -72,6 +72,18 @@ data ChannelRequest a where
   -- | Unpins a message.
   DeletePinnedMessage     :: Snowflake -> Snowflake -> ChannelRequest ()
 
+
+-- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
+data MessageTiming = Around Snowflake
+                   | Before Snowflake
+                   | After Snowflake
+
+timingToQuery :: R.QueryParam p => MessageTiming -> p
+timingToQuery t = case t of
+  (Around snow) -> "around" R.=: show snow
+  (Before snow) -> "before" R.=: show snow
+  (After  snow) -> "after"  R.=: show snow
+
 majorRouteChannel :: ChannelRequest a -> T.Text
 majorRouteChannel c = case c of
   (GetChannel chan) ->              "get_chan " <> T.pack (show chan)
@@ -99,32 +111,32 @@ maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
 url :: R.Url 'R.Https
 url = baseUrl /: "channels"
 
-jsonRequestChannel :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
+jsonRequestChannel :: FromJSON r => ChannelRequest r -> JsonRequest r
 jsonRequestChannel c = case c of
-  (GetChannel chan) -> pure $ Get (url // chan) mempty
-  (ModifyChannel chan patch) -> pure $ Patch (url // chan) (R.ReqBodyJson patch) mempty
-  (DeleteChannel chan) -> pure $ Delete (url // chan) mempty
-  (GetChannelMessages chan range) -> pure $ Get (url // chan /: "messages") (toQueryString range)
-  (GetChannelMessage chan msg) -> pure $ Get (url // chan /: "messages" // msg) mempty
-  (CreateMessage chan msg embed) -> pure $ Post (url // chan /: "messages")
-   (R.ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed) mempty
-  (UploadFile chan fileName file) -> do
-     body <- R.reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
-     pure $ Post (url // chan /: "messages") body mempty
+  (GetChannel chan) -> Get (url // chan) mempty
+  (ModifyChannel chan patch) -> Patch (url // chan) (R.ReqBodyJson patch) mempty
+  (DeleteChannel chan) -> Delete (url // chan) mempty
+  (GetChannelMessages chan (n,timing)) -> Get (url // chan /: "messages") ("limit" R.=: n <> timingToQuery timing)
+  (GetChannelMessage chan msg) -> Get (url // chan /: "messages" // msg) mempty
+  (CreateMessage chan msg embed) -> Post (url // chan /: "messages")
+   (pure . R.ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed) mempty
+  (UploadFile chan fileName file) ->
+     let body = R.reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
+     in Post (url // chan /: "messages") body mempty
   (EditMessage (chan, msg) new embed) ->
-                   pure $ Patch (url // chan /: "messages" // msg)
+                   Patch (url // chan /: "messages" // msg)
                       (R.ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed) mempty
   (DeleteMessage (chan, msg)) ->
-                   pure $ Delete (url // chan /: "messages" // msg) mempty
-  (BulkDeleteMessage (chan, msgs)) -> pure $ Post (url // chan /: "messages" /: "bulk-delete")
-                       (R.ReqBodyJson $ object ["messages" .= msgs]) mempty
-  (EditChannelPermissions chan perm patch) -> pure $ Put (url // chan /: "permissions" // perm)
+                   Delete (url // chan /: "messages" // msg) mempty
+  (BulkDeleteMessage (chan, msgs)) -> Post (url // chan /: "messages" /: "bulk-delete")
+                       (pure . R.ReqBodyJson $ object ["messages" .= msgs]) mempty
+  (EditChannelPermissions chan perm patch) -> Put (url // chan /: "permissions" // perm)
                        (R.ReqBodyJson patch) mempty
-  (GetChannelInvites chan) -> pure $ Get (url // chan /: "invites") mempty
-  (CreateChannelInvite chan patch) -> pure $ Post (url // chan /: "invites") (R.ReqBodyJson patch) mempty
-  (DeleteChannelPermission chan perm) -> pure $ Delete (url // chan /: "permissions" // perm) mempty
-  (TriggerTypingIndicator chan) -> pure $ Post (url // chan /: "typing") R.NoReqBody mempty
-  (GetPinnedMessages chan) -> pure $ Get (url // chan /: "pins") mempty
-  (AddPinnedMessage chan msg) -> pure $ Put (url // chan /: "pins" // msg) R.NoReqBody mempty
-  (DeletePinnedMessage chan msg) -> pure $ Delete (url // chan /: "pins" // msg) mempty
+  (GetChannelInvites chan) -> Get (url // chan /: "invites") mempty
+  (CreateChannelInvite chan patch) -> Post (url // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+  (DeleteChannelPermission chan perm) -> Delete (url // chan /: "permissions" // perm) mempty
+  (TriggerTypingIndicator chan) -> Post (url // chan /: "typing") (pure R.NoReqBody) mempty
+  (GetPinnedMessages chan) -> Get (url // chan /: "pins") mempty
+  (AddPinnedMessage chan msg) -> Put (url // chan /: "pins" // msg) R.NoReqBody mempty
+  (DeletePinnedMessage chan msg) -> Delete (url // chan /: "pins" // msg) mempty
 

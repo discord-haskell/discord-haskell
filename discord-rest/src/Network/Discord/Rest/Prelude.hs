@@ -17,7 +17,7 @@ import Network.Discord.Types
 
 class DiscordRequest req where
   majorRoute    :: req a -> T.Text
-  createRequest :: FromJSON r => req r -> IO (JsonRequest r)
+  createRequest :: FromJSON r => req r -> JsonRequest r
 
 
 -- | The base url (Req) for API requests
@@ -27,11 +27,12 @@ baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
 
 authHeader :: DiscordAuth -> R.Option 'R.Https
 authHeader (DiscordAuth auth version) =
-          R.header "Authorization" (TE.encodeUtf8 (formatAuth auth))
+          R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
-  srcUrl = "https://github.com/jano017/Discord.hs"
-  agent = "DiscordBot (" <> srcUrl <> ", " <> TE.encodeUtf8 version <> ")"
+  srcUrl = "https://github.com/aquarial/Discord.hs"
+  agent = "DiscordBot (" <> srcUrl <> ", " <> TE.encodeUtf8 version <> ") "
+                         <> " currently forking and rewriting https://github.com/jano017/Discord.hs"
 
 -- Append to an URL
 infixl 5 //
@@ -43,11 +44,11 @@ type Option = R.Option 'R.Https
 
 -- | Represtents a HTTP request made to an API that supplies a Json response
 data JsonRequest r where
-  Delete ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
-  Get    ::  FromJSON r                => R.Url 'R.Https      -> Option -> JsonRequest r
-  Patch  :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
-  Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
-  Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> a -> Option -> JsonRequest r
+  Delete ::  FromJSON r                => R.Url 'R.Https         -> Option -> JsonRequest r
+  Get    ::  FromJSON r                => R.Url 'R.Https         -> Option -> JsonRequest r
+  Patch  :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https ->    a -> Option -> JsonRequest r
+  Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https ->    a -> Option -> JsonRequest r
+  Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> IO a -> Option -> JsonRequest r
 
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}

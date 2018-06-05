@@ -6,6 +6,7 @@ module Network.Discord.Types.Gateway where
 import Control.Monad (mzero)
 import System.Info
 
+import qualified Data.Text.Encoding as TE
 import Data.Aeson
 import Data.Aeson.Types
 
@@ -66,7 +67,7 @@ instance ToJSON Payload where
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
     , "d"  .= object [
-        "token" .= authToken token
+        "token" .= TE.decodeUtf8 (authToken token)
       , "properties" .= object [
           "$os"                .= os
         , "$browser"           .= ("discord.hs" :: String)
