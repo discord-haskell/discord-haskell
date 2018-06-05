@@ -26,7 +26,7 @@ import Network.Discord.Types
 
 
 instance DiscordRequest ChannelRequest where
-  majorRoute :: ChannelRequest a -> T.Text
+  majorRoute :: ChannelRequest a -> String
   majorRoute = majorRouteChannel
 
   createRequest :: FromJSON r => ChannelRequest r -> JsonRequest r
@@ -84,26 +84,26 @@ timingToQuery t = case t of
   (Before snow) -> "before" R.=: show snow
   (After  snow) -> "after"  R.=: show snow
 
-majorRouteChannel :: ChannelRequest a -> T.Text
+majorRouteChannel :: ChannelRequest a -> String
 majorRouteChannel c = case c of
-  (GetChannel chan) ->              "get_chan " <> T.pack (show chan)
-  (ModifyChannel chan _) ->         "mod_chan " <> T.pack (show chan)
-  (DeleteChannel chan) ->           "mod_chan " <> T.pack (show chan)
-  (GetChannelMessages chan _) ->         "msg " <> T.pack (show chan)
-  (GetChannelMessage chan _) ->      "get_msg " <> T.pack (show chan)
-  (CreateMessage chan _ _) ->            "msg " <> T.pack (show chan)
-  (UploadFile chan _ _) ->               "msg " <> T.pack (show chan)
-  (EditMessage (chan, _) _ _) ->     "get_msg " <> T.pack (show chan)
-  (DeleteMessage (chan, _)) ->       "get_msg " <> T.pack (show chan)
-  (BulkDeleteMessage (chan, _)) ->  "del_msgs " <> T.pack (show chan)
-  (EditChannelPermissions chan _ _) -> "perms " <> T.pack (show chan)
-  (GetChannelInvites chan) ->        "invites " <> T.pack (show chan)
-  (CreateChannelInvite chan _) ->    "invites " <> T.pack (show chan)
-  (DeleteChannelPermission chan _) ->  "perms " <> T.pack (show chan)
-  (TriggerTypingIndicator chan) ->       "tti " <> T.pack (show chan)
-  (GetPinnedMessages chan) ->           "pins " <> T.pack (show chan)
-  (AddPinnedMessage chan _) ->           "pin " <> T.pack (show chan)
-  (DeletePinnedMessage chan _) ->        "pin " <> T.pack (show chan)
+  (GetChannel chan) ->              "get_chan " <> show chan
+  (ModifyChannel chan _) ->         "mod_chan " <> show chan
+  (DeleteChannel chan) ->           "mod_chan " <> show chan
+  (GetChannelMessages chan _) ->         "msg " <> show chan
+  (GetChannelMessage chan _) ->      "get_msg " <> show chan
+  (CreateMessage chan _ _) ->            "msg " <> show chan
+  (UploadFile chan _ _) ->               "msg " <> show chan
+  (EditMessage (chan, _) _ _) ->     "get_msg " <> show chan
+  (DeleteMessage (chan, _)) ->       "get_msg " <> show chan
+  (BulkDeleteMessage (chan, _)) ->  "del_msgs " <> show chan
+  (EditChannelPermissions chan _ _) -> "perms " <> show chan
+  (GetChannelInvites chan) ->        "invites " <> show chan
+  (CreateChannelInvite chan _) ->    "invites " <> show chan
+  (DeleteChannelPermission chan _) ->  "perms " <> show chan
+  (TriggerTypingIndicator chan) ->       "tti " <> show chan
+  (GetPinnedMessages chan) ->           "pins " <> show chan
+  (AddPinnedMessage chan _) ->           "pin " <> show chan
+  (DeletePinnedMessage chan _) ->        "pin " <> show chan
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]

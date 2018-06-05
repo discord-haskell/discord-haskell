@@ -16,7 +16,7 @@ import qualified Network.HTTP.Req as R
 import Network.Discord.Types
 
 class DiscordRequest req where
-  majorRoute    :: req a -> T.Text
+  majorRoute    :: req a -> String
   createRequest :: FromJSON r => req r -> JsonRequest r
 
 
