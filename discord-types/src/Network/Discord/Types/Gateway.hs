@@ -8,6 +8,7 @@ import System.Info
 
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.ByteString.Char8 as Q
 
 import Network.Discord.Types.Prelude
 
@@ -66,7 +67,7 @@ instance ToJSON Payload where
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
     , "d"  .= object [
-        "token" .= authToken token
+        "token" .= Q.unpack (authToken token)
       , "properties" .= object [
           "$os"                .= os
         , "$browser"           .= ("discord.hs" :: String)

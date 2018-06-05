@@ -29,8 +29,8 @@ library
                      , aeson
                      , bytestring
                      , containers
-                     , http-client
-                     , req
+                     , exceptions
+                     , http-conduit
                      , text
                      , time
   ghc-options:         -Wall

@@ -19,8 +19,9 @@ import Data.Time
 import qualified Data.ByteString.Char8 as Q
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
-import qualified Network.HTTP.Req as R
 import qualified Data.Map.Strict as M
+
+import Network.HTTP.Simple
 
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
