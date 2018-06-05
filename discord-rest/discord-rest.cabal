@@ -29,6 +29,7 @@ library
                      , aeson
                      , bytestring
                      , containers
+                     , data-default
                      , http-client
                      , req
                      , text

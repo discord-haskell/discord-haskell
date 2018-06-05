@@ -17,6 +17,7 @@ import Data.Aeson
 import Data.Ix (inRange)
 import Data.Time
 import qualified Data.ByteString.Char8 as Q
+import Data.Default
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
@@ -35,8 +36,7 @@ restHandler auth urls = loop M.empty
     case compareRate ratelocker curtime (majorRoute discReq) of
       Locked -> do writeChan urls (discReq, thread)
                    loop ratelocker
-      Available -> do request <- createRequest discReq
-                      (resp, timeout) <- tryRequest (compileRequest auth request)
+      Available -> do (resp, timeout) <- tryRequest (compileRequest auth (createRequest discReq))
                       case resp of
                         Resp r -> putMVar thread (Right r)
                         BadResp r -> putMVar thread (Left r)
@@ -102,4 +102,5 @@ compileRequest auth request = case request of
 instance R.MonadHttp IO where
   -- :: R.MonadHttp m => R.HttpException -> m a
   handleHttpException = throwIO
+  getHttpConfig = pure $ def { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
 
