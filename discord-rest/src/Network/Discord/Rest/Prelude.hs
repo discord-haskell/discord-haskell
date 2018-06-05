@@ -15,11 +15,12 @@ import Network.HTTP.Simple
 import Network.Discord.Types
 
 class DiscordRequest req where
-  majorRoute    :: req a -> String
+  majorRoute    :: req a -> T.Text
   modifyRequest :: FromJSON r => req r -> (Request -> Request)
 
+
 -- | The base url (Req) for API requests
-baseUrl :: String
+baseUrl :: T.Text
 baseUrl = "https://discordapp.com/api/v6/"
 
 authHeader :: DiscordAuth -> (Request -> Request)

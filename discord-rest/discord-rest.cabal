@@ -31,7 +31,6 @@ library
                      , containers
                      , exceptions
                      , http-conduit
-                     , http-types
                      , text
                      , time
   ghc-options:         -Wall
