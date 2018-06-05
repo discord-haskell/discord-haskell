@@ -16,9 +16,7 @@ a :: IO ()
 a = do
   c <- newChan
   id <- forkIO $ restHandler da c
-  let u = undefined
-      r = DeleteMessage (Message 453216461750796298 453207241294610444
-                              u u u u u u u u u u u u)
+  let r = DeleteMessage (453207241294610444, 453393614563966998)
   m <- newEmptyMVar
   writeChan c (r,m)
   x <- readMVar m

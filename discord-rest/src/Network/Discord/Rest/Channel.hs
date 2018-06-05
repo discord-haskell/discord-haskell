@@ -1,6 +1,11 @@
-{-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings, DataKinds #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provides actions for Channel API interactions
 module Network.Discord.Rest.Channel
   (
@@ -45,11 +50,11 @@ data ChannelRequest a where
   -- | Sends a message with a file to a channel.
   UploadFile              :: Snowflake -> FilePath -> BL.ByteString -> ChannelRequest Message
   -- | Edits a message content.
-  EditMessage             :: Message   -> T.Text -> Maybe Embed -> ChannelRequest Message
+  EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed -> ChannelRequest Message
   -- | Deletes a message.
-  DeleteMessage           :: Message   -> ChannelRequest ()
+  DeleteMessage           :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Deletes a group of messages.
-  BulkDeleteMessage       :: Snowflake -> [Message] -> ChannelRequest ()
+  BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> ChannelRequest ()
   -- | Edits a permission overrides for a channel.
   EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
@@ -69,26 +74,24 @@ data ChannelRequest a where
 
 majorRouteChannel :: ChannelRequest a -> T.Text
 majorRouteChannel c = case c of
-  (GetChannel chan) ->              "get_chan" <> T.pack (show chan)
-  (ModifyChannel chan _) ->         "mod_chan" <> T.pack (show chan)
-  (DeleteChannel chan) ->           "mod_chan" <> T.pack (show chan)
-  (GetChannelMessages chan _) ->         "msg" <> T.pack (show chan)
-  (GetChannelMessage chan _) ->      "get_msg" <> T.pack (show chan)
-  (CreateMessage chan _ _) ->            "msg" <> T.pack (show chan)
-  (UploadFile chan _ _) ->               "msg" <> T.pack (show chan)
-  (EditMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _) _ _) ->
-                                     "get_msg" <> T.pack (show chan)
-  (DeleteMessage (Message _ chan _ _ _ _ _ _ _ _ _ _ _ _)) ->
-                                     "get_msg" <> T.pack (show chan)
-  (BulkDeleteMessage chan _) ->   "del_msgs" <> T.pack (show chan)
-  (EditChannelPermissions chan _ _) -> "perms" <> T.pack (show chan)
-  (GetChannelInvites chan) ->        "invites" <> T.pack (show chan)
-  (CreateChannelInvite chan _) ->    "invites" <> T.pack (show chan)
-  (DeleteChannelPermission chan _) ->  "perms" <> T.pack (show chan)
-  (TriggerTypingIndicator chan) ->       "tti" <> T.pack (show chan)
-  (GetPinnedMessages chan) ->           "pins" <> T.pack (show chan)
-  (AddPinnedMessage chan _) ->           "pin" <> T.pack (show chan)
-  (DeletePinnedMessage chan _) ->        "pin" <> T.pack (show chan)
+  (GetChannel chan) ->              "get_chan " <> T.pack (show chan)
+  (ModifyChannel chan _) ->         "mod_chan " <> T.pack (show chan)
+  (DeleteChannel chan) ->           "mod_chan " <> T.pack (show chan)
+  (GetChannelMessages chan _) ->         "msg " <> T.pack (show chan)
+  (GetChannelMessage chan _) ->      "get_msg " <> T.pack (show chan)
+  (CreateMessage chan _ _) ->            "msg " <> T.pack (show chan)
+  (UploadFile chan _ _) ->               "msg " <> T.pack (show chan)
+  (EditMessage (chan, _) _ _) ->     "get_msg " <> T.pack (show chan)
+  (DeleteMessage (chan, _)) ->       "get_msg " <> T.pack (show chan)
+  (BulkDeleteMessage (chan, _)) ->  "del_msgs " <> T.pack (show chan)
+  (EditChannelPermissions chan _ _) -> "perms " <> T.pack (show chan)
+  (GetChannelInvites chan) ->        "invites " <> T.pack (show chan)
+  (CreateChannelInvite chan _) ->    "invites " <> T.pack (show chan)
+  (DeleteChannelPermission chan _) ->  "perms " <> T.pack (show chan)
+  (TriggerTypingIndicator chan) ->       "tti " <> T.pack (show chan)
+  (GetPinnedMessages chan) ->           "pins " <> T.pack (show chan)
+  (AddPinnedMessage chan _) ->           "pin " <> T.pack (show chan)
+  (DeletePinnedMessage chan _) ->        "pin " <> T.pack (show chan)
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
@@ -108,13 +111,13 @@ jsonRequestChannel c = case c of
   (UploadFile chan fileName file) -> do
      body <- R.reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
      pure $ Post (url // chan /: "messages") body mempty
-  (EditMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _) new embed) ->
+  (EditMessage (chan, msg) new embed) ->
                    pure $ Patch (url // chan /: "messages" // msg)
                       (R.ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed) mempty
-  (DeleteMessage (Message msg chan _ _ _ _ _ _ _ _ _ _ _ _)) ->
+  (DeleteMessage (chan, msg)) ->
                    pure $ Delete (url // chan /: "messages" // msg) mempty
-  (BulkDeleteMessage chan msgs) -> pure $ Post (url // chan /: "messages" /: "bulk-delete")
-                       (R.ReqBodyJson $ object ["messages" .= Prelude.map messageId msgs]) mempty
+  (BulkDeleteMessage (chan, msgs)) -> pure $ Post (url // chan /: "messages" /: "bulk-delete")
+                       (R.ReqBodyJson $ object ["messages" .= msgs]) mempty
   (EditChannelPermissions chan perm patch) -> pure $ Put (url // chan /: "permissions" // perm)
                        (R.ReqBodyJson patch) mempty
   (GetChannelInvites chan) -> pure $ Get (url // chan /: "invites") mempty

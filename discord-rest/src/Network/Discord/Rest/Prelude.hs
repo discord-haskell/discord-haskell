@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds, OverloadedStrings, MultiParamTypeClasses #-}
 {-# LANGUAGE AllowAmbiguousTypes, FlexibleInstances, UndecidableInstances #-}
-{-# LANGUAGE FunctionalDependencies, KindSignatures #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -53,8 +52,8 @@ data JsonRequest r where
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
 
-defaultRange :: Range
-defaultRange = Range 0 18446744073709551615 100
+maxRange :: Range
+maxRange = Range 0 18446744073709551615 100
 --                       2^64 - 1
 
 -- | Convert a Range to a query string
