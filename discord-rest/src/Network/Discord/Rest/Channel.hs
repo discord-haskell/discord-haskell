@@ -16,17 +16,19 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
+import Network.HTTP.Simple
+import Network.HTTP.Types.URI
 
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
 
 instance DiscordRequest ChannelRequest where
-  majorRoute :: ChannelRequest a -> T.Text
+  majorRoute :: ChannelRequest a -> String
   majorRoute = majorRouteChannel
 
-  createRequest :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
-  createRequest = jsonRequestChannel
+  modifyRequest :: FromJSON r => req r -> (Request -> Request)
+  modifyRequest = modifyRequestChannel
 
 
 -- | Data constructor for Channel requests. See <https://discordapp.com/developers/docs/resources/Channel Channel API>
@@ -38,7 +40,7 @@ data ChannelRequest a where
   -- | Deletes a channel if its id doesn't equal to the id of guild.
   DeleteChannel           :: Snowflake -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: Snowflake -> Range -> ChannelRequest [Message]
+  GetChannelMessages      :: Snowflake -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
   GetChannelMessage       :: Snowflake -> Snowflake -> ChannelRequest Message
   -- | Sends a message to a channel.
@@ -68,33 +70,48 @@ data ChannelRequest a where
   -- | Unpins a message.
   DeletePinnedMessage     :: Snowflake -> Snowflake -> ChannelRequest ()
 
-majorRouteChannel :: ChannelRequest a -> T.Text
+
+-- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
+data MessageTiming = Around Snowflake
+                   | Before Snowflake
+                   | After Snowflake
+
+--                                        Query == [QueryItem] == [(Byte, Byte)]
+buildTimingQuery :: (Int, MessageTiming) -> [(Q.ByteString, Maybe Q.ByteString)]
+buildTimingQuery (lim, m) = case m of
+  Around snow = [("around", Just (Q.pack (show snow)))]
+  Before snow = [("before", Just (Q.pack (show snow)))]
+  After  snow = [("after",  Just (Q.pack (show snow)))]
+
+majorRouteChannel :: ChannelRequest a -> String
 majorRouteChannel c = case c of
-  (GetChannel chan) ->              "get_chan " <> T.pack (show chan)
-  (ModifyChannel chan _) ->         "mod_chan " <> T.pack (show chan)
-  (DeleteChannel chan) ->           "mod_chan " <> T.pack (show chan)
-  (GetChannelMessages chan _) ->         "msg " <> T.pack (show chan)
-  (GetChannelMessage chan _) ->      "get_msg " <> T.pack (show chan)
-  (CreateMessage chan _ _) ->            "msg " <> T.pack (show chan)
-  (UploadFile chan _ _) ->               "msg " <> T.pack (show chan)
-  (EditMessage (chan, _) _ _) ->     "get_msg " <> T.pack (show chan)
-  (DeleteMessage (chan, _)) ->       "get_msg " <> T.pack (show chan)
-  (BulkDeleteMessage (chan, _)) ->  "del_msgs " <> T.pack (show chan)
-  (EditChannelPermissions chan _ _) -> "perms " <> T.pack (show chan)
-  (GetChannelInvites chan) ->        "invites " <> T.pack (show chan)
-  (CreateChannelInvite chan _) ->    "invites " <> T.pack (show chan)
-  (DeleteChannelPermission chan _) ->  "perms " <> T.pack (show chan)
-  (TriggerTypingIndicator chan) ->       "tti " <> T.pack (show chan)
-  (GetPinnedMessages chan) ->           "pins " <> T.pack (show chan)
-  (AddPinnedMessage chan _) ->           "pin " <> T.pack (show chan)
-  (DeletePinnedMessage chan _) ->        "pin " <> T.pack (show chan)
+  (GetChannel chan) ->              "get_chan " <> show chan
+  (ModifyChannel chan _) ->         "mod_chan " <> show chan
+  (DeleteChannel chan) ->           "mod_chan " <> show chan
+  (GetChannelMessages chan _) ->         "msg " <> show chan
+  (GetChannelMessage chan _) ->      "get_msg " <> show chan
+  (CreateMessage chan _ _) ->            "msg " <> show chan
+  (UploadFile chan _ _) ->               "msg " <> show chan
+  (EditMessage (chan, _) _ _) ->     "get_msg " <> show chan
+  (DeleteMessage (chan, _)) ->       "get_msg " <> show chan
+  (BulkDeleteMessage (chan, _)) ->  "del_msgs " <> show chan
+  (EditChannelPermissions chan _ _) -> "perms " <> show chan
+  (GetChannelInvites chan) ->        "invites " <> show chan
+  (CreateChannelInvite chan _) ->    "invites " <> show chan
+  (DeleteChannelPermission chan _) ->  "perms " <> show chan
+  (TriggerTypingIndicator chan) ->       "tti " <> show chan
+  (GetPinnedMessages chan) ->           "pins " <> show chan
+  (AddPinnedMessage chan _) ->           "pin " <> show chan
+  (DeletePinnedMessage chan _) ->        "pin " <> show chan
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
 
-url :: R.Url 'R.Https
-url = baseUrl /: "channels"
+url :: String
+url = baseUrl <> "channels/"
 
+-- jsonRequestChannel :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
+modifyRequest :: FromJSON r => req r -> (Request -> Request)
 jsonRequestChannel :: FromJSON r => ChannelRequest r -> IO (JsonRequest r)
 jsonRequestChannel c = case c of
   (GetChannel chan) -> pure $ Get (url // chan) mempty
