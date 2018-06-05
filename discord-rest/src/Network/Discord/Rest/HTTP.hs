@@ -9,7 +9,6 @@ module Network.Discord.Rest.HTTP
 
 import Data.Semigroup ((<>))
 
-import Control.Monad.Except (throwError)
 import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan
@@ -100,6 +99,6 @@ compileRequest auth request = case request of
   authopt = authHeader auth
 
 instance R.MonadHttp IO where
-  handleHttpException :: R.MonadHttp m => R.HttpException -> m a
-  handleHttpException = throwError
+  -- :: R.MonadHttp m => R.HttpException -> m a
+  handleHttpException = throwIO
 

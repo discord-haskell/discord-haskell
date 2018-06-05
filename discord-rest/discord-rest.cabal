@@ -28,15 +28,9 @@ library
                      , discord-types
                      , aeson
                      , bytestring
-                     , comonad
                      , containers
-                     , data-default
-                     , hashable
-                     , hslogger
                      , http-client
-                     , mtl
                      , req
-                     , stm
                      , text
                      , time
   ghc-options:         -Wall
