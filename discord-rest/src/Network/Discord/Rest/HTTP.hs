@@ -14,10 +14,10 @@ import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan
 import Control.Exception (throwIO)
 import Data.Aeson
-import Data.Proxy
 import Data.Ix (inRange)
 import Data.Time
 import qualified Data.ByteString.Char8 as Q
+import qualified Data.ByteString.Lazy.Char8 as QL
 import Data.Default
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
@@ -27,8 +27,12 @@ import qualified Data.Map.Strict as M
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
+data Resp a = Resp a
+            | NoResp
+            | BadResp String
+
 restHandler :: (FromJSON a, DiscordRequest req) =>
-        DiscordAuth -> Chan (req a, MVar (Either String a)) -> IO ()
+        DiscordAuth -> Chan (req a, MVar (Resp a)) -> IO ()
 restHandler auth urls = loop M.empty
   where
   loop ratelocker = do
@@ -37,12 +41,14 @@ restHandler auth urls = loop M.empty
     case compareRate ratelocker curtime (majorRoute discReq) of
       Locked -> do writeChan urls (discReq, thread)
                    loop ratelocker
-      Available -> do (resp, timeout) <- tryRequest (compileRequest auth (createRequest discReq))
-                      case resp of
-                        Resp r -> putMVar thread (Right r)
-                        NoResp -> putMVar thread (Left "Could not parse json")
-                        BadResp r -> putMVar thread (Left r)
-                        TryAgain -> writeChan urls (discReq, thread)
+      Available -> do let action = compileRequest auth (createRequest discReq)
+                      (resp, timeout) <- tryRequest action
+                      case decode <$> resp  of
+                        Resp (Just r) -> putMVar thread (Resp r)
+                        Resp Nothing  -> putMVar thread NoResp
+                        NoResp        -> putMVar thread NoResp
+                        BadResp "Try Again" -> writeChan urls (discReq, thread)
+                        BadResp r -> putMVar thread (BadResp r)
                       case timeout of
                         GlobalWait i -> threadDelay (i * 1000) >> loop ratelocker
                         PathWait i -> loop $ M.insert (majorRoute discReq)
@@ -65,13 +71,13 @@ data Timeout = GlobalWait Int
              | PathWait Int
              | NoLimit
 
-data Resp a = Resp a
-            | NoResp
-            | BadResp String
-            | TryAgain
+instance Functor Resp where
+  fmap f (Resp a) = Resp (f a)
+  fmap _ NoResp   = NoResp
+  fmap _ (BadResp e)  = BadResp e
 
-tryRequest :: FromJSON a => (Proxy a, IO R.LbsResponse) -> IO (Resp a, Timeout)
-tryRequest (_, action) = do
+tryRequest :: IO R.LbsResponse -> IO (Resp QL.ByteString, Timeout)
+tryRequest action = do
   resp <- action
   let code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
@@ -79,13 +85,12 @@ tryRequest (_, action) = do
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       remain = fromMaybe     1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
   case () of
-   _ | code == 429 -> pure (TryAgain, if global then GlobalWait wait else PathWait wait)
-     | code `elem` [500,502] -> pure (TryAgain, NoLimit)
-     | inRange (200,299) code -> let r = case decode (R.responseBody resp) of
-                                            Nothing -> NoResp
-                                            Just x -> Resp x
-                                 in pure (r, if remain > 0 then NoLimit else PathWait wait )
-     | inRange (400,499) code -> pure ( BadResp (show code <> " - " <> Q.unpack status)
+   _ | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait wait else PathWait wait)
+     | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
+     | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
+                                      , if remain > 0 then NoLimit else PathWait wait )
+     | inRange (400,499) code -> pure ( BadResp (show code <> " - " <> Q.unpack status
+                                                           <> QL.unpack (R.responseBody resp))
                                       , if remain > 0 then NoLimit else PathWait wait )
      | otherwise -> let err = "Unexpected code: " ++ show code ++ " - " ++ Q.unpack status
                     in pure (BadResp err, NoLimit)
@@ -93,8 +98,8 @@ tryRequest (_, action) = do
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
 
-compileRequest :: (FromJSON r) => DiscordAuth -> JsonRequest r -> (Proxy r, IO R.LbsResponse)
-compileRequest auth request = (Proxy, action)
+compileRequest :: (FromJSON r) => DiscordAuth -> JsonRequest r -> IO R.LbsResponse
+compileRequest auth request = action
   where
   authopt = authHeader auth
   action = case request of
