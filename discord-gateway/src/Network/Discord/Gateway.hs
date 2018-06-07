@@ -6,11 +6,11 @@
 module Network.Discord.Gateway where
 
 import Control.Concurrent.Chan
-import Control.Concurrent (threadDelay)
+import Control.Concurrent (threadDelay, forkIO)
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
-
+import Data.IORef
 import Data.Aeson
 import Network.URL
 import Wuss
@@ -46,10 +46,10 @@ class DiscordAuth m => DiscordGate m where
 newSocket (DiscordAuth auth _) =
   runSecureClient "gateway.discord.gg" 433 "/?v=6" $ connection -> do
       Hello interval <- step connection
-      heartbeat interval
+      sequenceKey <- newIORef
+      forkIO $ heartbeat interval sequenceKey
       eventStream Start m
 
--- step :: DiscordGate m => m Payload
 step :: Connection -> IO Payload
 step connection = do
   putStrLn "Waiting for data"
@@ -61,22 +61,25 @@ step connection = do
                     putStrLn ("Discord-hs.Gateway.Raw" <> show msg')
                     return (ParseError err)
 
+heartbeat :: Int -> IORef Integer -> IO ()
+heartbeat interval sequenceKey = forever $ do
+  num <- readIORef sequenceKey
+  send (Heartbeat num)
+  threadDelay (interval * 1000)
+
+
+
+
 runGateway :: DiscordGate m => URL -> m () -> IO ()
 runGateway (URL (Absolute h) path _) client =
   runSecureClient (host h) 443 (path ++ "/?v=6")
     $ run client
-runGateway _ _ = return ()
 
+runGateway _ _ = return ()
 send :: DiscordGate m => Payload -> m ()
 send payload = do
   conn <- connection
   liftIO . sendTextData conn $ encode payload
-
-heartbeat :: DiscordGate m => Int -> m ()
-heartbeat interval = fork . forever $ do
-  seqNum <- Heartbeat <$> (get =<< storeFor sequenceKey)
-  send seqNum
-  liftIO $ threadDelay (interval * 1000)
 
 setSequence :: DiscordGate m => Integer -> m ()
 setSequence sq = do
