@@ -24,27 +24,27 @@ data GatewayState
   | InvalidReconnect
   | InvalidDead
 
-class DiscordAuth m => DiscordGate m where
-  data VaultKey m a
-
-  type Vault m :: * -> *
-  -- | Retrieve a value from the store, blocking if the store is empty
-  get :: Vault m a -> m a
-  -- | Place a value into the store, discarding the old value if present.
-  put  :: Vault m a -> a -> m ()
-
-  sequenceKey :: VaultKey m Integer
-  storeFor :: VaultKey m a -> m ((Vault m) a)
-
-  connection   :: m Connection
-  feed :: m () -> Event -> m ()
-
-  run  :: m () -> Connection -> IO ()
-  fork :: m () -> m ()
+-- class DiscordAuth m => DiscordGate m where
+--   data VaultKey m a
+--
+--   type Vault m :: * -> *
+--   -- | Retrieve a value from the store, blocking if the store is empty
+--   get :: Vault m a -> m a
+--   -- | Place a value into the store, discarding the old value if present.
+--   put  :: Vault m a -> a -> m ()
+--
+--   sequenceKey :: VaultKey m Integer
+--   storeFor :: VaultKey m a -> m ((Vault m) a)
+--
+--   connection   :: m Connection
+--   feed :: m () -> Event -> m ()
+--
+--   run  :: m () -> Connection -> IO ()
+--   fork :: m () -> m ()
 
 newSocket :: DiscordAuth -> IO ()
 newSocket (DiscordAuth auth _) = do
-  runSecureClient "gateway.discord.gg" 433 "/?v=6" $ connection -> do
+  runSecureClient "gateway.discord.gg" 433 "/?v=6" $ \connection -> do
       Hello interval <- step connection
       sequenceKey <- newIORef
       forkIO $ heartbeat interval sequenceKey
