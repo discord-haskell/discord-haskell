@@ -19,8 +19,7 @@ import Network.WebSockets hiding (send)
 import Network.Discord.Types
 
 data GatewayState
-  = Create
-  | Start
+  = Start
   | Running
   | InvalidReconnect
   | InvalidDead
@@ -70,57 +69,42 @@ heartbeat interval sequenceKey = forever $ do
   send (Heartbeat num)
   threadDelay (interval * 1000)
 
+setSequence :: IORef Integer -> Integer -> IO ()
+setSequence = writeIORef
 
+send :: Connection -> Payload -> IO ()
+send conn payload = sendTextData conn (encode payload)
 
-
-runGateway :: DiscordGate m => URL -> m () -> IO ()
-runGateway (URL (Absolute h) path _) client =
-  runSecureClient (host h) 443 (path ++ "/?v=6")
-    $ run client
-
-runGateway _ _ = return ()
-send :: DiscordGate m => Payload -> m ()
-send payload = do
-  conn <- connection
-  liftIO . sendTextData conn $ encode payload
-
-setSequence :: DiscordGate m => Integer -> m ()
-setSequence sq = do
-  seqNum <- storeFor sequenceKey
-  put seqNum sq
-
-eventStream :: DiscordGate m => GatewayState -> m () -> m ()
-eventStream Create m = do
-  Hello interval <- step
-  heartbeat interval
-  eventStream Start m
-eventStream Start m = do
-  creds <- auth
-  send $ Identify creds False 50 (0, 1)
-  eventStream Running m
-eventStream Running m = do
-  payload <- step
-  case payload of
-    Dispatch _ sq _ -> do
-      setSequence sq
-      case parseDispatch payload of
-        Left reason -> liftIO $ errorM "Discord-hs.Gateway.Dispatch" reason
-        Right event -> do
-          liftIO $ print event
-          feed m event
-      liftIO $ putStrLn "Stepping app"
-      eventStream Running m
-    Heartbeat sq -> do
-      setSequence sq
-      send $ Heartbeat sq
-      eventStream Running m
-    Reconnect      -> eventStream InvalidReconnect m
-    InvalidSession -> eventStream Start m
-    HeartbeatAck   -> eventStream Running m
-    _              -> do
-      liftIO $ errorM "Discord-hs.Gateway.Error" "InvalidPacket"
-      liftIO $ putStrLn "DYING RIP ME"
-      eventStream InvalidDead m
-eventStream InvalidReconnect m = eventStream InvalidDead m
-eventStream InvalidDead      _ = liftIO $ errorM "Discord-hs.Gateway.Error" "Bot died"
+eventStream :: Connection -> Auth -> IORef Integer -> Chan Payload -> IO ()
+eventStream conn auth sequenceKey eventChan = loop Start
+  where
+  loop :: GatewayState -> IO ()
+  loop start = do
+    send conn $ Identify auth False 50 (0, 1)
+    loop Running
+  loop Running = do
+    payload <- step conn
+    case payload of
+      Dispatch _ sq _ -> do
+        setSequence sequenceKey sq
+        case parseDispatch payload of
+          Left reason -> liftIO $ errorM "Discord-hs.Gateway.Dispatch" reason
+          Right event -> do
+            print event
+            writeChan eventChan event
+        putStrLn "Stepping app"
+        loop Running
+      Heartbeat sq -> do
+        setSequence sequenceKey sq
+        send $ Heartbeat sq
+        eventStream Running m
+      Reconnect      -> loop InvalidReconnect
+      InvalidSession -> loop Start
+      HeartbeatAck   -> loop Running
+      _              -> do
+        errorM "Discord-hs.Gateway.Error" "InvalidPacket"
+        putStrLn "DYING RIP ME"
+        eventStream InvalidDead m
+  loop InvalidReconnect = loop InvalidDead
+  loop InvalidDead      = errorM "Discord-hs.Gateway.Error" "Bot died"
 
