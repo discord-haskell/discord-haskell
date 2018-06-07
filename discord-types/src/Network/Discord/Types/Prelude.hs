@@ -55,11 +55,6 @@ creationDate x = posixSecondsToUTCTime . realToFrac
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
--- | Return only the Right vaule from an either
-justRight :: (Show a) => Either a b -> b
-justRight (Right b) = b
-justRight (Left a) = error $ show a
-
 -- | Convert ToJSON values to FromJSON values
 reparse :: (ToJSON a, FromJSON b) => a -> Either String b
 reparse val = parseEither parseJSON $ toJSON val

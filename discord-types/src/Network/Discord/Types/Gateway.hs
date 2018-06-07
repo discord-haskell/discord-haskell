@@ -47,8 +47,7 @@ data Payload
     Int
   | HeartbeatAck
   | ParseError String
-  --deriving Show
-  -- TODO: Why is this showable?
+  deriving Show
 
 instance FromJSON Payload where
   parseJSON = withObject "payload" $ \o -> do

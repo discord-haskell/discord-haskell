@@ -30,6 +30,7 @@ import Network.Discord.Types
 data Resp a = Resp a
             | NoResp
             | BadResp String
+  deriving (Show)
 
 restHandler :: (FromJSON a, DiscordRequest req) =>
         DiscordAuth -> Chan (req a, MVar (Resp a)) -> IO ()
