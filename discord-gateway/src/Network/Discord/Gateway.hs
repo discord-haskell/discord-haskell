@@ -43,12 +43,15 @@ class DiscordAuth m => DiscordGate m where
   run  :: m () -> Connection -> IO ()
   fork :: m () -> m ()
 
-newSocket (DiscordAuth auth _) =
+newSocket :: DiscordAuth -> IO ()
+newSocket (DiscordAuth auth _) = do
   runSecureClient "gateway.discord.gg" 433 "/?v=6" $ connection -> do
       Hello interval <- step connection
       sequenceKey <- newIORef
       forkIO $ heartbeat interval sequenceKey
       eventStream Start m
+  print "Exiting socket"
+  return ()
 
 step :: Connection -> IO Payload
 step connection = do
