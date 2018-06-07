@@ -5,15 +5,16 @@
 --   people will need, and you should use Language.Discord.
 module Network.Discord.Gateway where
 
+import Control.Concurrent.Chan
 import Control.Concurrent (threadDelay)
 import Control.Monad (forever)
 import Control.Monad.IO.Class (liftIO)
 import Data.Maybe (fromJust)
 
 import Data.Aeson
-import Network.WebSockets hiding (send)
-import System.Log.Logger
+import Network.URL
 import Wuss
+import Network.WebSockets hiding (send)
 
 import Network.Discord.Types
 
@@ -41,6 +42,24 @@ class DiscordAuth m => DiscordGate m where
 
   run  :: m () -> Connection -> IO ()
   fork :: m () -> m ()
+
+newSocket (DiscordAuth auth _) =
+  runSecureClient "gateway.discord.gg" 433 "/?v=6" $ connection -> do
+      Hello interval <- step connection
+      heartbeat interval
+      eventStream Start m
+
+-- step :: DiscordGate m => m Payload
+step :: Connection -> IO Payload
+step connection = do
+  putStrLn "Waiting for data"
+  msg' <- receiveData connection
+  putStrLn "Got data"
+  case eitherDecode msg' of
+    Right msg -> return msg
+    Left  err -> do putStrLn ("Discord-hs.Gateway.Parse" <> err)
+                    putStrLn ("Discord-hs.Gateway.Raw" <> show msg')
+                    return (ParseError err)
 
 runGateway :: DiscordGate m => URL -> m () -> IO ()
 runGateway (URL (Absolute h) path _) client =
@@ -98,21 +117,4 @@ eventStream Running m = do
       eventStream InvalidDead m
 eventStream InvalidReconnect m = eventStream InvalidDead m
 eventStream InvalidDead      _ = liftIO $ errorM "Discord-hs.Gateway.Error" "Bot died"
-
-step :: DiscordGate m => m Payload
-step = do
-  conn <- connection
-  liftIO $ putStrLn "Waiting for data"
-  msg' <- liftIO $ receiveData conn
-  liftIO $ putStrLn "Got data"
-  case eitherDecode msg' of
-    Right msg -> return msg
-    Left  err ->
-      ( liftIO
-        $  errorM "Discord-hs.Gateway.Parse" err
-        >> infoM "Discord-hs.Gateway.Raw" (show msg')
-      ) >> (return $ ParseError err)
-
-gatewayUrl :: URL
-gatewayUrl = fromJust $ importURL "wss://gateway.discord.gg"
 
