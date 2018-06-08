@@ -8,11 +8,10 @@ module Network.Discord.Gateway where
 import Control.Concurrent.Chan
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Monad (forever)
-import Control.Monad.IO.Class (liftIO)
-import Data.Maybe (fromJust)
+import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson
-import Network.URL
+
 import Wuss
 import Network.WebSockets hiding (send)
 
@@ -42,14 +41,14 @@ data GatewayState
 --   run  :: m () -> Connection -> IO ()
 --   fork :: m () -> m ()
 
-newSocket :: DiscordAuth -> IO ()
-newSocket (DiscordAuth auth _) = do
-  runSecureClient "gateway.discord.gg" 433 "/?v=6" $ \connection -> do
+newSocket :: DiscordAuth -> Chan Event -> IO ()
+newSocket (DiscordAuth auth _) events = do
+  runSecureClient "gateway.discord.gg" 443 "/?v=6" $ \connection -> do
       Hello interval <- step connection
-      sequenceKey <- newIORef
-      forkIO $ heartbeat interval sequenceKey
-      eventStream Start m
-  print "Exiting socket"
+      print interval
+      sequenceKey <- newIORef (-1)
+      forkIO $ heartbeat connection interval sequenceKey
+      forkIO $ eventStream connection auth sequenceKey events
   return ()
 
 step :: Connection -> IO Payload
@@ -63,24 +62,30 @@ step connection = do
                     putStrLn ("Discord-hs.Gateway.Raw" <> show msg')
                     return (ParseError err)
 
-heartbeat :: Int -> IORef Integer -> IO ()
-heartbeat interval sequenceKey = forever $ do
+heartbeat :: Connection -> Int -> IORef Integer -> IO ()
+heartbeat conn interval sequenceKey = forever $ do
   num <- readIORef sequenceKey
-  send (Heartbeat num)
+  send conn (Heartbeat num)
+  print "heart"
   threadDelay (interval * 1000)
+  print "beat"
 
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence = writeIORef
 
 send :: Connection -> Payload -> IO ()
-send conn payload = sendTextData conn (encode payload)
+send conn payload = do
+  print ("Sending: " <> show payload)
+  print ("sending: " <> (show (encode payload)))
+  sendTextData conn (encode payload)
+  print "sent"
 
-eventStream :: Connection -> Auth -> IORef Integer -> Chan Payload -> IO ()
+eventStream :: Connection -> Auth -> IORef Integer -> Chan Event -> IO ()
 eventStream conn auth sequenceKey eventChan = loop Start
   where
   loop :: GatewayState -> IO ()
-  loop start = do
-    send conn $ Identify auth False 50 (0, 1)
+  loop Start = do
+    send conn (Identify auth False 50 (0, 1))
     loop Running
   loop Running = do
     payload <- step conn
@@ -88,7 +93,7 @@ eventStream conn auth sequenceKey eventChan = loop Start
       Dispatch _ sq _ -> do
         setSequence sequenceKey sq
         case parseDispatch payload of
-          Left reason -> liftIO $ errorM "Discord-hs.Gateway.Dispatch" reason
+          Left reason -> print ("Discord-hs.Gateway.Dispatch - " <> reason)
           Right event -> do
             print event
             writeChan eventChan event
@@ -96,15 +101,15 @@ eventStream conn auth sequenceKey eventChan = loop Start
         loop Running
       Heartbeat sq -> do
         setSequence sequenceKey sq
-        send $ Heartbeat sq
-        eventStream Running m
+        send conn (Heartbeat sq)
+        loop Running
       Reconnect      -> loop InvalidReconnect
       InvalidSession -> loop Start
       HeartbeatAck   -> loop Running
       _              -> do
-        errorM "Discord-hs.Gateway.Error" "InvalidPacket"
+        putStrLn "Discord-hs.Gateway.Error - InvalidPacket"
         putStrLn "DYING RIP ME"
-        eventStream InvalidDead m
+        loop InvalidDead
   loop InvalidReconnect = loop InvalidDead
-  loop InvalidDead      = errorM "Discord-hs.Gateway.Error" "Bot died"
+  loop InvalidDead      = putStrLn "Discord-hs.Gateway.Error - Bot died"
 
