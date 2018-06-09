@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings, GADTs #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Data structures pertaining to gateway dispatch 'Event's
 module Network.Discord.Types.Events where
 

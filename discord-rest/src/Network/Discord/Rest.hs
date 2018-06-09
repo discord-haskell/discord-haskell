@@ -1,7 +1,6 @@
-{-# LANGUAGE ExistentialQuantification, MultiParamTypeClasses #-}
-{-# LANGUAGE OverloadedStrings, FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 -- | Provides framework to interact with REST api gateways. Implementations specific to the
 --   Discord API are provided in Network.Discord.Rest.Channel, Network.Discord.Rest.Guild,
 --   and Network.Discord.Rest.User.

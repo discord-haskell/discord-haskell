@@ -1,5 +1,6 @@
-{-# LANGUAGE OverloadedStrings, MultiWayIf #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+
 -- | Data structures pertaining to Discord Channels
 module Network.Discord.Types.Channel where
 

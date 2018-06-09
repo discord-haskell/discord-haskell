@@ -1,5 +1,5 @@
-{-# LANGUAGE TypeFamilies, MultiParamTypeClasses, FlexibleInstances #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
+
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Reallistically, this is probably lower level than most
 --   people will need, and you should use Language.Discord.

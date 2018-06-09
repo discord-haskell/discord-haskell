@@ -1,5 +1,5 @@
-{-# LANGUAGE RankNTypes, ExistentialQuantification, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
+
 -- | Provides types and encoding/decoding code. Types should be identical to those provided
 --   in the Discord API documentation.
 module Network.Discord.Types

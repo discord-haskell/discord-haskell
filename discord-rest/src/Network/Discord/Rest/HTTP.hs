@@ -1,6 +1,5 @@
-{-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
-{-# LANGUAGE DataKinds, ScopedTypeVariables, Rank2Types #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provide HTTP primitives
 module Network.Discord.Rest.HTTP
   ( restHandler

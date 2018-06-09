@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 -- | Types relating to Discord Guilds (servers)
 module Network.Discord.Types.Guild where
 

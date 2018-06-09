@@ -1,5 +1,6 @@
-{-# LANGUAGE ExistentialQuantification, TypeSynonymInstances, GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+
 -- | Provides base types and utility functions needed for modules in Network.Discord.Types
 module Network.Discord.Types.Prelude where
 
@@ -59,3 +60,4 @@ epochTime = posixSecondsToUTCTime 0
 -- | Convert ToJSON values to FromJSON values
 reparse :: (ToJSON a, FromJSON b) => a -> Either String b
 reparse val = parseEither parseJSON $ toJSON val
+

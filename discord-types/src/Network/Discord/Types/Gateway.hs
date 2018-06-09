@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 -- | Data structures needed for interfacing with the Websocket
 --   Gateway
 module Network.Discord.Types.Gateway where
