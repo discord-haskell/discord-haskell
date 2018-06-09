@@ -5,6 +5,7 @@
 --   people will need, and you should use Language.Discord.
 module Network.Discord.Gateway where
 
+import Control.Monad (void)
 import Control.Concurrent.Chan
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Monad (forever)
@@ -23,31 +24,13 @@ data GatewayState
   | InvalidReconnect
   | InvalidDead
 
--- class DiscordAuth m => DiscordGate m where
---   data VaultKey m a
---
---   type Vault m :: * -> *
---   -- | Retrieve a value from the store, blocking if the store is empty
---   get :: Vault m a -> m a
---   -- | Place a value into the store, discarding the old value if present.
---   put  :: Vault m a -> a -> m ()
---
---   sequenceKey :: VaultKey m Integer
---   storeFor :: VaultKey m a -> m ((Vault m) a)
---
---   connection   :: m Connection
---   feed :: m () -> Event -> m ()
---
---   run  :: m () -> Connection -> IO ()
---   fork :: m () -> m ()
-
 newSocket :: DiscordAuth -> Chan Event -> IO ()
 newSocket (DiscordAuth auth _) events = do
-  forkIO $
+  void $ forkIO $
     runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \connection -> do
       Hello interval <- step connection
       sequenceKey <- newIORef (-1)
-      forkIO $ heartbeat connection interval sequenceKey
+      void $ forkIO $ heartbeat connection interval sequenceKey
       eventStream connection auth sequenceKey events
   return ()
 
