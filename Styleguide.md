@@ -69,7 +69,7 @@ data BadDataFormat  = Why
                     | Would
 
                     | You
-                    
+
                     | Ever
 
 -- Good
@@ -111,7 +111,7 @@ data JustNo = AConstructor
   | NaughtyConstructor
 
 -- It doesn't matter where constructors are aligned, as long as they're aligned
-data HasASuperLongName 
+data HasASuperLongName
   = OneConstructor
   | AnotherConstructor
 
@@ -128,7 +128,7 @@ data RecordSyntas = Record {
 Align elements in lists
 
 ```haskell
-exceptions = [ 
+exceptions = [
     InvalidStatusCode
   , MissingContentHeader
   , InternalServerError
@@ -192,7 +192,7 @@ data Array e = Array
 When a module both re-exports modules and contains its own code, the module name should immediately follow the opening parentheses
 
 ```haskell
-module Data.Set 
+module Data.Set
   ( module Data.Set
   , module Data.Set.Operators
   ) where
@@ -205,7 +205,7 @@ Code in a module should be indented once.
 
 ```haskell
 module MyModule where
-  
+
   -- Good
   apply :: (a -> b) -> a -> b
   apply f a = f a
@@ -265,7 +265,7 @@ are not followed.
 
 ## Punctuation and spelling
 
-Write proper sentences, start with a capital letter and use proper punctuation. 
+Write proper sentences, start with a capital letter and use proper punctuation.
 Spell words properly.
 
 ## Top level definitions
