@@ -20,10 +20,9 @@ import Data.Aeson.Types
 import Network.URL
 
 import Network.Discord.Rest.Channel
-import Network.Discord.Rest.Guild
-import Network.Discord.Rest.Prelude
-import Network.Discord.Rest.User
-import Network.Discord.Rest.HTTP (baseUrl)
+--import Network.Discord.Rest.Guild
+import Network.Discord.Rest.Prelude (baseUrl)
+--import Network.Discord.Rest.User
 
 -- | Obtains a new gateway to connect to.
 getGateway :: DiscordRest m => m URL
