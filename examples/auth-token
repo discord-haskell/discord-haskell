@@ -1,0 +1,3 @@
+create a file named auth-token.secret and add your token (not the secret id) from
+https://discordapp.com/developers/applications/me
+

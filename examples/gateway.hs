@@ -4,17 +4,17 @@ import Control.Concurrent (forkIO, ThreadId, killThread)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Control.Monad
+import Data.Char (isSpace)
 import Data.Monoid ((<>))
+import qualified Data.ByteString.Char8 as Q
 
 import Network.Discord.Gateway
 import Network.Discord.Types
 
-da = DiscordAuth
-        (Bot "NDUzMDU3MjkwMDMyMTE5ODA4.DfbiGA.K3K-c1Julbxs-KvbzZEu1qdkzsg")
-        "0.0.2"
-
 a :: IO ()
 a = do
+  tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
+  let da = DiscordAuth (Bot tok) "0.0.4"
   c <- newChan
   newSocket da c
   forever $ do
