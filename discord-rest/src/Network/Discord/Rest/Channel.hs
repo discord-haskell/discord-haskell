@@ -13,7 +13,7 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
-import Network.HTTP.Client (RequestBody (..))
+import Network.HTTP.Client (RequestBody (RequestBodyLBS))
 import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
@@ -110,30 +110,48 @@ url = baseUrl /: "channels"
 
 jsonRequestChannel :: FromJSON r => ChannelRequest r -> JsonRequest r
 jsonRequestChannel c = case c of
-  (GetChannel chan) -> Get (url // chan) mempty
-  (ModifyChannel chan patch) -> Patch (url // chan) (R.ReqBodyJson patch) mempty
-  (DeleteChannel chan) -> Delete (url // chan) mempty
-  (GetChannelMessages chan (n,timing)) -> Get (url // chan /: "messages") ("limit" R.=: n <> timingToQuery timing)
-  (GetChannelMessage chan msg) -> Get (url // chan /: "messages" // msg) mempty
-  (CreateMessage chan msg embed) -> Post (url // chan /: "messages")
-   (pure . R.ReqBodyJson . object $ ["content" .= msg] <> maybeEmbed embed) mempty
+  (GetChannel chan) ->
+      Get (url // chan) mempty
+  (ModifyChannel chan patch) ->
+      Patch (url // chan) (R.ReqBodyJson patch) mempty
+  (DeleteChannel chan) ->
+      Delete (url // chan) mempty
+  (GetChannelMessages chan (n,timing)) ->
+      let options = "limit" R.=: n <> timingToQuery timing
+      in Get (url // chan /: "messages") options
+  (GetChannelMessage chan msg) ->
+      Get (url // chan /: "messages" // msg) mempty
+  (CreateMessage chan msg embed) ->
+      let content = ["content" .= msg] <> maybeEmbed embed
+          body = pure $ R.ReqBodyJson $ object content
+      in Post (url // chan /: "messages") body mempty
   (UploadFile chan fileName file) ->
-     let body = R.reqBodyMultipart [partFileRequestBody "file" fileName $ RequestBodyLBS file]
-     in Post (url // chan /: "messages") body mempty
+      let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
+          body = R.reqBodyMultipart [part]
+      in Post (url // chan /: "messages") body mempty
   (EditMessage (chan, msg) new embed) ->
-                   Patch (url // chan /: "messages" // msg)
-                      (R.ReqBodyJson . object $ ["content" .= new] <> maybeEmbed embed) mempty
+      let content = ["content" .= new] <> maybeEmbed embed
+          body = R.ReqBodyJson $ object content
+      in Patch (url // chan /: "messages" // msg) body mempty
   (DeleteMessage (chan, msg)) ->
-                   Delete (url // chan /: "messages" // msg) mempty
-  (BulkDeleteMessage (chan, msgs)) -> Post (url // chan /: "messages" /: "bulk-delete")
-                       (pure . R.ReqBodyJson $ object ["messages" .= msgs]) mempty
-  (EditChannelPermissions chan perm patch) -> Put (url // chan /: "permissions" // perm)
-                       (R.ReqBodyJson patch) mempty
-  (GetChannelInvites chan) -> Get (url // chan /: "invites") mempty
-  (CreateChannelInvite chan patch) -> Post (url // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
-  (DeleteChannelPermission chan perm) -> Delete (url // chan /: "permissions" // perm) mempty
-  (TriggerTypingIndicator chan) -> Post (url // chan /: "typing") (pure R.NoReqBody) mempty
-  (GetPinnedMessages chan) -> Get (url // chan /: "pins") mempty
-  (AddPinnedMessage chan msg) -> Put (url // chan /: "pins" // msg) R.NoReqBody mempty
-  (DeletePinnedMessage chan msg) -> Delete (url // chan /: "pins" // msg) mempty
+      Delete (url // chan /: "messages" // msg) mempty
+  (BulkDeleteMessage (chan, msgs)) ->
+      let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
+      in Post (url // chan /: "messages" /: "bulk-delete") body mempty
+  (EditChannelPermissions chan perm patch) ->
+      Put (url // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+  (GetChannelInvites chan) ->
+      Get (url // chan /: "invites") mempty
+  (CreateChannelInvite chan patch) ->
+      Post (url // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+  (DeleteChannelPermission chan perm) ->
+      Delete (url // chan /: "permissions" // perm) mempty
+  (TriggerTypingIndicator chan) ->
+      Post (url // chan /: "typing") (pure R.NoReqBody) mempty
+  (GetPinnedMessages chan) ->
+      Get (url // chan /: "pins") mempty
+  (AddPinnedMessage chan msg) ->
+      Put (url // chan /: "pins" // msg) R.NoReqBody mempty
+  (DeletePinnedMessage chan msg) ->
+      Delete (url // chan /: "pins" // msg) mempty
 
