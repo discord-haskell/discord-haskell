@@ -1,5 +1,8 @@
-{-# LANGUAGE GADTs, OverloadedStrings, InstanceSigs, TypeSynonymInstances #-}
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provide actions for User API interactions.
 module Network.Discord.Rest.User
   (
@@ -7,13 +10,20 @@ module Network.Discord.Rest.User
   ) where
 
 import Data.Aeson
-import Data.Hashable
-import Data.Monoid (mempty)
-import Data.Text as T
+import Data.Monoid (mempty, (<>))
+import Network.HTTP.Req ((/:))
+import qualified Network.HTTP.Req as R
 
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
-import Network.Discord.Rest.HTTP
+
+
+instance DiscordRequest UserRequest where
+  majorRoute :: UserRequest a -> String
+  majorRoute = majorRouteUser
+
+  createRequest :: FromJSON r => UserRequest r -> JsonRequest r
+  createRequest = jsonRequestUser
 
 -- | Data constructor for User requests. See
 --   <https://discordapp.com/developers/docs/resources/user User API>
@@ -25,7 +35,7 @@ data UserRequest a where
   -- | Returns a 'User' for a given user ID
   GetUser              :: Snowflake -> UserRequest User
   -- | Modify the requestors user account settings. Returns a 'User' object on success.
-  ModifyCurrentUser    :: ToJSON a => a -> UserRequest User
+  ModifyCurrentUser    :: ToJSON o => o -> UserRequest User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
   GetCurrentUserGuilds :: Range -> UserRequest Guild
@@ -36,39 +46,35 @@ data UserRequest a where
   -- | Create a new DM channel with a user. Returns a DM 'Channel' object.
   CreateDM             :: Snowflake -> UserRequest Channel
 
-instance Hashable (UserRequest a) where
-  hashWithSalt s (GetCurrentUser)         = hashWithSalt s  ("me"::Text)
-  hashWithSalt s (GetUser _)              = hashWithSalt s  ("user"::Text)
-  hashWithSalt s (ModifyCurrentUser _)    = hashWithSalt s  ("modify_user"::Text)
-  hashWithSalt s (GetCurrentUserGuilds _) = hashWithSalt s  ("get_user_guilds"::Text)
-  hashWithSalt s (LeaveGuild g)           = hashWithSalt s  ("leave_guild"::Text, g)
-  hashWithSalt s (GetUserDMs)             = hashWithSalt s  ("get_dms"::Text)
-  hashWithSalt s (CreateDM _)             = hashWithSalt s  ("make_dm"::Text)
+majorRouteUser :: UserRequest a -> String
+majorRouteUser c = case c of
+  (GetCurrentUser) ->                      "me "
+  (GetUser _) ->                         "user "
+  (ModifyCurrentUser _) ->        "modify_user "
+  (GetCurrentUserGuilds _) -> "get_user_guilds "
+  (LeaveGuild g) ->               "leave_guild " <> show g
+  (GetUserDMs) ->                     "get_dms "
+  (CreateDM _) ->                     "make_dm "
 
-instance (FromJSON a) => DoFetch UserRequest a where
-  doFetch = go
-    where
-      url = baseUrl /: "users"
-      go :: DiscordRest m => UserRequest a -> m a
-      go r@(GetCurrentUser) = makeRequest r
-        $ Get (url /: "@me") mempty
 
-      go r@(GetUser user) = makeRequest r
-        $ Get (url // user ) mempty
+url :: R.Url 'R.Https
+url = baseUrl /: "users"
 
-      go r@(ModifyCurrentUser patch) = makeRequest r
-        $ Patch (url /: "@me")  (ReqBodyJson patch) mempty
+jsonRequestUser :: FromJSON r => UserRequest r -> JsonRequest r
+jsonRequestUser c = case c of
+      (GetCurrentUser) -> Get (url /: "@me") mempty
 
-      go r@(GetCurrentUserGuilds range) = makeRequest r
-        $ Get url $ toQueryString range
+      (GetUser user) -> Get (url // user ) mempty
 
-      go r@(LeaveGuild guild) = makeRequest r
-        $ Delete (url /: "@me" /: "guilds" // guild) mempty
+      (ModifyCurrentUser patch) ->
+          Patch (url /: "@me")  (R.ReqBodyJson patch) mempty
 
-      go r@(GetUserDMs) = makeRequest r
-        $ Get (url /: "@me" /: "channels") mempty
+      (GetCurrentUserGuilds range) -> Get url $ toQueryString range
 
-      go r@(CreateDM user) = makeRequest r
-        $ Post (url /: "@me" /: "channels")
-        (ReqBodyJson $ object ["recipient_id" .= user])
-        mempty
+      (LeaveGuild guild) -> Delete (url /: "@me" /: "guilds" // guild) mempty
+
+      (GetUserDMs) -> Get (url /: "@me" /: "channels") mempty
+
+      (CreateDM user) ->
+          let body = R.ReqBodyJson $ object ["recipient_id" .= user]
+          in Post (url /: "@me" /: "channels") (pure body) mempty
