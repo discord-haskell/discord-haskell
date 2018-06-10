@@ -14,6 +14,7 @@ module Network.Discord.Rest
 import Data.Aeson.Types
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
+import Control.Concurrent (forkIO)
 
 import Network.Discord.Types
 import Network.Discord.Rest.HTTP
@@ -25,7 +26,7 @@ import Network.Discord.Rest.Prelude
 restCall :: (DiscordRequest req, FromJSON a) => DiscordAuth -> req a -> IO (Resp a)
 restCall auth req = do
   c <- newChan
-  restLoop auth c
+  forkIO $ restLoop auth c
   compile c req
 
 compile :: (DiscordRequest req, FromJSON a)
