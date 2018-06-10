@@ -2,7 +2,7 @@
 
 -- | Provide HTTP primitives
 module Network.Discord.Rest.HTTP
-  ( restHandler
+  ( restLoop
   , Resp(..)
   ) where
 
@@ -31,9 +31,9 @@ data Resp a = Resp a
             | BadResp String
   deriving (Show)
 
-restHandler :: (FromJSON a, DiscordRequest req) =>
+restLoop :: (FromJSON a, DiscordRequest req) =>
         DiscordAuth -> Chan (req a, MVar (Resp a)) -> IO ()
-restHandler auth urls = loop M.empty
+restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
     (discReq, thread) <- readChan urls
