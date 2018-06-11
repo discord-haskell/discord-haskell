@@ -5,10 +5,9 @@
 --   Discord API are provided in Network.Discord.Rest.Channel, Network.Discord.Rest.Guild,
 --   and Network.Discord.Rest.User.
 module Network.Discord.Rest
-  ( module Network.Discord.Rest.Channel
-  , module Network.Discord.Rest.Guild
-  , module Network.Discord.Rest.User
+  ( module Network.Discord.Rest.Requests
   , restCall
+  , createHandler
   ) where
 
 import Data.Aeson.Types
@@ -18,20 +17,19 @@ import Control.Concurrent (forkIO)
 
 import Network.Discord.Types
 import Network.Discord.Rest.HTTP
-import Network.Discord.Rest.Channel
-import Network.Discord.Rest.Guild
-import Network.Discord.Rest.User
-import Network.Discord.Rest.Prelude
+import Network.Discord.Rest.Requests
 
-restCall :: (DiscordRequest req, FromJSON a) => DiscordAuth -> req a -> IO (Resp a)
-restCall auth req = do
+
+newtype Rest a = Rest (Chan (Request a, MVar (Resp a)))
+
+createHandler :: FromJSON a => DiscordAuth -> IO (Rest a)
+createHandler auth = do
   c <- newChan
   forkIO $ restLoop auth c
-  compile c req
+  pure (Rest c)
 
-compile :: (DiscordRequest req, FromJSON a)
-    => Chan (req a, MVar (Resp a)) -> req a -> IO (Resp a)
-compile c req = do
+restCall :: FromJSON a => Rest a -> Request a -> IO (Resp a)
+restCall (Rest c) req = do
   m <- newEmptyMVar
   writeChan c (req, m)
   readMVar m
