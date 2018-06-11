@@ -2,7 +2,7 @@
 
 ## REWORK 2
 
-Forked from [discord.hs](https://github.com/jano017/Discord.hs/tree/rework)
+Forked from [discord.hs](https://github.com/jano017/Discord.hs)
 
 Rewrote:
 - discord-gateway
