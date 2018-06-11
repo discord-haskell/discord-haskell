@@ -38,30 +38,26 @@ restLoop :: FromJSON a => DiscordAuth -> Chan (Request a, MVar (Resp a)) -> IO (
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
-    threadDelay (300 * 1000)
     (discReq, thread) <- readChan urls
     curtime <- getPOSIXTime
     case compareRate ratelocker (majorRoute discReq) curtime of
       Locked -> do writeChan urls (discReq, thread)
+                   threadDelay (300 * 1000)
                    loop ratelocker
       Available -> do let action = compileRequest auth (jsonRequest discReq)
-                      (resp, timeout) <- tryRequest action
+                      (resp, retry) <- tryRequest action
                       case decode <$> resp  of
                         Resp (Just r) -> putMVar thread (Resp r)
                         Resp Nothing  -> putMVar thread NoResp
                         NoResp        -> putMVar thread NoResp
                         BadResp "Try Again" -> writeChan urls (discReq, thread)
                         BadResp r -> putMVar thread (BadResp r)
-                      case timeout of
+                      case retry of
                         GlobalWait i -> do
-                            threadDelay $ round ((curtime - i + 0.1) * 1000)
-                            print $ "GWaiting until " <> show (posixSecondsToUTCTime i)
-                            threadDelay (round (i * 1000)) >> loop ratelocker
+                            threadDelay $ round ((i - curtime + 0.1) * 1000)
+                            loop ratelocker
                         PathWait i -> do
-                            print $ "PWaiting until " <> show (posixSecondsToUTCTime i)
-                            loop $ M.insert (majorRoute discReq)
-                                            ((curtime - i + 0.1) * 1000)
-                                            ratelocker
+                            loop $ M.insert (majorRoute discReq) i ratelocker
                         NoLimit -> loop ratelocker
 
 compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited
@@ -83,13 +79,13 @@ tryRequest action = do
   next10 <- round . (+10) <$> getPOSIXTime
   let code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
-      remain = fromMaybe      1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
-      global = fromMaybe  False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
+      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       resetInt  = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
       reset  = fromIntegral resetInt
-  print (code, status, reset, global, remain)
   case () of
-   _ | code == 429 -> print "RATE LIMITING!!!" >> pure (BadResp "Try Again", if global then GlobalWait reset else PathWait reset)
+   _ | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait reset
+                                                           else PathWait reset)
      | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
      | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
                                       , if remain > 0 then NoLimit else PathWait reset )
