@@ -7,6 +7,7 @@
 module Network.Discord.Rest.Requests
   (
     Request(..)
+  , MessageTiming(..)
   , majorRoute
   , jsonRequest
   ) where

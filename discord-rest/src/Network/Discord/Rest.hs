@@ -7,6 +7,8 @@
 module Network.Discord.Rest
   ( module Network.Discord.Rest.Requests
   , module Network.Discord.Types
+  , Rest(..)
+  , Resp(..)
   , restCall
   , createHandler
   ) where
