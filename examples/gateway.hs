@@ -1,7 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Concurrent (forkIO, ThreadId, killThread)
-import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Control.Monad
 import Data.Char (isSpace)
@@ -14,7 +12,7 @@ import Network.Discord.Types
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  let da = DiscordAuth (Bot tok) "0.0.4"
+  let da = DiscordAuth (Bot tok) "0.0.7"
   c <- newChan
   newSocket da c
   forever $ do
