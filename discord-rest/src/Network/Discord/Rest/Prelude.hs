@@ -15,24 +15,16 @@ import qualified Network.HTTP.Req as R
 
 import Network.Discord.Types
 
-class DiscordRequest req where
-  majorRoute    :: req a -> String
-  createRequest :: FromJSON r => req r -> JsonRequest r
-
-
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
 
 authHeader :: DiscordAuth -> R.Option 'R.Https
 authHeader (DiscordAuth auth version) =
           R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
-  srcUrl = "https://github.com/aquarial/Discord.hs"
+  srcUrl  = "https://github.com/aquarial/Discord.hs"
+  forkUrl = "https://github.com/jano017/Discord.hs"
   agent = "DiscordBot (" <> srcUrl <> ", " <> TE.encodeUtf8 version <> ") "
-                         <> " currently forking and rewriting https://github.com/jano017/Discord.hs"
+                         <> " currently forking and rewriting " <> forkUrl
 
 -- Append to an URL
 infixl 5 //
@@ -58,8 +50,8 @@ maxRange = Range 0 18446744073709551615 100
 --                       2^64 - 1
 
 -- | Convert a Range to a query string
-toQueryString :: Range -> Option
-toQueryString (Range a b l)
+rangeToOption :: Range -> Option
+rangeToOption (Range a b l)
   =  "after"  =: show a
   <> "before" =: show b
   <> "limit"  =: show l

@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveFunctor #-}
 
 -- | Provide HTTP primitives
 module Network.Discord.Rest.HTTP
@@ -14,7 +15,8 @@ import Control.Concurrent.Chan
 import Control.Exception (throwIO)
 import Data.Aeson
 import Data.Ix (inRange)
-import Data.Time
+import Data.Time.Clock
+import Data.Time.Clock.POSIX
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
 import Data.Default
@@ -23,25 +25,26 @@ import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
 import qualified Data.Map.Strict as M
 
-import Network.Discord.Rest.Prelude
 import Network.Discord.Types
+import Network.Discord.Rest.Prelude
+import Network.Discord.Rest.Requests
 
 data Resp a = Resp a
             | NoResp
             | BadResp String
-  deriving (Show)
+  deriving (Show, Functor)
 
-restLoop :: (FromJSON a, DiscordRequest req) =>
-        DiscordAuth -> Chan (req a, MVar (Resp a)) -> IO ()
+restLoop :: FromJSON a => DiscordAuth -> Chan (Request a, MVar (Resp a)) -> IO ()
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
+    threadDelay (300 * 1000)
     (discReq, thread) <- readChan urls
-    curtime <- getCurrentTime
-    case compareRate ratelocker curtime (majorRoute discReq) of
+    curtime <- getPOSIXTime
+    case compareRate ratelocker (majorRoute discReq) curtime of
       Locked -> do writeChan urls (discReq, thread)
                    loop ratelocker
-      Available -> do let action = compileRequest auth (createRequest discReq)
+      Available -> do let action = compileRequest auth (jsonRequest discReq)
                       (resp, timeout) <- tryRequest action
                       case decode <$> resp  of
                         Resp (Just r) -> putMVar thread (Resp r)
@@ -50,48 +53,49 @@ restLoop auth urls = loop M.empty
                         BadResp "Try Again" -> writeChan urls (discReq, thread)
                         BadResp r -> putMVar thread (BadResp r)
                       case timeout of
-                        GlobalWait i -> threadDelay (i * 1000) >> loop ratelocker
-                        PathWait i -> loop $ M.insert (majorRoute discReq)
-                                                      (addSeconds i curtime)
-                                                      ratelocker
+                        GlobalWait i -> do
+                            threadDelay $ round ((curtime - i + 0.1) * 1000)
+                            print $ "GWaiting until " <> show (posixSecondsToUTCTime i)
+                            threadDelay (round (i * 1000)) >> loop ratelocker
+                        PathWait i -> do
+                            print $ "PWaiting until " <> show (posixSecondsToUTCTime i)
+                            loop $ M.insert (majorRoute discReq)
+                                            ((curtime - i + 0.1) * 1000)
+                                            ratelocker
                         NoLimit -> loop ratelocker
 
-addSeconds :: Int -> UTCTime -> UTCTime
-addSeconds s = addUTCTime (fromIntegral s)
-
-compareRate :: (Ord a, Ord k) => M.Map k a -> a -> k -> RateLimited
-compareRate ratelocker curtime route =
+compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited
+compareRate ratelocker route curtime =
     case M.lookup route ratelocker of
       Just unlockTime -> if curtime < unlockTime then Locked else Available
       Nothing -> Available
 
 data RateLimited = Available | Locked
 
-data Timeout = GlobalWait Int
-             | PathWait Int
+data Timeout = GlobalWait POSIXTime
+             | PathWait POSIXTime
              | NoLimit
 
-instance Functor Resp where
-  fmap f (Resp a) = Resp (f a)
-  fmap _ NoResp   = NoResp
-  fmap _ (BadResp e)  = BadResp e
 
 tryRequest :: IO R.LbsResponse -> IO (Resp QL.ByteString, Timeout)
 tryRequest action = do
   resp <- action
+  next10 <- round . (+10) <$> getPOSIXTime
   let code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
-      wait   = fromMaybe  2000 $ readMaybeBS =<< R.responseHeader resp "Retry-After"
-      global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      remain = fromMaybe     1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      remain = fromMaybe      1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      global = fromMaybe  False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
+      resetInt  = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
+      reset  = fromIntegral resetInt
+  print (code, status, reset, global, remain)
   case () of
-   _ | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait wait else PathWait wait)
+   _ | code == 429 -> print "RATE LIMITING!!!" >> pure (BadResp "Try Again", if global then GlobalWait reset else PathWait reset)
      | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
      | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
-                                      , if remain > 0 then NoLimit else PathWait wait )
+                                      , if remain > 0 then NoLimit else PathWait reset )
      | inRange (400,499) code -> pure ( BadResp (show code <> " - " <> Q.unpack status
                                                            <> QL.unpack (R.responseBody resp))
-                                      , if remain > 0 then NoLimit else PathWait wait )
+                                      , if remain > 0 then NoLimit else PathWait reset )
      | otherwise -> let err = "Unexpected code: " ++ show code ++ " - " ++ Q.unpack status
                     in pure (BadResp err, NoLimit)
 
