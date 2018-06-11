@@ -8,8 +8,8 @@ module Network.Discord.Rest.Requests
   (
     Request(..)
   , MessageTiming(..)
-  , majorRoute
-  , jsonRequest
+  , prepareRequest
+  , JsonRequest
   ) where
 
 
@@ -25,11 +25,9 @@ import qualified Network.HTTP.Req as R
 import Network.Discord.Rest.Prelude
 import Network.Discord.Types
 
--- Defines:
---    Request a    - data type
---    majorRoute   - Request a -> String
---    jsonRequest  - Request a -> JsonRequest a
-
+-- | Seriallize request into compontents: api path accessed & request to run
+prepareRequest :: Request a -> (String, JsonRequest)
+prepareRequest r = (majorRoute r, jsonRequest r)
 
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data Request a where
@@ -272,7 +270,7 @@ guilds = baseUrl /: "guilds"
 users :: R.Url 'R.Https
 users = baseUrl /: "users"
 
-jsonRequest :: Request r -> JsonRequest r
+jsonRequest :: Request r -> JsonRequest
 jsonRequest c = case c of
   (GetChannel chan) ->
       Get (channels // chan) mempty

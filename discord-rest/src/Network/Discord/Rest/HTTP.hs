@@ -13,9 +13,7 @@ import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.Chan
 import Control.Exception (throwIO)
-import Data.Aeson
 import Data.Ix (inRange)
-import Data.Time.Clock
 import Data.Time.Clock.POSIX
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
@@ -32,31 +30,31 @@ import Network.Discord.Rest.Requests
 data Resp a = Resp a
             | NoResp
             | BadResp String
-  deriving (Show, Functor)
+  deriving (Eq, Show, Functor)
 
-restLoop :: DiscordAuth -> Chan (Request a, MVar (Resp QL.ByteString)) -> IO ()
+restLoop :: DiscordAuth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString)) -> IO ()
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
-    (discReq, thread) <- readChan urls
+    ((route, request), thread) <- readChan urls
     curtime <- getPOSIXTime
-    case compareRate ratelocker (majorRoute discReq) curtime of
-      Locked -> do writeChan urls (discReq, thread)
+    case compareRate ratelocker route curtime of
+      Locked -> do writeChan urls ((route, request), thread)
                    threadDelay (300 * 1000)
                    loop ratelocker
-      Available -> do let action = compileRequest auth (jsonRequest discReq)
+      Available -> do let action = compileRequest auth request
                       (resp, retry) <- tryRequest action
                       case resp of
                         Resp bs -> putMVar thread (Resp bs)
                         NoResp        -> putMVar thread NoResp
-                        BadResp "Try Again" -> writeChan urls (discReq, thread)
+                        BadResp "Try Again" -> writeChan urls ((route,request), thread)
                         BadResp r -> putMVar thread (BadResp r)
                       case retry of
                         GlobalWait i -> do
                             threadDelay $ round ((i - curtime + 0.1) * 1000)
                             loop ratelocker
                         PathWait i -> do
-                            loop $ M.insert (majorRoute discReq) i ratelocker
+                            loop $ M.insert route i ratelocker
                         NoLimit -> loop ratelocker
 
 compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited
@@ -97,7 +95,7 @@ tryRequest action = do
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
 
-compileRequest :: DiscordAuth -> JsonRequest r -> IO R.LbsResponse
+compileRequest :: DiscordAuth -> JsonRequest -> IO R.LbsResponse
 compileRequest auth request = action
   where
   authopt = authHeader auth

@@ -24,20 +24,18 @@ import Network.Discord.Rest.HTTP
 import Network.Discord.Rest.Requests
 
 
---newtype Rest a = Rest (Chan (Request a, MVar (Resp QL.ByteString)))
+newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteString)))
 
-createHandler :: FromJSON a =>
-    DiscordAuth -> IO (Chan (Request a, MVar (Resp QL.ByteString)))
+createHandler :: DiscordAuth -> IO RestChan
 createHandler auth = do
   c <- newChan
   forkIO $ restLoop auth c
-  pure c
+  pure (RestChan c)
 
-restCall :: FromJSON a =>
-    Chan (Request a, MVar (Resp QL.ByteString)) -> Request a -> IO (Resp a)
-restCall c req = do
+restCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
+restCall (RestChan c) req = do
   m <- newEmptyMVar
-  writeChan c (req, m)
+  writeChan c (prepareRequest req, m)
   r <- readMVar m
   pure $ case decode <$> r of
     Resp (Just o) -> Resp o

@@ -1,5 +1,5 @@
-{-# LANGUAGE DataKinds, OverloadedStrings, MultiParamTypeClasses #-}
-{-# LANGUAGE AllowAmbiguousTypes, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -8,7 +8,6 @@ module Network.Discord.Rest.Prelude where
 
 import Data.Monoid ((<>))
 import Network.HTTP.Req ((=:))
-import Data.Aeson
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Req as R
@@ -35,12 +34,12 @@ url // part = url R./: T.pack (show part)
 type Option = R.Option 'R.Https
 
 -- | Represtents a HTTP request made to an API that supplies a Json response
-data JsonRequest r where
-  Delete ::  FromJSON r                => R.Url 'R.Https         -> Option -> JsonRequest r
-  Get    ::  FromJSON r                => R.Url 'R.Https         -> Option -> JsonRequest r
-  Patch  :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https ->    a -> Option -> JsonRequest r
-  Put    :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https ->    a -> Option -> JsonRequest r
-  Post   :: (FromJSON r, R.HttpBody a) => R.Url 'R.Https -> IO a -> Option -> JsonRequest r
+data JsonRequest where
+  Delete ::                 R.Url 'R.Https         -> Option -> JsonRequest
+  Get    ::                 R.Url 'R.Https         -> Option -> JsonRequest
+  Patch  :: R.HttpBody a => R.Url 'R.Https ->    a -> Option -> JsonRequest
+  Put    :: R.HttpBody a => R.Url 'R.Https ->    a -> Option -> JsonRequest
+  Post   :: R.HttpBody a => R.Url 'R.Https -> IO a -> Option -> JsonRequest
 
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
