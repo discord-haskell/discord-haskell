@@ -36,6 +36,7 @@ restLoop :: DiscordAuth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
+    threadDelay (40 * 1000)
     ((route, request), thread) <- readChan urls
     curtime <- getPOSIXTime
     case compareRate ratelocker route curtime of
