@@ -272,7 +272,7 @@ guilds = baseUrl /: "guilds"
 users :: R.Url 'R.Https
 users = baseUrl /: "users"
 
-jsonRequest :: FromJSON r => Request r -> JsonRequest r
+jsonRequest :: Request r -> JsonRequest r
 jsonRequest c = case c of
   (GetChannel chan) ->
       Get (channels // chan) mempty

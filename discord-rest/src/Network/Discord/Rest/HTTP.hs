@@ -34,7 +34,7 @@ data Resp a = Resp a
             | BadResp String
   deriving (Show, Functor)
 
-restLoop :: FromJSON a => DiscordAuth -> Chan (Request a, MVar (Resp a)) -> IO ()
+restLoop :: DiscordAuth -> Chan (Request a, MVar (Resp QL.ByteString)) -> IO ()
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
@@ -46,9 +46,8 @@ restLoop auth urls = loop M.empty
                    loop ratelocker
       Available -> do let action = compileRequest auth (jsonRequest discReq)
                       (resp, retry) <- tryRequest action
-                      case decode <$> resp  of
-                        Resp (Just r) -> putMVar thread (Resp r)
-                        Resp Nothing  -> putMVar thread NoResp
+                      case resp of
+                        Resp bs -> putMVar thread (Resp bs)
                         NoResp        -> putMVar thread NoResp
                         BadResp "Try Again" -> writeChan urls (discReq, thread)
                         BadResp r -> putMVar thread (BadResp r)
@@ -98,7 +97,7 @@ tryRequest action = do
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
 
-compileRequest :: (FromJSON r) => DiscordAuth -> JsonRequest r -> IO R.LbsResponse
+compileRequest :: DiscordAuth -> JsonRequest r -> IO R.LbsResponse
 compileRequest auth request = action
   where
   authopt = authHeader auth
