@@ -1,4 +1,4 @@
-# Discord.hs
+# discord-haskell
 
 ## Getting Started
 
