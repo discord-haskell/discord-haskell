@@ -7,10 +7,10 @@
 module Network.Discord.Rest
   ( module Network.Discord.Rest.Requests
   , module Network.Discord.Types
---  , Rest(..)
   , Resp(..)
   , restCall
   , createHandler
+  , RestChan(..)
   ) where
 
 import Data.Aeson
@@ -26,12 +26,14 @@ import Network.Discord.Rest.Requests
 
 newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteString)))
 
+-- | Starts the http request thread. Please only call this once
 createHandler :: DiscordAuth -> IO RestChan
 createHandler auth = do
   c <- newChan
   forkIO $ restLoop auth c
   pure (RestChan c)
 
+-- | Execute a request blocking until a response is recieved
 restCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
 restCall (RestChan c) req = do
   m <- newEmptyMVar
