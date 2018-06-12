@@ -48,6 +48,6 @@ Mostly Unchanged
 
 - Suport gateway RESUME events properly
 - Cleaner interface to gateway that constructs the Chan
-- Verify each REST request is sent properly
+- Double check the REST request ADT matches the API
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 
