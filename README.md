@@ -13,7 +13,8 @@
 
 4 Connect to the gateway once in order to send CreateMessage events
 
-5 Look at the examples. [examples/gateway.hs](./examples/gateway.hs) and [examples/rest.hs](./examples/rest.hs) will be kept up to date
+5 Look at the examples. [examples/gateway.hs](./examples/gateway.hs)
+and [examples/rest.hs](./examples/rest.hs) work as of now
 
 ## Overview
 
@@ -39,4 +40,11 @@ Rewritten:
 Mostly Unchanged
 - discord-types
 - rest api data types
+
+## TODO
+
+- Suport gateway RESUME events properly
+- Cleaner interface to gateway that constructs the Chan
+- Verify each REST request is sent properly
+- Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 
