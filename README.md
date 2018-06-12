@@ -18,13 +18,16 @@ and [examples/rest.hs](./examples/rest.hs) work as of now
 
 ## Overview
 
-The library core is based on
-[Chans](https://www.stackage.org/haddock/lts-11.10/base-4.10.1.0/Control-Concurrent-Chan.html).
+The library core is based on Chans.
+
+
+For the rest api
 [discord-rest/HTTPS.hs](./discord-rest/src/Network/Discord/Rest/HTTP.hs)
-executes each http request it gets respecting the ratelimits.
+executes each http request it gets respecting the ratelimits
 [discord-rest/Rest.hs](./discord-rest/src/Network/Discord/Rest.hs) provides
 a cleaner interface to the Chan
 
+For the gateway api
 [discord-gateway/Gateway.hs](./discord-gateway/src/Network/Discord/Gateway.hs)
 can construct a Chan of `Event`s.
 
