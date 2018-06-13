@@ -92,5 +92,5 @@ parseDispatch (Dispatch ob _ ev) = case ev of
   "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate       <$> reparse o
   _                           -> UnknownEvent ev         <$> reparse o
   where o = Object ob
-parseDispatch _ = error "Tried to parse non-Dispatch payload"
+parseDispatch _ = Left "non-Dispatch payload"
 
