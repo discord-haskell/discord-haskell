@@ -49,5 +49,6 @@ Mostly Unchanged
 - Suport gateway RESUME events properly
 - Cleaner interface to gateway that constructs the Chan
 - Double check the REST request ADT matches the API
+- Add the two other auth options besidees Bot: Client & Bearer
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 

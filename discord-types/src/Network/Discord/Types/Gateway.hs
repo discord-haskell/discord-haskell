@@ -8,6 +8,7 @@ import Control.Monad (mzero)
 import System.Info
 
 import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString as Q
 import Data.Aeson
 import Data.Aeson.Types
 
@@ -35,7 +36,7 @@ data Payload
     Bool
     Bool
   | Resume
-    String
+    Q.ByteString
     String
     Integer
   | Reconnect
@@ -101,7 +102,7 @@ instance ToJSON Payload where
   toJSON (Resume token session seqId) = object [
       "op" .= (6 :: Int)
     , "d"  .= object [
-        "token"      .= token
+        "token"      .= Q.unpack token
       , "session_id" .= session
       , "seq"        .= seqId
       ]

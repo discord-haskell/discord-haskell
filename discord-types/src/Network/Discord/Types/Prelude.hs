@@ -17,22 +17,22 @@ import Control.Monad (mzero)
 
 -- | Authorization token for the Discord API
 data Auth = Bot    Q.ByteString
-          | Client Q.ByteString
-          | Bearer Q.ByteString
+          -- | Client Q.ByteString
+          -- | Bearer Q.ByteString
   deriving Show
 
 
 -- | Formats the token for use with the REST API
 formatAuth :: Auth -> Q.ByteString
 formatAuth (Bot    token) = "Bot "    <> token
-formatAuth (Client token) = token
-formatAuth (Bearer token) = "Bearer " <> token
+--formatAuth (Client token) = token
+--formatAuth (Bearer token) = "Bearer " <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
 authToken :: Auth -> Q.ByteString
 authToken (Bot    token) = token
-authToken (Client token) = token
-authToken (Bearer token) = token
+--authToken (Client token) = token
+--authToken (Bearer token) = token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake Word64
