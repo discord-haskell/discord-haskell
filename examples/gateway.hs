@@ -12,10 +12,11 @@ import Network.Discord.Types
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  let da = DiscordAuth (Bot tok) "0.0.7"
+  let da = DiscordAuth (Bot tok) "0.0.8"
   c <- newChan
   newSocket da c
   forever $ do
     x <- readChan c
-    putStrLn (show x <> "\n\n")
+    pure ()
+    --putStrLn (show x <> "\n\n")
 

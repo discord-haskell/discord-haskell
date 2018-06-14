@@ -8,7 +8,7 @@ module Network.Discord.Gateway where
 import Control.Monad (void, forever)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import Control.Exception (try)
+import Control.Exception (try, SomeException)
 import Control.Concurrent (threadDelay, forkIO)
 import Control.Monad (forever)
 import Data.Monoid ((<>))
@@ -36,16 +36,8 @@ newSocket (DiscordAuth auth _) events = do
     runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
       Hello interval <- step conn log
       seqKey <- newIORef (-1)
-      seqLock <- newMVar ()
-      forkIO $ heartbeat conn interval (seqKey, seqLock) log
-      --dispatch <- step conn log
-      --writeChan log ("step thing - " <> show dispatch)
-      --case parseDispatch dispatch of
-      --  Left str -> writeChan log ("error ??? - " <> str)
-      --  Right ev -> do
-      --    writeChan log $ "Dispatch info obj1 - " <> show ev
-      --    --writeChan log $ "Dispatch info obj2 - " <> QL.unpack (encode ev)
-      eventStream conn auth (seqKey,seqLock) events log
+      forkIO $ heartbeat conn interval seqKey log
+      eventStream conn auth seqKey events log
       pure ()
   pure ()
 
@@ -63,28 +55,25 @@ step connection log = do
                     writeChan log ("Discord-hs.Gateway.Raw" <> show msg')
                     return (ParseError err)
 
-heartbeat :: Connection -> Int -> (IORef Integer, MVar ()) -> Chan String -> IO ()
-heartbeat conn interval (seqKey, seqLock) log = do
+heartbeat :: Connection -> Int -> IORef Integer -> Chan String -> IO ()
+heartbeat conn interval seqKey log = do
   writeChan log "starting the heartbeat"
   forever $ do
-    takeMVar seqLock
     num <- readIORef seqKey
     writeChan log ("heart " <> show num)
     send conn (Heartbeat num)
     writeChan log ("beat " <> show interval)
     threadDelay (interval * 1000)
 
-setSequence :: (IORef Integer, MVar ()) -> Integer -> IO ()
-setSequence (key, lock) i = do _ <- tryTakeMVar lock
-                               writeIORef key i
-                               putMVar lock ()
+setSequence :: IORef Integer -> Integer -> IO ()
+setSequence key i = writeIORef key i
 
 send :: Connection -> Payload -> IO ()
 send conn payload =
   sendTextData conn (encode payload)
 
-eventStream :: Connection -> Auth -> (IORef Integer, MVar ()) -> Chan Event -> Chan String -> IO ()
-eventStream conn auth (key,lock) eventChan log = loop Start
+eventStream :: Connection -> Auth -> IORef Integer -> Chan Event -> Chan String -> IO ()
+eventStream conn auth seqKey eventChan log = loop Start
   where
   loop :: GatewayState -> IO ()
   loop Start = do
@@ -95,22 +84,22 @@ eventStream conn auth (key,lock) eventChan log = loop Start
     eitherPayload <- try (step conn log)
     writeChan log "After step"
     writeChan log ("Payload - " <> show eitherPayload)
-    case eitherPayload :: Either Exception Payload of
+    case eitherPayload :: Either SomeException Payload of
       Left err -> loop InvalidReconnect
       Right d@(Dispatch _ sq _) -> do
-        setSequence (key, lock) sq
+        setSequence seqKey sq
         case parseDispatch d of
           Left reason -> writeChan log ("Discord-hs.Gateway.Dispatch - " <> reason)
           Right event -> do
             writeChan eventChan event
         loop Running
       Right (Heartbeat sq) -> do
-        setSequence (key,lock) sq
+        setSequence seqKey sq
         send conn (Heartbeat sq)
         loop Running
       Right (Reconnect)      -> loop InvalidReconnect
       Right (InvalidSession) -> loop Start
-      Right (HeartbeatAck)   -> tryPutMVar lock () >> loop Running
+      Right (HeartbeatAck)   -> loop Running
       Right _ -> do
         writeChan log "Discord-hs.Gateway.Error - InvalidPacket"
         loop InvalidDead

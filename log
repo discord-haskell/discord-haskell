@@ -1,0 +1,32 @@
+GHCi, version 8.2.2: http://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/karl/.dotfiles/haskell/.ghci
+[ 1 of 12] Compiling Main             ( /home/karl/programming/src-builds/discord-haskell/docs/Site.hs, interpreted )
+[ 2 of 12] Compiling Network.Discord.Types.Prelude ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Prelude.hs, interpreted )
+[ 3 of 12] Compiling Network.Discord.Types.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Gateway.hs, interpreted )
+[ 4 of 12] Compiling Network.Discord.Types.Channel ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Channel.hs, interpreted )
+[ 5 of 12] Compiling Network.Discord.Types.Guild ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Guild.hs, interpreted )
+[ 6 of 12] Compiling Network.Discord.Types.Events ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Events.hs, interpreted )
+[ 7 of 12] Compiling Network.Discord.Types ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types.hs, interpreted )
+[ 8 of 12] Compiling Network.Discord.Rest.Prelude ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/Prelude.hs, interpreted )
+[ 9 of 12] Compiling Network.Discord.Rest.Requests ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/Requests.hs, interpreted )
+[10 of 12] Compiling Network.Discord.Rest.HTTP ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/HTTP.hs, interpreted )
+[11 of 12] Compiling Network.Discord.Rest ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest.hs, interpreted )
+[12 of 12] Compiling Network.Discord.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-gateway/src/Network/Discord/Gateway.hs, interpreted )
+Ok, 12 modules loaded.
+Loaded GHCi configuration from /tmp/haskell-stack-ghci/123e5e89/ghci-script
+data Payload
+  = Dispatch Object Integer String
+  | Heartbeat Integer
+  | Identify Auth Bool Integer (Int, Int)
+  | StatusUpdate (Maybe Integer) (Maybe String)
+  | VoiceStatusUpdate !Snowflake !(Maybe Snowflake) Bool Bool
+  | Resume String String Integer
+  | Reconnect
+  | RequestGuildMembers !Snowflake String Integer
+  | InvalidSession
+  | Hello Int
+  | HeartbeatAck
+  | ParseError String
+  	-- Defined at /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Gateway.hs:17:1
+instance Show Payload
+  -- Defined at /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Gateway.hs:51:12
