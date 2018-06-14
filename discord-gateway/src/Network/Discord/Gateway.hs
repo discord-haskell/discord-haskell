@@ -5,20 +5,16 @@
 --   people will need, and you should use Language.Discord.
 module Network.Discord.Gateway where
 
-import Control.Monad (void, forever)
+import Control.Monad (forever)
 import Control.Monad.Random
 import Control.Concurrent.Chan
-import Control.Concurrent.MVar
 import Control.Exception (try, SomeException)
-import Control.Concurrent (threadDelay, forkIO)
-import Control.Monad (forever)
+import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson
 import Data.Aeson.Types
-import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as Q
-import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss
 import Network.WebSockets hiding (send)
@@ -32,7 +28,7 @@ data GatewayState = Start
 
 data ConnLoopState = ConnStart
                    | ConnClosed
-                   | ConnReconnect Q.ByteString String String
+                   | ConnReconnect Q.ByteString String Integer Int
 
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: IORef String
@@ -46,39 +42,43 @@ newSocket :: DiscordAuth -> Chan Event -> IO ()
 newSocket (DiscordAuth auth _) events = do
   log <- newChan
   forkIO (logger log)
-  forkIO (connectionLoop auth ConnStart events log)
+  forkIO (connectionLoop auth events log ConnStart)
   pure ()
 
-connectionLoop s auth events log = loop
+connectionLoop :: Auth -> Chan Event -> Chan String -> ConnLoopState -> IO ()
+connectionLoop auth events log = loop
   where
-  loop = case s of
+  loop s = case s of
     (ConnStart) -> do
         runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-          Hello interval <- step conn log
-          resp <- startEventStream events auth interval (-1) log
-          loop resp
+          hello <- step conn log
+          case hello of
+            Right (Hello interval) -> do
+              resp <- startEventStream conn events auth interval (-1) log
+              loop resp
+            _ -> writeChan log ("recieved: " <> show hello) >> loop ConnClosed
     (ConnClosed) -> writeChan log "ConnClosed"
     (ConnReconnect tok seshID seqID interval) -> do
-        startEventStream events auth (pure interval) seqID log
         runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
           send conn (Resume tok seshID seqID)
           writeChan log "Resuming???"
           eitherPayload <- step conn log
           case eitherPayload of
-            Left _ -> connectionLoop ConnClosed
+            Left _ -> loop ConnClosed
             Right InvalidSession -> do t <- getRandomR (1,5)
                                        writeChan log ("Failed ot connect. waiting:" <> show t)
                                        threadDelay (t * 10^6)
                                        loop ConnStart
-            Right d@(Dispatch _) -> do case parseDispatch d of
-                                          Right event -> writeChan events event
-                                          _ -> pure ()
-                                       resp <- startEventStream events auth interval seqKey log
-                                       loop resp
+            Right d@(Dispatch _ _ _) -> do case parseDispatch d of
+                                             Right event -> writeChan events event
+                                             _ -> pure ()
+                                           resp <- startEventStream conn events auth interval seqID log
+                                           loop resp
             Right payload -> do writeChan log ("Why did they send a: " <> show payload)
                                 loop ConnClosed
 
-startEventStream events auth interval seqN log = do
+startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> Chan String -> IO ConnLoopState
+startEventStream conn events auth interval seqN log = do
     seqKey <- newIORef seqN
     heart <- forkIO $ heartbeat conn interval seqKey log
     sID <- newIORef ""
@@ -120,7 +120,7 @@ send conn payload =
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
 eventStream (ConnData conn sID auth eventChan interval) seqKey log = loop Start
   where
-  loop :: GatewayState -> IO ()
+  loop :: GatewayState -> IO ConnLoopState
   loop Start = do
     send conn (Identify auth False 50 (0, 1))
     loop Running
