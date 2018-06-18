@@ -48,13 +48,14 @@ newSocket (DiscordAuth auth _) events = do
 connectionLoop :: Auth -> Chan Event -> Chan String -> ConnLoopState -> IO ()
 connectionLoop auth events log = loop
   where
+  loop :: ConnLoopState -> IO ()
   loop s = case s of
     (ConnStart) -> do
         loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
           hello <- step conn log
           case hello of
             Right (Hello interval) -> do
-              startEventStream conn events auth interval (-1) log
+              startEventStream conn events auth interval (-1) Start log
             _ -> writeChan log ("recieved: " <> show hello) >> pure ConnClosed
     (ConnClosed) -> writeChan log "ConnClosed"
     (ConnReconnect tok seshID seqID) -> do
@@ -63,21 +64,21 @@ connectionLoop auth events log = loop
           writeChan log "Resuming???"
           eitherPayload <- step conn log
           case eitherPayload of
+            Right (Hello interval) -> startEventStream conn events auth interval seqID Running log
             Right InvalidSession -> do t <- getRandomR (1,5)
                                        writeChan log ("Failed ot connect. waiting:" <> show t)
                                        threadDelay (t * 10^6)
                                        pure ConnStart
-            Right (Hello interval) -> startEventStream conn events auth interval seqID log
             Right payload -> do writeChan log ("Why did they send a: " <> show payload)
                                 pure ConnClosed
             Left _ -> pure ConnClosed
 
-startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> Chan String -> IO ConnLoopState
-startEventStream conn events auth interval seqN log = do
+startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
+startEventStream conn events auth interval seqN state log = do
     seqKey <- newIORef seqN
     heart <- forkIO $ heartbeat conn interval seqKey log
     sID <- newIORef ""
-    resp <- eventStream (ConnData conn sID auth events) seqKey log
+    resp <- eventStream (ConnData conn sID auth events) seqKey log state
     killThread heart
     pure resp
 
@@ -112,8 +113,8 @@ send :: Connection -> Payload -> IO ()
 send conn payload =
   sendTextData conn (encode payload)
 
-eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
-eventStream (ConnData conn sID auth eventChan) seqKey log = loop Start
+eventStream :: ConnectionData -> IORef Integer -> Chan String -> GatewayState -> IO ConnLoopState
+eventStream (ConnData conn sID auth eventChan) seqKey log = loop
   where
   loop :: GatewayState -> IO ConnLoopState
   loop Start = do
