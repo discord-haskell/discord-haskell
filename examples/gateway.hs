@@ -17,5 +17,5 @@ a = do
   forever $ do
     x <- readChan c
     pure ()
-    --putStrLn (show x <> "\n\n")
+    putStrLn (show x <> "\n\n")
 
