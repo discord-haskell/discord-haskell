@@ -6,18 +6,18 @@
 module Network.Discord.Gateway where
 
 import Control.Monad (forever, (<=<))
-import Control.Monad.Random
+import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Chan
 import Control.Exception.Safe (Exception, try, SomeException, Exception)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
-import Data.Aeson
-import Data.Aeson.Types
+import Data.Aeson (eitherDecode, encode, (.:))
+import Data.Aeson.Types (parseMaybe)
 import qualified Data.ByteString.Char8 as Q
 
-import Wuss
-import Network.WebSockets hiding (send)
+import Wuss (runSecureClient)
+import Network.WebSockets (Connection, receiveData, sendTextData)
 
 import Network.Discord.Types
 
