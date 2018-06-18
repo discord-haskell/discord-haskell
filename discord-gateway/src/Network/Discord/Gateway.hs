@@ -43,7 +43,7 @@ data ConnectionData = ConnData { connection :: Connection
 newWebSocket :: DiscordAuth -> IO (Chan Event)
 newWebSocket (DiscordAuth auth _) = do
   log <- newChan
-  forkIO (logger log putStrLn)
+  forkIO (logger log False)
   events <- newChan
   forkIO (connectionLoop auth events log ConnStart)
   pure events
@@ -77,10 +77,9 @@ connectionLoop auth events log = loop
             Left _ -> pure ConnClosed
 
 
-logger :: Chan String -> (String -> IO ()) -> IO ()
-logger log func = do
-  putStrLn "starting the log"
-  forever $ readChan log >>= func
+logger :: Chan String -> Bool -> IO ()
+logger log True = forever $ readChan log >>= putStrLn
+logger _ False = pure ()
 
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
 step connection log = try $ do
