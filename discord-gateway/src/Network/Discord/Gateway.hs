@@ -73,14 +73,6 @@ connectionLoop auth events log = loop
                                 pure ConnClosed
             Left _ -> pure ConnClosed
 
-startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
-startEventStream conn events auth interval seqN state log = do
-    seqKey <- newIORef seqN
-    heart <- forkIO $ heartbeat conn interval seqKey log
-    sID <- newIORef ""
-    resp <- eventStream (ConnData conn sID auth events) seqKey log state
-    killThread heart
-    pure resp
 
 logger :: Chan String -> IO ()
 logger log = do
@@ -113,6 +105,15 @@ setSequence key i = writeIORef key i
 send :: Connection -> Payload -> IO ()
 send conn payload =
   sendTextData conn (encode payload)
+
+startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
+startEventStream conn events auth interval seqN state log = do
+    seqKey <- newIORef seqN
+    heart <- forkIO $ heartbeat conn interval seqKey log
+    sID <- newIORef ""
+    resp <- eventStream (ConnData conn sID auth events) seqKey log state
+    killThread heart
+    pure resp
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> GatewayState -> IO ConnLoopState
 eventStream (ConnData conn sID auth eventChan) seqKey log = loop
