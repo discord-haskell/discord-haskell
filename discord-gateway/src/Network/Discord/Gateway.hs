@@ -5,7 +5,7 @@
 --   people will need, and you should use Language.Discord.
 module Network.Discord.Gateway where
 
-import Control.Monad (forever)
+import Control.Monad (forever, (<=<))
 import Control.Monad.Random
 import Control.Concurrent.Chan
 import Control.Exception (try, SomeException)
@@ -29,6 +29,7 @@ data GatewayState = Start
 data ConnLoopState = ConnStart
                    | ConnClosed
                    | ConnReconnect Q.ByteString String Integer
+  deriving Show
 
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: IORef String
@@ -49,16 +50,15 @@ connectionLoop auth events log = loop
   where
   loop s = case s of
     (ConnStart) -> do
-        runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+        loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
           hello <- step conn log
           case hello of
             Right (Hello interval) -> do
-              resp <- startEventStream conn events auth interval (-1) log
-              loop resp
-            _ -> writeChan log ("recieved: " <> show hello) >> loop ConnClosed
+              startEventStream conn events auth interval (-1) log
+            _ -> writeChan log ("recieved: " <> show hello) >> pure ConnClosed
     (ConnClosed) -> writeChan log "ConnClosed"
     (ConnReconnect tok seshID seqID) -> do
-        runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+        loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
           send conn (Resume tok seshID seqID)
           writeChan log "Resuming???"
           eitherPayload <- step conn log
@@ -66,12 +66,11 @@ connectionLoop auth events log = loop
             Right InvalidSession -> do t <- getRandomR (1,5)
                                        writeChan log ("Failed ot connect. waiting:" <> show t)
                                        threadDelay (t * 10^6)
-                                       loop ConnStart
-            Right (Hello interval) -> do resp <- startEventStream conn events auth interval seqID log
-                                         loop resp
+                                       pure ConnStart
+            Right (Hello interval) -> startEventStream conn events auth interval seqID log
             Right payload -> do writeChan log ("Why did they send a: " <> show payload)
-                                loop ConnClosed
-            Left _ -> loop ConnClosed
+                                pure ConnClosed
+            Left _ -> pure ConnClosed
 
 startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> Chan String -> IO ConnLoopState
 startEventStream conn events auth interval seqN log = do
