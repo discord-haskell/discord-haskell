@@ -21,6 +21,7 @@ library
   build-depends:       base
                      , discord-types
                      , aeson
+                     , bytestring
                      , MonadRandom
                      , transformers
                      , url
