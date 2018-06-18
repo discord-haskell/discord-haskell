@@ -8,7 +8,7 @@ module Network.Discord.Gateway.Internal where
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Chan
-import Control.Exception.Safe (Exception, try, SomeException, Exception)
+import Control.Exception.Safe (Exception, try, finally, SomeException, Exception)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
@@ -100,11 +100,10 @@ send conn payload =
 startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
 startEventStream conn events auth interval seqN state log = do
     seqKey <- newIORef seqN
-    heart <- forkIO $ heartbeat conn interval seqKey log
     sID <- newIORef ""
-    resp <- eventStream (ConnData conn sID auth events) seqKey log state
-    killThread heart
-    pure resp
+    heart <- forkIO $ heartbeat conn interval seqKey log
+    finally (eventStream (ConnData conn sID auth events) seqKey log state)
+            (killThread heart)
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> GatewayState -> IO ConnLoopState
 eventStream (ConnData conn sID auth eventChan) seqKey log = loop
