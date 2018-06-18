@@ -38,12 +38,15 @@ data ConnectionData = ConnData { connection :: Connection
                                }
 
 
-newSocket :: DiscordAuth -> Chan Event -> IO ()
-newSocket (DiscordAuth auth _) events = do
+
+
+newWebSocket :: DiscordAuth -> IO (Chan Event)
+newWebSocket (DiscordAuth auth _) = do
   log <- newChan
   forkIO (logger log)
+  events <- newChan
   forkIO (connectionLoop auth events log ConnStart)
-  pure ()
+  pure events
 
 connectionLoop :: Auth -> Chan Event -> Chan String -> ConnLoopState -> IO ()
 connectionLoop auth events log = loop

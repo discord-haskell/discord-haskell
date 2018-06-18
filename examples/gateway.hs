@@ -12,9 +12,8 @@ import Network.Discord.Types
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  let da = DiscordAuth (Bot tok) "0.0.8"
-  c <- newChan
-  newSocket da c
+  let da = DiscordAuth (Bot tok) "0.1.0"
+  c <- newWebSocket da
   forever $ do
     x <- readChan c
     pure ()
