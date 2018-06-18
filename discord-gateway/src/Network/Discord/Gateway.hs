@@ -8,7 +8,7 @@ module Network.Discord.Gateway where
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random
 import Control.Concurrent.Chan
-import Control.Exception (try, SomeException)
+import Control.Exception.Safe (Exception, try, SomeException, Exception)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
