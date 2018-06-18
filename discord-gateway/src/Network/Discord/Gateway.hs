@@ -90,6 +90,7 @@ logger log = do
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
 step connection log = try $ do
   msg' <- receiveData connection
+  writeChan log ("Successful step: " <> show msg')
   case eitherDecode msg' of
     Right msg -> return msg
     Left  err -> do writeChan log ("Discord-hs.Gateway.Parse" <> err)
@@ -126,7 +127,9 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
     writeChan log "After step"
     writeChan log ("Payload - " <> show eitherPayload)
     case eitherPayload :: Either SomeException Payload of
-      Left _ -> loop InvalidReconnect
+      Left e -> do writeChan log ("Unknown Exception - " <> show e)
+                   threadDelay (round (1/2 * 10^6))
+                   loop InvalidReconnect
       Right (Dispatch obj sq name) -> do
         setSequence seqKey sq
         case parseDispatch (Dispatch obj sq name) of
@@ -141,7 +144,7 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
         setSequence seqKey sq
         send conn (Heartbeat sq)
         loop Running
-      Right (Reconnect)      -> loop InvalidReconnect
+      Right (Reconnect)      -> writeChan log "Should reconnect" >> loop InvalidReconnect
       Right (InvalidSession) -> loop Start
       Right (HeartbeatAck)   -> loop Running
       Right _ -> do
@@ -151,6 +154,7 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
                              let (Bot tok) = auth
                              seshID <- readIORef sID
                              seqID <- readIORef seqKey
+                             writeChan log ("Reconecting to: " <> show (ConnReconnect tok seshID seqID))
                              pure (ConnReconnect tok seshID seqID)
 
   loop InvalidDead      = do writeChan log "Discord-hs.Gateway.Error - Bot died"
