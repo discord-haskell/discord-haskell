@@ -41,31 +41,31 @@ connectionLoop :: Auth -> Chan Event -> Chan String -> ConnLoopState -> IO ()
 connectionLoop auth events log = loop
   where
   loop :: ConnLoopState -> IO ()
-  loop s = case s of
-    (ConnStart) -> do
-        loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-          hello <- step conn log
-          case hello of
-            Right (Hello interval) -> do
-              startEventStream conn events auth interval (-1) Start log
-            _ -> writeChan log ("recieved: " <> show hello) >> pure ConnClosed
-    (ConnClosed) -> writeChan log "ConnClosed"
-    (ConnReconnect tok seshID seqID) -> do
-        loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-          writeChan log ("message - sending " <> show (Resume tok seshID seqID))
-          send conn (Resume tok seshID seqID)
-          writeChan log "Resuming???"
-          eitherPayload <- step conn log
-          writeChan log ("message - received " <> show eitherPayload)
-          case eitherPayload of
-            Right (Hello interval) -> startEventStream conn events auth interval seqID Running log
-            Right InvalidSession -> do t <- getRandomR (1,5)
-                                       writeChan log ("Failed ot connect. waiting:" <> show t)
-                                       threadDelay (t * 10^6)
-                                       pure ConnStart
-            Right payload -> do writeChan log ("Why did they send a: " <> show payload)
-                                pure ConnClosed
-            Left _ -> pure ConnClosed
+  loop s = do 
+    writeChan log ("conn loop: " <> show s)
+    case s of
+      (ConnStart) -> do
+          loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+            hello <- step conn log
+            case hello of
+              Right (Hello interval) -> do
+                startEventStream conn events auth interval (-1) Start log
+              _ -> writeChan log ("recieved: " <> show hello) >> pure ConnClosed
+      (ConnClosed) -> writeChan log "ConnClosed"
+      (ConnReconnect tok seshID seqID) -> do
+          loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+            send conn (Resume tok seshID seqID) log
+            writeChan log "Resuming???"
+            eitherPayload <- step conn log
+            case eitherPayload of
+              Right (Hello interval) -> startEventStream conn events auth interval seqID Running log
+              Right InvalidSession -> do t <- getRandomR (1,5)
+                                         writeChan log ("Failed ot connect. waiting:" <> show t)
+                                         threadDelay (t * 10^6)
+                                         pure ConnStart
+              Right payload -> do writeChan log ("Why did they send a: " <> show payload)
+                                  pure ConnClosed
+              Left _ -> pure ConnClosed
 
 
 logger :: Chan String -> Bool -> IO ()
@@ -75,6 +75,7 @@ logger _ False = pure ()
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
 step connection log = try $ do
   msg' <- receiveData connection
+  writeChan log ("message - received " <> show msg')
   case eitherDecode msg' of
     Right msg -> return msg
     Left  err -> do writeChan log ("Discord-hs.Gateway.Parse" <> err)
@@ -87,15 +88,16 @@ heartbeat conn interval seqKey log = do
   forever $ do
     num <- readIORef seqKey
     writeChan log ("heart " <> show num)
-    send conn (Heartbeat num)
+    send conn (Heartbeat num) log
     writeChan log ("beat " <> show interval)
     threadDelay (interval * 1000)
 
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
-send :: Connection -> Payload -> IO ()
-send conn payload =
+send :: Connection -> Payload -> Chan String -> IO ()
+send conn payload log = do
+  writeChan log ("message - sending " <> show payload)
   sendTextData conn (encode payload)
 
 startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
@@ -111,11 +113,10 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
   where
   loop :: GatewayState -> IO ConnLoopState
   loop Start = do
-    send conn (Identify auth False 50 (0, 1))
+    send conn (Identify auth False 50 (0, 1)) log
     loop Running
   loop Running = do
     eitherPayload <- step conn log
-    writeChan log ("message - received " <> show eitherPayload)
     case eitherPayload :: Either SomeException Payload of
       Left e -> do writeChan log ("Unknown Exception - " <> show e)
                    threadDelay (round (1/2 * 10^6))
@@ -132,7 +133,7 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
         loop Running
       Right (Heartbeat sq) -> do
         setSequence seqKey sq
-        send conn (Heartbeat sq)
+        send conn (Heartbeat sq) log
         loop Running
       Right (Reconnect)      -> writeChan log "Should reconnect" >> loop InvalidReconnect
       Right (InvalidSession) -> pure ConnStart
