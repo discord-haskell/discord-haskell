@@ -18,18 +18,14 @@ and [examples/rest.hs](./examples/rest.hs) are usually kept in a working state
 
 ## Overview
 
-The library core is based on Chans.
+[discord-rest/Rest/HTTPS.hs](./discord-rest/src/Network/Discord/Rest/HTTP.hs)
+ provides a Chan that executes each http request it gets respecting the rate limits
 
-
-For the rest api
-[discord-rest/HTTPS.hs](./discord-rest/src/Network/Discord/Rest/HTTP.hs)
-executes each http request it gets respecting the ratelimits
 [discord-rest/Rest.hs](./discord-rest/src/Network/Discord/Rest.hs) provides
-a cleaner interface to the Chan
+an IO action that simplifies executing http requests
 
-For the gateway api
 [discord-gateway/Gateway.hs](./discord-gateway/src/Network/Discord/Gateway.hs)
-can construct a Chan of `Event`s.
+can construct a real time Chan of `Event`s the user can read from
 
 ## History
 
