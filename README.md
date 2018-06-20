@@ -44,9 +44,15 @@ Mostly Unchanged
 
 ## TODO
 
+In roughly the order I'm working on them:
+
 - Suport gateway RESUME events properly
-- Cleaner interface to gateway that constructs the Chan
+- Rework gateway FromJSON parsing
+- Add gateway ToJSON for events
+- Reconnect to gateway if the InvalidSession says True
+- Add all gateway types (emoji removed, etc)
 - Double check the REST request ADT matches the API
+- Cleaner interface to gateway that constructs the Chan
 - Add the two other auth options besidees Bot: Client & Bearer
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 
