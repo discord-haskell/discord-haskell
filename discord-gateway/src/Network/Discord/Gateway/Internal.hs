@@ -6,6 +6,8 @@
 --   people will need
 module Network.Discord.Gateway.Internal where
 
+import Prelude hiding (log)
+
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Chan
