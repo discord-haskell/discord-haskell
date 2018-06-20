@@ -52,9 +52,11 @@ connectionLoop auth events log = loop
     (ConnClosed) -> writeChan log "ConnClosed"
     (ConnReconnect tok seshID seqID) -> do
         loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+          writeChan log ("message - sending " <> show (Resume tok seshID seqID))
           send conn (Resume tok seshID seqID)
           writeChan log "Resuming???"
           eitherPayload <- step conn log
+          writeChan log ("message - received " <> show eitherPayload)
           case eitherPayload of
             Right (Hello interval) -> startEventStream conn events auth interval seqID Running log
             Right InvalidSession -> do t <- getRandomR (1,5)
@@ -73,7 +75,6 @@ logger _ False = pure ()
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
 step connection log = try $ do
   msg' <- receiveData connection
-  writeChan log ("Successful step: " <> show msg')
   case eitherDecode msg' of
     Right msg -> return msg
     Left  err -> do writeChan log ("Discord-hs.Gateway.Parse" <> err)
@@ -113,10 +114,8 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
     send conn (Identify auth False 50 (0, 1))
     loop Running
   loop Running = do
-    writeChan log "Before step"
     eitherPayload <- step conn log
-    writeChan log "After step"
-    writeChan log ("Payload - " <> show eitherPayload)
+    writeChan log ("message - received " <> show eitherPayload)
     case eitherPayload :: Either SomeException Payload of
       Left e -> do writeChan log ("Unknown Exception - " <> show e)
                    threadDelay (round (1/2 * 10^6))
@@ -136,7 +135,7 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop
         send conn (Heartbeat sq)
         loop Running
       Right (Reconnect)      -> writeChan log "Should reconnect" >> loop InvalidReconnect
-      Right (InvalidSession) -> loop Start
+      Right (InvalidSession) -> pure ConnStart
       Right (HeartbeatAck)   -> loop Running
       Right _ -> do
         writeChan log "Discord-hs.Gateway.Error - InvalidPacket"

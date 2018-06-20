@@ -1,0 +1,283 @@
+GHCi, version 8.2.2: http://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/karl/.dotfiles/haskell/.ghci
+[ 1 of 13] Compiling Main             ( /home/karl/programming/src-builds/discord-haskell/docs/Site.hs, interpreted )
+[ 2 of 13] Compiling Network.Discord.Types.Prelude ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Prelude.hs, interpreted )
+[ 3 of 13] Compiling Network.Discord.Types.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Gateway.hs, interpreted )
+[ 4 of 13] Compiling Network.Discord.Types.Channel ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Channel.hs, interpreted )
+[ 5 of 13] Compiling Network.Discord.Types.Guild ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Guild.hs, interpreted )
+[ 6 of 13] Compiling Network.Discord.Types.Events ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Events.hs, interpreted )
+[ 7 of 13] Compiling Network.Discord.Types ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types.hs, interpreted )
+[ 8 of 13] Compiling Network.Discord.Rest.Prelude ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/Prelude.hs, interpreted )
+[ 9 of 13] Compiling Network.Discord.Rest.Requests ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/Requests.hs, interpreted )
+[10 of 13] Compiling Network.Discord.Rest.HTTP ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest/HTTP.hs, interpreted )
+[11 of 13] Compiling Network.Discord.Rest ( /home/karl/programming/src-builds/discord-haskell/discord-rest/src/Network/Discord/Rest.hs, interpreted )
+[12 of 13] Compiling Network.Discord.Gateway.Internal ( /home/karl/programming/src-builds/discord-haskell/discord-gateway/src/Network/Discord/Gateway/Internal.hs, interpreted )
+[13 of 13] Compiling Network.Discord.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-gateway/src/Network/Discord/Gateway.hs, interpreted )
+Ok, 13 modules loaded.
+Loaded GHCi configuration from /tmp/haskell-stack-ghci/123e5e89/ghci-script
+[1 of 9] Compiling Network.Discord.Types.Prelude ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Prelude.hs, interpreted )
+[2 of 9] Compiling Network.Discord.Types.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Gateway.hs, interpreted )
+[3 of 9] Compiling Network.Discord.Types.Channel ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Channel.hs, interpreted )
+[4 of 9] Compiling Network.Discord.Types.Guild ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Guild.hs, interpreted )
+[5 of 9] Compiling Network.Discord.Types.Events ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types/Events.hs, interpreted )
+[6 of 9] Compiling Network.Discord.Types ( /home/karl/programming/src-builds/discord-haskell/discord-types/src/Network/Discord/Types.hs, interpreted )
+[7 of 9] Compiling Network.Discord.Gateway.Internal ( /home/karl/programming/src-builds/discord-haskell/discord-gateway/src/Network/Discord/Gateway/Internal.hs, interpreted )
+[8 of 9] Compiling Network.Discord.Gateway ( /home/karl/programming/src-builds/discord-haskell/discord-gateway/src/Network/Discord/Gateway.hs, interpreted )
+[9 of 9] Compiling Main             ( examples/gateway.hs, interpreted )
+Ok, 9 modules loaded.
+starting the heartbeat
+heart -1
+beat 41250
+message - received Right HeartbeatAck
+message - received Right (Dispatch (fromList [("session_id",String "a366b7d08487e693081c8be4a0fc6451"),("shard",Array [Number 0.0,Number 1.0]),("private_channels",Array []),("presences",Array []),("guilds",Array [Object (fromList [("unavailable",Bool True),("id",String "453207241294610442")])]),("user_settings",Object (fromList [])),("_trace",Array [String "gateway-prd-main-pxv8",String "discord-sessions-prd-1-17"]),("user",Object (fromList [("email",Null),("mfa_enabled",Bool False),("username",String "Testbot 2 The Awakening"),("verified",Bool True),("bot",Bool True),("discriminator",String "7998"),("id",String "453057290032119808"),("avatar",Null)])),("relationships",Array []),("v",Number 6.0)]) 1 "READY")
+message - received Right (Dispatch (fromList [("roles",Array [Object (fromList [("color",Number 0.0),("managed",Bool False),("name",String "@everyone"),("id",String "453207241294610442"),("permissions",Number 1.04324161e8),("mentionable",Bool False),("hoist",Bool False),("position",Number 0.0)]),Object (fromList [("color",Number 0.0),("managed",Bool True),("name",String "Testbot 2: The Awakening"),("id",String "453211348143308811"),("permissions",Number 2.146958591e9),("mentionable",Bool False),("hoist",Bool False),("position",Number 1.0)])]),("presences",Array [Object (fromList [("status",String "online"),("game",Null),("user",Object (fromList [("id",String "453057290032119808")]))])]),("afk_channel_id",Null),("large",Bool False),("channels",Array [Object (fromList [("permission_overwrites",Array []),("name",String "Text Channels"),("bitrate",Number 64000.0),("id",String "453207241294610443"),("type",Number 4.0),("user_limit",Number 0.0),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("last_message_id",String "458356696490967042"),("topic",Null),("name",String "general"),("id",String "453207241294610444"),("type",Number 0.0),("parent_id",String "453207241294610443"),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("name",String "Voice Channels"),("bitrate",Number 64000.0),("id",String "453207241294610445"),("type",Number 4.0),("user_limit",Number 0.0),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("name",String "General"),("bitrate",Number 64000.0),("id",String "453207241294610446"),("type",Number 2.0),("user_limit",Number 0.0),("parent_id",String "453207241294610445"),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("last_message_id",Null),("topic",Null),("name",String "another"),("id",String "453692578034876417"),("type",Number 0.0),("parent_id",String "453207241294610443"),("position",Number 1.0)])]),("application_id",Null),("members",Array [Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")]),Object (fromList [("roles",Array [String "453211348143308811"]),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Testbot 2 The Awakening"),("bot",Bool True),("discriminator",String "7998"),("id",String "453057290032119808"),("avatar",Null)])),("joined_at",String "2018-06-04T15:00:05.743000+00:00")])]),("icon",Null),("mfa_level",Number 0.0),("lazy",Bool True),("default_message_notifications",Number 0.0),("member_count",Number 2.0),("name",String "zzzzzzzzzzz"),("emojis",Array []),("explicit_content_filter",Number 0.0),("features",Array []),("unavailable",Bool False),("id",String "453207241294610442"),("voice_states",Array []),("splash",Null),("region",String "us-central"),("afk_timeout",Number 300.0),("verification_level",Number 0.0),("system_channel_id",String "453207241294610444"),("owner_id",String "196446188663341056"),("joined_at",String "2018-06-04T15:00:05.743000+00:00")]) 2 "GUILD_CREATE")
+message - received Right (Dispatch (fromList [("status",String "online"),("nick",Null),("roles",Array []),("game",Null),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("guild_id",String "453207241294610442")]) 3 "PRESENCE_UPDATE")
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+heart 3
+beat 41250
+message - received Right HeartbeatAck
+message - received Right (Dispatch (fromList [("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("user_id",String "196446188663341056"),("timestamp",Number 1.529459575e9),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444")]) 4 "TYPING_START")
+message - received Right (Dispatch (fromList [("mention_roles",Array []),("attachments",Array []),("embeds",Array []),("pinned",Bool False),("content",String "Ddddddddddddsssssss"),("mention_everyone",Bool False),("edited_timestamp",Null),("author",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("id",String "458811475742687232"),("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("type",Number 0.0),("tts",Bool False),("timestamp",String "2018-06-20T01:53:00.122000+00:00"),("mentions",Array []),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444"),("nonce",String "464982257073913856")]) 5 "MESSAGE_CREATE")
+heart 5
+beat 41250
+message - received Right HeartbeatAck
+message - received Right (Dispatch (fromList [("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("user_id",String "196446188663341056"),("timestamp",Number 1.529459589e9),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444")]) 6 "TYPING_START")
+message - received Right (Dispatch (fromList [("mention_roles",Array []),("attachments",Array []),("embeds",Array []),("pinned",Bool False),("content",String "Ccccccccfc"),("mention_everyone",Bool False),("edited_timestamp",Null),("author",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("id",String "458811523855548418"),("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("type",Number 0.0),("tts",Bool False),("timestamp",String "2018-06-20T01:53:11.593000+00:00"),("mentions",Array []),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444"),("nonce",String "464982305568456704")]) 7 "MESSAGE_CREATE")
+message - received Right (Dispatch (fromList [("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("user_id",String "196446188663341056"),("timestamp",Number 1.529459598e9),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444")]) 8 "TYPING_START")
+message - received Right (Dispatch (fromList [("mention_roles",Array []),("attachments",Array []),("embeds",Array []),("pinned",Bool False),("content",String "Xddddddddddd"),("mention_everyone",Bool False),("edited_timestamp",Null),("author",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("id",String "458811562036166657"),("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("type",Number 0.0),("tts",Bool False),("timestamp",String "2018-06-20T01:53:20.696000+00:00"),("mentions",Array []),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444"),("nonce",String "464982343505936384")]) 9 "MESSAGE_CREATE")
+message - received Right (Dispatch (fromList [("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("user_id",String "196446188663341056"),("timestamp",Number 1.529459604e9),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444")]) 10 "TYPING_START")
+message - received Right (Dispatch (fromList [("mention_roles",Array []),("attachments",Array []),("embeds",Array []),("pinned",Bool False),("content",String "Xxxxxxxddddd"),("mention_everyone",Bool False),("edited_timestamp",Null),("author",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("id",String "458811604054704128"),("member",Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("joined_at",String "2018-06-04T14:43:46.509000+00:00")])),("type",Number 0.0),("tts",Bool False),("timestamp",String "2018-06-20T01:53:30.714000+00:00"),("mentions",Array []),("guild_id",String "453207241294610442"),("channel_id",String "453207241294610444"),("nonce",String "464982385394450432")]) 11 "MESSAGE_CREATE")
+heart 11
+beat 41250
+message - received Right HeartbeatAck
+heart 11
+beat 41250
+message - received Right HeartbeatAck
+heart 11
+beat 41250
+message - received Left Network.Socket.recvBuf: resource vanished (Connection reset by peer)
+Unknown Exception - Network.Socket.recvBuf: resource vanished (Connection reset by peer)
+should try and reconnect
+Reconecting to: ConnReconnect "NDUzMDU3MjkwMDMyMTE5ODA4.Dfyqdg._lQz1esYYCb2hXiCj7XMDdYwJRY" "a366b7d08487e693081c8be4a0fc6451" 11
+Resuming???
+starting the heartbeat
+heart 11
+beat 41250
+message - received Left (CloseRequest 4006 "Invalid session.")
+Unknown Exception - CloseRequest 4006 "Invalid session."
+should try and reconnect
+Reconecting to: ConnReconnect "NDUzMDU3MjkwMDMyMTE5ODA4.Dfyqdg._lQz1esYYCb2hXiCj7XMDdYwJRY" "" 11
+Resuming???
+starting the heartbeat
+heart 11
+beat 41250
+message - received Right InvalidSession
+message - received Right HeartbeatAck
+message - received Right (Dispatch (fromList [("session_id",String "00966b3281e46c224f53a8d7f98879f9"),("shard",Array [Number 0.0,Number 1.0]),("private_channels",Array []),("presences",Array []),("guilds",Array [Object (fromList [("unavailable",Bool True),("id",String "453207241294610442")])]),("user_settings",Object (fromList [])),("_trace",Array [String "gateway-prd-main-3vfg",String "discord-sessions-prd-1-6"]),("user",Object (fromList [("email",Null),("mfa_enabled",Bool False),("username",String "Testbot 2 The Awakening"),("verified",Bool True),("bot",Bool True),("discriminator",String "7998"),("id",String "453057290032119808"),("avatar",Null)])),("relationships",Array []),("v",Number 6.0)]) 1 "READY")
+message - received Right (Dispatch (fromList [("roles",Array [Object (fromList [("color",Number 0.0),("managed",Bool False),("name",String "@everyone"),("id",String "453207241294610442"),("permissions",Number 1.04324161e8),("mentionable",Bool False),("hoist",Bool False),("position",Number 0.0)]),Object (fromList [("color",Number 0.0),("managed",Bool True),("name",String "Testbot 2: The Awakening"),("id",String "453211348143308811"),("permissions",Number 2.146958591e9),("mentionable",Bool False),("hoist",Bool False),("position",Number 1.0)])]),("presences",Array [Object (fromList [("status",String "online"),("game",Null),("user",Object (fromList [("id",String "196446188663341056")]))]),Object (fromList [("status",String "online"),("game",Null),("user",Object (fromList [("id",String "453057290032119808")]))])]),("afk_channel_id",Null),("large",Bool False),("channels",Array [Object (fromList [("permission_overwrites",Array []),("name",String "Text Channels"),("bitrate",Number 64000.0),("id",String "453207241294610443"),("type",Number 4.0),("user_limit",Number 0.0),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("last_message_id",String "458812126765645854"),("topic",Null),("name",String "general"),("id",String "453207241294610444"),("type",Number 0.0),("parent_id",String "453207241294610443"),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("name",String "Voice Channels"),("bitrate",Number 64000.0),("id",String "453207241294610445"),("type",Number 4.0),("user_limit",Number 0.0),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("name",String "General"),("bitrate",Number 64000.0),("id",String "453207241294610446"),("type",Number 2.0),("user_limit",Number 0.0),("parent_id",String "453207241294610445"),("position",Number 0.0)]),Object (fromList [("permission_overwrites",Array []),("last_message_id",Null),("topic",Null),("name",String "another"),("id",String "453692578034876417"),("type",Number 0.0),("parent_id",String "453207241294610443"),("position",Number 1.0)])]),("application_id",Null),("members",Array [Object (fromList [("roles",Array []),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Fish"),("discriminator",String "9731"),("id",String "196446188663341056"),("avatar",String "f5286895a62f81ac798570eceb4a05fb")])),("joined_at",String "2018-06-04T14:43:46.509000+00:00")]),Object (fromList [("roles",Array [String "453211348143308811"]),("deaf",Bool False),("mute",Bool False),("user",Object (fromList [("username",String "Testbot 2 The Awakening"),("bot",Bool True),("discriminator",String "7998"),("id",String "453057290032119808"),("avatar",Null)])),("joined_at",String "2018-06-04T15:00:05.743000+00:00")])]),("icon",Null),("mfa_level",Number 0.0),("lazy",Bool True),("default_message_notifications",Number 0.0),("member_count",Number 2.0),("name",String "zzzzzzzzzzz"),("emojis",Array []),("explicit_content_filter",Number 0.0),("features",Array []),("unavailable",Bool False),("id",String "453207241294610442"),("voice_states",Array []),("splash",Null),("region",String "us-central"),("afk_timeout",Number 300.0),("verification_level",Number 0.0),("system_channel_id",String "453207241294610444"),("owner_id",String "196446188663341056"),("joined_at",String "2018-06-04T15:00:05.743000+00:00")]) 2 "GUILD_CREATE")
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
+heart 2
+beat 41250
+message - received Right HeartbeatAck
