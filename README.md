@@ -2,6 +2,8 @@
 
 ## Getting Started
 
+0 You probably shouldn't yet, this library is in rough shape right now
+
 1 Create a bot to get a clientid and secret
 <https://discordapp.com/developers/applications/me>
 
