@@ -41,7 +41,7 @@ connectionLoop :: Auth -> Chan Event -> Chan String -> ConnLoopState -> IO ()
 connectionLoop auth events log = loop
   where
   loop :: ConnLoopState -> IO ()
-  loop s = do 
+  loop s = do
     writeChan log ("conn loop: " <> show s)
     case s of
       (ConnClosed) -> writeChan log "ConnClosed"
