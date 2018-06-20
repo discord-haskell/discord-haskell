@@ -126,11 +126,7 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop Running
         setSequence seqKey sq
         case parseDispatch (Dispatch obj sq name) of
           Left reason -> writeChan log ("Discord-hs.Gateway.Dispatch - " <> reason)
-          Right event -> do
-            writeChan eventChan event
-            case (name, parseMaybe (.: "session_id") obj) of
-              ("READY", Just sesh) -> writeIORef sID sesh
-              _                    -> pure ()
+          Right event -> writeChan eventChan event
         loop Running
       Right (Heartbeat sq) -> do
         setSequence seqKey sq
