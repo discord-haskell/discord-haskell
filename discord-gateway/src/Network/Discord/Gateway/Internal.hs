@@ -45,7 +45,7 @@ connectionLoop auth events log = loop
   loop s = do
     writeChan log ("conn loop: " <> show s)
     case s of
-      (ConnClosed) -> writeChan log "ConnClosed"
+      (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             msg <- step conn log
