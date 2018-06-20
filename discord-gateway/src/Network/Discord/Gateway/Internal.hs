@@ -55,7 +55,7 @@ connectionLoop auth events log = loop
               Right (Hello interval) -> do
                 send conn (Identify auth False 50 (0, 1)) log
                 startEventStream conn events auth interval (-1) log
-              _ -> writeChan log ("recieved: " <> show msg) >> pure ConnClosed
+              _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             send conn (Resume tok seshID seqID) log
@@ -64,7 +64,7 @@ connectionLoop auth events log = loop
             case eitherPayload of
               Right (Hello interval) -> startEventStream conn events auth interval seqID log
               Right InvalidSession -> do t <- getRandomR (1,5)
-                                         writeChan log ("Failed ot connect. waiting:" <> show t)
+                                         writeChan log ("Failed to connect. waiting:" <> show t)
                                          threadDelay (t * 10^6)
                                          pure ConnStart
               Right payload -> do writeChan log ("Why did they send a: " <> show payload)
