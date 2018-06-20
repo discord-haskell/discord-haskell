@@ -24,8 +24,7 @@ import Network.WebSockets (Connection, receiveData, sendTextData)
 
 import Network.Discord.Types
 
-data GatewayState = Start
-                  | Running
+data GatewayState = Running
                   | InvalidReconnect
                   | InvalidDead
 
