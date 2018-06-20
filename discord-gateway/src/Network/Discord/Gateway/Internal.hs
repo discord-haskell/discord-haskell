@@ -51,7 +51,8 @@ connectionLoop auth events log = loop
             msg <- step conn log
             case msg of
               Right (Hello interval) -> do
-                startEventStream conn events auth interval (-1) Start log
+                send conn (Identify auth False 50 (0, 1)) log
+                startEventStream conn events auth interval (-1) log
               _ -> writeChan log ("recieved: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
@@ -59,7 +60,7 @@ connectionLoop auth events log = loop
             writeChan log "Resuming???"
             eitherPayload <- step conn log
             case eitherPayload of
-              Right (Hello interval) -> startEventStream conn events auth interval seqID Running log
+              Right (Hello interval) -> startEventStream conn events auth interval seqID log
               Right InvalidSession -> do t <- getRandomR (1,5)
                                          writeChan log ("Failed ot connect. waiting:" <> show t)
                                          threadDelay (t * 10^6)
@@ -101,21 +102,18 @@ send conn payload log = do
   writeChan log ("message - sending " <> show payload)
   sendTextData conn (encode payload)
 
-startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> GatewayState -> Chan String -> IO ConnLoopState
-startEventStream conn events auth interval seqN state log = do
+startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> Chan String -> IO ConnLoopState
+startEventStream conn events auth interval seqN log = do
     seqKey <- newIORef seqN
     sID <- newIORef ""
     heart <- forkIO $ heartbeat conn interval seqKey log
-    finally (eventStream (ConnData conn sID auth events) seqKey log state)
+    finally (eventStream (ConnData conn sID auth events) seqKey log)
             (killThread heart)
 
-eventStream :: ConnectionData -> IORef Integer -> Chan String -> GatewayState -> IO ConnLoopState
-eventStream (ConnData conn sID auth eventChan) seqKey log = loop
+eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
+eventStream (ConnData conn sID auth eventChan) seqKey log = loop Running
   where
   loop :: GatewayState -> IO ConnLoopState
-  loop Start = do
-    send conn (Identify auth False 50 (0, 1)) log
-    loop Running
   loop Running = do
     eitherPayload <- step conn log
     case eitherPayload :: Either SomeException Payload of
