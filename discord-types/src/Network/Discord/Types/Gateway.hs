@@ -64,7 +64,7 @@ instance FromJSON Payload where
       _  -> mzero
 
 instance ToJSON Payload where
-  toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i < 0 then "null" else show i ]
+  toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
     , "d"  .= object [

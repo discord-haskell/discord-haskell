@@ -57,7 +57,7 @@ connectionLoop auth events log = loop
                   Right (Right payload) ->
                     case payload of
                       (Ready (Init _ _ _ _ seshID)) ->
-                        startEventStream conn events auth seshID interval (-1) log
+                        startEventStream conn events auth seshID interval 0 log
                       _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
                   err -> writeChan log ("Ready event parse error " <> show err <> " on " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
