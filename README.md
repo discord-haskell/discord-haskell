@@ -14,7 +14,7 @@
 4 Connect to the gateway once in order to send CreateMessage events
 
 5 Look at the examples. [examples/gateway.hs](./examples/gateway.hs)
-and [examples/rest.hs](./examples/rest.hs) work as of now
+and [examples/rest.hs](./examples/rest.hs) are usually kept in a working state
 
 ## Overview
 
