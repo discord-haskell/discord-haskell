@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
 
 -- | Provides logic code for interacting with the Discord websocket
