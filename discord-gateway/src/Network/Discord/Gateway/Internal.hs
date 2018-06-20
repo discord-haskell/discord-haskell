@@ -11,12 +11,11 @@ import Prelude hiding (log)
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Chan
-import Control.Exception.Safe (Exception, try, finally, SomeException, Exception)
+import Control.Exception.Safe (try, finally, SomeException)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
-import Data.Aeson (eitherDecode, encode, (.:))
-import Data.Aeson.Types (parseMaybe)
+import Data.Aeson (eitherDecode, encode)
 import qualified Data.ByteString.Char8 as Q
 
 import Wuss (runSecureClient)
