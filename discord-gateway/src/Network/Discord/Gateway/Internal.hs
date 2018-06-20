@@ -44,6 +44,7 @@ connectionLoop auth events log = loop
   loop s = do 
     writeChan log ("conn loop: " <> show s)
     case s of
+      (ConnClosed) -> writeChan log "ConnClosed"
       (ConnStart) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             hello <- step conn log
@@ -51,7 +52,6 @@ connectionLoop auth events log = loop
               Right (Hello interval) -> do
                 startEventStream conn events auth interval (-1) Start log
               _ -> writeChan log ("recieved: " <> show hello) >> pure ConnClosed
-      (ConnClosed) -> writeChan log "ConnClosed"
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             send conn (Resume tok seshID seqID) log
