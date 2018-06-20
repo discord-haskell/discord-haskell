@@ -77,8 +77,8 @@ logger log True = forever $ readChan log >>= putStrLn
 logger _ False = pure ()
 
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
-step connection log = try $ do
-  msg' <- receiveData connection
+step conn log = try $ do
+  msg' <- receiveData conn
   writeChan log ("message - received " <> show msg')
   case eitherDecode msg' of
     Right msg -> return msg
