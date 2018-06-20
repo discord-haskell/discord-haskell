@@ -34,7 +34,7 @@ data ConnLoopState = ConnStart
   deriving Show
 
 data ConnectionData = ConnData { connection :: Connection
-                               , connSessionID :: IORef String
+                               , connSessionID :: String
                                , connAuth :: Auth
                                , connChan :: (Chan Event)
                                }
@@ -53,7 +53,14 @@ connectionLoop auth events log = loop
             case msg of
               Right (Hello interval) -> do
                 send conn (Identify auth False 50 (0, 1)) log
-                startEventStream conn events auth interval (-1) log
+                msg2 <- step conn log
+                case parseDispatch <$> msg2 of
+                  Right (Right payload) ->
+                    case payload of
+                      (Ready (Init _ _ _ _ seshID)) ->
+                        startEventStream conn events auth seshID interval (-1) log
+                      _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
+                  err -> writeChan log ("Ready event parse error " <> show err <> " on " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
@@ -61,7 +68,7 @@ connectionLoop auth events log = loop
             writeChan log "Resuming???"
             eitherPayload <- step conn log
             case eitherPayload of
-              Right (Hello interval) -> startEventStream conn events auth interval seqID log
+              Right (Hello interval) -> startEventStream conn events auth seshID interval seqID log
               Right InvalidSession -> do t <- getRandomR (1,5)
                                          writeChan log ("Failed to connect. waiting:" <> show t)
                                          threadDelay (t * 10^6)
@@ -103,16 +110,15 @@ send conn payload log = do
   writeChan log ("message - sending " <> show payload)
   sendTextData conn (encode payload)
 
-startEventStream :: Connection -> Chan Event -> Auth -> Int -> Integer -> Chan String -> IO ConnLoopState
-startEventStream conn events auth interval seqN log = do
+startEventStream :: Connection -> Chan Event -> Auth -> String -> Int -> Integer -> Chan String -> IO ConnLoopState
+startEventStream conn events auth seshID interval seqN log = do
     seqKey <- newIORef seqN
-    sID <- newIORef ""
     heart <- forkIO $ heartbeat conn interval seqKey log
-    finally (eventStream (ConnData conn sID auth events) seqKey log)
+    finally (eventStream (ConnData conn seshID auth events) seqKey log)
             (killThread heart)
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
-eventStream (ConnData conn sID auth eventChan) seqKey log = loop Running
+eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
   where
   loop :: GatewayState -> IO ConnLoopState
   loop Running = do
@@ -138,9 +144,8 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop Running
                     loop InvalidDead
   loop InvalidReconnect = do writeChan log "should try and reconnect"
                              let (Bot tok) = auth
-                             seshID <- readIORef sID
                              seqID <- readIORef seqKey
-                             writeChan log ("Reconecting to: " <> show (ConnReconnect tok seshID seqID))
+                             writeChan log ("Reconnecting to: " <> show (ConnReconnect tok seshID seqID))
                              pure (ConnReconnect tok seshID seqID)
 
   loop InvalidDead      = do writeChan log "Discord-hs.Gateway.Error - Bot died"
