@@ -137,9 +137,8 @@ eventStream (ConnData conn sID auth eventChan) seqKey log = loop Running
       Right (Reconnect)      -> writeChan log "Should reconnect" >> loop InvalidReconnect
       Right (InvalidSession) -> pure ConnStart
       Right (HeartbeatAck)   -> loop Running
-      Right _ -> do
-        writeChan log "Discord-hs.Gateway.Error - InvalidPacket"
-        loop InvalidDead
+      Right _ -> do writeChan log "Discord-hs.Gateway.Error - Invalid Packet"
+                    loop InvalidDead
   loop InvalidReconnect = do writeChan log "should try and reconnect"
                              let (Bot tok) = auth
                              seshID <- readIORef sID
