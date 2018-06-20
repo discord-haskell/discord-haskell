@@ -67,7 +67,7 @@ connectionLoop auth events log = loop
                                          pure ConnStart
               Right payload -> do writeChan log ("Why did they send a: " <> show payload)
                                   pure ConnClosed
-              Left _ -> pure ConnClosed
+              Left e -> writeChan log ("message - error " <> show e) >> pure ConnClosed
 
 
 logger :: Chan String -> Bool -> IO ()
