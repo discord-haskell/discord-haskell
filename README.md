@@ -46,7 +46,6 @@ Mostly Unchanged
 
 In roughly the order I'm working on them:
 
-- Suport gateway RESUME events properly
 - Rework gateway FromJSON parsing
 - Add gateway ToJSON for events
 - Reconnect to gateway if the InvalidSession says True

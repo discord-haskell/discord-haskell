@@ -102,7 +102,7 @@ instance ToJSON Payload where
   toJSON (Resume token session seqId) = object [
       "op" .= (6 :: Int)
     , "d"  .= object [
-        "token"      .= Q.unpack token
+        "token"      .= TE.decodeUtf8 token
       , "session_id" .= session
       , "seq"        .= seqId
       ]
