@@ -122,10 +122,17 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
   loop :: GatewayState -> IO ConnLoopState
   loop Running = do
     eitherPayload <- step conn log
-      Left e -> do writeChan log ("Unknown Exception - " <> show e)
-                   threadDelay (round (1/2 * 10^6))
-                   loop InvalidReconnect
     case eitherPayload :: Either ConnectionException Payload of
+      Left (CloseRequest code str) ->
+        case code of
+          -- see discord documentation on gateway close event codes
+          1000 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4000 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4007 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4014 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4006 -> pure ConnStart
+          e -> do writeChan log ("Closing connection because $" <> show e <> " " <> show str)
+                  pure ConnClosed
       Right (Dispatch obj sq name) -> do
         setSequence seqKey sq
         case parseDispatch (Dispatch obj sq name) of
