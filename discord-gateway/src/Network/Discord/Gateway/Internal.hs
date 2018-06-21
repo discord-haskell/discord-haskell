@@ -82,9 +82,14 @@ logger log True = forever $ readChan log >>= putStrLn
 logger _ False = pure ()
 
 step :: Connection -> Chan String -> IO (Either SomeException Payload)
+send :: Connection -> Payload -> Chan String -> IO ()
+send conn payload log = do
+  writeChan log ("message - sending " <> QL.unpack (encode payload))
+  sendTextData conn (encode payload)
+
 step conn log = try $ do
   msg' <- receiveData conn
-  writeChan log ("message - received " <> show msg')
+  writeChan log ("message - received " <> QL.unpack msg')
   case eitherDecode msg' of
     Right msg -> return msg
     Left  err -> do writeChan log ("Discord-hs.Gateway.Parse" <> err)
@@ -101,11 +106,6 @@ heartbeat conn interval seqKey log = do
 
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
-
-send :: Connection -> Payload -> Chan String -> IO ()
-send conn payload log = do
-  writeChan log ("message - sending " <> show payload)
-  sendTextData conn (encode payload)
 
 startEventStream :: Connection -> Chan Event -> Auth -> String -> Int -> Integer -> Chan String -> IO ConnLoopState
 startEventStream conn events auth seshID interval seqN log = do
