@@ -81,12 +81,12 @@ logger :: Chan String -> Bool -> IO ()
 logger log True = forever $ readChan log >>= putStrLn
 logger _ False = pure ()
 
-step :: Connection -> Chan String -> IO (Either SomeException Payload)
 send :: Connection -> Payload -> Chan String -> IO ()
 send conn payload log = do
   writeChan log ("message - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
 
+step :: Connection -> Chan String -> IO (Either ConnectionException Payload)
 step conn log = try $ do
   msg' <- receiveData conn
   writeChan log ("message - received " <> QL.unpack msg')
@@ -120,10 +120,10 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
   loop :: GatewayState -> IO ConnLoopState
   loop Running = do
     eitherPayload <- step conn log
-    case eitherPayload :: Either SomeException Payload of
       Left e -> do writeChan log ("Unknown Exception - " <> show e)
                    threadDelay (round (1/2 * 10^6))
                    loop InvalidReconnect
+    case eitherPayload :: Either ConnectionException Payload of
       Right (Dispatch obj sq name) -> do
         setSequence seqKey sq
         case parseDispatch (Dispatch obj sq name) of
