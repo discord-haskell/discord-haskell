@@ -133,6 +133,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
           4006 -> pure ConnStart
           e -> do writeChan log ("Closing connection because $" <> show e <> " " <> show str)
                   pure ConnClosed
+      Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch obj sq name) -> do
         setSequence seqKey sq
         case parseDispatch (Dispatch obj sq name) of
