@@ -25,7 +25,6 @@ import qualified Data.Map.Strict as M
 
 import Network.Discord.Types
 import Network.Discord.Rest.Prelude
-import Network.Discord.Rest.Requests
 
 data Resp a = Resp a
             | NoResp
