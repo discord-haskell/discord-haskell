@@ -15,6 +15,6 @@ newWebSocket (DiscordAuth auth _) = do
   log <- newChan
   forkIO (logger log True)
   events <- newChan
-  forkIO (connectionLoop auth events log ConnStart)
+  forkIO (connectionLoop auth events log)
   pure events
 
