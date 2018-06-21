@@ -96,9 +96,7 @@ heartbeat conn interval seqKey log = do
   writeChan log "starting the heartbeat"
   forever $ do
     num <- readIORef seqKey
-    writeChan log ("heart " <> show num)
     send conn (Heartbeat num) log
-    writeChan log ("beat " <> show interval)
     threadDelay (interval * 1000)
 
 setSequence :: IORef Integer -> Integer -> IO ()
