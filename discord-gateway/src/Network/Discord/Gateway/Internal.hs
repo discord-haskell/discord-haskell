@@ -117,7 +117,7 @@ startEventStream conn events (Bot auth) seshID interval seqN log = do
   let err :: SomeException -> IO ConnLoopState
       err e = writeChan log ("error - " <> show e) >> ConnReconnect auth seshID <$> readIORef seqKey
   handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey log)
-                         (killThread heart)
+                       (killThread heart)
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
