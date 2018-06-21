@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Network.Discord.Rest.Requests
+module Discord.Rest.Requests
   (
     Request(..)
   , MessageTiming(..)
@@ -22,8 +22,8 @@ import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
-import Network.Discord.Rest.Prelude
-import Network.Discord.Types
+import Discord.Rest.Prelude
+import Discord.Types
 
 -- | Seriallize request into compontents: api path accessed & request to run
 prepareRequest :: Request a -> (String, JsonRequest)

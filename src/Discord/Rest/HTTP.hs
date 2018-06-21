@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 
 -- | Provide HTTP primitives
-module Network.Discord.Rest.HTTP
+module Discord.Rest.HTTP
   ( restLoop
   , Resp(..)
   ) where
@@ -23,8 +23,8 @@ import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
 import qualified Data.Map.Strict as M
 
-import Network.Discord.Types
-import Network.Discord.Rest.Prelude
+import Discord.Types
+import Discord.Rest.Prelude
 
 data Resp a = Resp a
             | NoResp

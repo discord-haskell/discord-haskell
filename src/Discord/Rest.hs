@@ -2,11 +2,11 @@
 {-# OPTIONS_HADDOCK prune, not-home #-}
 
 -- | Provides framework to interact with REST api gateways. Implementations specific to the
---   Discord API are provided in Network.Discord.Rest.Channel, Network.Discord.Rest.Guild,
---   and Network.Discord.Rest.User.
-module Network.Discord.Rest
-  ( module Network.Discord.Rest.Requests
-  , module Network.Discord.Types
+--   Discord API are provided in Discord.Rest.Channel, Discord.Rest.Guild,
+--   and Discord.Rest.User.
+module Discord.Rest
+  ( module Discord.Rest.Requests
+  , module Discord.Types
   , Resp(..)
   , restCall
   , createHandler
@@ -19,9 +19,9 @@ import Control.Concurrent.MVar
 import Control.Concurrent (forkIO)
 import qualified Data.ByteString.Lazy.Char8 as QL
 
-import Network.Discord.Types
-import Network.Discord.Rest.HTTP
-import Network.Discord.Rest.Requests
+import Discord.Types
+import Discord.Rest.HTTP
+import Discord.Rest.Requests
 
 
 newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteString)))

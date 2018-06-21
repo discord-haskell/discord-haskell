@@ -4,7 +4,7 @@
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Realistically, this is probably lower level than most
 --   people will need
-module Network.Discord.Gateway.Internal where
+module Discord.Gateway.Internal where
 
 import Prelude hiding (log)
 
@@ -22,7 +22,7 @@ import qualified Data.ByteString.Lazy.Char8 as QL
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection, receiveData, sendTextData)
 
-import Network.Discord.Types
+import Discord.Types
 
 data GatewayState = Running
                   | InvalidReconnect

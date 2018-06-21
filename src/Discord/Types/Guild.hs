@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Types relating to Discord Guilds (servers)
-module Network.Discord.Types.Guild where
+module Discord.Types.Guild where
 
 import Data.Time.Clock
 
@@ -9,8 +9,8 @@ import Data.Aeson
 import Control.Applicative ((<|>))
 import Control.Monad (mzero)
 
-import Network.Discord.Types.Channel
-import Network.Discord.Types.Prelude
+import Discord.Types.Channel
+import Discord.Types.Prelude
 
 -- |Representation of a guild member.
 data Member = GuildMember {-# UNPACK #-} !Snowflake User

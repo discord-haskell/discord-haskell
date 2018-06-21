@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Data structures pertaining to gateway dispatch 'Event's
-module Network.Discord.Types.Events where
+module Discord.Types.Events where
 
 import Control.Monad (mzero)
 
 import Data.Aeson
 
-import Network.Discord.Types.Channel
-import Network.Discord.Types.Gateway
-import Network.Discord.Types.Guild (Member, Guild)
-import Network.Discord.Types.Prelude
+import Discord.Types.Channel
+import Discord.Types.Gateway
+import Discord.Types.Guild (Member, Guild)
+import Discord.Types.Prelude
 
 -- |Represents data sent on READY event.
 data Init = Init Int User [Channel] [Guild] String deriving Show

@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Data structures pertaining to Discord Channels
-module Network.Discord.Types.Channel where
+module Discord.Types.Channel where
 
 import Control.Monad (mzero)
 import Data.Text as Text (pack, Text)
@@ -14,7 +14,7 @@ import Data.Vector (toList)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 
-import Network.Discord.Types.Prelude
+import Discord.Types.Prelude
 
 -- |Represents information about a user.
 data User = User

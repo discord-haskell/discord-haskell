@@ -4,14 +4,14 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Utility and base types and functions for the Discord Rest API
-module Network.Discord.Rest.Prelude where
+module Discord.Rest.Prelude where
 
 import Data.Monoid ((<>))
 import Network.HTTP.Req ((=:))
 import qualified Data.Text as T
 import qualified Network.HTTP.Req as R
 
-import Network.Discord.Types
+import Discord.Types
 
 
 authHeader :: Auth -> R.Option 'R.Https
