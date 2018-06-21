@@ -3,8 +3,7 @@
 -- | Provides types and encoding/decoding code. Types should be identical to those provided
 --   in the Discord API documentation.
 module Network.Discord.Types
-  ( module Network.Discord.Types
-  , module Network.Discord.Types.Prelude
+  ( module Network.Discord.Types.Prelude
   , module Network.Discord.Types.Channel
   , module Network.Discord.Types.Events
   , module Network.Discord.Types.Gateway
@@ -19,10 +18,3 @@ import Network.Discord.Types.Guild
 import Network.Discord.Types.Prelude
 
 import Data.Aeson (Object)
-import Data.Text (Text)
-
-data DiscordAuth = DiscordAuth {
-    authAuth :: Auth
-  , authVersion :: Text
-  }
-

@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Concurrent.Chan
-import Control.Monad
+import Control.Monad (forever)
 import Data.Char (isSpace)
 import Data.Monoid ((<>))
 import qualified Data.ByteString.Char8 as Q
@@ -12,10 +12,9 @@ import Network.Discord.Types
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  let da = DiscordAuth (Bot tok) "0.1.0"
-  c <- newWebSocket da
+  c <- newWebSocket (Bot tok)
   forever $ do
     x <- readChan c
+    putStrLn (show x <> "\n")
     pure ()
-    putStrLn (show x <> "\n\n")
 

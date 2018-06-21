@@ -10,8 +10,8 @@ import Control.Concurrent.Chan
 import Network.Discord.Types
 import Network.Discord.Gateway.Internal
 
-newWebSocket :: DiscordAuth -> IO (Chan Event)
-newWebSocket (DiscordAuth auth _) = do
+newWebSocket :: Auth -> IO (Chan Event)
+newWebSocket auth = do
   log <- newChan
   forkIO (logger log False)
   events <- newChan
