@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 
 import Data.Char (isSpace)
 
