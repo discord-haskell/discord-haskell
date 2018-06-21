@@ -128,9 +128,9 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
           -- see discord documentation on gateway close event codes
           1000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
           4014 -> ConnReconnect auth seshID <$> readIORef seqKey
-          4006 -> pure ConnStart
           e -> do writeChan log ("Closing connection because $" <> show e <> " " <> show str)
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
