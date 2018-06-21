@@ -11,6 +11,8 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString as Q
 import Data.Aeson
 import Data.Aeson.Types
+import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
 
 import Network.Discord.Types.Prelude
 
@@ -56,7 +58,7 @@ instance FromJSON Payload where
     op <- o .: "op" :: Parser Int
     case op of
       0  -> Dispatch <$> o .: "d" <*> o .: "s" <*> o .: "t"
-      1  -> Heartbeat <$> o .: "d"
+      1  -> Heartbeat . fromMaybe 0 . readMaybe  <$> o .: "d"
       7  -> return Reconnect
       9  -> return InvalidSession
       10 -> (\od -> Hello <$> od .: "heartbeat_interval") =<< o .: "d"
