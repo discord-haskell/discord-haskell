@@ -17,6 +17,7 @@ import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
 import qualified Data.ByteString.Char8 as Q
+import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection, receiveData, sendTextData)
@@ -34,7 +35,7 @@ data ConnLoopState = ConnStart
 
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: String
-                               , connAuth :: Auth
+                               , connAuth :: Q.ByteString
                                , connChan :: (Chan Event)
                                }
 
@@ -109,7 +110,7 @@ setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
 startEventStream :: Connection -> Chan Event -> Auth -> String -> Int -> Integer -> Chan String -> IO ConnLoopState
-startEventStream conn events auth seshID interval seqN log = do
+startEventStream conn events (Bot auth) seshID interval seqN log = do
     seqKey <- newIORef seqN
     heart <- forkIO $ heartbeat conn interval seqKey log
     finally (eventStream (ConnData conn seshID auth events) seqKey log)
@@ -141,10 +142,9 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
       Right _ -> do writeChan log "Discord-hs.Gateway.Error - Invalid Packet"
                     loop InvalidDead
   loop InvalidReconnect = do writeChan log "should try and reconnect"
-                             let (Bot tok) = auth
                              seqID <- readIORef seqKey
-                             writeChan log ("Reconnecting to: " <> show (ConnReconnect tok seshID seqID))
-                             pure (ConnReconnect tok seshID seqID)
+                             writeChan log ("Reconnecting to: " <> show (ConnReconnect auth seshID seqID))
+                             pure (ConnReconnect auth seshID seqID)
 
   loop InvalidDead      = do writeChan log "Discord-hs.Gateway.Error - Bot died"
                              pure ConnClosed
