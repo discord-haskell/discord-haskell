@@ -31,7 +31,7 @@ data Resp a = Resp a
             | BadResp String
   deriving (Eq, Show, Functor)
 
-restLoop :: DiscordAuth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString)) -> IO ()
+restLoop :: Auth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString)) -> IO ()
 restLoop auth urls = loop M.empty
   where
   loop ratelocker = do
@@ -95,7 +95,7 @@ tryRequest action = do
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
 
-compileRequest :: DiscordAuth -> JsonRequest -> IO R.LbsResponse
+compileRequest :: Auth -> JsonRequest -> IO R.LbsResponse
 compileRequest auth request = action
   where
   authopt = authHeader auth

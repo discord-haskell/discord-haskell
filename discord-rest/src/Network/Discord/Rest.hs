@@ -27,7 +27,7 @@ import Network.Discord.Rest.Requests
 newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteString)))
 
 -- | Starts the http request thread. Please only call this once
-createHandler :: DiscordAuth -> IO RestChan
+createHandler :: Auth -> IO RestChan
 createHandler auth = do
   c <- newChan
   forkIO $ restLoop auth c

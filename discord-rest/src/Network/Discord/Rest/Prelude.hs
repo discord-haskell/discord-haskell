@@ -9,21 +9,17 @@ module Network.Discord.Rest.Prelude where
 import Data.Monoid ((<>))
 import Network.HTTP.Req ((=:))
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Req as R
 
 import Network.Discord.Types
 
 
-authHeader :: DiscordAuth -> R.Option 'R.Https
-authHeader (DiscordAuth auth version) =
+authHeader :: Auth -> R.Option 'R.Https
+authHeader auth =
           R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
-  srcUrl  = "https://github.com/aquarial/Discord.hs"
-  forkUrl = "https://github.com/jano017/Discord.hs"
-  agent = "DiscordBot (" <> srcUrl <> ", " <> TE.encodeUtf8 version <> ") "
-                         <> " currently forking and rewriting " <> forkUrl
+  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.2.0)"
 
 -- Append to an URL
 infixl 5 //

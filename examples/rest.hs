@@ -12,7 +12,7 @@ import Network.Discord.Rest
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  handle <- createHandler (DiscordAuth (Bot tok) "0.1.0")
+  handle <- createHandler (Bot tok)
 
   print =<< restCall handle (CreateMessage 453207241294610444 "A" Nothing)
   putStrLn ""
