@@ -11,7 +11,7 @@ import Prelude hiding (log)
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Chan
-import Control.Exception.Safe (try, finally)
+import Control.Exception.Safe (try, finally, handle, SomeException)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
@@ -113,8 +113,10 @@ startEventStream :: Connection -> Chan Event -> Auth -> String -> Int -> Integer
 startEventStream conn events (Bot auth) seshID interval seqN log = do
     seqKey <- newIORef seqN
     heart <- forkIO $ heartbeat conn interval seqKey log
-    finally (eventStream (ConnData conn seshID auth events) seqKey log)
-            (killThread heart)
+    let err :: SomeException -> IO ConnLoopState
+        err e = writeChan log ("error - " <> show e) >> ConnReconnect auth seshID <$> readIORef seqKey
+    handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey log)
+                         (killThread heart)
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
