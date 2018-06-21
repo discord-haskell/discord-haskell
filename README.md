@@ -1,8 +1,11 @@
 # discord-haskell
 
-## Getting Started
+The library is usable for simple gateway & rest bots.
+The two largest missing features are that
+it's missing some gateway & rest types and
+it can't lookup guilds/channels/messages by name
 
-0 You probably shouldn't yet, this library is in rough shape right now
+## Getting Started
 
 1 Create a bot to get a clientid and secret
 <https://discordapp.com/developers/applications/me>
@@ -56,4 +59,3 @@ In roughly the order I'm working on them:
 - Upload to Hackage
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 - Add the two other auth options besidees Bot: Client & Bearer
-
