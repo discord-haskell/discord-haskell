@@ -13,7 +13,7 @@ import Network.Discord.Gateway.Internal
 newWebSocket :: DiscordAuth -> IO (Chan Event)
 newWebSocket (DiscordAuth auth _) = do
   log <- newChan
-  forkIO (logger log True)
+  forkIO (logger log False)
   events <- newChan
   forkIO (connectionLoop auth events log)
   pure events
