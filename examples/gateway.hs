@@ -12,7 +12,7 @@ import Discord.Types
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  c <- newWebSocket (Bot tok)
+  c <- chanWebSocket (Bot tok)
   forever $ do
     x <- readChan c
     putStrLn (show x <> "\n")
