@@ -6,8 +6,8 @@ import Data.Char (isSpace)
 import Data.Monoid ((<>))
 import qualified Data.ByteString.Char8 as Q
 
-import Network.Discord.Gateway
-import Network.Discord.Types
+import Discord.Gateway
+import Discord.Types
 
 a :: IO ()
 a = do

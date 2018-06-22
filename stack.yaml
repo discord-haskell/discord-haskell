@@ -1,9 +1,6 @@
 extra-package-dbs: []
 packages:
 - '.'
-- 'discord-types'
-- 'discord-rest'
-- 'discord-gateway'
 
 resolver: lts-11.10
 

@@ -5,8 +5,7 @@ import Data.Char (isSpace)
 
 import qualified Data.ByteString.Char8 as Q
 
-
-import Network.Discord.Rest
+import Discord.Rest
 
 a :: IO ()
 a = do
