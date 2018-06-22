@@ -31,11 +31,15 @@ library
                      , Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base
-                     , MonadRandom
                      , aeson
                      , bytestring
+                     , containers
+                     , data-default
                      , hashable
+                     , http-client
+                     , MonadRandom
                      , mtl
+                     , req
                      , safe-exceptions
                      , text
                      , time
