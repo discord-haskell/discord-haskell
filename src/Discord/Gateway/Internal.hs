@@ -81,7 +81,7 @@ connectionLoop auth events log = loop ConnStart
 
 logger :: Chan String -> Bool -> IO ()
 logger log True = forever $ readChan log >>= putStrLn
-logger _ False = pure ()
+logger log False = forever $ readChan log >>= \_ -> pure ()
 
 send :: Connection -> Payload -> Chan String -> IO ()
 send conn payload log = do
