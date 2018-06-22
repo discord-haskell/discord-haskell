@@ -18,18 +18,18 @@ import Discord.Types.Prelude
 
 -- |Represents information about a user.
 data User = User
-  { userId       :: {-# UNPACK #-} !Snowflake -- ^ The user's id.
-  , userName     :: String                    -- ^ The user's username, not unique across
-                                              --   the platform.
-  , userDiscrim  :: String                    -- ^ The user's 4-digit discord-tag.
-  , userAvatar   :: Maybe String              -- ^ The user's avatar hash.
-  , userIsBot    :: Bool                      -- ^ Whether the user belongs to an OAuth2
-                                              --   application.
-  , userMfa      :: Maybe Bool                -- ^ Whether the user has two factor
-                                              --   authentication enabled on the account.
-  , userVerified :: Maybe Bool                -- ^ Whether the email on this account has
-                                              --   been verified.
-  , userEmail    :: Maybe String              -- ^ The user's email.
+  { userId       :: Snowflake    -- ^ The user's id.
+  , userName     :: String       -- ^ The user's username, not unique across
+                                 --   the platform.
+  , userDiscrim  :: String       -- ^ The user's 4-digit discord-tag.
+  , userAvatar   :: Maybe String -- ^ The user's avatar hash.
+  , userIsBot    :: Bool         -- ^ Whether the user belongs to an OAuth2
+                                 --   application.
+  , userMfa      :: Maybe Bool   -- ^ Whether the user has two factor
+                                 --   authentication enabled on the account.
+  , userVerified :: Maybe Bool   -- ^ Whether the email on this account has
+                                 --   been verified.
+  , userEmail    :: Maybe String -- ^ The user's email.
   }
   | Webhook deriving (Show, Eq)
 
@@ -61,19 +61,19 @@ data Channel
       }
   -- |A voice channel in a guild.
   | Voice
-      { channelId:: Snowflake
-      , channelGuild:: Snowflake
-      , channelName:: String
-      , channelPosition:: Integer
-      , channelPermissions:: [Overwrite]
-      , channelBitRate:: Integer   -- ^ The bitrate (in bits) of the channel.
-      , channelUserLimit:: Integer -- ^ The user limit of the voice channel.
+      { channelId          :: Snowflake
+      , channelGuild       :: Snowflake
+      , channelName        :: String
+      , channelPosition    :: Integer
+      , channelPermissions :: [Overwrite]
+      , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
+      , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
   | DirectMessage
       { channelId          :: Snowflake
-      , channelRecipients  :: [User]    -- ^ The 'User' object(s) of the DM recipient(s).
+      , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
       , channelLastMessage :: Snowflake
       } deriving (Show, Eq)
 
@@ -105,10 +105,10 @@ instance FromJSON Channel where
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
-  { overwriteId:: {-# UNPACK #-} !Snowflake -- ^ 'Role' or 'User' id
-  , overWriteType:: String                  -- ^ Either "role" or "member
-  , overwriteAllow:: Integer                -- ^ Allowed permission bit set
-  , overwriteDeny:: Integer                 -- ^ Denied permission bit set
+  { overwriteId    :: Snowflake -- ^ 'Role' or 'User' id
+  , overWriteType  :: String    -- ^ Either "role" or "member
+  , overwriteAllow :: Integer   -- ^ Allowed permission bit set
+  , overwriteDeny  :: Integer   -- ^ Denied permission bit set
   } deriving (Show, Eq)
 
 instance FromJSON Overwrite where
@@ -121,27 +121,27 @@ instance FromJSON Overwrite where
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
-  { messageId           :: {-# UNPACK #-} !Snowflake -- ^ The id of the message
-  , messageChannel      :: {-# UNPACK #-} !Snowflake -- ^ Id of the channel the message
-                                                     --   was sent in
-  , messageAuthor       :: User                      -- ^ The 'User' the message was sent
-                                                     --   by
-  , messageContent      :: Text                      -- ^ Contents of the message
-  , messageTimestamp    :: UTCTime                   -- ^ When the message was sent
-  , messageEdited       :: Maybe UTCTime             -- ^ When/if the message was edited
-  , messageTts          :: Bool                      -- ^ Whether this message was a TTS
-                                                     --   message
-  , messageEveryone     :: Bool                      -- ^ Whether this message mentions
-                                                     --   everyone
-  , messageMentions     :: [User]                    -- ^ 'User's specifically mentioned in
-                                                     --   the message
-  , messageMentionRoles :: [Snowflake]               -- ^ 'Role's specifically mentioned in
-                                                     --   the message
-  , messageAttachments  :: [Attachment]              -- ^ Any attached files
-  , messageEmbeds       :: [Embed]                   -- ^ Any embedded content
-  , messageNonce        :: Maybe Snowflake           -- ^ Used for validating if a message
-                                                     --   was sent
-  , messagePinned       :: Bool                      -- ^ Whether this message is pinned
+  { messageId           :: Snowflake       -- ^ The id of the message
+  , messageChannel      :: Snowflake       -- ^ Id of the channel the message
+                                           --   was sent in
+  , messageAuthor       :: User            -- ^ The 'User' the message was sent
+                                           --   by
+  , messageContent      :: Text            -- ^ Contents of the message
+  , messageTimestamp    :: UTCTime         -- ^ When the message was sent
+  , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
+  , messageTts          :: Bool            -- ^ Whether this message was a TTS
+                                           --   message
+  , messageEveryone     :: Bool            -- ^ Whether this message mentions
+                                           --   everyone
+  , messageMentions     :: [User]          -- ^ 'User's specifically mentioned in
+                                           --   the message
+  , messageMentionRoles :: [Snowflake]     -- ^ 'Role's specifically mentioned in
+                                           --   the message
+  , messageAttachments  :: [Attachment]    -- ^ Any attached files
+  , messageEmbeds       :: [Embed]         -- ^ Any embedded content
+  , messageNonce        :: Maybe Snowflake -- ^ Used for validating if a message
+                                           --   was sent
+  , messagePinned       :: Bool            -- ^ Whether this message is pinned
   } deriving (Show, Eq)
 
 instance FromJSON Message where
@@ -164,13 +164,13 @@ instance FromJSON Message where
 
 -- |Represents an attached to a message file.
 data Attachment = Attachment
-  { attachmentId       :: {-# UNPACK #-} !Snowflake -- ^ Attachment id
-  , attachmentFilename :: String                    -- ^ Name of attached file
-  , attachmentSize     :: Integer                   -- ^ Size of file (in bytes)
-  , attachmentUrl      :: String                    -- ^ Source of file
-  , attachmentProxy    :: String                    -- ^ Proxied url of file
-  , attachmentHeight   :: Maybe Integer             -- ^ Height of file (if image)
-  , attachmentWidth    :: Maybe Integer             -- ^ Width of file (if image)
+  { attachmentId       :: Snowflake     -- ^ Attachment id
+  , attachmentFilename :: String        -- ^ Name of attached file
+  , attachmentSize     :: Integer       -- ^ Size of file (in bytes)
+  , attachmentUrl      :: String        -- ^ Source of file
+  , attachmentProxy    :: String        -- ^ Proxied url of file
+  , attachmentHeight   :: Maybe Integer -- ^ Height of file (if image)
+  , attachmentWidth    :: Maybe Integer -- ^ Width of file (if image)
   } deriving (Show, Eq)
 
 instance FromJSON Attachment where
@@ -192,7 +192,7 @@ data Embed = Embed
   , embedUrl    :: String     -- ^ URL of embed
   , embedTime   :: UTCTime    -- ^ The time of the embed content
   , embedColor  :: Integer    -- ^ The embed color
-  , embedFields ::[SubEmbed]  -- ^ Fields of the embed
+  , embedFields :: [SubEmbed] -- ^ Fields of the embed
   } deriving (Show, Read, Eq)
 
 instance FromJSON Embed where
