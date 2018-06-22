@@ -67,33 +67,32 @@ reparse val = case parseEither parseJSON $ toJSON val of
 
 eventParse :: T.Text -> Object -> Parser Event
 eventParse t o = case t of
-    "RESUMED"                   -> Resumed                 <$> reparse o
-    "RESUMED"                   -> Resumed                 <$> reparse o
-    "CHANNEL_CREATE"            -> ChannelCreate           <$> reparse o
-    "CHANNEL_UPDATE"            -> ChannelUpdate           <$> reparse o
-    "CHANNEL_DELETE"            -> ChannelDelete           <$> reparse o
-    "GUILD_CREATE"              -> GuildCreate             <$> reparse o
-    "GUILD_UPDATE"              -> GuildUpdate             <$> reparse o
-    "GUILD_DELETE"              -> GuildDelete             <$> reparse o
-    "GUILD_BAN_ADD"             -> GuildBanAdd             <$> reparse o
-    "GUILD_BAN_REMOVE"          -> GuildBanRemove          <$> reparse o
-    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate        <$> reparse o
-    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate <$> reparse o
-    "GUILD_MEMBER_ADD"          -> GuildMemberAdd          <$> reparse o
-    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate       <$> reparse o
-    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove       <$> reparse o
-    "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk        <$> reparse o
-    "GUILD_ROLE_CREATE"         -> GuildRoleCreate         <$> reparse o
-    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate         <$> reparse o
-    "GUILD_ROLE_DELETE"         -> GuildRoleDelete         <$> reparse o
-    "MESSAGE_CREATE"            -> MessageCreate           <$> reparse o
-    "MESSAGE_UPDATE"            -> MessageUpdate           <$> reparse o
-    "MESSAGE_DELETE"            -> MessageDelete           <$> reparse o
-    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk       <$> reparse o
-    "PRESENCE_UPDATE"           -> PresenceUpdate          <$> reparse o
-    "TYPING_START"              -> TypingStart             <$> reparse o
-    "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate      <$> reparse o
-    "VOICE_STATE_UPDATE"        -> VoiceStateUpdate        <$> reparse o
-    "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate       <$> reparse o
-    _                           -> UnknownEvent t          <$> reparse o
+    "RESUMED"                   -> Resumed                   <$> reparse o
+    "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
+    "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
+    "CHANNEL_DELETE"            -> ChannelDelete             <$> reparse o
+    "GUILD_CREATE"              -> GuildCreate               <$> reparse o
+    "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
+    "GUILD_DELETE"              -> GuildDelete               <$> reparse o
+    "GUILD_BAN_ADD"             -> GuildBanAdd               <$> reparse o
+    "GUILD_BAN_REMOVE"          -> GuildBanRemove            <$> reparse o
+    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate          <$> reparse o
+    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> reparse o
+    "GUILD_MEMBER_ADD"          -> GuildMemberAdd            <$> reparse o
+    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate         <$> reparse o
+    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove         <$> reparse o
+    "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk          <$> reparse o
+    "GUILD_ROLE_CREATE"         -> GuildRoleCreate           <$> reparse o
+    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate           <$> reparse o
+    "GUILD_ROLE_DELETE"         -> GuildRoleDelete           <$> reparse o
+    "MESSAGE_CREATE"            -> MessageCreate             <$> reparse o
+    "MESSAGE_UPDATE"            -> MessageUpdate             <$> reparse o
+    "MESSAGE_DELETE"            -> MessageDelete             <$> reparse o
+    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk         <$> reparse o
+    "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
+    "TYPING_START"              -> TypingStart               <$> reparse o
+    "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o
+    "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
+    "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
+    _                           -> UnknownEvent (T.unpack t) <$> reparse o
 
