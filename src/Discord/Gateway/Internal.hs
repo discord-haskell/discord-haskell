@@ -57,8 +57,8 @@ connectionLoop auth events log = loop ConnStart
                 case msg2 of
                   Right (Dispatch (Ready (Init _ _ _ _ seshID)) _) ->
                     startEventStream conn events auth seshID interval 0 log
-                  _ -> writeChan log ("received: " <> show msg2) >> pure ConnClosed
-              _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
+                  _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
+              _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             send conn (Resume tok seshID seqID) log
