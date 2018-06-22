@@ -15,26 +15,25 @@ build-type:          Simple
 cabal-version:       >=1.10
 
 library
-  exposed-modules:     Network.Discord
-                     , Network.Discord.Framework
-                     , Network.Discord.Gateway
-                     , Network.Discord.Rest
-                     , Network.Discord.Rest.Channel
-                     , Network.Discord.Rest.Guild
-                     , Network.Discord.Rest.User
-                     , Network.Discord.Types
-                     , Network.Discord.Types.Channel
-                     , Network.Discord.Types.Events
-                     , Network.Discord.Types.Gateway
-                     , Network.Discord.Types.Guild
-  other-modules:       Network.Discord.Rest.Prelude
-                     , Network.Discord.Rest.HTTP
+  exposed-modules:     Discord
+                     , Discord.Framework
+                     , Discord.Gateway
+                     , Discord.Rest
+                     , Discord.Rest.Channel
+                     , Discord.Rest.Guild
+                     , Discord.Rest.User
+                     , Discord.Types
+                     , Discord.Types.Channel
+                     , Discord.Types.Events
+                     , Discord.Types.Gateway
+                     , Discord.Types.Guild
+  other-modules:       Discord.Rest.Prelude
+                     , Discord.Rest.HTTP
   -- other-extensions:
   build-depends:       base
                      , MonadRandom
                      , aeson
                      , bytestring
-                     , discord-types
                      , hashable
                      , mtl
                      , safe-exceptions
