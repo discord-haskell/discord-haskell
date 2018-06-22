@@ -6,11 +6,11 @@ module Discord.Types.Events where
 import Control.Monad (mzero)
 
 import Data.Aeson
+import Data.Aeson.Types
+import qualified Data.Text as T
 
 import Discord.Types.Channel
-import Discord.Types.Gateway
 import Discord.Types.Guild (Member, Guild)
-import Discord.Types.Prelude
 
 -- |Represents data sent on READY event.
 data Init = Init Int User [Channel] [Guild] String deriving Show
@@ -59,38 +59,41 @@ data Event =
   | Nil
   deriving Show
 
--- |Parses JSON stuff by Discord to an event type.
-parseDispatch :: Payload -> Either String Event
-parseDispatch (Dispatch ob _ ev) = case ev of
-  "READY"                     -> Ready                   <$> reparse o
-  "RESUMED"                   -> Resumed                 <$> reparse o
-  "CHANNEL_CREATE"            -> ChannelCreate           <$> reparse o
-  "CHANNEL_UPDATE"            -> ChannelUpdate           <$> reparse o
-  "CHANNEL_DELETE"            -> ChannelDelete           <$> reparse o
-  "GUILD_CREATE"              -> GuildCreate             <$> reparse o
-  "GUILD_UPDATE"              -> GuildUpdate             <$> reparse o
-  "GUILD_DELETE"              -> GuildDelete             <$> reparse o
-  "GUILD_BAN_ADD"             -> GuildBanAdd             <$> reparse o
-  "GUILD_BAN_REMOVE"          -> GuildBanRemove          <$> reparse o
-  "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate        <$> reparse o
-  "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate <$> reparse o
-  "GUILD_MEMBER_ADD"          -> GuildMemberAdd          <$> reparse o
-  "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate       <$> reparse o
-  "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove       <$> reparse o
-  "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk        <$> reparse o
-  "GUILD_ROLE_CREATE"         -> GuildRoleCreate         <$> reparse o
-  "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate         <$> reparse o
-  "GUILD_ROLE_DELETE"         -> GuildRoleDelete         <$> reparse o
-  "MESSAGE_CREATE"            -> MessageCreate           <$> reparse o
-  "MESSAGE_UPDATE"            -> MessageUpdate           <$> reparse o
-  "MESSAGE_DELETE"            -> MessageDelete           <$> reparse o
-  "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk       <$> reparse o
-  "PRESENCE_UPDATE"           -> PresenceUpdate          <$> reparse o
-  "TYPING_START"              -> TypingStart             <$> reparse o
-  "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate      <$> reparse o
-  "VOICE_STATE_UPDATE"        -> VoiceStateUpdate        <$> reparse o
-  "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate       <$> reparse o
-  _                           -> UnknownEvent ev         <$> reparse o
-  where o = Object ob
-parseDispatch _ = Left "non-Dispatch payload"
+-- | Convert ToJSON value to FromJSON value
+reparse :: (ToJSON a, FromJSON b) => a -> Parser b
+reparse val = case parseEither parseJSON $ toJSON val of
+                Left err -> mzero
+                Right b -> pure b
+
+eventParse :: T.Text -> Object -> Parser Event
+eventParse t o = case t of
+    "RESUMED"                   -> Resumed                 <$> reparse o
+    "RESUMED"                   -> Resumed                 <$> reparse o
+    "CHANNEL_CREATE"            -> ChannelCreate           <$> reparse o
+    "CHANNEL_UPDATE"            -> ChannelUpdate           <$> reparse o
+    "CHANNEL_DELETE"            -> ChannelDelete           <$> reparse o
+    "GUILD_CREATE"              -> GuildCreate             <$> reparse o
+    "GUILD_UPDATE"              -> GuildUpdate             <$> reparse o
+    "GUILD_DELETE"              -> GuildDelete             <$> reparse o
+    "GUILD_BAN_ADD"             -> GuildBanAdd             <$> reparse o
+    "GUILD_BAN_REMOVE"          -> GuildBanRemove          <$> reparse o
+    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate        <$> reparse o
+    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate <$> reparse o
+    "GUILD_MEMBER_ADD"          -> GuildMemberAdd          <$> reparse o
+    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate       <$> reparse o
+    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove       <$> reparse o
+    "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk        <$> reparse o
+    "GUILD_ROLE_CREATE"         -> GuildRoleCreate         <$> reparse o
+    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate         <$> reparse o
+    "GUILD_ROLE_DELETE"         -> GuildRoleDelete         <$> reparse o
+    "MESSAGE_CREATE"            -> MessageCreate           <$> reparse o
+    "MESSAGE_UPDATE"            -> MessageUpdate           <$> reparse o
+    "MESSAGE_DELETE"            -> MessageDelete           <$> reparse o
+    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk       <$> reparse o
+    "PRESENCE_UPDATE"           -> PresenceUpdate          <$> reparse o
+    "TYPING_START"              -> TypingStart             <$> reparse o
+    "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate      <$> reparse o
+    "VOICE_STATE_UPDATE"        -> VoiceStateUpdate        <$> reparse o
+    "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate       <$> reparse o
+    _                           -> UnknownEvent t          <$> reparse o
 

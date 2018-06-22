@@ -57,7 +57,3 @@ creationDate x = posixSecondsToUTCTime . realToFrac
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
--- | Convert ToJSON values to FromJSON values
-reparse :: (ToJSON a, FromJSON b) => a -> Either String b
-reparse val = parseEither parseJSON $ toJSON val
-

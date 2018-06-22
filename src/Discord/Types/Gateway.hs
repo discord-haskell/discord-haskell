@@ -16,10 +16,11 @@ import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 
 import Discord.Types.Prelude
+import Discord.Types.Events
 
 -- |Represents all sorts of things that we can send to Discord.
 data Payload
-  = Dispatch Object Integer String
+  = Dispatch Event Integer
   | Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
   | StatusUpdate (Maybe Integer) (Maybe String)
@@ -37,8 +38,10 @@ instance FromJSON Payload where
   parseJSON = withObject "payload" $ \o -> do
     op <- o .: "op" :: Parser Int
     case op of
-      0  -> Dispatch <$> o .: "d" <*> o .: "s" <*> o .: "t"
-      1  -> Heartbeat . fromMaybe 0 . readMaybe  <$> o .: "d"
+      0  -> do etype <- o .: "t"
+               ejson <- o .: "d"
+               Dispatch <$> eventParse etype ejson <*> o .: "s"
+      1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> return Reconnect
       9  -> return InvalidSession
       10 -> do od <- o .: "d"
