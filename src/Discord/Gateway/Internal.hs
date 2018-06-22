@@ -54,14 +54,10 @@ connectionLoop auth events log = loop ConnStart
               Right (Hello interval) -> do
                 send conn (Identify auth False 50 (0, 1)) log
                 msg2 <- step conn log
-                case parseDispatch <$> msg2 of
-                  Right (Right payload) ->
-                    case payload of
-                      (Ready (Init _ _ _ _ seshID)) ->
-                        startEventStream conn events auth seshID interval 0 log
-                      _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
-                  err -> do writeChan log ("Ready event parse error " <> show err <> " on " <> show msg2)
-                            pure ConnClosed
+                case msg2 of
+                  Right (Dispatch (Ready (Init _ _ _ _ seshID)) _) ->
+                    startEventStream conn events auth seshID interval 0 log
+                  _ -> writeChan log ("received: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
@@ -137,11 +133,9 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
           e -> do writeChan log ("Closing connection because $" <> show e <> " " <> show str)
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
-      Right (Dispatch obj sq name) -> do
+      Right (Dispatch event sq) -> do
         setSequence seqKey sq
-        case parseDispatch (Dispatch obj sq name) of
-          Left reason -> writeChan log ("Discord-hs.Gateway.Dispatch - " <> reason)
-          Right event -> writeChan eventChan event
+        writeChan eventChan event
         loop Running
       Right (Heartbeat sq) -> do
         setSequence seqKey sq
