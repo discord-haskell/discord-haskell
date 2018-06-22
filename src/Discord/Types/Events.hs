@@ -62,7 +62,7 @@ data Event =
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
 reparse val = case parseEither parseJSON $ toJSON val of
-                Left err -> mzero
+                Left _ -> mzero
                 Right b -> pure b
 
 eventParse :: T.Text -> Object -> Parser Event
@@ -94,5 +94,5 @@ eventParse t o = case t of
     "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o
     "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
     "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
-    _                           -> UnknownEvent (T.unpack t) <$> reparse o
+    _other_event                -> UnknownEvent (T.unpack t) <$> reparse o
 
