@@ -5,16 +5,18 @@
 --   people will need, and you should use Language.Discord.
 module Discord.Gateway where
 
-import Control.Concurrent (forkIO)
-import Control.Concurrent.Chan
-import Discord.Types
-import Discord.Gateway.Internal
+import Prelude hiding (log)
+import Control.Exception.Safe (finally)
+import Control.Concurrent (forkIO, killThread, newChan, Chan)
+import Discord.Types (Auth, Event)
+import Discord.Gateway.Internal (logger, connectionLoop)
 
 newWebSocket :: Auth -> IO (Chan Event)
 newWebSocket auth = do
   log <- newChan
-  forkIO (logger log False)
+  logid <- forkIO (logger log False)
   events <- newChan
-  forkIO (connectionLoop auth events log)
+  _ <- forkIO $ finally (connectionLoop auth events log)
+                        (killThread logid)
   pure events
 
