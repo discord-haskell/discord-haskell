@@ -67,6 +67,7 @@ reparse val = case parseEither parseJSON $ toJSON val of
 
 eventParse :: T.Text -> Object -> Parser Event
 eventParse t o = case t of
+    "READY"                     -> Ready                     <$> reparse o
     "RESUMED"                   -> Resumed                   <$> reparse o
     "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
