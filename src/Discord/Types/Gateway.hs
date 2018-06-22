@@ -41,7 +41,9 @@ instance FromJSON Payload where
       1  -> Heartbeat . fromMaybe 0 . readMaybe  <$> o .: "d"
       7  -> return Reconnect
       9  -> return InvalidSession
-      10 -> (\od -> Hello <$> od .: "heartbeat_interval") =<< o .: "d"
+      10 -> do od <- o .: "d"
+               int <- od .: "heartbeat_interval"
+               pure (Hello int)
       11 -> return HeartbeatAck
       _  -> mzero
 
