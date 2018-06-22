@@ -13,11 +13,12 @@ a = do
   handle <- createHandler (Bot tok)
 
   msg <- restCall handle (CreateMessage 453207241294610444 "A" Nothing)
-  print $ "Message object: " <> show msg
+  putStrLn $ "Message object: " <> show msg
 
+  putStrLn ""
 
   chan <- restCall handle (GetChannel 453207241294610444)
-  print $ "Channel object: " <> show chan
+  putStrLn $ "Channel object: " <> show chan
 
   return ()
 
