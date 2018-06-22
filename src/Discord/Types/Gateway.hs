@@ -58,10 +58,10 @@ instance ToJSON Payload where
         "token" .= TE.decodeUtf8 (authToken token)
       , "properties" .= object [
           "$os"                .= os
-        , "$browser"           .= ("discord.hs" :: String)
-        , "$device"            .= ("discord.hs" :: String)
-        , "$referrer"          .= (""           :: String)
-        , "$referring_domain"  .= (""           :: String)
+        , "$browser"           .= ("discord-haskell" :: String)
+        , "$device"            .= ("discord-haskell" :: String)
+        , "$referrer"          .= (""                :: String)
+        , "$referring_domain"  .= (""                :: String)
         ]
       , "compress" .= compress
       , "large_threshold" .= large
