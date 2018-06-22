@@ -17,7 +17,7 @@ import Data.Ix (inRange)
 import Data.Time.Clock.POSIX
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
-import Data.Default
+import Data.Default (def)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
