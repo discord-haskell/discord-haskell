@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StrictData #-}
 
 -- | Data structures needed for interfacing with the Websocket
 --   Gateway
@@ -18,37 +19,16 @@ import Discord.Types.Prelude
 
 -- |Represents all sorts of things that we can send to Discord.
 data Payload
-  = Dispatch
-    Object
-    Integer
-    String
-  | Heartbeat
-    Integer
-  | Identify
-    Auth
-    Bool
-    Integer
-    (Int, Int)
-  | StatusUpdate
-    (Maybe Integer)
-    (Maybe String)
-  | VoiceStatusUpdate
-    {-# UNPACK #-} !Snowflake
-    !(Maybe Snowflake)
-    Bool
-    Bool
-  | Resume
-    Q.ByteString
-    String
-    Integer
+  = Dispatch Object Integer String
+  | Heartbeat Integer
+  | Identify Auth Bool Integer (Int, Int)
+  | StatusUpdate (Maybe Integer) (Maybe String)
+  | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
+  | Resume Q.ByteString String Integer
   | Reconnect
-  | RequestGuildMembers
-    {-# UNPACK #-} !Snowflake
-    String
-    Integer
+  | RequestGuildMembers Snowflake String Integer
   | InvalidSession
-  | Hello
-    Int
+  | Hello Int
   | HeartbeatAck
   | ParseError String
   deriving Show
