@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE MultiWayIf #-}
 
 -- | Provide HTTP primitives
 module Discord.Rest.HTTP
@@ -80,8 +81,7 @@ tryRequest action = do
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       resetInt  = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
       reset  = fromIntegral resetInt
-  case () of
-   _ | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait reset
+  if | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait reset
                                                            else PathWait reset)
      | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
      | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
