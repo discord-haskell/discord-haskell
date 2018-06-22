@@ -18,7 +18,7 @@ library
   ghc-options:         -Wall
   hs-source-dirs:      src
   default-language:    Haskell2010
-  extensions:          unbox-strict-fields
+  -- extensions:
   exposed-modules:     Discord
                      , Discord.Framework
                      , Discord.Gateway
