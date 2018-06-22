@@ -19,7 +19,7 @@ it can't lookup guilds/channels/messages by name
 4 Connect to the gateway once in order to send CreateMessage events
 
 5 Look at the examples. [examples/gateway.hs](./examples/gateway.hs)
-and [examples/rest.hs](./examples/rest.hs) are usually kept in a working state
+and [examples/rest.hs](./examples/rest.hs) usually work
 
 ## Overview
 
@@ -34,16 +34,9 @@ can construct a real time Chan of `Event`s the user can read from
 
 ## History
 
-I forked [discord.hs](https://github.com/jano017/Discord.hs) and
-rewrote the core logic of the api.
-
-Rewritten:
-- discord-gateway
-- discord-rest
-
-Mostly Unchanged
-- discord-types
-- rest api data types
+I started discord-haskell by forking
+[discord.hs](https://github.com/jano017/Discord.hs), but
+I have since rewritten all of the rest and gateway logic.
 
 ## TODO
 
@@ -55,7 +48,7 @@ In roughly the order I'm working on them:
 - Add gateway ToJSON for events
 - Double check the REST request ADT matches the API
 - Cleaner interface to gateway that constructs the Chan
-- More helpful README
+- More helpful README (examples, how to depend it this)
 - Upload to Hackage
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 - Add the two other auth options besidees Bot: Client & Bearer
