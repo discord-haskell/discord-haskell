@@ -1,8 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 
 import Control.Monad (forever, when, void)
-import Data.Monoid ((<>))
 import Data.Char (isSpace, toLower)
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.Text as T
