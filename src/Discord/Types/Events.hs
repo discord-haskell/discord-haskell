@@ -56,7 +56,6 @@ data Event =
   | VoiceStateUpdate        Object
   | VoiceServerUpdate       Object
   | UnknownEvent     String Object
-  | Nil
   deriving Show
 
 -- | Convert ToJSON value to FromJSON value
