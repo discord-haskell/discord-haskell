@@ -44,7 +44,7 @@ loginRest auth = do
 
 loginGateway :: Auth -> IO (IO (Event))
 loginGateway auth = do
-  logs <- readMVar discordLogins
+  logs <- takeMVar discordLogins
   case M.findWithDefault (Discord Nothing Nothing) auth logs of
     (Discord _ (Just e)) -> pure e
     (Discord r  Nothing) -> do
