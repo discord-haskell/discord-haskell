@@ -19,7 +19,7 @@ import Control.Monad (mzero)
 data Auth = Bot    Q.ByteString
           -- | Client Q.ByteString
           -- | Bearer Q.ByteString
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 
 -- | Formats the token for use with the REST API
