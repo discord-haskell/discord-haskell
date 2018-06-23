@@ -1,20 +1,18 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Concurrent.Chan
 import Control.Monad (forever)
 import Data.Char (isSpace)
 import Data.Monoid ((<>))
 import qualified Data.ByteString.Char8 as Q
 
-import Discord.Gateway
-import Discord.Types
+import Discord
 
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  c <- chanWebSocket (Bot tok)
+  (Discord _ nextEvent) <- login (Bot tok) Gateway
   forever $ do
-    x <- readChan c
+    x <- nextEvent
     putStrLn (show x <> "\n")
     pure ()
 
