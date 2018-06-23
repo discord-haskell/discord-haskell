@@ -35,7 +35,7 @@ loginRest :: Auth -> IO RestPart
 loginRest auth = do
   logs <- takeMVar discordLogins
   case M.findWithDefault (Discord Nothing Nothing) auth logs of
-    (Discord (Just call) _) -> pure call
+    (Discord (Just call) _) -> putMVar discordLogins logs >> pure call
     (Discord  _          e) -> do
       restHandler <- createHandler auth
       let nextDisc = Discord (Just (RestPart (writeRestCall restHandler))) e
@@ -46,8 +46,8 @@ loginGateway :: Auth -> IO (IO (Event))
 loginGateway auth = do
   logs <- takeMVar discordLogins
   case M.findWithDefault (Discord Nothing Nothing) auth logs of
-    (Discord _ (Just e)) -> pure e
-    (Discord r  Nothing) -> do
+    (Discord _ (Just e)) -> putMVar discordLogins logs >> pure e
+    (Discord r  _      ) -> do
       chan <- chanWebSocket auth
       let nextDisc = Discord r (Just (readChan chan))
       putMVar discordLogins (M.insert auth nextDisc logs)
