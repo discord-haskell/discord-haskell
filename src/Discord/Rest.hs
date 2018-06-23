@@ -8,7 +8,7 @@ module Discord.Rest
   ( module Discord.Rest.Requests
   , module Discord.Types
   , Resp(..)
-  , restCall
+  , writeRestCall
   , createHandler
   , RestChan(..)
   ) where
@@ -34,8 +34,8 @@ createHandler auth = do
   pure (RestChan c)
 
 -- | Execute a request blocking until a response is recieved
-restCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
-restCall (RestChan c) req = do
+writeRestCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
+writeRestCall (RestChan c) req = do
   m <- newEmptyMVar
   writeChan c (prepareRequest req, m)
   r <- readMVar m
