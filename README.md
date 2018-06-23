@@ -18,8 +18,10 @@ it can't lookup guilds/channels/messages by name
 
 4 Connect to the gateway once in order to send CreateMessage events
 
-5 Look at the examples. [examples/gateway.hs](./examples/gateway.hs)
-and [examples/rest.hs](./examples/rest.hs) usually work
+5 Look at the examples.
+[examples/gateway.hs](./examples/gateway.hs),
+[examples/rest.hs](./examples/rest.hs), and
+[examples/ping-pong.hs](./examples/ping-pong.hs) usually work
 
 ## Overview
 
