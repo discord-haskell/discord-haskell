@@ -12,10 +12,11 @@ import Discord
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  (Discord rest nextEvent) <- login (Bot tok) RestGateway
 
-  msg <- rest (CreateMessage 453207241294610444 "Hello!" Nothing)
+  RestPart rest <- loginRest (Bot tok)
+  _ <- rest (CreateMessage 453207241294610444 "Hello!" Nothing)
 
+  nextEvent <- loginGateway (Bot tok)
   forever $ do
       e <- nextEvent
       case e of

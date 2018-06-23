@@ -10,7 +10,7 @@ import Discord
 a :: IO ()
 a = do
   tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
-  (Discord _ nextEvent) <- login (Bot tok) Gateway
+  nextEvent <- loginGateway (Bot tok)
   forever $ do
     x <- nextEvent
     putStrLn (show x <> "\n")
