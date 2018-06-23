@@ -1,9 +1,9 @@
 {-# LANGUAGE OverloadedStrings  #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
 
--- | Provides framework to interact with REST api gateways. Implementations specific to the
---   Discord API are provided in Discord.Rest.Channel, Discord.Rest.Guild,
---   and Discord.Rest.User.
+-- | Provides a higher level interface to the rest functions.
+--   Preperly writes to the rate-limit loop. Creates separate
+--   MVars for each call
 module Discord.Rest
   ( module Discord.Rest.Requests
   , module Discord.Types
