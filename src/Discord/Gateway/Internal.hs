@@ -16,7 +16,7 @@ import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
-import qualified Data.ByteString.Char8 as Q
+import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss (runSecureClient)
@@ -30,12 +30,12 @@ data GatewayState = Running
 
 data ConnLoopState = ConnStart
                    | ConnClosed
-                   | ConnReconnect Q.ByteString String Integer
+                   | ConnReconnect T.Text String Integer
   deriving Show
 
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: String
-                               , connAuth :: Q.ByteString
+                               , connAuth :: T.Text
                                , connChan :: (Chan Event)
                                }
 

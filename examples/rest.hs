@@ -2,13 +2,14 @@
 
 import Data.Monoid ((<>))
 import Data.Char (isSpace)
-import qualified Data.ByteString.Char8 as Q
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 import Discord
 
 a :: IO ()
 a = do
-  tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
+  tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   RestPart rest <- loginRest (Bot tok)
 
   msg <- rest (CreateMessage 453207241294610444 "A" Nothing)

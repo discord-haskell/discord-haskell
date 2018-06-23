@@ -3,13 +3,14 @@
 import Control.Monad (forever)
 import Data.Char (isSpace)
 import Data.Monoid ((<>))
-import qualified Data.ByteString.Char8 as Q
+import qualified Data.Text as T
+import qualified Data.Text.IO as TIO
 
 import Discord
 
 a :: IO ()
 a = do
-  tok <- Q.filter (not . isSpace) <$> Q.readFile "./examples/auth-token.secret"
+  tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   nextEvent <- loginGateway (Bot tok)
   forever $ do
     x <- nextEvent

@@ -10,13 +10,14 @@ import Data.Word
 import Data.Aeson.Types
 import Data.Time.Clock
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Char8 as Q
 import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
 
 -- | Authorization token for the Discord API
-data Auth = Bot    Q.ByteString
+data Auth = Bot T.Text
           -- | Client Q.ByteString
           -- | Bearer Q.ByteString
   deriving (Show, Eq, Ord)
@@ -24,12 +25,12 @@ data Auth = Bot    Q.ByteString
 
 -- | Formats the token for use with the REST API
 formatAuth :: Auth -> Q.ByteString
-formatAuth (Bot    token) = "Bot "    <> token
+formatAuth (Bot    token) = "Bot "    <> TE.encodeUtf8 token
 --formatAuth (Client token) = token
 --formatAuth (Bearer token) = "Bearer " <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
-authToken :: Auth -> Q.ByteString
+authToken :: Auth -> T.Text
 authToken (Bot    token) = token
 --authToken (Client token) = token
 --authToken (Bearer token) = token

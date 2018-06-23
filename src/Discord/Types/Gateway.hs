@@ -9,6 +9,7 @@ import Control.Monad (mzero)
 import System.Info
 
 import qualified Data.Text.Encoding as TE
+import qualified Data.Text as T
 import qualified Data.ByteString as Q
 import Data.Aeson
 import Data.Aeson.Types
@@ -25,7 +26,7 @@ data Payload
   | Identify Auth Bool Integer (Int, Int)
   | StatusUpdate (Maybe Integer) (Maybe String)
   | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
-  | Resume Q.ByteString String Integer
+  | Resume T.Text String Integer
   | Reconnect
   | RequestGuildMembers Snowflake String Integer
   | InvalidSession
@@ -55,7 +56,7 @@ instance ToJSON Payload where
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
     , "d"  .= object [
-        "token" .= TE.decodeUtf8 (authToken token)
+        "token" .= authToken token
       , "properties" .= object [
           "$os"                .= os
         , "$browser"           .= ("discord-haskell" :: String)
@@ -89,7 +90,7 @@ instance ToJSON Payload where
   toJSON (Resume token session seqId) = object [
       "op" .= (6 :: Int)
     , "d"  .= object [
-        "token"      .= TE.decodeUtf8 token
+        "token"      .= token
       , "session_id" .= session
       , "seq"        .= seqId
       ]
