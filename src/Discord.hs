@@ -4,9 +4,9 @@ module Discord
   ( module Discord.Rest.Requests
   , module Discord.Types
   , Resp(..)
+  , RestPart(..)
   , loginRest
   , loginGateway
-  , Discord(..)
   ) where
 
 import System.IO.Unsafe (unsafePerformIO)
@@ -20,8 +20,10 @@ import Discord.Rest.Requests
 import Discord.Types
 import Discord.Gateway
 
+newtype RestPart = RestPart { restPart :: forall a. FromJSON a => Request a -> IO (Resp a) }
+
 data Discord = Discord
-  { restCall :: forall a. FromJSON a => Maybe (Request a -> IO (Resp a))
+  { restCall :: Maybe RestPart
   , nextEvent :: Maybe (IO Event)
   }
 
@@ -29,14 +31,14 @@ discordLogins :: MVar (M.Map Auth Discord)
 discordLogins = unsafePerformIO (newMVar M.empty)
 {-# NOINLINE discordLogins #-}
 
-loginRest :: FromJSON a => Auth -> IO (Request a -> IO (Resp a))
+loginRest :: Auth -> IO RestPart
 loginRest auth = do
-  logs <- readMVar discordLogins
-  case M.findWithDefault (Discord Nothing Nothing) auth logs :: Discord of
+  logs <- takeMVar discordLogins
+  case M.findWithDefault (Discord Nothing Nothing) auth logs of
     (Discord (Just call) _) -> pure call
     (Discord  _          e) -> do
       restHandler <- createHandler auth
-      let nextDisc = Discord (Just (writeRestCall restHandler)) e
+      let nextDisc = Discord (Just (RestPart (writeRestCall restHandler))) e
       putMVar discordLogins (M.insert auth nextDisc logs)
       loginRest auth
 
