@@ -55,7 +55,8 @@ connectionLoop auth events log = loop ConnStart
                 send conn (Identify auth False 50 (0, 1)) log
                 msg2 <- step conn log
                 case msg2 of
-                  Right (Dispatch (Ready (Init _ _ _ _ seshID)) _) ->
+                  Right (Dispatch r@(Ready (Init _ _ _ _ seshID)) _) -> do
+                    writeChan events r
                     startEventStream conn events auth seshID interval 0 log
                   _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
