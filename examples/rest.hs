@@ -10,7 +10,7 @@ import Discord
 a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  RestPart rest <- loginRest (Bot tok)
+  Discord (RestPart rest) _ <- login (Bot tok)
 
   msg <- rest (CreateMessage 453207241294610444 "A" Nothing)
   putStrLn ("Message object: " <> show msg)
