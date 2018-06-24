@@ -5,8 +5,8 @@ module Discord
   , module Discord.Types
   , Resp(..)
   , RestPart(..)
-  , loginRest
-  , loginGateway
+  , Discord(..)
+  , login
   ) where
 
 import System.IO.Unsafe (unsafePerformIO)
@@ -23,32 +23,23 @@ import Discord.Gateway
 newtype RestPart = RestPart { restPart :: forall a. FromJSON a => Request a -> IO (Resp a) }
 
 data Discord = Discord
-  { restCall :: Maybe RestPart
-  , nextEvent :: Maybe (IO Event)
+  { restCall :: RestPart
+  , nextEvent :: IO Event
+  -- query guild/channel info
   }
 
 discordLogins :: MVar (M.Map Auth Discord)
 discordLogins = unsafePerformIO (newMVar M.empty)
 {-# NOINLINE discordLogins #-}
 
-loginRest :: Auth -> IO RestPart
-loginRest auth = do
+login :: Auth -> IO Discord
+login auth = do
   logs <- takeMVar discordLogins
-  case M.findWithDefault (Discord Nothing Nothing) auth logs of
-    (Discord (Just call) _) -> putMVar discordLogins logs >> pure call
-    (Discord  _          e) -> do
+  case M.lookup auth logs of
+    Just d -> putMVar discordLogins logs >> pure d
+    Nothing -> do
       restHandler <- createHandler auth
-      let nextDisc = Discord (Just (RestPart (writeRestCall restHandler))) e
-      putMVar discordLogins (M.insert auth nextDisc logs)
-      loginRest auth
-
-loginGateway :: Auth -> IO (IO (Event))
-loginGateway auth = do
-  logs <- takeMVar discordLogins
-  case M.findWithDefault (Discord Nothing Nothing) auth logs of
-    (Discord _ (Just e)) -> putMVar discordLogins logs >> pure e
-    (Discord r  _      ) -> do
       chan <- chanWebSocket auth
-      let nextDisc = Discord r (Just (readChan chan))
+      let nextDisc = Discord (RestPart (writeRestCall restHandler)) (readChan chan)
       putMVar discordLogins (M.insert auth nextDisc logs)
-      loginGateway auth
+      pure nextDisc
