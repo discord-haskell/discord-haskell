@@ -45,11 +45,11 @@ connectionLoop auth events log = loop ConnStart
       (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-            msg <- step conn log
+            msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
                 send conn (Identify auth False 50 (0, 1)) log
-                msg2 <- step conn log
+                msg2 <- getPayload conn log
                 case msg2 of
                   Right (Dispatch r@(Ready (Init _ _ _ _ seshID)) _) -> do
                     writeChan events r
@@ -60,7 +60,7 @@ connectionLoop auth events log = loop ConnStart
           loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             send conn (Resume tok seshID seqID) log
             writeChan log "Resuming???"
-            eitherPayload <- step conn log
+            eitherPayload <- getPayload conn log
             case eitherPayload of
               Right (Hello interval) -> startEventStream conn events auth seshID interval seqID log
               Right InvalidSession -> do t <- getRandomR (1,5)
@@ -81,8 +81,8 @@ send conn payload log = do
   writeChan log ("message - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
 
-step :: Connection -> Chan String -> IO (Either ConnectionException Payload)
-step conn log = try $ do
+getPayload :: Connection -> Chan String -> IO (Either ConnectionException Payload)
+getPayload conn log = try $ do
   msg' <- receiveData conn
   writeChan log ("message - received " <> QL.unpack msg')
   case eitherDecode msg' of
@@ -117,7 +117,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
   where
   loop :: IO ConnLoopState
   loop = do
-    eitherPayload <- step conn log
+    eitherPayload <- getPayload conn log
     case eitherPayload :: Either ConnectionException Payload of
       Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes
