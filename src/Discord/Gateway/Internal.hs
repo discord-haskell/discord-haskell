@@ -24,10 +24,6 @@ import Network.WebSockets (ConnectionException(..), Connection, receiveData, sen
 
 import Discord.Types
 
-data GatewayState = Running
-                  | InvalidReconnect
-                  | InvalidDead
-
 data ConnLoopState = ConnStart
                    | ConnClosed
                    | ConnReconnect T.Text String Integer
@@ -117,40 +113,30 @@ startEventStream conn events (Bot auth) seshID interval seqN log = do
                        (killThread heart)
 
 eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey log = loop Running
+eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
   where
-  loop :: GatewayState -> IO ConnLoopState
-  loop Running = do
+  loop :: IO ConnLoopState
+  loop = do
     eitherPayload <- step conn log
     case eitherPayload :: Either ConnectionException Payload of
-      Left (CloseRequest code str) ->
-        case code of
+      Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes
           1000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
           4014 -> ConnReconnect auth seshID <$> readIORef seqKey
-          e -> do writeChan log ("Closing connection because $" <> show e <> " " <> show str)
+          e -> do writeChan log ("Closing connection because #" <> show e <> " " <> show str)
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
-      Right (Dispatch event sq) -> do
-        setSequence seqKey sq
-        writeChan eventChan event
-        loop Running
-      Right (Heartbeat sq) -> do
-        setSequence seqKey sq
-        send conn (Heartbeat sq) log
-        loop Running
-      Right (Reconnect)      -> writeChan log "Should reconnect" >> loop InvalidReconnect
+      Right (Dispatch event sq) -> do setSequence seqKey sq
+                                      writeChan eventChan event
+                                      loop
+      Right (Heartbeat sq) -> do setSequence seqKey sq
+                                 send conn (Heartbeat sq) log
+                                 loop
+      Right (Reconnect)      -> do writeChan log "Should reconnect"
+                                   ConnReconnect auth seshID <$> readIORef seqKey
       Right (InvalidSession) -> pure ConnStart
-      Right (HeartbeatAck)   -> loop Running
-      Right _ -> do writeChan log "Discord-hs.Gateway.Error - Invalid Packet"
-                    loop InvalidDead
-  loop InvalidReconnect = do writeChan log "should try and reconnect"
-                             seqID <- readIORef seqKey
-                             writeChan log ("Reconnecting to: " <> show (ConnReconnect auth seshID seqID))
-                             pure (ConnReconnect auth seshID seqID)
-
-  loop InvalidDead      = do writeChan log "Discord-hs.Gateway.Error - Bot died"
-                             pure ConnClosed
+      Right (HeartbeatAck)   -> loop
+      Right p -> writeChan log ("error - Invalid Payload: " <> show p) >> pure ConnClosed
