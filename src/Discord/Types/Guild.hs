@@ -40,6 +40,7 @@ data Guild
       , guildNotification ::                !Integer   -- ^ Level of default notifications
       , guildRoles        ::                [Role]     -- ^ Array of 'Role' objects
       , guildEmojis       ::                [Emoji]    -- ^ Array of 'Emoji' objects
+      , guildChannels     ::                [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
       }
   | Unavailable
       { guildId :: {-# UNPACK #-} !Snowflake
@@ -65,6 +66,7 @@ instance FromJSON Guild where
               <*> o .:  "default_message_notifications"
               <*> o .:  "roles"
               <*> o .:  "emojis"
+              <*> o .:? "channels" .!= []
   parseJSON _          = mzero
 
 -- | Represents an emoticon (emoji)
