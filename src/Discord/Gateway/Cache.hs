@@ -4,7 +4,6 @@
 -- |Query info about connected Guilds and Channels
 module Discord.Gateway.Cache where
 
-import Data.List (foldl')
 import Data.Monoid ((<>))
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
@@ -18,6 +17,8 @@ data Cache = Cache
             , _guilds :: M.Map Snowflake Guild
             , _channels :: M.Map Snowflake Channel
             } deriving (Show)
+
+
 
 emptyCache :: IO (MVar Cache)
 emptyCache = newMVar (Cache Nothing M.empty M.empty M.empty)
@@ -45,7 +46,9 @@ adjustCache minfo event = case event of
   GuildCreate guild ->
     let newChans = map (setChanGuildID (guildId guild)) $  guildChannels guild
         g = M.insert (guildId guild) (guild { guildChannels = newChans }) (_guilds minfo)
-        c = M.fromList [ (channelId ch, ch) | ch <- newChans ]
+        c = M.unionWith (\a _ -> a)
+                        (M.fromList [ (channelId ch, ch) | ch <- newChans ])
+                        (_channels minfo)
     in minfo { _guilds = g, _channels = c }
   --GuildUpdate guild -> do
   --  let g = M.insert (guildId guild) guild (_guilds minfo)
