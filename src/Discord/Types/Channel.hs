@@ -83,6 +83,7 @@ data Channel
       }
   | GuildCategory
       { channelId          :: Snowflake
+      , channelGuild       :: Snowflake
       } deriving (Show, Eq)
 
 instance FromJSON Channel where
@@ -109,12 +110,14 @@ instance FromJSON Channel where
               <*> o .: "permission_overwrites"
               <*> o .: "bitrate"
               <*> o .: "user_limit"
+              <*> o .:? "guild_id" .!= 0
       3 ->
         GroupDM <$> o .: "id"
                 <*> o .:  "recipients"
                 <*> o .:? "last_message_id"
       4 ->
         GuildCategory <$> o .: "id"
+                      <*> o .:? "guild_id" .!= 0
       _ -> mzero
 
 -- | Permission overwrites for a channel.
