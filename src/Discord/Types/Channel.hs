@@ -56,8 +56,8 @@ data Channel
       , channelPosition    :: Integer     -- ^ The storing position of the channel.
       , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
       , channelTopic       :: String      -- ^ The topic of the channel. (0 - 1024 chars).
-      , channelLastMessage :: Snowflake   -- ^ The id of the last message sent in the
-                                          --   channel
+      , channelLastMessage :: Maybe Snowflake   -- ^ The id of the last message sent in the
+                                                --   channel
       }
   -- |A voice channel in a guild.
   | Voice
@@ -74,7 +74,7 @@ data Channel
   | DirectMessage
       { channelId          :: Snowflake
       , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
-      , channelLastMessage :: Snowflake
+      , channelLastMessage :: Maybe Snowflake
       } deriving (Show, Eq)
 
 instance FromJSON Channel where
@@ -88,11 +88,11 @@ instance FromJSON Channel where
                 <*> o .:  "position"
                 <*> o .:  "permission_overwrites"
                 <*> o .:? "topic" .!= ""
-                <*> o .:? "last_message_id" .!= 0
+                <*> o .:? "last_message_id"
       1 ->
           DirectMessage <$> o .:  "id"
                         <*> o .:  "recipients"
-                        <*> o .:? "last_message_id" .!= 0
+                        <*> o .:? "last_message_id"
       2 ->
           Voice <$> o .: "id"
                 <*> o .: "guild_id"
