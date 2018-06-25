@@ -75,13 +75,20 @@ data Channel
       { channelId          :: Snowflake
       , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
       , channelLastMessage :: Maybe Snowflake
+      }
+  | GroupDM
+      { channelId          :: Snowflake
+      , channelRecipients  :: [User]
+      , channelLastMessage :: Maybe Snowflake
+      }
+  | GuildCategory
+      { channelId          :: Snowflake
       } deriving (Show, Eq)
 
 instance FromJSON Channel where
   parseJSON = withObject "text or voice" $ \o -> do
     type' <- (o .: "type") :: Parser Int
     case type' of
-      _ -> mzero
       0 ->
         Text  <$> o .:  "id"
               <*> o .:? "guild_id" .!= 0
@@ -102,6 +109,13 @@ instance FromJSON Channel where
               <*> o .: "permission_overwrites"
               <*> o .: "bitrate"
               <*> o .: "user_limit"
+      3 ->
+        GroupDM <$> o .: "id"
+                <*> o .:  "recipients"
+                <*> o .:? "last_message_id"
+      4 ->
+        GuildCategory <$> o .: "id"
+      _ -> mzero
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
