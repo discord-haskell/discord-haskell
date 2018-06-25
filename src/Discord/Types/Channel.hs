@@ -119,6 +119,12 @@ instance FromJSON Channel where
                       <*> o .:? "guild_id" .!= 0
       _ -> mzero
 
+isGuildChannel c = case c of
+        GuildCategory{..} -> True
+        Text{..} -> True
+        Voice{..}  -> True
+        _ -> False
+
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
   { overwriteId    :: Snowflake -- ^ 'Role' or 'User' id
