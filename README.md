@@ -49,8 +49,10 @@ In roughly the order I'm working on them:
 - Add all gateway types (emoji removed, etc)
 - Add gateway ToJSON for events
 - Double check the REST request ADT matches the API
-- Cleaner interface to gateway that constructs the Chan
+- Update types JSON, removing strict and unpack
+- Update types JSON to use 'withObject'
+- Update types JSON comments
 - More helpful README (examples, how to depend it this)
 - Upload to Hackage
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
-- Add the two other auth options besidees Bot: Client & Bearer
+- Add the two other auth options besides Bot: Client & Bearer
