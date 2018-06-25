@@ -28,10 +28,9 @@ addEvent cache eventChan log = loop
   loop :: IO ()
   loop = do
     event <- readChan eventChan
-    --print "aft"
-    --minfo <- takeMVar cache
-    --writeChan log ("cache - " <> show minfo)
-    --putMVar cache (adjustCache minfo event)
+    minfo <- takeMVar cache
+    writeChan log ("cache - " <> show (adjustCache minfo event))
+    putMVar cache (adjustCache minfo event)
     loop
 
 adjustCache :: Cache -> Event -> Cache
