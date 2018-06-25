@@ -43,15 +43,12 @@ adjustCache minfo event = case event of
   --ChannelCreate Channel
   --ChannelUpdate Channel
   --ChannelDelete Channel
-  --GuildCreate guild -> do
-  --  let g = M.insert (guildId guild) guild (_guilds minfo)
-  --      c = case guildChannels guild of
-  --            Nothing -> _channels minfo
-  --            Just chans -> foldl' (\m (k,v) -> M.insert k v m)
-  --                                 (_channels minfo)
-  --                                 [ ((guildId guild, channelId ch), ch) | ch <- chans ]
-  --      m2 = minfo { _guilds = g, _channels = c }
-  --  putMVar cache m2
+  GuildCreate guild ->
+    let g = M.insert (guildId guild) (guild {- UPDATE channels field of guild (like _channels of Cache)-}) (_guilds minfo)
+        c = foldl' (\m (k,v) -> M.insert k v m)
+                                M.empty
+                                [ ((guildId guild, channelId ch), if isGuildChannel ch then ch { channelGuild=guildId guild} else ch) | ch <- guildChannels guild ]
+    in minfo { _guilds = g, _channels = c }
   --GuildUpdate guild -> do
   --  let g = M.insert (guildId guild) guild (_guilds minfo)
   --      m2 = minfo { _guilds = g }
