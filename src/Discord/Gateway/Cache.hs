@@ -16,7 +16,7 @@ data Cache = Cache
             { _currentUser :: Maybe User
             , _dmChannels :: M.Map Snowflake Channel
             , _guilds :: M.Map Snowflake Guild
-            , _channels :: M.Map (Snowflake,Snowflake) Channel
+            , _channels :: M.Map Snowflake Channel
             } deriving (Show)
 
 emptyCache :: IO (MVar Cache)
@@ -45,9 +45,7 @@ adjustCache minfo event = case event of
   GuildCreate guild ->
     let newChans = map (setChanGuildID (guildId guild)) $  guildChannels guild
         g = M.insert (guildId guild) (guild { guildChannels = newChans }) (_guilds minfo)
-        c = foldl' (\m (k,v) -> M.insert k v m)
-                                M.empty
-                                [ ((guildId guild, channelId ch), ch) | ch <- newChans ]
+        c = M.fromList [ (channelId ch, ch) | ch <- newChans ]
     in minfo { _guilds = g, _channels = c }
   --GuildUpdate guild -> do
   --  let g = M.insert (guildId guild) guild (_guilds minfo)
