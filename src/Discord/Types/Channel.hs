@@ -82,23 +82,26 @@ instance FromJSON Channel where
     type' <- (o .: "type") :: Parser Int
     case type' of
       _ -> mzero
-      0 -> Text  <$> o .:  "id"
-                 <*> o .:? "guild_id" .!= 0
-                 <*> o .:  "name"
-                 <*> o .:  "position"
-                 <*> o .:  "permission_overwrites"
-                 <*> o .:? "topic" .!= ""
-                 <*> o .:? "last_message_id"
-      1 -> DirectMessage <$> o .:  "id"
-                         <*> o .:  "recipients"
-                         <*> o .:? "last_message_id"
-      2 -> Voice <$> o .: "id"
-                 <*> o .: "guild_id"
-                 <*> o .: "name"
-                 <*> o .: "position"
-                 <*> o .: "permission_overwrites"
-                 <*> o .: "bitrate"
-                 <*> o .: "user_limit"
+      0 ->
+        Text  <$> o .:  "id"
+              <*> o .:? "guild_id" .!= 0
+              <*> o .:  "name"
+              <*> o .:  "position"
+              <*> o .:  "permission_overwrites"
+              <*> o .:? "topic" .!= ""
+              <*> o .:? "last_message_id"
+      1 ->
+        DirectMessage <$> o .:  "id"
+                      <*> o .:  "recipients"
+                      <*> o .:? "last_message_id"
+      2 ->
+        Voice <$> o .: "id"
+              <*> o .: "guild_id"
+              <*> o .: "name"
+              <*> o .: "position"
+              <*> o .: "permission_overwrites"
+              <*> o .: "bitrate"
+              <*> o .: "user_limit"
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
