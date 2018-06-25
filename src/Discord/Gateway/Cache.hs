@@ -43,10 +43,11 @@ adjustCache minfo event = case event of
   --ChannelUpdate Channel
   --ChannelDelete Channel
   GuildCreate guild ->
-    let g = M.insert (guildId guild) (guild {- UPDATE channels field of guild (like _channels of Cache)-}) (_guilds minfo)
+    let newChans = map (setChanGuildID (guildId guild)) $  guildChannels guild
+        g = M.insert (guildId guild) (guild { guildChannels = newChans }) (_guilds minfo)
         c = foldl' (\m (k,v) -> M.insert k v m)
                                 M.empty
-                                [ ((guildId guild, channelId ch), if isGuildChannel ch then ch { channelGuild=guildId guild} else ch) | ch <- guildChannels guild ]
+                                [ ((guildId guild, channelId ch), ch) | ch <- newChans ]
     in minfo { _guilds = g, _channels = c }
   --GuildUpdate guild -> do
   --  let g = M.insert (guildId guild) guild (_guilds minfo)
@@ -58,3 +59,8 @@ adjustCache minfo event = case event of
   --      m2 = minfo { _guilds = g, _channels = c }
   --  putMVar cache m2
   _ -> minfo
+
+setChanGuildID :: Snowflake -> Channel -> Channel
+setChanGuildID s c = if isGuildChannel c
+                     then c { channelGuild = s }
+                     else c
