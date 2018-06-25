@@ -4,7 +4,7 @@
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Realistically, this is probably lower level than most
 --   people will need
-module Discord.Gateway.Internal where
+module Discord.Gateway.EventLoop where
 
 import Prelude hiding (log)
 
@@ -32,7 +32,7 @@ data ConnLoopState = ConnStart
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: String
                                , connAuth :: T.Text
-                               , connChan :: (Chan Event)
+                               , connChan :: Chan Event
                                }
 
 connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
@@ -72,10 +72,6 @@ connectionLoop auth events log = loop ConnStart
               Left e -> writeChan log ("message - error " <> show e) >> pure ConnClosed
 
 
-logger :: Chan String -> Bool -> IO ()
-logger log True = forever $ readChan log >>= putStrLn . ((<>) "\n")
-logger log False = forever $ readChan log >>= \_ -> pure ()
-
 send :: Connection -> Payload -> Chan String -> IO ()
 send conn payload log = do
   writeChan log ("message - sending " <> QL.unpack (encode payload))
@@ -97,6 +93,7 @@ heartbeat conn interval seqKey log = do
   forever $ do
     num <- readIORef seqKey
     send conn (Heartbeat num) log
+    writeChan log ("Delaying " <> show num)
     threadDelay (interval * 1000)
 
 setSequence :: IORef Integer -> Integer -> IO ()
@@ -118,6 +115,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
   loop :: IO ConnLoopState
   loop = do
     eitherPayload <- getPayload conn log
+    writeChan log "Payload"
     case eitherPayload :: Either ConnectionException Payload of
       Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes

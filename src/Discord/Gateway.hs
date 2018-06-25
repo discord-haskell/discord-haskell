@@ -24,3 +24,6 @@ chanWebSocket auth = do
                         (killThread logid)
   pure events
 
+logger :: Chan String -> Bool -> IO ()
+logger log True = forever $ readChan log >>= appendFile "log" . ((<>) "\n")
+logger log False = forever $ readChan log >>= \_ -> pure ()
