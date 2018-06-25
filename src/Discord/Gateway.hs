@@ -24,7 +24,7 @@ chanWebSocket auth = do
   log <- newChan
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
-  logid <- forkIO (logger log True)
+  logid <- forkIO (logger log False)
   cache <- emptyCache
   cacheID <- forkIO $ addEvent cache eventsCache log
   _ <- forkIO $ finally (connectionLoop auth eventsWrite log)
@@ -33,5 +33,5 @@ chanWebSocket auth = do
 
 
 logger :: Chan String -> Bool -> IO ()
-logger log True = forever $ readChan log >>= appendFile "log" . ((<>) "\n")
+logger log True = forever $ readChan log >>= putStrLn . ((<>) "\n")
 logger log False = forever $ readChan log >>= \_ -> pure ()
