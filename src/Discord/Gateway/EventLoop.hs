@@ -115,7 +115,6 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
   loop :: IO ConnLoopState
   loop = do
     eitherPayload <- getPayload conn log
-    writeChan log "Payload"
     case eitherPayload :: Either ConnectionException Payload of
       Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes
