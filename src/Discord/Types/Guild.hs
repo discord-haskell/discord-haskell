@@ -24,8 +24,7 @@ instance FromJSON Member where
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
-data Guild
-  = Guild
+data Guild = Guild
       { guildId           :: {-# UNPACK #-} !Snowflake -- ^ Gulid id
       , guildName         ::                 String    -- ^ Guild name (2 - 100 chars)
       , guildIcon         ::                 String    -- ^ Icon hash
@@ -41,33 +40,35 @@ data Guild
       , guildRoles        ::                [Role]     -- ^ Array of 'Role' objects
       , guildEmojis       ::                [Emoji]    -- ^ Array of 'Emoji' objects
       , guildChannels     ::                [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
-      }
-  | Unavailable
-      { guildId :: {-# UNPACK #-} !Snowflake
       } deriving Show
 
 instance FromJSON Guild where
   parseJSON (Object o) = do
-    short <- o .:? "unavailable" .!= False
-    if short
-      then Unavailable <$> o .: "id"
-      else
-        Guild <$> o .:  "id"
-              <*> o .:  "name"
-              <*> o .:? "icon" .!= ""
-              <*> o .:? "hash" .!= ""
-              <*> o .:  "owner_id"
-              <*> o .:  "region"
-              <*> o .:? "afk_channel_id"   .!= 0
-              <*> o .:? "afk_timeout"      .!= 0
-              <*> o .:? "embed_enabled"    .!= False
-              <*> o .:? "embed_channel_id" .!= 0
-              <*> o .:  "verification_level"
-              <*> o .:  "default_message_notifications"
-              <*> o .:  "roles"
-              <*> o .:  "emojis"
-              <*> o .:? "channels" .!= []
+    Guild <$> o .:  "id"
+          <*> o .:  "name"
+          <*> o .:? "icon" .!= ""
+          <*> o .:? "hash" .!= ""
+          <*> o .:  "owner_id"
+          <*> o .:  "region"
+          <*> o .:? "afk_channel_id"   .!= 0
+          <*> o .:? "afk_timeout"      .!= 0
+          <*> o .:? "embed_enabled"    .!= False
+          <*> o .:? "embed_channel_id" .!= 0
+          <*> o .:  "verification_level"
+          <*> o .:  "default_message_notifications"
+          <*> o .:  "roles"
+          <*> o .:  "emojis"
+          <*> o .:? "channels" .!= []
   parseJSON _          = mzero
+
+data Unavailable = Unavailable
+      { idOnceAvailable :: {-# UNPACK #-} !Snowflake
+      } deriving Show
+
+instance FromJSON Unavailable where
+  parseJSON (Object o) =
+       Unavailable <$> o .: "id"
+  parseJSON _ = mzero
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
