@@ -44,7 +44,7 @@ adjustCache minfo event = case event of
   --ChannelUpdate Channel
   --ChannelDelete Channel
   GuildCreate guild ->
-    let newChans = map (setChanGuildID (guildId guild)) $  guildChannels guild
+    let newChans = map (setChanGuildID (guildId guild)) $ guildChannels guild
         g = M.insert (guildId guild) (guild { guildChannels = newChans }) (_guilds minfo)
         c = M.unionWith (\a _ -> a)
                         (M.fromList [ (channelId ch, ch) | ch <- newChans ])
