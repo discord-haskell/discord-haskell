@@ -12,16 +12,14 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 
 data Cache = Cache
-            { _currentUser :: Maybe User
+            { _currentUser :: User
             , _dmChannels :: M.Map Snowflake Channel
             , _guilds :: M.Map Snowflake Guild
             , _channels :: M.Map Snowflake Channel
             } deriving (Show)
 
-
-
 emptyCache :: IO (MVar Cache)
-emptyCache = newMVar (Cache Nothing M.empty M.empty M.empty)
+emptyCache = newEmptyMVar
 
 addEvent :: MVar Cache -> Chan Event -> Chan String -> IO ()
 addEvent cache eventChan log = loop
@@ -38,8 +36,7 @@ adjustCache :: Cache -> Event -> Cache
 adjustCache minfo event = case event of
   Ready (Init _ user dmChannels guilds _) ->
     let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-        g = M.fromList (zip (map guildId guilds) guilds)
-    in Cache (Just user) dmChans g M.empty
+    in Cache user dmChans M.empty M.empty
   --ChannelCreate Channel
   --ChannelUpdate Channel
   --ChannelDelete Channel
