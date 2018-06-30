@@ -10,10 +10,10 @@ import Data.Aeson.Types
 import qualified Data.Text as T
 
 import Discord.Types.Channel
-import Discord.Types.Guild (Member, Guild)
+import Discord.Types.Guild (Member, Guild, Unavailable)
 
 -- |Represents data sent on READY event.
-data Init = Init Int User [Channel] [Guild] String deriving Show
+data Init = Init Int User [Channel] [Unavailable] String deriving Show
 
 -- |Allows Init type to be generated using a JSON response by Discord.
 instance FromJSON Init where
