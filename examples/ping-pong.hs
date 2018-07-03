@@ -7,6 +7,7 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
+-- |Replies to every message that starts with "ping" with "pong"
 a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
