@@ -46,7 +46,6 @@ In roughly the order I'm working on them:
 
 - Implement getting Channels through the Cache
 - Rework gateway FromJSON parsing
-- Reconnect to gateway if the InvalidSession says True
 - Add all gateway types (emoji removed, etc)
 - Add gateway ToJSON for events
 - Double check the REST request ADT matches the API

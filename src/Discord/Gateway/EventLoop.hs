@@ -63,10 +63,12 @@ connectionLoop auth events log = loop ConnStart
             eitherPayload <- getPayload conn log
             case eitherPayload of
               Right (Hello interval) -> startEventStream conn events auth seshID interval seqID log
-              Right InvalidSession -> do t <- getRandomR (1,5)
-                                         writeChan log ("Failed to connect. waiting:" <> show t)
-                                         threadDelay (t * 10^6)
-                                         pure ConnStart
+              Right (InvalidSession retry) -> do t <- getRandomR (1,5)
+                                                 writeChan log ("Invalid sesh, sleep:" <> show t)
+                                                 threadDelay (t * 10^6)
+                                                 pure $ if retry
+                                                        then ConnReconnect tok seshID seqID
+                                                        else ConnStart
               Right payload -> do writeChan log ("Why did they send a: " <> show payload)
                                   pure ConnClosed
               Left e -> writeChan log ("message - error " <> show e) >> pure ConnClosed
@@ -133,6 +135,8 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
                                  loop
       Right (Reconnect)      -> do writeChan log "Should reconnect"
                                    ConnReconnect auth seshID <$> readIORef seqKey
-      Right (InvalidSession) -> pure ConnStart
+      Right (InvalidSession retry) -> if retry
+                                      then ConnReconnect auth seshID <$> readIORef seqKey
+                                      else pure ConnStart
       Right (HeartbeatAck)   -> loop
       Right p -> writeChan log ("error - Invalid Payload: " <> show p) >> pure ConnClosed
