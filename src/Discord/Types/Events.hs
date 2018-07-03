@@ -3,7 +3,11 @@
 -- | Data structures pertaining to gateway dispatch 'Event's
 module Discord.Types.Events where
 
+import Prelude hiding (id)
 import Control.Monad (mzero)
+
+import Data.Time.ISO8601 (parseISO8601)
+import Data.Time (UTCTime)
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -21,6 +25,7 @@ data Event =
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
   | ChannelDelete           Channel
+  | ChannelPinsUpdate       Snowflake (Maybe UTCTime)
   | GuildCreate             Guild
   | GuildUpdate             Guild
   | GuildDelete             Guild
@@ -65,6 +70,10 @@ eventParse t o = case t of
     "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
     "CHANNEL_DELETE"            -> ChannelDelete             <$> reparse o
+    "CHANNEL_PINS_UPDATE"       -> do id <- o .: "channel_id"
+                                      stamp <- o .:? "last_pin_timestamp"
+                                      let utc = stamp >>= parseISO8601
+                                      pure (ChannelPinsUpdate id utc)
     "GUILD_CREATE"              -> GuildCreate               <$> reparse o
     "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> GuildDelete               <$> reparse o
