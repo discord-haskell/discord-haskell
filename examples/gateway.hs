@@ -14,6 +14,5 @@ a = do
   dis <- login (Bot tok)
   forever $ do
     x <- nextEvent dis
-    --putStrLn (show x <> "\n")
-    pure ()
+    putStrLn (show x <> "\n")
 
