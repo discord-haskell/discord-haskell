@@ -9,25 +9,15 @@ import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Text as T
 
+import Discord.Types.Prelude (Snowflake)
 import Discord.Types.Channel
 import Discord.Types.Guild (Member, Guild, Unavailable)
 
--- |Represents data sent on READY event.
-data Init = Init Int User [Channel] [Unavailable] String deriving Show
-
--- |Allows Init type to be generated using a JSON response by Discord.
-instance FromJSON Init where
-  parseJSON (Object o) = Init <$> o .: "v"
-                              <*> o .: "user"
-                              <*> o .: "private_channels"
-                              <*> o .: "guilds"
-                              <*> o .: "session_id"
-  parseJSON _          = mzero
 
 -- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Init
-  | Resumed                 Object
+    Ready                   Int User [Channel] [Unavailable] String
+  | Resumed                 [T.Text]
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
   | ChannelDelete           Channel
@@ -66,8 +56,12 @@ reparse val = case parseEither parseJSON $ toJSON val of
 
 eventParse :: T.Text -> Object -> Parser Event
 eventParse t o = case t of
-    "READY"                     -> Ready                     <$> reparse o
-    "RESUMED"                   -> Resumed                   <$> reparse o
+    "READY"                     -> Ready <$> o .: "v"
+                                         <*> o .: "user"
+                                         <*> o .: "private_channels"
+                                         <*> o .: "guilds"
+                                         <*> o .: "session_id"
+    "RESUMED"                   -> Resumed <$> o .: "_trace"
     "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
     "CHANNEL_DELETE"            -> ChannelDelete             <$> reparse o
@@ -95,4 +89,3 @@ eventParse t o = case t of
     "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
     "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
     _other_event                -> UnknownEvent (T.unpack t) <$> reparse o
-
