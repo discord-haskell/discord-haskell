@@ -29,7 +29,7 @@ data Payload
   | Resume T.Text String Integer
   | Reconnect
   | RequestGuildMembers Snowflake String Integer
-  | InvalidSession
+  | InvalidSession Bool
   | Hello Int
   | HeartbeatAck
   | ParseError String
@@ -43,8 +43,8 @@ instance FromJSON Payload where
                ejson <- o .: "d"
                Dispatch <$> eventParse etype ejson <*> o .: "s"
       1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
-      9  -> return InvalidSession
       7  -> pure Reconnect
+      9  -> InvalidSession <$> o .: "d"
       10 -> do od <- o .: "d"
                int <- od .: "heartbeat_interval"
                pure (Hello int)
