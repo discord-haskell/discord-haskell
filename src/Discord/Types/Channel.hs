@@ -119,6 +119,8 @@ instance FromJSON Channel where
                       <*> o .:? "guild_id" .!= 0
       _ -> mzero
 
+-- |If the channel is part of a guild (has a guild id field)
+isGuildChannel :: Channel -> Bool
 isGuildChannel c = case c of
         GuildCategory{..} -> True
         Text{..} -> True
