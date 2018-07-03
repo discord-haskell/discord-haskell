@@ -44,7 +44,6 @@ I have since rewritten all of the rest and gateway logic.
 
 In roughly the order I'm working on them:
 
-- Implement getting Channels through the Cache
 - Rework gateway FromJSON parsing
 - Add all gateway types (emoji removed, etc)
 - Add gateway ToJSON for events
@@ -53,7 +52,7 @@ In roughly the order I'm working on them:
 - Update types JSON, removing strict and unpack
 - Update types JSON to use 'withObject'
 - Update types JSON comments
-- More helpful README (examples, how to depend it this)
+- More helpful README (examples, how to depend it this package)
 - Upload to Hackage
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 - Add the two other auth options besides Bot: Client & Bearer
