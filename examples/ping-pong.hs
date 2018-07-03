@@ -14,13 +14,11 @@ a = do
 
   dis <- login (Bot tok)
 
-  _ <- rest dis (CreateMessage 453207241294610444 "Hello!" Nothing)
-
   forever $ do
       e <- nextEvent dis
       case e of
         MessageCreate m -> when (isPing (messageContent m)) $ do
-          void $ rest dis (CreateMessage 453207241294610444 "Pong!" Nothing)
+          void $ rest dis (CreateMessage (messageId m) "Pong!" Nothing)
         _ -> pure ()
 
 isPing :: T.Text -> Bool
