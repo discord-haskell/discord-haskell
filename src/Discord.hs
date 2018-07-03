@@ -44,14 +44,14 @@ cache d = readMVar (_discordCache d)
 
 login :: Auth -> IO Discord
 login auth = do
-  logs <- takeMVar discordLogins
-  case M.lookup auth logs of
-    Just d -> putMVar discordLogins logs >> pure d
+  logins <- takeMVar discordLogins
+  case M.lookup auth logins of
+    Just d -> putMVar discordLogins logins >> pure d
     Nothing -> do
       restHandler <- createHandler auth
       (chan,info) <- chanWebSocket auth
-      let nextDisc = Discord (RestPart (writeRestCall restHandler)) (readChan chan) (readMVar info)
-      putMVar discordLogins (M.insert auth nextDisc logs)
+      let nextDisc = Discord restHandler chan info
+      putMVar discordLogins (M.insert auth nextDisc logins)
       pure nextDisc
 
 
