@@ -33,9 +33,6 @@ data Discord = Discord
   , _discordCache :: MVar Cache
   }
 
-discordLogins :: MVar (M.Map Auth Discord)
-discordLogins = unsafePerformIO (newMVar M.empty)
-{-# NOINLINE discordLogins #-}
 rest :: FromJSON a => Discord -> Request a -> IO (Resp a)
 rest d = writeRestCall (_discordRest d)
 
@@ -56,3 +53,8 @@ login auth = do
       let nextDisc = Discord (RestPart (writeRestCall restHandler)) (readChan chan) (readMVar info)
       putMVar discordLogins (M.insert auth nextDisc logs)
       pure nextDisc
+
+
+discordLogins :: MVar (M.Map Auth Discord)
+discordLogins = unsafePerformIO (newMVar M.empty)
+{-# NOINLINE discordLogins #-}
