@@ -18,7 +18,9 @@ a = do
       e <- nextEvent dis
       case e of
         MessageCreate m -> when (isPing (messageContent m)) $ do
-          void $ rest dis (CreateMessage (messageId m) "Pong!" Nothing)
+          resp <- rest dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+          putStrLn (show resp)
+          putStrLn ""
         _ -> pure ()
 
 isPing :: T.Text -> Bool
