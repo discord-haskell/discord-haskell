@@ -20,19 +20,18 @@ library
   default-language:    Haskell2010
   -- extensions:
   exposed-modules:     Discord
-                     , Discord.Framework
                      , Discord.Gateway
+                     , Discord.Gateway.Cache
+                     , Discord.Gateway.EventLoop
                      , Discord.Rest
-                     , Discord.Rest.Channel
-                     , Discord.Rest.Guild
-                     , Discord.Rest.User
+                     , Discord.Rest.Prelude
+                     , Discord.Rest.HTTP
+                     , Discord.Rest.Requests
                      , Discord.Types
                      , Discord.Types.Channel
                      , Discord.Types.Events
                      , Discord.Types.Gateway
                      , Discord.Types.Guild
-  other-modules:       Discord.Rest.Prelude
-                     , Discord.Rest.HTTP
   build-depends:       base
                      , aeson
                      , bytestring
