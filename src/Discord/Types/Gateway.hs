@@ -19,7 +19,7 @@ import Text.Read (readMaybe)
 import Discord.Types.Prelude
 import Discord.Types.Events
 
--- |Represents all sorts of things that we can send to Discord.
+-- |Represents data sent and received with Discord servers
 data Payload
   = Dispatch Event Integer
   | Heartbeat Integer
@@ -43,12 +43,12 @@ instance FromJSON Payload where
                ejson <- o .: "d"
                Dispatch <$> eventParse etype ejson <*> o .: "s"
       1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
-      7  -> return Reconnect
       9  -> return InvalidSession
+      7  -> pure Reconnect
       10 -> do od <- o .: "d"
                int <- od .: "heartbeat_interval"
                pure (Hello int)
-      11 -> return HeartbeatAck
+      11 -> pure HeartbeatAck
       _  -> mzero
 
 instance ToJSON Payload where
