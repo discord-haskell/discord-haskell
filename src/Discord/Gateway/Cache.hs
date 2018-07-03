@@ -34,7 +34,7 @@ addEvent cache eventChan log = loop
 
 adjustCache :: Cache -> Event -> Cache
 adjustCache minfo event = case event of
-  Ready (Init _ user dmChannels _unavailableGuilds _) ->
+  (Ready _ user dmChannels _unavailableGuilds _) ->
     let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
     in Cache user dmChans M.empty M.empty
   --ChannelCreate Channel
