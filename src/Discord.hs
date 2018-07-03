@@ -6,6 +6,7 @@ module Discord
   , Resp(..)
   , RestPart(..)
   , Discord(..)
+  , Cache(..)
   , login
   ) where
 
@@ -19,13 +20,14 @@ import Discord.Rest
 import Discord.Rest.Requests
 import Discord.Types
 import Discord.Gateway
+import Discord.Gateway.Cache
 
 newtype RestPart = RestPart { restPart :: forall a. FromJSON a => Request a -> IO (Resp a) }
 
 data Discord = Discord
   { restCall :: RestPart
   , nextEvent :: IO Event
-  -- query guild/channel info
+  , info :: IO Cache
   }
 
 discordLogins :: MVar (M.Map Auth Discord)
@@ -39,7 +41,7 @@ login auth = do
     Just d -> putMVar discordLogins logs >> pure d
     Nothing -> do
       restHandler <- createHandler auth
-      chan <- chanWebSocket auth
-      let nextDisc = Discord (RestPart (writeRestCall restHandler)) (readChan chan)
+      (chan,info) <- chanWebSocket auth
+      let nextDisc = Discord (RestPart (writeRestCall restHandler)) (readChan chan) (readMVar info)
       putMVar discordLogins (M.insert auth nextDisc logs)
       pure nextDisc
