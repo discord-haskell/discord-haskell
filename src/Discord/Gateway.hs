@@ -9,7 +9,7 @@ module Discord.Gateway
 
 import Prelude hiding (log)
 import Control.Exception.Safe (finally)
-import Control.Concurrent (forkIO, killThread, readChan, newChan, dupChan, Chan)
+import Control.Concurrent (forkIO, killThread, readChan, newChan, dupChan, Chan, MVar)
 import Control.Monad (forever)
 import Data.Monoid ((<>))
 
@@ -19,7 +19,7 @@ import Discord.Gateway.Cache
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-chanWebSocket :: Auth -> IO (Chan Event)
+chanWebSocket :: Auth -> IO (Chan Event, MVar Cache)
 chanWebSocket auth = do
   log <- newChan
   eventsWrite <- newChan
@@ -29,7 +29,7 @@ chanWebSocket auth = do
   cacheID <- forkIO $ addEvent cache eventsCache log
   _ <- forkIO $ finally (connectionLoop auth eventsWrite log)
                         (killThread logid >> killThread cacheID)
-  pure eventsWrite
+  pure (eventsWrite, cache)
 
 
 logger :: Chan String -> Bool -> IO ()
