@@ -10,16 +10,14 @@ import Discord
 a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  Discord (RestPart rest) _ <- login (Bot tok)
+  dis <- login (Bot tok)
 
-  msg <- rest (CreateMessage 453207241294610444 "A" Nothing)
+  msg <- rest dis (CreateMessage 453207241294610444 "A" Nothing)
   putStrLn ("Message object: " <> show msg)
 
   putStrLn ""
 
-  chan <- rest (GetChannel 453207241294610444)
+  chan <- rest dis (GetChannel 453207241294610444)
   putStrLn ("Channel object: " <> show chan)
-
-  return ()
 
 

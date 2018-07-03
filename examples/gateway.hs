@@ -11,9 +11,9 @@ import Discord
 a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  Discord _ nextEvent <- login (Bot tok)
+  dis <- login (Bot tok)
   forever $ do
-    x <- nextEvent
-    putStrLn (show x <> "\n")
+    x <- nextEvent dis
+    --putStrLn (show x <> "\n")
     pure ()
 

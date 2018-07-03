@@ -11,15 +11,15 @@ a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
 
-  Discord (RestPart rest) nextEvent <- login (Bot tok)
+  dis <- login (Bot tok)
 
-  _ <- rest (CreateMessage 453207241294610444 "Hello!" Nothing)
+  _ <- rest dis (CreateMessage 453207241294610444 "Hello!" Nothing)
 
   forever $ do
-      e <- nextEvent
+      e <- nextEvent dis
       case e of
         MessageCreate m -> when (isPing (messageContent m)) $ do
-          void $ rest (CreateMessage 453207241294610444 "Pong!" Nothing)
+          void $ rest dis (CreateMessage 453207241294610444 "Pong!" Nothing)
         _ -> pure ()
 
 isPing :: T.Text -> Bool
