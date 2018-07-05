@@ -32,6 +32,9 @@ instance FromJSON GuildMember where
                 <*> o .: "mute"
   parseJSON _ = mzero
 
+
+-- https://discordapp.com/developers/docs/resources/guild#guild-object
+
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 data Guild = Guild
@@ -39,17 +42,27 @@ data Guild = Guild
       , guildName         ::   String    -- ^ Guild name (2 - 100 chars)
       , guildIcon         ::   String    -- ^ Icon hash
       , guildSplash       ::   String    -- ^ Splash hash
-      , guildOwner        ::  !Snowflake -- ^ Guild owner id
+      , guildOwnerId      ::  !Snowflake -- ^ Guild owner id
+      , guildPermissions  ::   Maybe [Integer]
       , guildRegion       ::   String    -- ^ Guild voice region
       , guildAfkId        ::  !Snowflake -- ^ Id of afk channel
       , guildAfkTimeout   ::  !Integer   -- ^ Afk timeout in seconds
-      , guildEmbedEnabled ::  !Bool      -- ^ Is this guild embeddable?
-      , guildEmbedChannel ::  !Snowflake -- ^ Id of embedded channel
-      , guildVerification ::  !Integer   -- ^ Level of verification
+      , guildEmbedChannel ::  Maybe Snowflake -- ^ Id of embedded channel
+      , guildVerificationLevel ::  !Integer   -- ^ Level of verification
       , guildNotification ::  !Integer   -- ^ Level of default notifications
+      , guildExplicitFilterLevel :: !Integer
       , guildRoles        ::  [Role]     -- ^ Array of 'Role' objects
       , guildEmojis       ::  [Emoji]    -- ^ Array of 'Emoji' objects
+      , guildFeatures     ::  [String]
+      , guildMultiFactAuth :: !Integer
+      , guildApplicationId :: Maybe Snowflake
+      , guildJoinedAt     :: Maybe UTCTime
+      , guildLarge        :: Maybe Bool
+      , guildMemberCount  :: Maybe String
+   -- , guildVoiceStates  :: [VoiceState] -- todo have to add voice state data type
+      , guildMembers      :: Maybe [GuildMember]
       , guildChannels     ::  [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
+   -- , guildPresences    :: Maybe [Presence]
       } deriving Show
 
 instance FromJSON Guild where
