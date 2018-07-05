@@ -28,7 +28,7 @@ data Event =
   | ChannelPinsUpdate       Snowflake (Maybe UTCTime)
   | GuildCreate             Guild
   | GuildUpdate             Guild
-  | GuildDelete             Guild
+  | GuildDelete             Unavailable
   | GuildBanAdd             Member
   | GuildBanRemove          Member
   | GuildEmojiUpdate        Object
