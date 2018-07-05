@@ -38,31 +38,31 @@ instance FromJSON GuildMember where
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 data Guild = Guild
-      { guildId           ::  !Snowflake -- ^ Gulid id
-      , guildName         ::   String    -- ^ Guild name (2 - 100 chars)
-      , guildIcon         ::   String    -- ^ Icon hash
-      , guildSplash       ::   String    -- ^ Splash hash
-      , guildOwnerId      ::  !Snowflake -- ^ Guild owner id
-      , guildPermissions  ::   Maybe [Integer]
-      , guildRegion       ::   String    -- ^ Guild voice region
-      , guildAfkId        ::  !Snowflake -- ^ Id of afk channel
-      , guildAfkTimeout   ::  !Integer   -- ^ Afk timeout in seconds
-      , guildEmbedChannel ::  Maybe Snowflake -- ^ Id of embedded channel
-      , guildVerificationLevel ::  !Integer   -- ^ Level of verification
-      , guildNotification ::  !Integer   -- ^ Level of default notifications
+      { guildId                  :: !Snowflake       -- ^ Gulid id
+      , guildName                ::  String          -- ^ Guild name (2 - 100 chars)
+      , guildIcon                ::  String          -- ^ Icon hash
+      , guildSplash              ::  String          -- ^ Splash hash
+      , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
+      , guildPermissions         ::  Maybe [Integer]
+      , guildRegion              ::  String          -- ^ Guild voice region
+      , guildAfkId               :: !Snowflake       -- ^ Id of afk channel
+      , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
+      , guildEmbedChannel        ::  Maybe Snowflake -- ^ Id of embedded channel
+      , guildVerificationLevel   :: !Integer         -- ^ Level of verification
+      , guildNotification        :: !Integer         -- ^ Level of default notifications
       , guildExplicitFilterLevel :: !Integer
-      , guildRoles        ::  [Role]     -- ^ Array of 'Role' objects
-      , guildEmojis       ::  [Emoji]    -- ^ Array of 'Emoji' objects
-      , guildFeatures     ::  [String]
-      , guildMultiFactAuth :: !Integer
-      , guildApplicationId :: Maybe Snowflake
-      , guildJoinedAt     :: Maybe UTCTime
-      , guildLarge        :: Maybe Bool
-      , guildMemberCount  :: Maybe String
-   -- , guildVoiceStates  :: [VoiceState] -- todo have to add voice state data type
-      , guildMembers      :: Maybe [GuildMember]
-      , guildChannels     ::  [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
-   -- , guildPresences    :: Maybe [Presence]
+      , guildRoles               :: [Role]           -- ^ Array of 'Role' objects
+      , guildEmojis              :: [Emoji]          -- ^ Array of 'Emoji' objects
+      , guildFeatures            :: [String]
+      , guildMultiFactAuth       :: !Integer
+      , guildApplicationId       ::  Maybe Snowflake
+      , guildJoinedAt            ::  Maybe UTCTime
+      , guildLarge               ::  Maybe Bool
+      , guildMemberCount         ::  Maybe String
+   -- , guildVoiceStates         :: [VoiceState]     -- todo have to add voice state data type
+      , guildMembers             ::  Maybe [GuildMember]
+      , guildChannels            :: [Channel]        -- ^ Channels in the guild (sent in GuildCreate)
+                                                     -- , guildPresences           ::  Maybe [Presence]
       } deriving Show
 
 instance FromJSON Guild where
