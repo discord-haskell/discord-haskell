@@ -13,13 +13,23 @@ import Discord.Types.Channel
 import Discord.Types.Prelude
 
 -- |Representation of a guild member.
-data Member = GuildMember !Snowflake User
-            | MemberShort User (Maybe String) ![Snowflake]
-          deriving Show
+data GuildMember = GuildMember
+      { memberUser     :: User
+      , memberNick     :: Maybe String
+      , memberRoles    :: [Snowflake]
+      , memberJoinedAt :: UTCTime
+      , memberDeaf     :: Bool
+      , memberMute     :: Bool
+      } deriving Show
 
-instance FromJSON Member where
+instance FromJSON GuildMember where
   parseJSON (Object o) =
-    GuildMember <$> o .: "guild_id" <*> o .: "user"
+    GuildMember <$> o .: "user"
+                <*> o .: "nick"
+                <*> o .: "roles"
+                <*> o .: "joined_at"
+                <*> o .: "deaf"
+                <*> o .: "mute"
   parseJSON _ = mzero
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
