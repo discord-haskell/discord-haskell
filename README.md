@@ -49,7 +49,8 @@ In roughly the order I'm working on them:
 
 - Rework gateway FromJSON parsing
 - Add all gateway types (emoji removed, etc)
-- Add neat [permission](https://discordapp.com/developers/docs/topics/permissions) handling
+- Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
+- Add neat [presence adt](https://discordapp.com/developers/docs/topics/gateway#presence-update) handling
 - Add gateway ToJSON for events
 - Double check the REST request ADT matches the API
 - Update channel types (fill out guildcategory)
