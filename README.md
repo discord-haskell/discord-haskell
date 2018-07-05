@@ -25,13 +25,13 @@ it can't lookup guilds/channels/messages by name
 
 ## Overview
 
-[discord-rest/Rest/HTTPS.hs](./discord-rest/src/Network/Discord/Rest/HTTP.hs)
+[discord/Rest/HTTPS.hs](./src/Discord/Rest/HTTP.hs)
  provides a Chan that executes each http request it gets respecting the rate limits
 
-[discord-rest/Rest.hs](./discord-rest/src/Network/Discord/Rest.hs) provides
+[discord/Rest.hs](./src/Discord/Rest.hs) provides
 an IO action that simplifies executing http requests
 
-[discord-gateway/Gateway.hs](./discord-gateway/src/Network/Discord/Gateway.hs)
+[discord/Gateway.hs](./src/Discord/Gateway.hs)
 can construct a real time Chan of `Event`s the user can read from
 
 ## History
