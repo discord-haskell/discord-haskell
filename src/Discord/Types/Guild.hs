@@ -13,7 +13,7 @@ import Discord.Types.Channel
 import Discord.Types.Prelude
 
 -- |Representation of a guild member.
-data Member = GuildMember {-# UNPACK #-} !Snowflake User
+data Member = GuildMember !Snowflake User
             | MemberShort User (Maybe String) ![Snowflake]
           deriving Show
 
@@ -25,21 +25,21 @@ instance FromJSON Member where
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 data Guild = Guild
-      { guildId           :: {-# UNPACK #-} !Snowflake -- ^ Gulid id
-      , guildName         ::                 String    -- ^ Guild name (2 - 100 chars)
-      , guildIcon         ::                 String    -- ^ Icon hash
-      , guildSplash       ::                 String    -- ^ Splash hash
-      , guildOwner        ::                !Snowflake -- ^ Guild owner id
-      , guildRegion       ::                 String    -- ^ Guild voice region
-      , guildAfkId        ::                !Snowflake -- ^ Id of afk channel
-      , guildAfkTimeout   ::                !Integer   -- ^ Afk timeout in seconds
-      , guildEmbedEnabled ::                !Bool      -- ^ Is this guild embeddable?
-      , guildEmbedChannel ::                !Snowflake -- ^ Id of embedded channel
-      , guildVerification ::                !Integer   -- ^ Level of verification
-      , guildNotification ::                !Integer   -- ^ Level of default notifications
-      , guildRoles        ::                [Role]     -- ^ Array of 'Role' objects
-      , guildEmojis       ::                [Emoji]    -- ^ Array of 'Emoji' objects
-      , guildChannels     ::                [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
+      { guildId           ::  !Snowflake -- ^ Gulid id
+      , guildName         ::   String    -- ^ Guild name (2 - 100 chars)
+      , guildIcon         ::   String    -- ^ Icon hash
+      , guildSplash       ::   String    -- ^ Splash hash
+      , guildOwner        ::  !Snowflake -- ^ Guild owner id
+      , guildRegion       ::   String    -- ^ Guild voice region
+      , guildAfkId        ::  !Snowflake -- ^ Id of afk channel
+      , guildAfkTimeout   ::  !Integer   -- ^ Afk timeout in seconds
+      , guildEmbedEnabled ::  !Bool      -- ^ Is this guild embeddable?
+      , guildEmbedChannel ::  !Snowflake -- ^ Id of embedded channel
+      , guildVerification ::  !Integer   -- ^ Level of verification
+      , guildNotification ::  !Integer   -- ^ Level of default notifications
+      , guildRoles        ::  [Role]     -- ^ Array of 'Role' objects
+      , guildEmojis       ::  [Emoji]    -- ^ Array of 'Emoji' objects
+      , guildChannels     ::  [Channel]  -- ^ Channels in the guild (sent in GuildCreate)
       } deriving Show
 
 instance FromJSON Guild where
@@ -62,7 +62,7 @@ instance FromJSON Guild where
   parseJSON _          = mzero
 
 data Unavailable = Unavailable
-      { idOnceAvailable :: {-# UNPACK #-} !Snowflake
+      { idOnceAvailable :: !Snowflake
       } deriving Show
 
 instance FromJSON Unavailable where
@@ -72,10 +72,10 @@ instance FromJSON Unavailable where
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId      :: {-# UNPACK #-} !Snowflake   -- ^ The emoji id
-  , emojiName    ::                 String      -- ^ The emoji name
-  , emojiRoles   ::                ![Snowflake] -- ^ Roles the emoji is active for
-  , emojiManaged ::                !Bool        -- ^ Whether this emoji is managed
+  { emojiId      :: !Snowflake   -- ^ The emoji id
+  , emojiName    ::  String      -- ^ The emoji name
+  , emojiRoles   :: ![Snowflake] -- ^ Roles the emoji is active for
+  , emojiManaged :: !Bool        -- ^ Whether this emoji is managed
   } deriving (Show)
 
 instance FromJSON Emoji where
@@ -92,7 +92,7 @@ instance FromJSON Emoji where
 --   (guild) and channel context.
 data Role =
     Role {
-        roleID      :: {-# UNPACK #-} !Snowflake -- ^ The role id
+        roleID      :: !Snowflake -- ^ The role id
       , roleName    :: String                    -- ^ The role name
       , roleColor   :: Integer                   -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
@@ -117,7 +117,7 @@ instance FromJSON Role where
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion =
     VoiceRegion
-      { regionId          :: {-# UNPACK #-} !Snowflake -- ^ Unique id of the region
+      { regionId          :: !Snowflake -- ^ Unique id of the region
       , regionName        :: String                    -- ^ Name of the region
       , regionHostname    :: String                    -- ^ Example hostname for the region
       , regionPort        :: Int                       -- ^ Example port for the region
@@ -184,7 +184,7 @@ instance FromJSON InviteMeta where
 -- | Represents the behavior of a third party account link.
 data Integration =
     Integration
-      { integrationId       :: {-# UNPACK #-} !Snowflake -- ^ Integration id
+      { integrationId       :: !Snowflake -- ^ Integration id
       , integrationName     :: String                    -- ^ Integration name
       , integrationType     :: String                    -- ^ Integration type (Twitch, Youtube, ect.)
       , integrationEnabled  :: Bool                      -- ^ Is the integration enabled
@@ -228,8 +228,8 @@ instance FromJSON IntegrationAccount where
 -- | Represents an image to be used in third party sites to link to a discord channel
 data GuildEmbed =
     GuildEmbed
-      { embedEnabled :: !Bool                     -- ^ Whether the embed is enabled
-      , embedChannel :: {-# UNPACK #-} !Snowflake -- ^ The embed channel id
+      { embedEnabled :: !Bool      -- ^ Whether the embed is enabled
+      , embedChannel :: !Snowflake -- ^ The embed channel id
       }
 instance FromJSON GuildEmbed where
   parseJSON (Object o) = GuildEmbed
