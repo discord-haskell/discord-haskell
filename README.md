@@ -1,5 +1,8 @@
 # discord-haskell
 
+The examples will work on the `master` branch. The `dev` branch
+has the most recent breaking changes.
+
 The library is usable for simple gateway & rest bots.
 The two largest missing features are that
 it's missing some gateway & rest types and
