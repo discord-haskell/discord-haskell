@@ -4,7 +4,6 @@
 module Discord.Types.Events where
 
 import Prelude hiding (id)
-import Control.Monad (mzero)
 
 import Data.Time.ISO8601 (parseISO8601)
 import Data.Time (UTCTime)
@@ -63,11 +62,11 @@ data ReactionInfo = ReactionInfo
   } deriving Show
 
 instance FromJSON ReactionInfo where
-  parseJSON (Object o) = ReactionInfo <$> o .: "user_id"
-                                      <*> o .: "channel_id"
-                                      <*> o .: "message_id"
-                                      <*> o .: "emoji"
-  parseJSON _ = mzero
+  parseJSON = withObject "ReactionInfo" $ \o ->
+    ReactionInfo <$> o .: "user_id"
+                 <*> o .: "channel_id"
+                 <*> o .: "message_id"
+                 <*> o .: "emoji"
 
 data PresenceInfo = PresenceInfo
   { presenceUserId  :: Snowflake
@@ -78,12 +77,12 @@ data PresenceInfo = PresenceInfo
   } deriving Show
 
 instance FromJSON PresenceInfo where
-  parseJSON (Object o) = PresenceInfo <$> o .: "user_id"
-                                      <*> o .: "roles"
-                                   -- <*> o .: "game"
-                                      <*> o .: "guild_id"
-                                      <*> o .: "status"
-  parseJSON _ = mzero
+  parseJSON = withObject "PresenceInfo" $ \o ->
+    PresenceInfo <$> o .: "user_id"
+                 <*> o .: "roles"
+              -- <*> o .: "game"
+                 <*> o .: "guild_id"
+                 <*> o .: "status"
 
 data TypingInfo = TypingInfo
   { typingUserId    :: Snowflake
@@ -92,20 +91,20 @@ data TypingInfo = TypingInfo
   } deriving Show
 
 instance FromJSON TypingInfo where
-  parseJSON (Object o) = do cid <- o .: "channel_id"
-                            uid <- o .: "user_id"
-                            stamp <- o .: "timestamp"
-                            case stamp >>= parseISO8601 of
-                              Just utc -> pure (TypingInfo uid cid utc)
-                              Nothing -> mzero
-  parseJSON _ = mzero
+  parseJSON = withObject "TypingInfo" $ \o ->
+    do cid <- o .: "channel_id"
+       uid <- o .: "user_id"
+       stamp <- o .: "timestamp"
+       case stamp >>= parseISO8601 of
+         Just utc -> pure (TypingInfo uid cid utc)
+         Nothing -> fail "Invalid timestamp"
 
 
 
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
 reparse val = case parseEither parseJSON $ toJSON val of
-                Left _ -> mzero
+                Left r -> fail r
                 Right b -> pure b
 
 eventParse :: T.Text -> Object -> Parser Event

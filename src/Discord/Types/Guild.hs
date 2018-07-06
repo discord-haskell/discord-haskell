@@ -7,7 +7,6 @@ import Data.Time.Clock
 
 import Data.Aeson
 import Control.Applicative ((<|>))
-import Control.Monad (mzero)
 
 import Discord.Types.Channel
 import Discord.Types.Prelude
@@ -23,14 +22,13 @@ data GuildMember = GuildMember
       } deriving Show
 
 instance FromJSON GuildMember where
-  parseJSON (Object o) =
+  parseJSON = withObject "GuildMember" $ \o ->
     GuildMember <$> o .: "user"
                 <*> o .: "nick"
                 <*> o .: "roles"
                 <*> o .: "joined_at"
                 <*> o .: "deaf"
                 <*> o .: "mute"
-  parseJSON _ = mzero
 
 
 -- https://discordapp.com/developers/docs/resources/guild#guild-object
@@ -67,7 +65,7 @@ data Guild = Guild
       } deriving Show
 
 instance FromJSON Guild where
-  parseJSON (Object o) = do
+  parseJSON = withObject "Guild" $ \o ->
     Guild <$> o .:  "id"
           <*> o .:  "name"
           <*> o .:  "icon"
@@ -93,16 +91,14 @@ instance FromJSON Guild where
        -- <*> o .:  "voice_states"
           <*> o .:  "members"
           <*> o .:  "channels"
-  parseJSON _          = mzero
 
 data Unavailable = Unavailable
       { idOnceAvailable :: !Snowflake
       } deriving Show
 
 instance FromJSON Unavailable where
-  parseJSON (Object o) =
+  parseJSON = withObject "Unavailable" $ \o ->
        Unavailable <$> o .: "id"
-  parseJSON _ = mzero
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
@@ -113,12 +109,11 @@ data Emoji = Emoji
   } deriving (Show)
 
 instance FromJSON Emoji where
-  parseJSON (Object o) =
+  parseJSON = withObject "Emoji" $ \o ->
     Emoji <$> o .: "id"
           <*> o .: "name"
           <*> o .: "roles"
           <*> o .: "managed"
-  parseJSON _ = mzero
 
 -- | Roles represent a set of permissions attached to a group of users. Roles have unique
 --   names, colors, and can be "pinned" to the side bar, causing their members to be listed separately.
@@ -137,16 +132,15 @@ data Role =
     } deriving (Show, Eq)
 
 instance FromJSON Role where
-  parseJSON (Object o) = Role
-    <$> o .: "id"
-    <*> o .: "name"
-    <*> o .: "color"
-    <*> o .: "hoist"
-    <*> o .: "position"
-    <*> o .: "permissions"
-    <*> o .: "managed"
-    <*> o .: "mentionable"
-  parseJSON _ = mzero
+  parseJSON = withObject "Role" $ \o ->
+    Role <$> o .: "id"
+         <*> o .: "name"
+         <*> o .: "color"
+         <*> o .: "hoist"
+         <*> o .: "position"
+         <*> o .: "permissions"
+         <*> o .: "managed"
+         <*> o .: "mentionable"
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion =
@@ -162,35 +156,34 @@ data VoiceRegion =
       } deriving (Show)
 
 instance FromJSON VoiceRegion where
-  parseJSON (Object o) = VoiceRegion
-    <$> o .: "id"
-    <*> o .: "name"
-    <*> o .: "sample_hostname"
-    <*> o .: "sample_port"
-    <*> o .: "vip"
-    <*> o .: "optimal"
-    <*> o .: "deprecated"
-    <*> o .: "custom"
-  parseJSON _ = mzero
+  parseJSON = withObject "VoiceRegion" $ \o ->
+    VoiceRegion <$> o .: "id"
+                <*> o .: "name"
+                <*> o .: "sample_hostname"
+                <*> o .: "sample_port"
+                <*> o .: "vip"
+                <*> o .: "optimal"
+                <*> o .: "deprecated"
+                <*> o .: "custom"
 
 -- | Represents a code to add a user to a guild
-data Invite =
-    Invite {
-        inviteCode  ::  String    -- ^ The invite code
+data Invite = Invite
+      { inviteCode  ::  String    -- ^ The invite code
       , inviteGuild :: !Snowflake -- ^ The guild the code will invite to
       , inviteChan  :: !Snowflake -- ^ The channel the code will invite to
-    }
-  -- | Invite code with additional metadata
-  | InviteLong Invite InviteMeta
+      }
 
 instance FromJSON Invite where
-  parseJSON ob@(Object o) =
-        InviteLong <$> parseJSON ob <*> parseJSON ob
-    <|> Invite
-        <$>  o .: "code"
-        <*> ((o .: "guild")   >>= (.: "id"))
-        <*> ((o .: "channel") >>= (.: "id"))
-  parseJSON _ = mzero
+  parseJSON = withObject "Invite" $ \o ->
+    Invite <$>  o .: "code"
+           <*> ((o .: "guild")   >>= (.: "id"))
+           <*> ((o .: "channel") >>= (.: "id"))
+
+-- | Invite code with additional metadata
+data InviteWithMeta = InviteWithMeta Invite InviteMeta
+
+instance FromJSON InviteWithMeta where
+  parseJSON ob = InviteWithMeta <$> parseJSON ob <*> parseJSON ob
 
 -- | Additional metadata about an invite.
 data InviteMeta =
@@ -205,15 +198,14 @@ data InviteMeta =
   }
 
 instance FromJSON InviteMeta where
-  parseJSON (Object o) = InviteMeta
-    <$> o .: "inviter"
-    <*> o .: "uses"
-    <*> o .: "max_uses"
-    <*> o .: "max_age"
-    <*> o .: "temporary"
-    <*> o .: "created_at"
-    <*> o .: "revoked"
-  parseJSON _ = mzero
+  parseJSON = withObject "InviteMeta" $ \o ->
+    InviteMeta <$> o .: "inviter"
+               <*> o .: "uses"
+               <*> o .: "max_uses"
+               <*> o .: "max_age"
+               <*> o .: "temporary"
+               <*> o .: "created_at"
+               <*> o .: "revoked"
 
 -- | Represents the behavior of a third party account link.
 data Integration =
@@ -232,19 +224,18 @@ data Integration =
       } deriving (Show)
 
 instance FromJSON Integration where
-  parseJSON (Object o) = Integration
-    <$> o .: "id"
-    <*> o .: "name"
-    <*> o .: "type"
-    <*> o .: "enabled"
-    <*> o .: "syncing"
-    <*> o .: "role_id"
-    <*> o .: "expire_behavior"
-    <*> o .: "expire_grace_period"
-    <*> o .: "user"
-    <*> o .: "account"
-    <*> o .: "synced_at"
-  parseJSON _ = mzero
+  parseJSON = withObject "Integration" $ \o ->
+    Integration <$> o .: "id"
+                <*> o .: "name"
+                <*> o .: "type"
+                <*> o .: "enabled"
+                <*> o .: "syncing"
+                <*> o .: "role_id"
+                <*> o .: "expire_behavior"
+                <*> o .: "expire_grace_period"
+                <*> o .: "user"
+                <*> o .: "account"
+                <*> o .: "synced_at"
 
 -- | Represents a third party account link.
 data IntegrationAccount =
@@ -254,10 +245,8 @@ data IntegrationAccount =
     } deriving (Show)
 
 instance FromJSON IntegrationAccount where
-  parseJSON (Object o) = Account
-    <$> o .: "id"
-    <*> o .: "name"
-  parseJSON _ = mzero
+  parseJSON = withObject "Account" $ \o ->
+    Account <$> o .: "id" <*> o .: "name"
 
 -- | Represents an image to be used in third party sites to link to a discord channel
 data GuildEmbed =
@@ -265,11 +254,10 @@ data GuildEmbed =
       { embedEnabled :: !Bool      -- ^ Whether the embed is enabled
       , embedChannel :: !Snowflake -- ^ The embed channel id
       }
+
 instance FromJSON GuildEmbed where
-  parseJSON (Object o) = GuildEmbed
-    <$> o .: "enabled"
-    <*> o .: "snowflake"
-  parseJSON _ = mzero
+  parseJSON = withObject "GuildEmbed" $ \o -> GuildEmbed <$> o .: "enabled"
+                                                         <*> o .: "snowflake"
 
 instance ToJSON GuildEmbed where
   toJSON (GuildEmbed enabled snowflake) = object

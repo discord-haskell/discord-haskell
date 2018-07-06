@@ -4,12 +4,12 @@
 -- | Data structures pertaining to Discord Channels
 module Discord.Types.Channel where
 
-import Control.Monad (mzero)
 import Data.Text as Text (pack, Text)
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Time.Clock
+import Data.Monoid ((<>))
 import Data.Vector (toList)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
@@ -34,7 +34,7 @@ data User = User
   | Webhook deriving (Show, Eq)
 
 instance FromJSON User where
-  parseJSON (Object o) =
+  parseJSON = withObject "Useer" $ \o ->
     User <$> o .:  "id"
          <*> o .:  "username"
          <*> o .:  "discriminator"
@@ -43,7 +43,6 @@ instance FromJSON User where
          <*> o .:? "mfa_enabled"
          <*> o .:? "verified"
          <*> o .:? "email"
-  parseJSON _ = mzero
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -87,7 +86,7 @@ data Channel
       } deriving (Show, Eq)
 
 instance FromJSON Channel where
-  parseJSON = withObject "text or voice" $ \o -> do
+  parseJSON = withObject "Channel" $ \o -> do
     type' <- (o .: "type") :: Parser Int
     case type' of
       0 ->
@@ -117,7 +116,7 @@ instance FromJSON Channel where
       4 ->
         GuildCategory <$> o .: "id"
                       <*> o .:? "guild_id" .!= 0
-      _ -> mzero
+      _ -> fail ("Unknown channel type:" <> show type')
 
 -- |If the channel is part of a guild (has a guild id field)
 isGuildChannel :: Channel -> Bool
@@ -136,12 +135,11 @@ data Overwrite = Overwrite
   } deriving (Show, Eq)
 
 instance FromJSON Overwrite where
-  parseJSON (Object o) =
+  parseJSON = withObject "Overwrite" $ \o ->
     Overwrite <$> o .: "id"
               <*> o .: "type"
               <*> o .: "allow"
               <*> o .: "deny"
-  parseJSON _ = mzero
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
@@ -169,7 +167,7 @@ data Message = Message
   } deriving (Show, Eq)
 
 instance FromJSON Message where
-  parseJSON (Object o) =
+  parseJSON = withObject "Message" $ \o ->
     Message <$> o .:  "id"
             <*> o .:  "channel_id"
             <*> o .:? "author" .!= Webhook
@@ -184,7 +182,6 @@ instance FromJSON Message where
             <*> o .:  "embeds"
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
-  parseJSON _ = mzero
 
 -- |Represents an attached to a message file.
 data Attachment = Attachment
@@ -198,7 +195,7 @@ data Attachment = Attachment
   } deriving (Show, Eq)
 
 instance FromJSON Attachment where
-  parseJSON (Object o) =
+  parseJSON = withObject "Attachment" $ \o ->
     Attachment <$> o .:  "id"
                <*> o .:  "filename"
                <*> o .:  "size"
@@ -206,7 +203,6 @@ instance FromJSON Attachment where
                <*> o .:  "proxy_url"
                <*> o .:? "height"
                <*> o .:? "width"
-  parseJSON _ = mzero
 
 -- |An embed attached to a message.
 data Embed = Embed
@@ -220,7 +216,7 @@ data Embed = Embed
   } deriving (Show, Read, Eq)
 
 instance FromJSON Embed where
-  parseJSON (Object o) =
+  parseJSON = withObject "Embed" $ \o ->
     Embed <$> o .:? "title" .!= "Untitled"
           <*> o .:  "type"
           <*> o .:? "description" .!= ""
@@ -263,8 +259,6 @@ instance FromJSON Embed where
                  <*> i .: "inline"
                  | Object i <- toList v] ++ a
       to_embed _ _ a = a
-
-  parseJSON _ = mzero
 
 instance ToJSON Embed where
   toJSON (Embed {..}) = object

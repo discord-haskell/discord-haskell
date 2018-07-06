@@ -11,6 +11,7 @@ import System.Info
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text as T
 import qualified Data.ByteString as Q
+import Data.Monoid ((<>))
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe (fromMaybe)
@@ -49,7 +50,7 @@ instance FromJSON Payload where
                int <- od .: "heartbeat_interval"
                pure (Hello int)
       11 -> pure HeartbeatAck
-      _  -> mzero
+      _  -> fail ("Unknown payload ID:" <> show op)
 
 instance ToJSON Payload where
   toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
