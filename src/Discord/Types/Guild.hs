@@ -106,10 +106,10 @@ instance FromJSON Unavailable where
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId      :: !Snowflake   -- ^ The emoji id
-  , emojiName    ::  String      -- ^ The emoji name
-  , emojiRoles   :: ![Snowflake] -- ^ Roles the emoji is active for
-  , emojiManaged :: !Bool        -- ^ Whether this emoji is managed
+  { emojiId      :: Snowflake         -- ^ The emoji id
+  , emojiName    :: String            -- ^ The emoji name
+  , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
+  , emojiManaged :: Bool              -- ^ Whether this emoji is managed
   } deriving (Show)
 
 instance FromJSON Emoji where
