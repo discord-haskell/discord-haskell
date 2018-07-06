@@ -48,7 +48,7 @@ data Event =
   | MessageReactionRemove   ReactionInfo
   | MessageReactionRemoveAll Snowflake Snowflake
   | PresenceUpdate          PresenceInfo
-  | TypingStart             
+  | TypingStart             TypingInfo
   | UserSettingsUpdate      
   | UserUpdate              
   | VoiceStateUpdate        
@@ -85,6 +85,23 @@ instance FromJSON PresenceInfo where
                                       <*> o .: "guild_id"
                                       <*> o .: "status"
   parseJSON _ = mzero
+
+data TypingInfo = TypingInfo
+  { typingUserId    :: Snowflake
+  , typingChannelId :: Snowflake
+  , typingTimestamp :: UTCTime
+  } deriving Show
+
+instance FromJSON TypingInfo where
+  parseJSON (Object o) = do cid <- o .: "channel_id"
+                            uid <- o .: "user_id"
+                            stamp <- o .: "timestamp"
+                            case stamp >>= parseISO8601 of
+                              Just utc -> pure (TypingInfo uid cid utc)
+                              Nothing -> mzero
+  parseJSON _ = mzero
+
+
 
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
