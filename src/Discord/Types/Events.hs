@@ -15,7 +15,7 @@ import qualified Data.Text as T
 
 import Discord.Types.Prelude (Snowflake)
 import Discord.Types.Channel
-import Discord.Types.Guild (Member, Guild, Unavailable)
+import Discord.Types.Guild (Guild, Unavailable)
 
 
 -- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
@@ -29,8 +29,8 @@ data Event =
   | GuildCreate             Guild
   | GuildUpdate             Guild
   | GuildDelete             Unavailable
-  | GuildBanAdd             Member
-  | GuildBanRemove          Member
+  | GuildBanAdd             Snowflake User
+  | GuildBanRemove          Snowflake User
   | GuildEmojiUpdate        Object
   | GuildIntegrationsUpdate Object
   | GuildMemberAdd          Member
@@ -77,8 +77,8 @@ eventParse t o = case t of
     "GUILD_CREATE"              -> GuildCreate               <$> reparse o
     "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> GuildDelete               <$> reparse o
-    "GUILD_BAN_ADD"             -> GuildBanAdd               <$> reparse o
-    "GUILD_BAN_REMOVE"          -> GuildBanRemove            <$> reparse o
+    "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> reparse o
+    "GUILD_BAN_REMOVE"          -> GuildBanRemove <$> o .: "guild_id" <*> reparse o
     "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate          <$> reparse o
     "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> reparse o
     "GUILD_MEMBER_ADD"          -> GuildMemberAdd            <$> reparse o
