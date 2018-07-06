@@ -44,7 +44,8 @@ data Event =
   | MessageUpdate           Message
   | MessageDelete           Snowflake Snowflake
   | MessageDeleteBulk       Snowflake [Snowflake]
-  | MessageReactionAdd      ReactionAddInfo
+  | MessageReactionAdd      ReactionInfo
+  | MessageReactionRemove   ReactionInfo
   | PresenceUpdate          
   | TypingStart             
   | UserSettingsUpdate      
@@ -54,12 +55,19 @@ data Event =
   | UnknownEvent     String Object
   deriving Show
 
-data ReactionAddInfo = ReactionAddInfo
-  { reactionAddUserId :: Snowflake
-  , reactionAddChannelId :: Snowflake
-  , reactionAddMessageId :: Snowflake
-  , reactionAddEmoji :: Emoji
+data ReactionInfo = ReactionInfo
+  { reactionUserId    :: Snowflake
+  , reactionChannelId :: Snowflake
+  , reactionMessageId :: Snowflake
+  , reactionEmoji     :: Emoji
   } deriving Show
+
+instance FromJSON ReactionInfo where
+  parseJSON (Object o) = ReactionInfo <$> o .: "user_id"
+                                      <*> o .: "channel_id"
+                                      <*> o .: "message_id"
+                                      <*> o .: "emoji"
+  parseJSON _ = mzero
 
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
@@ -103,10 +111,8 @@ eventParse t o = case t of
     "MESSAGE_UPDATE"            -> MessageUpdate             <$> reparse o
     "MESSAGE_DELETE"            -> MessageDelete     <$> o .: "channel_id" <*> o .: "id"
     "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
-    "MESSAGE_REACTION_ADD"       -> MessageReactionAdd <$> (ReactionAddInfo <$> o .: "user_id"
-                                                                            <*> o .: "channel_id"
-                                                                            <*> o .: "message_id"
-                                                                            <*> o .: "emoji")
+    "MESSAGE_REACTION_ADD"      -> MessageReactionAdd <$> reparse o
+    "MESSAGE_REACTION_REMOVE"   -> MessageReactionRemove <$> reparse o
     "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
     "TYPING_START"              -> TypingStart               <$> reparse o
     "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o
