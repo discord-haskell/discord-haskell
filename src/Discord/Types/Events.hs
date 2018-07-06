@@ -49,10 +49,9 @@ data Event =
   | MessageReactionRemoveAll Snowflake Snowflake
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
-  | UserSettingsUpdate      
-  | UserUpdate              
-  | VoiceStateUpdate        
-  | VoiceServerUpdate       
+  | UserUpdate              User
+  -- | VoiceStateUpdate
+  -- | VoiceServerUpdate
   | UnknownEvent     String Object
   deriving Show
 
@@ -151,7 +150,7 @@ eventParse t o = case t of
                                                               <*> o .: "message_id"
     "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
     "TYPING_START"              -> TypingStart               <$> reparse o
-    "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o
-    "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
-    "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
+    "USER_UPDATE"               -> UserUpdate                <$> reparse o
+ -- "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
+ -- "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
     _other_event                -> UnknownEvent (T.unpack t) <$> reparse o
