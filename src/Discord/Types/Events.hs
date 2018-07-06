@@ -75,7 +75,7 @@ data PresenceInfo = PresenceInfo
   , presenceRoles   :: [Role]
   -- , presenceGame :: Maybe Activity
   , presenceGuildId :: Snowflake
-  , prsenceStatus   :: String
+  , presencetatus   :: String
   } deriving Show
 
 instance FromJSON PresenceInfo where
