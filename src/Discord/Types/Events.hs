@@ -15,7 +15,7 @@ import qualified Data.Text as T
 
 import Discord.Types.Prelude (Snowflake)
 import Discord.Types.Channel
-import Discord.Types.Guild (Guild, Unavailable)
+import Discord.Types.Guild (Guild, Unavailable, GuildMember, Role, Emoji)
 
 
 -- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
@@ -31,27 +31,35 @@ data Event =
   | GuildDelete             Unavailable
   | GuildBanAdd             Snowflake User
   | GuildBanRemove          Snowflake User
-  | GuildEmojiUpdate        Object
-  | GuildIntegrationsUpdate Object
-  | GuildMemberAdd          Member
-  | GuildMemberRemove       Member
-  | GuildMemberUpdate       Member
-  | GuildMemberChunk        Object
-  | GuildRoleCreate         Object
-  | GuildRoleUpdate         Object
-  | GuildRoleDelete         Object
+  | GuildEmojiUpdate        Snowflake [Emoji]
+  | GuildIntegrationsUpdate Snowflake
+  | GuildMemberAdd          Snowflake GuildMember
+  | GuildMemberRemove       Snowflake User
+  | GuildMemberUpdate       Snowflake [Snowflake] User String
+  | GuildMemberChunk        Snowflake [GuildMember]
+  | GuildRoleCreate         Snowflake Role
+  | GuildRoleUpdate         Snowflake Role
+  | GuildRoleDelete         Snowflake Snowflake
   | MessageCreate           Message
   | MessageUpdate           Message
-  | MessageDelete           Object
-  | MessageDeleteBulk       Object
-  | PresenceUpdate          Object
-  | TypingStart             Object
-  | UserSettingsUpdate      Object
-  | UserUpdate              Object
-  | VoiceStateUpdate        Object
-  | VoiceServerUpdate       Object
+  | MessageDelete           Snowflake Snowflake
+  | MessageDeleteBulk       Snowflake [Snowflake]
+  | MessageReactionAdd      ReactionAddInfo
+  | PresenceUpdate          
+  | TypingStart             
+  | UserSettingsUpdate      
+  | UserUpdate              
+  | VoiceStateUpdate        
+  | VoiceServerUpdate       
   | UnknownEvent     String Object
   deriving Show
+
+data ReactionAddInfo = ReactionAddInfo
+  { reactionAddUserId :: Snowflake
+  , reactionAddChannelId :: Snowflake
+  , reactionAddMessageId :: Snowflake
+  , reactionAddEmoji :: Emoji
+  } deriving Show
 
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
@@ -79,19 +87,26 @@ eventParse t o = case t of
     "GUILD_DELETE"              -> GuildDelete               <$> reparse o
     "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> reparse o
     "GUILD_BAN_REMOVE"          -> GuildBanRemove <$> o .: "guild_id" <*> reparse o
-    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate          <$> reparse o
-    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> reparse o
-    "GUILD_MEMBER_ADD"          -> GuildMemberAdd            <$> reparse o
-    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate         <$> reparse o
-    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove         <$> reparse o
-    "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk          <$> reparse o
-    "GUILD_ROLE_CREATE"         -> GuildRoleCreate           <$> reparse o
-    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate           <$> reparse o
-    "GUILD_ROLE_DELETE"         -> GuildRoleDelete           <$> reparse o
+    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
+    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> o .: "guild_id"
+    "GUILD_MEMBER_ADD"          -> GuildMemberAdd <$> o .: "guild_id" <*> reparse o
+    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove <$> o .: "guild_id" <*> o .: "user"
+    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate <$> o .: "guild_id"
+                                                     <*> o .: "roles"
+                                                     <*> o .: "user"
+                                                     <*> o .: "nick"
+    "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk <$> o .: "guild_id" <*> o .: "members"
+    "GUILD_ROLE_CREATE"         -> GuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
+    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
+    "GUILD_ROLE_DELETE"         -> GuildRoleDelete  <$> o .: "guild_id" <*> o .: "role"
     "MESSAGE_CREATE"            -> MessageCreate             <$> reparse o
     "MESSAGE_UPDATE"            -> MessageUpdate             <$> reparse o
-    "MESSAGE_DELETE"            -> MessageDelete             <$> reparse o
-    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk         <$> reparse o
+    "MESSAGE_DELETE"            -> MessageDelete     <$> o .: "channel_id" <*> o .: "id"
+    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
+    "MESSAGE_REACTION_ADD"       -> MessageReactionAdd <$> (ReactionAddInfo <$> o .: "user_id"
+                                                                            <*> o .: "channel_id"
+                                                                            <*> o .: "message_id"
+                                                                            <*> o .: "emoji")
     "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
     "TYPING_START"              -> TypingStart               <$> reparse o
     "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o
