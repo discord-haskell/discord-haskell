@@ -37,11 +37,11 @@ instance FromJSON GuildMember where
 --   "Server"
 data Guild = Guild
       { guildId                  :: !Snowflake       -- ^ Gulid id
-      , guildName                ::  Maybe String    -- ^ Guild name (2 - 100 chars)
+      , guildName                ::  String          -- ^ Guild name (2 - 100 chars)
       , guildIcon                ::  Maybe String    -- ^ Icon hash
-      , guildSplash              ::  String          -- ^ Splash hash
+      , guildSplash              ::  Maybe String    -- ^ Splash hash
       , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
-      , guildPermissions         ::  Maybe [Integer]
+      , guildPermissions         ::  Maybe Integer
       , guildRegion              ::  String          -- ^ Guild voice region
       , guildAfkId               ::  Maybe Snowflake -- ^ Id of afk channel
       , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
@@ -68,15 +68,15 @@ instance FromJSON Guild where
   parseJSON = withObject "Guild" $ \o ->
     Guild <$> o .:  "id"
           <*> o .:  "name"
-          <*> o .:  "icon"
-          <*> o .:  "splash"
+          <*> o .:? "icon"
+          <*> o .:? "splash"
           <*> o .:  "owner_id"
-          <*> o .:  "permissions"
+          <*> o .:? "permissions"
           <*> o .:  "region"
-          <*> o .:  "afk_channel_id"
+          <*> o .:? "afk_channel_id"
           <*> o .:  "afk_timeout"
-          <*> o .:  "embed_enabled"
-          <*> o .:  "embed_channel_id"
+          <*> o .:? "embed_enabled"
+          <*> o .:? "embed_channel_id"
           <*> o .:  "verification_level"
           <*> o .:  "default_message_notifications"
           <*> o .:  "explicit_content_filter"
@@ -84,12 +84,12 @@ instance FromJSON Guild where
           <*> o .:  "emojis"
           <*> o .:  "features"
           <*> o .:  "mfa_level"
-          <*> o .:  "application_id"
-          <*> o .:  "joined_at"
-          <*> o .:  "large"
-          <*> o .:  "member_count"
+          <*> o .:? "application_id"
+          <*> o .:? "joined_at"
+          <*> o .:? "large"
+          <*> o .:? "member_count"
        -- <*> o .:  "voice_states"
-          <*> o .:  "members"
+          <*> o .:? "members"
           <*> o .:  "channels"
 
 data Unavailable = Unavailable
