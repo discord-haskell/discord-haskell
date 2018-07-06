@@ -39,14 +39,15 @@ instance FromJSON GuildMember where
 --   "Server"
 data Guild = Guild
       { guildId                  :: !Snowflake       -- ^ Gulid id
-      , guildName                ::  String          -- ^ Guild name (2 - 100 chars)
-      , guildIcon                ::  String          -- ^ Icon hash
+      , guildName                ::  Maybe String    -- ^ Guild name (2 - 100 chars)
+      , guildIcon                ::  Maybe String    -- ^ Icon hash
       , guildSplash              ::  String          -- ^ Splash hash
       , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
       , guildPermissions         ::  Maybe [Integer]
       , guildRegion              ::  String          -- ^ Guild voice region
-      , guildAfkId               :: !Snowflake       -- ^ Id of afk channel
+      , guildAfkId               ::  Maybe Snowflake -- ^ Id of afk channel
       , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
+      , guildEmbedEnabled        ::  Maybe Bool      -- ^ Id of embedded channel
       , guildEmbedChannel        ::  Maybe Snowflake -- ^ Id of embedded channel
       , guildVerificationLevel   :: !Integer         -- ^ Level of verification
       , guildNotification        :: !Integer         -- ^ Level of default notifications
@@ -58,7 +59,7 @@ data Guild = Guild
       , guildApplicationId       ::  Maybe Snowflake
       , guildJoinedAt            ::  Maybe UTCTime
       , guildLarge               ::  Maybe Bool
-      , guildMemberCount         ::  Maybe String
+      , guildMemberCount         ::  Maybe Integer
    -- , guildVoiceStates         :: [VoiceState]     -- todo have to add voice state data type
       , guildMembers             ::  Maybe [GuildMember]
       , guildChannels            :: [Channel]        -- ^ Channels in the guild (sent in GuildCreate)
@@ -69,19 +70,29 @@ instance FromJSON Guild where
   parseJSON (Object o) = do
     Guild <$> o .:  "id"
           <*> o .:  "name"
-          <*> o .:? "icon" .!= ""
-          <*> o .:? "hash" .!= ""
+          <*> o .:  "icon"
+          <*> o .:  "splash"
           <*> o .:  "owner_id"
+          <*> o .:  "permissions"
           <*> o .:  "region"
-          <*> o .:? "afk_channel_id"   .!= 0
-          <*> o .:? "afk_timeout"      .!= 0
-          <*> o .:? "embed_enabled"    .!= False
-          <*> o .:? "embed_channel_id" .!= 0
+          <*> o .:  "afk_channel_id"
+          <*> o .:  "afk_timeout"
+          <*> o .:  "embed_enabled"
+          <*> o .:  "embed_channel_id"
           <*> o .:  "verification_level"
           <*> o .:  "default_message_notifications"
+          <*> o .:  "explicit_content_filter"
           <*> o .:  "roles"
           <*> o .:  "emojis"
-          <*> o .:? "channels" .!= []
+          <*> o .:  "features"
+          <*> o .:  "mfa_level"
+          <*> o .:  "application_id"
+          <*> o .:  "joined_at"
+          <*> o .:  "large"
+          <*> o .:  "member_count"
+       -- <*> o .:  "voice_states"
+          <*> o .:  "members"
+          <*> o .:  "channels"
   parseJSON _          = mzero
 
 data Unavailable = Unavailable
