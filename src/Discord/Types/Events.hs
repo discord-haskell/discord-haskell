@@ -46,7 +46,8 @@ data Event =
   | MessageDeleteBulk       Snowflake [Snowflake]
   | MessageReactionAdd      ReactionInfo
   | MessageReactionRemove   ReactionInfo
-  | PresenceUpdate          
+  | MessageReactionRemoveAll Snowflake Snowflake
+  | PresenceUpdate          PresenceInfo
   | TypingStart             
   | UserSettingsUpdate      
   | UserUpdate              
@@ -67,6 +68,22 @@ instance FromJSON ReactionInfo where
                                       <*> o .: "channel_id"
                                       <*> o .: "message_id"
                                       <*> o .: "emoji"
+  parseJSON _ = mzero
+
+data PresenceInfo = PresenceInfo
+  { presenceUserId  :: Snowflake
+  , presenceRoles   :: [Role]
+  -- , presenceGame :: Maybe Activity
+  , presenceGuildId :: Snowflake
+  , prsenceStatus   :: String
+  } deriving Show
+
+instance FromJSON PresenceInfo where
+  parseJSON (Object o) = PresenceInfo <$> o .: "user_id"
+                                      <*> o .: "roles"
+                                   -- <*> o .: "game"
+                                      <*> o .: "guild_id"
+                                      <*> o .: "status"
   parseJSON _ = mzero
 
 -- | Convert ToJSON value to FromJSON value
@@ -113,6 +130,8 @@ eventParse t o = case t of
     "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
     "MESSAGE_REACTION_ADD"      -> MessageReactionAdd <$> reparse o
     "MESSAGE_REACTION_REMOVE"   -> MessageReactionRemove <$> reparse o
+    "MESSAGE_REACTION_REMOVE_ALL" -> MessageReactionRemoveAll <$> o .: "channel_id"
+                                                              <*> o .: "message_id"
     "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
     "TYPING_START"              -> TypingStart               <$> reparse o
     "USER_SETTINGS_UPDATE"      -> UserSettingsUpdate        <$> reparse o

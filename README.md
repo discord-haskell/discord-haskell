@@ -49,6 +49,7 @@ In roughly the order I'm working on them:
 
 - Rework gateway FromJSON parsing
 - Add all gateway types (emoji removed, etc)
+- Add      [Activity object](https://discordapp.com/developers/docs/topics/gateway#activity-object) for PresenceInfo in the Event ADT
 - Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
 - Add neat [presence adt](https://discordapp.com/developers/docs/topics/gateway#presence-update) handling
 - Add gateway ToJSON for events
