@@ -85,8 +85,8 @@ getPayload conn log = try $ do
   writeChan log ("message - received " <> QL.unpack msg')
   case eitherDecode msg' of
     Right msg -> return msg
-    Left  err -> do writeChan log ("Discord-hs.Gateway.Parse" <> err)
-                    writeChan log ("Discord-hs.Gateway.Raw" <> show msg')
+    Left  err -> do writeChan log ("parse error Error - " <> err)
+                    writeChan log ("parse error Message - " <> show msg')
                     return (ParseError err)
 
 heartbeat :: Connection -> Int -> IORef Integer -> Chan String -> IO ()
