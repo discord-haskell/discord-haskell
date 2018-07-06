@@ -86,15 +86,15 @@ data Request a where
   --   objects on success. Fires multiple Channel Update 'Event's.
   ModifyChanPosition       :: ToJSON o => Snowflake -> o -> Request [Channel]
   -- | Returns a guild 'Member' object for the specified user
-  GetGuildMember           :: Snowflake -> Snowflake -> Request Member
+  GetGuildMember           :: Snowflake -> Snowflake -> Request GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
-  ListGuildMembers         :: Snowflake -> Range -> Request [Member]
+  ListGuildMembers         :: Snowflake -> Range -> Request [GuildMember]
   -- | Adds a user to the guild, provided you have a valid oauth2 access token
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
   AddGuildMember           :: ToJSON o => Snowflake -> Snowflake -> o
-                                -> Request Member
+                                -> Request GuildMember
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
   ModifyGuildMember        :: ToJSON o => Snowflake -> Snowflake -> o
                                 -> Request ()
