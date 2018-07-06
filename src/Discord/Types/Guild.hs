@@ -23,12 +23,12 @@ data GuildMember = GuildMember
 
 instance FromJSON GuildMember where
   parseJSON = withObject "GuildMember" $ \o ->
-    GuildMember <$> o .: "user"
-                <*> o .: "nick"
-                <*> o .: "roles"
-                <*> o .: "joined_at"
-                <*> o .: "deaf"
-                <*> o .: "mute"
+    GuildMember <$> o .:  "user"
+                <*> o .:? "nick"
+                <*> o .:  "roles"
+                <*> o .:  "joined_at"
+                <*> o .:  "deaf"
+                <*> o .:  "mute"
 
 
 -- https://discordapp.com/developers/docs/resources/guild#guild-object
