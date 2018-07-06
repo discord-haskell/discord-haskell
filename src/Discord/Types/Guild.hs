@@ -109,7 +109,7 @@ data Emoji = Emoji
   { emojiId      :: Snowflake         -- ^ The emoji id
   , emojiName    :: String            -- ^ The emoji name
   , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
-  , emojiManaged :: Bool              -- ^ Whether this emoji is managed
+  , emojiManaged :: Maybe Bool        -- ^ Whether this emoji is managed
   } deriving (Show)
 
 instance FromJSON Emoji where
