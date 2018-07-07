@@ -42,7 +42,10 @@ instance FromJSON Payload where
     case op of
       0  -> do etype <- o .: "t"
                ejson <- o .: "d"
-               Dispatch <$> eventParse etype ejson <*> o .: "s"
+               case ejson of
+                 Object hm -> Dispatch <$> eventParse etype hm <*> o .: "s"
+                 _other -> Dispatch (UnknownEvent ("Dispatch payload wasn't an object") o)
+                                  <$> o .: "s"
       1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> pure Reconnect
       9  -> InvalidSession <$> o .: "d"

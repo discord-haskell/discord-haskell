@@ -8,7 +8,6 @@ import Prelude hiding (id)
 import Data.Time.ISO8601 (parseISO8601)
 import Data.Time (UTCTime)
 
-import Control.Applicative ((<|>))
 import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Text as T
