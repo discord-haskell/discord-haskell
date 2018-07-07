@@ -7,6 +7,7 @@ import Prelude hiding (id)
 
 import Data.Time.ISO8601 (parseISO8601)
 import Data.Time (UTCTime)
+import Data.Time.Clock.POSIX (POSIXTime, posixSecondsToUTCTime)
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -90,18 +91,13 @@ data TypingInfo = TypingInfo
   , typingTimestamp :: UTCTime
   } deriving Show
 
-isoTimestamp :: Object -> T.Text -> Parser String
-isoTimestamp o name = (o .: name :: Parser String) <|>
-            (show <$> (o .: name :: Parser Integer))
-
 instance FromJSON TypingInfo where
   parseJSON = withObject "TypingInfo" $ \o ->
     do cid <- o .: "channel_id"
        uid <- o .: "user_id"
-       stamp <- isoTimestamp o "timestamp"
-       case parseISO8601 stamp of
-         Just utc -> pure (TypingInfo uid cid utc)
-         Nothing -> fail "Invalid timestamp"
+       posix <- o .: "timestamp"
+       let utc = posixSecondsToUTCTime posix
+       pure (TypingInfo uid cid utc)
 
 
 
@@ -123,8 +119,8 @@ eventParse t o = case t of
     "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
     "CHANNEL_DELETE"            -> ChannelDelete             <$> reparse o
     "CHANNEL_PINS_UPDATE"       -> do id <- o .: "channel_id"
-                                      stamp <- isoTimestamp o "last_pin_timestamp"
-                                      let utc = parseISO8601 stamp
+                                      stamp <- o .:? "last_pin_timestamp"
+                                      let utc = stamp >>= parseISO8601
                                       pure (ChannelPinsUpdate id utc)
     "GUILD_CREATE"              -> GuildCreate               <$> reparse o
     "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
