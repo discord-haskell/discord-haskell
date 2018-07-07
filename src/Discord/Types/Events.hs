@@ -79,7 +79,7 @@ data PresenceInfo = PresenceInfo
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
-    PresenceInfo <$> o .: "user_id"
+    PresenceInfo <$> (o .: "user" >>= (.: "id"))
                  <*> o .: "roles"
               -- <*> o .: "game"
                  <*> o .: "guild_id"
