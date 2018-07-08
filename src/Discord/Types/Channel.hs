@@ -10,7 +10,6 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Time.Clock
 import Data.Monoid ((<>))
-import Data.Vector (toList)
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 
@@ -251,7 +250,7 @@ instance FromJSON Embed where
         "fields" -> [Field <$> i .: "name"
                            <*> i .: "value"
                            <*> i .: "inline"
-                           | Object i <- toList v] ++ a
+                           | Object i <- V.toList v] ++ a
         _ -> a
       to_embed _ _ a = a
 
