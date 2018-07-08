@@ -4,7 +4,7 @@
 -- | Data structures pertaining to Discord Channels
 module Discord.Types.Channel where
 
-import Data.Text as Text (pack, Text)
+import qualified Data.Text as T
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
@@ -148,7 +148,7 @@ data Message = Message
                                            --   was sent in
   , messageAuthor       :: User            -- ^ The 'User' the message was sent
                                            --   by
-  , messageContent      :: Text            -- ^ Contents of the message
+  , messageContent      :: T.Text          -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
   , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
   , messageTts          :: Bool            -- ^ Whether this message was a TTS
