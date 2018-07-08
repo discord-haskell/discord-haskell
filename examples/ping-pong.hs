@@ -12,13 +12,13 @@ a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
 
-  dis <- login (Bot tok)
+  dis <- loginRestGateway (Bot tok)
 
   forever $ do
       e <- nextEvent dis
       case e of
         MessageCreate m -> when (isPing (messageContent m)) $ do
-          resp <- rest dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
           putStrLn (show resp)
           putStrLn ""
         _ -> pure ()

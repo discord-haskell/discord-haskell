@@ -11,7 +11,7 @@ import Discord
 a :: IO ()
 a = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  dis <- login (Bot tok)
+  dis <- loginRest (Bot tok)
 
   msg <- rest dis (CreateMessage 453207241294610444 "A" Nothing)
   putStrLn ("Message object: " <> show msg)
