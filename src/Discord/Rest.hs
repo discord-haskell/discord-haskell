@@ -30,7 +30,7 @@ newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteStri
 createHandler :: Auth -> IO RestChan
 createHandler auth = do
   c <- newChan
-  forkIO $ restLoop auth c
+  _ <- forkIO $ restLoop auth c
   pure (RestChan c)
 
 -- | Execute a request blocking until a response is recieved
