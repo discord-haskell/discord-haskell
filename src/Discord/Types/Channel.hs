@@ -264,9 +264,14 @@ instance ToJSON Embed where
     , "color"       .= embedColor
     ] |> makeSubEmbeds embedFields
     where
-      (Object o) |> hm = Object $ HM.union o hm
-      _ |> _ = error "Type mismatch"
+      (|>) :: Value -> HM.HashMap T.Text Value -> Value
+      (|>) (Object o) hm = Object $ HM.union o hm
+      (|>) _          _  = error "Type mismatch"
+
+      makeSubEmbeds :: [SubEmbed] -> HM.HashMap T.Text Value
       makeSubEmbeds = foldr embed HM.empty
+
+      embed :: SubEmbed -> HM.HashMap T.Text Value -> HM.HashMap T.Text Value
       embed (Thumbnail url _ height width) =
         HM.alter (\_ -> Just $ object
           [ "url"    .= url
