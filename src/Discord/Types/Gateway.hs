@@ -21,20 +21,23 @@ import Discord.Types.Prelude
 import Discord.Types.Events
 
 -- |Represents data sent and received with Discord servers
-data Payload
+data GatewayReceivable
   = Dispatch Event Integer
-  | Heartbeat Integer
-  | Identify Auth Bool Integer (Int, Int)
-  | StatusUpdate (Maybe Integer) (Maybe String)
-  | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
-  | Resume T.Text String Integer
+  | HeartbeatRequest Integer
   | Reconnect
-  | RequestGuildMembers Snowflake String Integer
   | InvalidSession Bool
   | Hello Int
   | HeartbeatAck
   | ParseError String
   deriving Show
+
+data GatewaySendable
+  = Heartbeat Integer
+  | Identify Auth Bool Integer (Int, Int)
+  | StatusUpdate (Maybe Integer) (Maybe String)
+  | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
+  | Resume T.Text String Integer
+  | RequestGuildMembers Snowflake String Integer
 
 instance FromJSON Payload where
   parseJSON = withObject "payload" $ \o -> do
