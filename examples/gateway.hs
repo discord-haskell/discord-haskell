@@ -9,8 +9,8 @@ import qualified Data.Text.IO as TIO
 import Discord
 
 -- |Prints every event as it happens
-a :: IO ()
-a = do
+gatewayExample :: IO ()
+gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Bot tok)
   forever $ do
