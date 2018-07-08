@@ -225,39 +225,34 @@ instance FromJSON Embed where
           <*> o .:? "color" .!= 0
           <*> sequence (HM.foldrWithKey to_embed [] o)
     where
-      to_embed k (Object v) a
-        | k == pack "footer" =
-          (Footer <$> v .: "text"
-                  <*> v .:? "icon_url" .!= ""
-                  <*> v .:? "proxy_icon_url" .!= "") : a
-        | k == pack "image" =
-          (Image <$> v .: "url"
-                 <*> v .: "proxy_url"
-                 <*> v .: "height"
-                 <*> v .: "width") : a
-        | k == pack "thumbnail" =
-          (Thumbnail <$> v .: "url"
-                     <*> v .: "proxy_url"
-                     <*> v .: "height"
-                     <*> v .: "width") : a
-        | k == pack "video" =
-          (Video <$> v .: "url"
-                 <*> v .: "height"
-                 <*> v .: "width") : a
-        | k == pack "provider" =
-          (Provider <$> v .: "name"
-                    <*> v .:? "url" .!= "") : a
-        | k == pack "author" =
-          (Author <$> v .:  "name"
-                  <*> v .:?  "url" .!= ""
-                  <*> v .:? "icon_url" .!= ""
-                  <*> v .:? "proxy_icon_url" .!= "") : a
-      to_embed k (Array v) a
-        | k == pack "fields" =
-          [Field <$> i .: "name"
-                 <*> i .: "value"
-                 <*> i .: "inline"
-                 | Object i <- toList v] ++ a
+      to_embed k (Object v) a = case k of
+        "footer" -> (Footer <$> v .: "text"
+                            <*> v .:? "icon_url" .!= ""
+                            <*> v .:? "proxy_icon_url" .!= "") : a
+        "image" -> (Image <$> v .: "url"
+                          <*> v .: "proxy_url"
+                          <*> v .: "height"
+                          <*> v .: "width") : a
+        "thumbnail" -> (Thumbnail <$> v .: "url"
+                                  <*> v .: "proxy_url"
+                                  <*> v .: "height"
+                                  <*> v .: "width") : a
+        "video" -> (Video <$> v .: "url"
+                          <*> v .: "height"
+                          <*> v .: "width") : a
+        "provider" -> (Provider <$> v .: "name"
+                                <*> v .:? "url" .!= "") : a
+        "author" -> (Author <$> v .:  "name"
+                            <*> v .:?  "url" .!= ""
+                            <*> v .:? "icon_url" .!= ""
+                            <*> v .:? "proxy_icon_url" .!= "") : a
+        _ -> a
+      to_embed k (Array v) a = case k of
+        "fields" -> [Field <$> i .: "name"
+                           <*> i .: "value"
+                           <*> i .: "inline"
+                           | Object i <- toList v] ++ a
+        _ -> a
       to_embed _ _ a = a
 
 instance ToJSON Embed where
