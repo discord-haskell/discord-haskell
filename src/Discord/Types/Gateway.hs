@@ -39,7 +39,8 @@ data GatewaySendable
   | Resume T.Text String Integer
   | RequestGuildMembers Snowflake String Integer
 
-instance FromJSON Payload where
+
+instance FromJSON GatewayReceivable where
   parseJSON = withObject "payload" $ \o -> do
     op <- o .: "op" :: Parser Int
     case op of
@@ -49,16 +50,27 @@ instance FromJSON Payload where
                  Object hm -> Dispatch <$> eventParse etype hm <*> o .: "s"
                  _other -> Dispatch (UnknownEvent ("Dispatch payload wasn't an object") o)
                                   <$> o .: "s"
-      1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
+      1  -> HeartbeatRequest . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> pure Reconnect
       9  -> InvalidSession <$> o .: "d"
       10 -> do od <- o .: "d"
                int <- od .: "heartbeat_interval"
                pure (Hello int)
       11 -> pure HeartbeatAck
-      _  -> fail ("Unknown payload ID:" <> show op)
+      _  -> fail ("Unknown Receivable payload ID:" <> show op)
 
-instance ToJSON Payload where
+instance FromJSON GatewaySendable where
+  parseJSON = withObject "payload" $ \o -> do
+    op <- o .: "op" :: Parser Int
+    case op of
+      1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
+      2  -> do od <- o .: "d"
+               tok <- od .: "token"
+               compress <- od .:? "compress" .!= False
+               
+      _  -> fail ("Unknown Sendable payload ID:" <> show op)
+
+instance ToJSON GatewayEvent where
   toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
