@@ -9,7 +9,7 @@ module Discord.Gateway
 
 import Prelude hiding (log)
 import Control.Exception.Safe (finally)
-import Control.Concurrent (forkIO, killThread, readChan, newChan, dupChan, Chan, MVar)
+import Control.Concurrent (threadDelay, forkIO, killThread, readChan, newChan, dupChan, Chan, MVar)
 import Control.Monad (forever)
 import Data.Monoid ((<>))
 
@@ -28,7 +28,7 @@ chanWebSocket auth = do
   cache <- emptyCache
   cacheID <- forkIO $ addEvent cache eventsCache log
   _ <- forkIO $ finally (connectionLoop auth eventsWrite log)
-                        (killThread logid >> killThread cacheID)
+                        (threadDelay (2*10^6) >> killThread logid >> killThread cacheID)
   pure (eventsWrite, cache)
 
 
