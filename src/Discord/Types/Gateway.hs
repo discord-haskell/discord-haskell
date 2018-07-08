@@ -59,18 +59,18 @@ instance FromJSON GatewayReceivable where
       11 -> pure HeartbeatAck
       _  -> fail ("Unknown Receivable payload ID:" <> show op)
 
-instance FromJSON GatewaySendable where
-  parseJSON = withObject "payload" $ \o -> do
-    op <- o .: "op" :: Parser Int
-    case op of
-      1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
-      2  -> do od <- o .: "d"
-               tok <- od .: "token"
-               compress <- od .:? "compress" .!= False
-               
-      _  -> fail ("Unknown Sendable payload ID:" <> show op)
+-- instance FromJSON GatewaySendable where
+--   parseJSON = withObject "payload" $ \o -> do
+--     op <- o .: "op" :: Parser Int
+--     case op of
+--       1  -> Heartbeat . fromMaybe 0 . readMaybe <$> o .: "d"
+--       2  -> do od <- o .: "d"
+--                tok <- od .: "token"
+--                compress <- od .:? "compress" .!= False
+--
+--       _  -> fail ("Unknown Sendable payload ID:" <> show op)
 
-instance ToJSON GatewayEvent where
+instance ToJSON GatewaySendable where
   toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
@@ -122,4 +122,3 @@ instance ToJSON GatewayEvent where
       , "limit"    .= limit
       ]
     ]
-  toJSON _ = object []
