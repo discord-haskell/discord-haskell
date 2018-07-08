@@ -22,7 +22,16 @@ emptyCache :: IO (MVar Cache)
 emptyCache = newEmptyMVar
 
 addEvent :: MVar Cache -> Chan Event -> Chan String -> IO ()
-addEvent cache eventChan log = loop
+addEvent cache eventChan log = do
+      ready <- readChan eventChan
+      case ready of
+        (Ready _ user dmChannels _unavailableGuilds _) -> do
+          let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
+          putMVar cache (Cache user dmChans M.empty M.empty)
+          loop
+        _ -> do
+          writeChan log ("Cache error - expected Ready, but got " <> show ready)
+          addEvent cache eventChan log
   where
   loop :: IO ()
   loop = do
@@ -34,9 +43,6 @@ addEvent cache eventChan log = loop
 
 adjustCache :: Cache -> Event -> Cache
 adjustCache minfo event = case event of
-  (Ready _ user dmChannels _unavailableGuilds _) ->
-    let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-    in Cache user dmChans M.empty M.empty
   --ChannelCreate Channel
   --ChannelUpdate Channel
   --ChannelDelete Channel
