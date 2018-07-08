@@ -9,7 +9,7 @@ module Discord
   , RestPart(..)
   , restCall
   , nextEvent
-  , cache
+  , readCache
   , loginRest
   , loginRestGateway
   ) where
@@ -38,8 +38,8 @@ restCall d = writeRestCall (_discordRest d)
 nextEvent :: Discord -> IO Event
 nextEvent d = readChan (_discordEvents d)
 
-cache :: Discord -> IO Cache
-cache d = readMVar (_discordCache d)
+readCache :: Discord -> IO Cache
+readCache d = readMVar (_discordCache d)
 
 
 loginRest :: Auth -> IO RestPart
