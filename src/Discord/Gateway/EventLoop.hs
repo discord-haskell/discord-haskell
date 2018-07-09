@@ -74,12 +74,12 @@ connectionLoop auth events log = loop ConnStart
               Left e -> writeChan log ("message - error " <> show e) >> pure ConnClosed
 
 
-send :: Connection -> Payload -> Chan String -> IO ()
+send :: Connection -> GatewaySendable -> Chan String -> IO ()
 send conn payload log = do
   writeChan log ("message - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
 
-getPayload :: Connection -> Chan String -> IO (Either ConnectionException Payload)
+getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayload conn log = try $ do
   msg' <- receiveData conn
   writeChan log ("message - received " <> QL.unpack msg')
@@ -116,7 +116,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
   loop :: IO ConnLoopState
   loop = do
     eitherPayload <- getPayload conn log
-    case eitherPayload :: Either ConnectionException Payload of
+    case eitherPayload :: Either ConnectionException GatewayReceivable of
       Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes
           1000 -> ConnReconnect auth seshID <$> readIORef seqKey
@@ -130,13 +130,13 @@ eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
       Right (Dispatch event sq) -> do setSequence seqKey sq
                                       writeChan eventChan event
                                       loop
-      Right (Heartbeat sq) -> do setSequence seqKey sq
-                                 send conn (Heartbeat sq) log
-                                 loop
+      Right (HeartbeatRequest sq) -> do setSequence seqKey sq
+                                        send conn (Heartbeat sq) log
+                                        loop
       Right (Reconnect)      -> do writeChan log "Should reconnect"
                                    ConnReconnect auth seshID <$> readIORef seqKey
       Right (InvalidSession retry) -> if retry
                                       then ConnReconnect auth seshID <$> readIORef seqKey
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
-      Right p -> writeChan log ("error - Invalid Payload: " <> show p) >> pure ConnClosed
+      Right p -> writeChan log ("error - Invalid gateway payload: " <> show p) >> pure ConnClosed
