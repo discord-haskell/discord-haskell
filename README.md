@@ -55,8 +55,6 @@ In roughly the order I'm working on them:
 - Add gateway ToJSON for events
 - Double check the REST request ADT matches the API
 - Update channel types (fill out guildcategory)
-- Update types JSON, removing strict and unpack
-- Update types JSON to use 'withObject'
 - Update types JSON comments
 - More helpful README (examples, how to depend it this package)
 - Upload to Hackage
