@@ -140,6 +140,14 @@ instance FromJSON Overwrite where
               <*> o .: "allow"
               <*> o .: "deny"
 
+instance ToJSON Overwrite where
+  toJSON Overwrite{..} = object
+              [ ("id",     toJSON overwriteId)
+              , ("type",   toJSON overwriteType)
+              , ("allow",  toJSON overwriteAllow)
+              , ("deny",   toJSON overwriteDeny)
+              ]
+
 -- | Represents information about a message in a Discord channel.
 data Message = Message
   { messageId           :: Snowflake       -- ^ The id of the message
