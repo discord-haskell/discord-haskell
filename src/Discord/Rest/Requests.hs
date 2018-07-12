@@ -302,7 +302,8 @@ jsonRequest c = case c of
   (DeleteChannel chan) ->
       Delete (channels // chan) mempty
   (GetChannelMessages chan (n,timing)) ->
-      let options = "limit" R.=: n <> timingToQuery timing
+      let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+          options = "limit" R.=: n' <> timingToQuery timing
       in Get (channels // chan /: "messages") options
   (GetChannelMessage chan msg) ->
       Get (channels // chan /: "messages" // msg) mempty
