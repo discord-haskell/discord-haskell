@@ -6,7 +6,6 @@ module Discord.Types.Guild where
 import Data.Time.Clock
 
 import Data.Aeson
-import Control.Applicative ((<|>))
 
 import Discord.Types.Channel
 import Discord.Types.Prelude

@@ -5,12 +5,9 @@
 --   Gateway
 module Discord.Types.Gateway where
 
-import Control.Monad (mzero)
 import System.Info
 
-import qualified Data.Text.Encoding as TE
 import qualified Data.Text as T
-import qualified Data.ByteString as Q
 import Data.Monoid ((<>))
 import Data.Aeson
 import Data.Aeson.Types
