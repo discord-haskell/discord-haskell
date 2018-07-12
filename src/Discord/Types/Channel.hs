@@ -128,7 +128,7 @@ isGuildChannel c = case c of
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
   { overwriteId    :: Snowflake -- ^ 'Role' or 'User' id
-  , overWriteType  :: String    -- ^ Either "role" or "member
+  , overwriteType  :: String    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
   } deriving (Show, Eq)
