@@ -10,12 +10,12 @@ module Discord.Rest.HTTP
 
 import Data.Semigroup ((<>))
 
-import Control.Concurrent.MVar
 import Control.Concurrent (threadDelay)
+import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Control.Exception (throwIO)
 import Data.Ix (inRange)
-import Data.Time.Clock.POSIX
+import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
 import Data.Default (def)
