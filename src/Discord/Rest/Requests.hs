@@ -41,7 +41,7 @@ data Request a where
   -- | Gets a messages from a channel with limit of 100 per request.
   GetChannelMessages      :: Snowflake -> (Int, MessageTiming) -> Request [Message]
   -- | Gets a message in a channel by its id.
-  GetChannelMessage       :: Snowflake -> Snowflake -> Request Message
+  GetChannelMessage       :: (Snowflake, Snowflake) -> Request Message
   -- | Sends a message to a channel.
   CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> Request Message
   -- | Sends a message with a file to a channel.
@@ -220,7 +220,7 @@ majorRoute c = case c of
   (ModifyChannel chan _) ->            "mod_chan " <> show chan
   (DeleteChannel chan) ->              "mod_chan " <> show chan
   (GetChannelMessages chan _) ->            "msg " <> show chan
-  (GetChannelMessage chan _) ->         "get_msg " <> show chan
+  (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _ _) ->               "msg " <> show chan
   (UploadFile chan _ _) ->                  "msg " <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
@@ -305,7 +305,7 @@ jsonRequest c = case c of
       let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> timingToQuery timing
       in Get (channels // chan /: "messages") options
-  (GetChannelMessage chan msg) ->
+  (GetChannelMessage (chan, msg)) ->
       Get (channels // chan /: "messages" // msg) mempty
   (CreateMessage chan msg embed) ->
       let content = ["content" .= msg] <> maybeEmbed embed
