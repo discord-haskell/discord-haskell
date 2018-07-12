@@ -108,7 +108,6 @@ compileRequest auth request = action
                                  R.req R.POST   url b        R.lbsResponse (authopt <> opts)
 
 instance R.MonadHttp IO where
-  -- :: R.MonadHttp m => R.HttpException -> m a
   handleHttpException = throwIO
   getHttpConfig = pure $ def { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
 
