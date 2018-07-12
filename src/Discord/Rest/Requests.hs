@@ -1,6 +1,7 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
@@ -34,7 +35,7 @@ data Request a where
   -- | Gets a channel by its id.
   GetChannel              :: Snowflake -> Request Channel
   -- | Edits channels options.
-  ModifyChannel           :: ToJSON o  => Snowflake -> o -> Request Channel
+  ModifyChannel           :: Snowflake -> ModifyChannelOptions -> Request Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
   DeleteChannel           :: Snowflake -> Request Channel
   -- | Gets a messages from a channel with limit of 100 per request.
@@ -190,6 +191,28 @@ timingToQuery t = case t of
   (Around snow) -> "around" R.=: show snow
   (Before snow) -> "before" R.=: show snow
   (After  snow) -> "after"  R.=: show snow
+
+data ModifyChannelOptions = ModifyChannelOptions
+  { modifyName                 :: Maybe String
+  , modifyPosition             :: Maybe Integer
+  , modifyTopic                :: Maybe String
+  , modifyNSFW                 :: Maybe Bool
+  , modifyBitrate              :: Maybe Integer
+  , modifyUserRateLimit        :: Maybe Integer
+  , modifyPermissionOverwrites :: Maybe [Overwrite]
+  , modifyParentId             :: Maybe Snowflake
+  }
+
+instance ToJSON ModifyChannelOptions where
+  toJSON ModifyChannelOptions{..} = object [(name, val) | (name, Just val) <-
+               [("name",                   toJSON <$> modifyName),
+                ("position",               toJSON <$> modifyPosition),
+                ("topic",                  toJSON <$> modifyTopic),
+                ("nsfw",                   toJSON <$> modifyNSFW),
+                ("bitrate",                toJSON <$> modifyBitrate),
+                ("user_limit",             toJSON <$> modifyUserRateLimit),
+                ("permission_overwrites",  toJSON <$> modifyPermissionOverwrites),
+                ("parent_id",              toJSON <$> modifyParentId) ] ]
 
 majorRoute :: Request a -> String
 majorRoute c = case c of
