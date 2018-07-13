@@ -46,6 +46,8 @@ data Request a where
   CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> Request Message
   -- | Sends a message with a file to a channel.
   UploadFile              :: Snowflake -> FilePath -> BL.ByteString -> Request Message
+  -- | Add an emoji reaction to a message. ID must be present for custom emoji
+  CreateReaction          :: (Snowflake, Snowflake) -> T.Text -> Maybe Snowflake -> Request ()
   -- | Edits a message content.
   EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed -> Request Message
   -- | Deletes a message.
@@ -223,6 +225,7 @@ majorRoute c = case c of
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _ _) ->               "msg " <> show chan
   (UploadFile chan _ _) ->                  "msg " <> show chan
+  (CreateReaction (chan, _) _ _) ->    "reactions" <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
@@ -315,6 +318,10 @@ jsonRequest c = case c of
       let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
+  (CreateReaction (chan, msgid) name rID) ->
+      let emoji = T.unpack name <> maybe "" ((<>) ":" . show) rID
+      in Put (channels // chan /: "messages" // msgid /: "reactions" // emoji /: "@me" )
+             R.NoReqBody mempty
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
