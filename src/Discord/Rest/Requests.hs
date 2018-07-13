@@ -53,6 +53,9 @@ data Request a where
   -- | Remove a Reaction someone else added
   DeleteUserReaction      :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
                                                     -> Snowflake -> Request ()
+  -- | List of users that reacted with this emoji
+  GetReactions            :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
+                                                    -> (Int, ReactionTiming) -> Request ()
   -- | Edits a message content.
   EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed -> Request Message
   -- | Deletes a message.
@@ -188,6 +191,15 @@ data Request a where
   -- | Create a new DM channel with a user. Returns a DM 'Channel' object.
   CreateDM             :: Snowflake -> Request Channel
 
+-- | Data constructor for GetReaction requests
+data ReactionTiming = BeforeReaction Snowflake
+                    | AfterReaction Snowflake
+
+reactionTimingToQuery :: R.QueryParam p => ReactionTiming -> p
+reactionTimingToQuery t = case t of
+  (BeforeReaction snow) -> "before" R.=: show snow
+  (AfterReaction snow) -> "after"  R.=: show snow
+
 -- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
 data MessageTiming = AroundMessage Snowflake
                    | BeforeMessage Snowflake
@@ -233,6 +245,7 @@ majorRoute c = case c of
   (CreateReaction (chan, _) _) ->          "react" <> show chan
   (DeleteOwnReaction (chan, _) _) ->       "react" <> show chan
   (DeleteUserReaction (chan, _) _ _) ->    "react" <> show chan
+  (GetReactions (chan, _) _ _) ->          "react" <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
@@ -335,6 +348,12 @@ jsonRequest c = case c of
   (DeleteUserReaction (chan, msgid) (name, rID) uID) ->
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
       in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
+  (GetReactions (chan, msgid) (name, rID) (n, timing)) ->
+      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+          n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+          options = "limit" R.=: n' <> reactionTimingToQuery timing
+      in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji )
+             R.NoReqBody options
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
