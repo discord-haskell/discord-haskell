@@ -352,8 +352,7 @@ jsonRequest c = case c of
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
           n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
-      in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji )
-             R.NoReqBody options
+      in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
