@@ -24,7 +24,7 @@ it can't lookup guilds/channels/messages by name
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
 [examples/rest.hs](./examples/rest.hs), and
-[examples/ping-pong.hs](./examples/ping-pong.hs) usually work
+[examples/ping-pong.hs](./examples/ping-pong.hs)
 
 ## Overview
 
@@ -47,16 +47,15 @@ I have since rewritten all of the rest and gateway logic.
 
 In roughly the order I'm working on them:
 
-- Rework gateway FromJSON parsing
-- Add all gateway types (emoji removed, etc)
+- Double check the REST request ADT matches the API
 - Add      [Activity object](https://discordapp.com/developers/docs/topics/gateway#activity-object) for PresenceInfo in the Event ADT
 - Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
 - Add neat [presence adt](https://discordapp.com/developers/docs/topics/gateway#presence-update) handling
-- Add gateway ToJSON for events
-- Double check the REST request ADT matches the API
+- Add all gateway types (emoji removed, etc)
 - Update channel types (fill out guildcategory)
-- Update types JSON comments
 - More helpful README (examples, how to depend it this package)
+- Add gateway ToJSON for events
+- Update types JSON comments
 - Upload to Hackage
 - Rewrite rate-limiting loop to use a PSQueue for rate limited requests
 - Add the two other auth options besides Bot: Client & Bearer
