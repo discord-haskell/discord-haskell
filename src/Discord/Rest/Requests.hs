@@ -230,9 +230,9 @@ majorRoute c = case c of
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _ _) ->               "msg " <> show chan
   (UploadFile chan _ _) ->                  "msg " <> show chan
-  (CreateReaction (chan, _) (_, _)) ->     "react" <> show chan
-  (DeleteOwnReaction (chan, _) (_, _)) ->  "react" <> show chan
-  (DeleteUserReaction (chan, _) (_, _) _) -> "react" <> show chan
+  (CreateReaction (chan, _) _) ->          "react" <> show chan
+  (DeleteOwnReaction (chan, _) _) ->       "react" <> show chan
+  (DeleteUserReaction (chan, _) _ _) ->    "react" <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
