@@ -48,6 +48,11 @@ data Request a where
   UploadFile              :: Snowflake -> FilePath -> BL.ByteString -> Request Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
   CreateReaction          :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake) -> Request ()
+  -- | Remove a Reaction this bot added
+  DeleteOwnReaction       :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake) -> Request ()
+  -- | Remove a Reaction someone else added
+  DeleteUserReaction      :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
+                                                    -> Snowflake -> Request ()
   -- | Edits a message content.
   EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed -> Request Message
   -- | Deletes a message.
@@ -226,6 +231,8 @@ majorRoute c = case c of
   (CreateMessage chan _ _) ->               "msg " <> show chan
   (UploadFile chan _ _) ->                  "msg " <> show chan
   (CreateReaction (chan, _) (_, _)) ->     "react" <> show chan
+  (DeleteOwnReaction (chan, _) (_, _)) ->  "react" <> show chan
+  (DeleteUserReaction (chan, _) (_, _) _) -> "react" <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
@@ -319,10 +326,15 @@ jsonRequest c = case c of
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
   (CreateReaction (chan, msgid) (name, rID)) ->
-      let emoji :: T.Text
-          emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
       in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
              R.NoReqBody mempty
+  (DeleteOwnReaction (chan, msgid) (name, rID)) ->
+      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
+  (DeleteUserReaction (chan, msgid) (name, rID) uID) ->
+      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
