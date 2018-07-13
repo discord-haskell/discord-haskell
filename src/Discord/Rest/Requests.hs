@@ -56,6 +56,8 @@ data Request a where
   -- | List of users that reacted with this emoji
   GetReactions            :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
                                                     -> (Int, ReactionTiming) -> Request ()
+  -- | Delete all reactions on a message
+  DeleteAllReactions      :: (Snowflake, Snowflake) -> Request ()
   -- | Edits a message content.
   EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed -> Request Message
   -- | Deletes a message.
@@ -246,6 +248,7 @@ majorRoute c = case c of
   (DeleteOwnReaction (chan, _) _) ->       "react" <> show chan
   (DeleteUserReaction (chan, _) _ _) ->    "react" <> show chan
   (GetReactions (chan, _) _ _) ->          "react" <> show chan
+  (DeleteAllReactions (chan, _)) ->        "react" <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
@@ -353,6 +356,8 @@ jsonRequest c = case c of
           n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
       in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
+  (DeleteAllReactions (chan, msgid)) ->
+      Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
