@@ -319,8 +319,9 @@ jsonRequest c = case c of
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
   (CreateReaction (chan, msgid) name rID) ->
-      let emoji = T.unpack name <> maybe "" ((<>) ":" . show) rID
-      in Put (channels // chan /: "messages" // msgid /: "reactions" // emoji /: "@me" )
+      let emoji :: T.Text
+          emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+      in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
              R.NoReqBody mempty
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
