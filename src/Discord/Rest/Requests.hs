@@ -189,15 +189,15 @@ data Request a where
   CreateDM             :: Snowflake -> Request Channel
 
 -- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
-data MessageTiming = Around Snowflake
-                   | Before Snowflake
-                   | After Snowflake
+data MessageTiming = AroundMessage Snowflake
+                   | BeforeMessage Snowflake
+                   | AfterMessage Snowflake
 
-timingToQuery :: R.QueryParam p => MessageTiming -> p
-timingToQuery t = case t of
-  (Around snow) -> "around" R.=: show snow
-  (Before snow) -> "before" R.=: show snow
-  (After  snow) -> "after"  R.=: show snow
+messageTimingToQuery :: R.QueryParam p => MessageTiming -> p
+messageTimingToQuery t = case t of
+  (AroundMessage snow) -> "around" R.=: show snow
+  (BeforeMessage snow) -> "before" R.=: show snow
+  (AfterMessage snow) -> "after"  R.=: show snow
 
 data ModifyChannelOptions = ModifyChannelOptions
   { modifyName                 :: Maybe String
@@ -313,7 +313,7 @@ jsonRequest c = case c of
       Delete (channels // chan) mempty
   (GetChannelMessages chan (n,timing)) ->
       let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
-          options = "limit" R.=: n' <> timingToQuery timing
+          options = "limit" R.=: n' <> messageTimingToQuery timing
       in Get (channels // chan /: "messages") options
   (GetChannelMessage (chan, msg)) ->
       Get (channels // chan /: "messages" // msg) mempty
