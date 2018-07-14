@@ -15,7 +15,8 @@ import qualified Data.Text as T
 
 import Discord.Types.Prelude (Snowflake)
 import Discord.Types.Channel
-import Discord.Types.Guild (Guild, Unavailable, GuildMember, Role, Emoji)
+import Discord.Types.Guild (Guild, Unavailable, GuildInfo,
+                            GuildMember, Role, Emoji)
 
 
 -- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
@@ -26,7 +27,7 @@ data Event =
   | ChannelUpdate           Channel
   | ChannelDelete           Channel
   | ChannelPinsUpdate       Snowflake (Maybe UTCTime)
-  | GuildCreate             Guild
+  | GuildCreate             Guild GuildInfo
   | GuildUpdate             Guild
   | GuildDelete             Unavailable
   | GuildBanAdd             Snowflake User
@@ -122,7 +123,7 @@ eventParse t o = case t of
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
                                       pure (ChannelPinsUpdate id utc)
-    "GUILD_CREATE"              -> GuildCreate               <$> reparse o
+    "GUILD_CREATE"              -> GuildCreate               <$> reparse o <*> reparse o
     "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> GuildDelete               <$> reparse o
     "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> reparse o

@@ -15,7 +15,7 @@ import Discord.Types
 data Cache = Cache
             { _currentUser :: User
             , _dmChannels :: M.Map Snowflake Channel
-            , _guilds :: M.Map Snowflake Guild
+            , _guilds :: M.Map Snowflake (Guild, GuildInfo)
             , _channels :: M.Map Snowflake Channel
             } deriving (Show)
 
@@ -47,9 +47,9 @@ adjustCache minfo event = case event of
   --ChannelCreate Channel
   --ChannelUpdate Channel
   --ChannelDelete Channel
-  GuildCreate guild ->
-    let newChans = map (setChanGuildID (guildId guild)) $ guildChannels guild
-        g = M.insert (guildId guild) (guild { guildChannels = newChans }) (_guilds minfo)
+  GuildCreate guild info ->
+    let newChans = map (setChanGuildID (guildId guild)) $ guildChannels info
+        g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (_guilds minfo)
         c = M.unionWith (\a _ -> a)
                         (M.fromList [ (channelId ch, ch) | ch <- newChans ])
                         (_channels minfo)

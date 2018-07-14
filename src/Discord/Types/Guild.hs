@@ -54,13 +54,6 @@ data Guild = Guild
       , guildFeatures            :: [String]
       , guildMultiFactAuth       :: !Integer
       , guildApplicationId       ::  Maybe Snowflake
-      , guildJoinedAt            ::  Maybe UTCTime
-      , guildLarge               ::  Maybe Bool
-      , guildMemberCount         ::  Maybe Integer
-   -- , guildVoiceStates         :: [VoiceState]     -- todo have to add voice state data type
-      , guildMembers             ::  Maybe [GuildMember]
-      , guildChannels            :: [Channel]        -- ^ Channels in the guild (sent in GuildCreate)
-                                                     -- , guildPresences           ::  Maybe [Presence]
       } deriving Show
 
 instance FromJSON Guild where
@@ -84,12 +77,6 @@ instance FromJSON Guild where
           <*> o .:  "features"
           <*> o .:  "mfa_level"
           <*> o .:? "application_id"
-          <*> o .:? "joined_at"
-          <*> o .:? "large"
-          <*> o .:? "member_count"
-       -- <*> o .:  "voice_states"
-          <*> o .:? "members"
-          <*> o .:  "channels"
 
 data Unavailable = Unavailable
       { idOnceAvailable :: !Snowflake
@@ -98,6 +85,25 @@ data Unavailable = Unavailable
 instance FromJSON Unavailable where
   parseJSON = withObject "Unavailable" $ \o ->
        Unavailable <$> o .: "id"
+
+data GuildInfo = GuildInfo
+      { guildJoinedAt    :: UTCTime
+      , guildLarge       :: Bool
+      , guildMemberCount :: Integer
+   -- , guildVoiceStates :: [VoiceState]  -- (without guildid) todo have to add voice state data type
+      , guildMembers     :: [GuildMember]
+      , guildChannels    :: [Channel]     -- ^ Channels in the guild (sent in GuildCreate)
+   -- , guildPresences   :: [Presence]
+      } deriving Show
+
+instance FromJSON GuildInfo where
+  parseJSON = withObject "GuildInfo" $ \o ->
+    GuildInfo <$> o .: "joined_at"
+              <*> o .: "large"
+              <*> o .: "member_count"
+           -- <*> o .: "voice_states"
+              <*> o .: "members"
+              <*> o .: "channels"
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
