@@ -41,6 +41,25 @@ has the most recent (potentially) breaking changes.
 [examples/rest.hs](./examples/rest.hs), and
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
+6 Add this library to your dependencies. The library
+won't be uploaded to hackage for a while. In the meantime,
+use github. discord-haskell is version
+bound to match stackage lts-11.10
+
+```
+# in stack.yaml
+extra-deps:
+- git: git@github.com:aquarial/discord-haskell.git
+  commit: <most recent master commit>
+  extra-dep: true
+
+# in project.cabal
+  build-depends:       base
+                     , discord-haskell
+
+```
+
+
 ## Overview
 
 [discord/Rest/HTTPS.hs](./src/Discord/Rest/HTTP.hs)
