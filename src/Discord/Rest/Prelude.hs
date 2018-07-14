@@ -1,11 +1,14 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Utility and base types and functions for the Discord Rest API
 module Discord.Rest.Prelude where
 
+import Data.Default (def)
+import Control.Exception (throwIO)
+import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
 import Network.HTTP.Req ((=:))
 import qualified Data.Text as T
@@ -31,11 +34,11 @@ type Option = R.Option 'R.Https
 
 -- | Represtents a HTTP request made to an API that supplies a Json response
 data JsonRequest where
-  Delete ::                 R.Url 'R.Https         -> Option -> JsonRequest
-  Get    ::                 R.Url 'R.Https         -> Option -> JsonRequest
-  Patch  :: R.HttpBody a => R.Url 'R.Https ->    a -> Option -> JsonRequest
-  Put    :: R.HttpBody a => R.Url 'R.Https ->    a -> Option -> JsonRequest
-  Post   :: R.HttpBody a => R.Url 'R.Https -> IO a -> Option -> JsonRequest
+  Delete ::                 R.Url 'R.Https ->      Option -> JsonRequest
+  Get    ::                 R.Url 'R.Https ->      Option -> JsonRequest
+  Patch  :: R.HttpBody a => R.Url 'R.Https -> a -> Option -> JsonRequest
+  Put    :: R.HttpBody a => R.Url 'R.Https -> a -> Option -> JsonRequest
+  Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> Option -> JsonRequest
 
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
@@ -51,4 +54,12 @@ rangeToOption (Range a b l)
   <> "before" =: show b
   <> "limit"  =: show l
 
+-- | Same Monad as IO. Overwrite Req settings
+newtype RestIO a = RestIO { restIOtoIO :: IO a }
+  deriving (Functor, Applicative, Monad, MonadIO)
 
+instance R.MonadHttp RestIO where
+  -- | Throw actual exceptions
+  handleHttpException = liftIO . throwIO
+  -- | Don't throw exceptions on http error codes like 404
+  getHttpConfig = pure $ def { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
