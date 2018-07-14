@@ -1,9 +1,10 @@
 # discord-haskell
 
 The library is usable for simple gateway & rest bots.
-The two largest missing features are:
-it's missing some gateway & rest types and
-the cache isn't updated.
+The three largest largest issues are:
+1) in ghci, the gateway thread isn't killed on ^C (exit ghci and reopen to kill threads)
+2) cache isn't updated.
+3) missing some gateway & rest types and
 
 Note the difference between `rest` and `restCall`. If you don't want
 to use `nextEvent` you should login with `loginRest`. `loginRestGateway` 
@@ -58,18 +59,6 @@ extra-deps:
                      , discord-haskell
 
 ```
-
-
-## Overview
-
-[discord/Rest/HTTPS.hs](./src/Discord/Rest/HTTP.hs)
- provides a Chan that executes each http request it gets respecting the rate limits
-
-[discord/Rest.hs](./src/Discord/Rest.hs) provides
-an IO action that simplifies executing http requests
-
-[discord/Gateway.hs](./src/Discord/Gateway.hs)
-can construct a real time Chan of `Event`s the user can read from
 
 ## History
 
