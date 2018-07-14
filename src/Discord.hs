@@ -49,6 +49,6 @@ loginRest auth = do
 
 loginRestGateway :: Auth -> IO Discord
 loginRestGateway auth = do
-  restHandler <- createHandler auth
-  (chan,info) <- chanWebSocket auth
+  restHandler  <- createHandler auth
+  (chan, info) <- chanWebSocket auth
   pure (Discord restHandler chan info)

@@ -41,9 +41,9 @@ writeRestCall (RestChan c) req = do
   r <- readMVar m
   pure $ case decode <$> r of
     Resp (Just o) -> Resp o
-    Resp Nothing -> NoResp
-    NoResp -> NoResp
-    BadResp err -> BadResp err
+    Resp Nothing  -> NoResp
+    NoResp        -> NoResp
+    BadResp err   -> BadResp err
 
 
 

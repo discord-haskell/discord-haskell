@@ -33,5 +33,5 @@ chanWebSocket auth = do
 
 
 logger :: Chan String -> Bool -> IO ()
-logger log True = forever $ readChan log >>= putStrLn . ((<>) "\n")
+logger log True  = forever $ readChan log >>= putStrLn . ((<>) "\n")
 logger log False = forever $ readChan log >>= \_ -> pure ()

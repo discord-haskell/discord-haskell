@@ -37,7 +37,7 @@ data ConnectionData = ConnData { connection :: Connection
 
 connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
 connectionLoop auth events log = loop ConnStart
-  where
+ where
   loop :: ConnLoopState -> IO ()
   loop s = do
     writeChan log ("conn loop: " <> show s)
