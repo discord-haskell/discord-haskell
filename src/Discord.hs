@@ -26,6 +26,13 @@ import Discord.Gateway.Cache
 
 newtype RestPart = RestPart { rest :: forall a. FromJSON a => Request a -> IO (Resp a) }
 
+loginRest :: Auth -> IO RestPart
+loginRest auth = do
+  restHandler <- createHandler auth
+  pure (RestPart (writeRestCall restHandler))
+
+
+
 data Discord = Discord
   { _discordRest :: RestChan
   , _discordEvents :: Chan Event
@@ -40,12 +47,6 @@ nextEvent d = readChan (_discordEvents d)
 
 readCache :: Discord -> IO Cache
 readCache d = readMVar (_discordCache d)
-
-
-loginRest :: Auth -> IO RestPart
-loginRest auth = do
-  restHandler <- createHandler auth
-  pure (RestPart (writeRestCall restHandler))
 
 loginRestGateway :: Auth -> IO Discord
 loginRestGateway auth = do
