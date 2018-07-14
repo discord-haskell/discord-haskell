@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad (forever)
 import Data.Char (isSpace)
 import Data.Monoid ((<>))
 import qualified Data.Text as T

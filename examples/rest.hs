@@ -21,6 +21,8 @@ restExample = do
   chan <- rest dis (GetChannel 453207241294610444)
   putStrLn ("Channel object: " <> show chan)
 
+  putStrLn ""
+
   case msg of
     Resp m -> do r <- rest dis (CreateReaction (453207241294610444, messageId m) ("🐮", Nothing))
                  putStrLn ("Reaction resp: " <> show r)
