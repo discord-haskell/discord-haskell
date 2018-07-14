@@ -100,13 +100,15 @@ heartbeat conn interval seqKey log = do
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
-startEventStream :: Connection -> Chan Event -> Auth -> String -> Int -> Integer -> Chan String -> IO ConnLoopState
+startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
+                               -> Integer -> Chan String -> IO ConnLoopState
 startEventStream conn events (Bot auth) seshID interval seqN log = do
   seqKey <- newIORef seqN
   heart <- forkIO $ heartbeat conn interval seqKey log
 
   let err :: SomeException -> IO ConnLoopState
-      err e = writeChan log ("error - " <> show e) >> ConnReconnect auth seshID <$> readIORef seqKey
+      err e = do writeChan log ("error - " <> show e)
+                 ConnReconnect auth seshID <$> readIORef seqKey
   handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey log)
                        (killThread heart)
 
