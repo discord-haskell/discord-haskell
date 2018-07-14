@@ -4,8 +4,7 @@ packages:
 
 resolver: lts-11.10
 
-extra-deps:
-- url-2.1.3
+extra-deps: []
 
 nix:
   packages: [ zlib, gmp ]
