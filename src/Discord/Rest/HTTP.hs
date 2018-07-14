@@ -41,7 +41,6 @@ restLoop auth urls = loop M.empty
     curtime <- getPOSIXTime
     case compareRate ratelocker route curtime of
       Locked -> do writeChan urls ((route, request), thread)
-                   threadDelay (300 * 1000)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
                       (resp, retry) <- tryRequest action
