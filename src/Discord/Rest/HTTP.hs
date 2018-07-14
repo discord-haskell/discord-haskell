@@ -46,7 +46,7 @@ restLoop auth urls = loop M.empty
                       (resp, retry) <- tryRequest action
                       case resp of
                         Resp bs -> putMVar thread (Resp bs)
-                        NoResp        -> putMVar thread NoResp
+                        NoResp  -> putMVar thread NoResp
                         BadResp "Try Again" -> writeChan urls ((route,request), thread)
                         BadResp r -> putMVar thread (BadResp r)
                       case retry of
