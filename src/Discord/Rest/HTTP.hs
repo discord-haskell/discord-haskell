@@ -10,15 +10,14 @@ module Discord.Rest.HTTP
 
 import Data.Semigroup ((<>))
 
+import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
-import Control.Exception (throwIO)
 import Data.Ix (inRange)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
-import Data.Default (def)
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
@@ -43,7 +42,7 @@ restLoop auth urls = loop M.empty
       Locked -> do writeChan urls ((route, request), thread)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
-                      (resp, retry) <- tryRequest action
+                      (resp, retry) <- restIOtoIO (tryRequest action)
                       case resp of
                         Resp bs -> putMVar thread (Resp bs)
                         NoResp  -> putMVar thread NoResp
@@ -70,10 +69,10 @@ data Timeout = GlobalWait POSIXTime
              | NoLimit
 
 
-tryRequest :: IO R.LbsResponse -> IO (Resp QL.ByteString, Timeout)
+tryRequest :: RestIO R.LbsResponse -> RestIO (Resp QL.ByteString, Timeout)
 tryRequest action = do
   resp <- action
-  next10 <- round . (+10) <$> getPOSIXTime
+  next10 <- liftIO (round . (+10) <$> getPOSIXTime)
   let code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
@@ -94,7 +93,7 @@ tryRequest action = do
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
 
-compileRequest :: Auth -> JsonRequest -> IO R.LbsResponse
+compileRequest :: Auth -> JsonRequest -> RestIO R.LbsResponse
 compileRequest auth request = action
   where
   authopt = authHeader auth
@@ -105,8 +104,4 @@ compileRequest auth request = action
     (Put    url body opts) -> R.req R.PUT    url body        R.lbsResponse (authopt <> opts)
     (Post   url body opts) -> do b <- body
                                  R.req R.POST   url b        R.lbsResponse (authopt <> opts)
-
-instance R.MonadHttp IO where
-  handleHttpException = throwIO
-  getHttpConfig = pure $ def { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
 
