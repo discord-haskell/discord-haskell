@@ -16,13 +16,13 @@ import qualified Network.HTTP.Req as R
 
 import Discord.Types
 
-
+-- | Discord requires HTTP headers for authentication.
 authHeader :: Auth -> R.Option 'R.Https
 authHeader auth =
           R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
-  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.2.0)"
+  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.3.0)"
 
 -- Append to an URL
 infixl 5 //
