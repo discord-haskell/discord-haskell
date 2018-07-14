@@ -12,4 +12,5 @@ _site
 *.hi
 *.o
 
+the-log-of-discord-haskell.txt
 examples/auth-token.secret
