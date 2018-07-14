@@ -27,7 +27,7 @@ authHeader auth =
 -- Append to an URL
 infixl 5 //
 (//) :: Show a => R.Url scheme -> a -> R.Url scheme
-url // part = url R./: T.pack (show part)
+(//) url part = url R./: T.pack (show part)
 
 
 type Option = R.Option 'R.Https
