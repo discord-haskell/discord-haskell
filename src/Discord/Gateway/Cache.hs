@@ -38,7 +38,6 @@ addEvent cache eventChan log = do
   loop = do
     event <- readChan eventChan
     minfo <- takeMVar cache
-    writeChan log ("cache - " <> show (adjustCache minfo event))
     putMVar cache (adjustCache minfo event)
     loop
 
