@@ -22,7 +22,7 @@ restExample = do
   putStrLn ("Channel object: " <> show chan)
 
   case msg of
-    Resp m -> do r <- rest dis (CreateReaction (453207241294610444, messageId m) "🐮" Nothing)
+    Resp m -> do r <- rest dis (CreateReaction (453207241294610444, messageId m) ("🐮", Nothing))
                  putStrLn ("Reaction resp: " <> show r)
     _ -> putStrLn "Creating the message failed, couldn't react"
 

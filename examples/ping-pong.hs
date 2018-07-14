@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad (forever, when, void)
+import Control.Monad (forever, when)
 import Data.Char (isSpace, toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
