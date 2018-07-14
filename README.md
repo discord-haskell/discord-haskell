@@ -3,7 +3,7 @@
 The library is usable for simple gateway & rest bots.
 The two largest missing features are:
 it's missing some gateway & rest types and
-the cache isn't updated
+the cache isn't updated.
 
 Note the difference between `rest` and `restCall`. If you don't want
 to use `nextEvent` login with `loginRest`. `loginRestGateway` uses
@@ -17,6 +17,8 @@ loginRestGateway :: Auth -> IO Discord
 restCall :: FromJSON a => Discord -> Request a -> IO (Resp a)
 nextEvent :: Discord -> IO Event
 ```
+
+If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
 The examples will work on the `master` branch. The `dev` branch
 has the most recent (potentially) breaking changes.

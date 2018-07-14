@@ -24,7 +24,8 @@ chanWebSocket auth = do
   log <- newChan
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
-  logid <- forkIO (logger log False)
+  writeFile "the-log-of-discord-haskell.txt" ""
+  logid <- forkIO (logger log True)
   cache <- emptyCache
   cacheID <- forkIO $ addEvent cache eventsCache log
   _ <- forkIO $ finally (connectionLoop auth eventsWrite log)
@@ -33,5 +34,9 @@ chanWebSocket auth = do
 
 
 logger :: Chan String -> Bool -> IO ()
-logger log True  = forever $ readChan log >>= putStrLn . ((<>) "\n")
 logger log False = forever $ readChan log >>= \_ -> pure ()
+logger log True  = forever $ do
+  x <- readChan log
+  let line = x <> "\n\n"
+  appendFile "the-log-of-discord-haskell.txt" line
+
