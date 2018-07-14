@@ -6,16 +6,16 @@ it's missing some gateway & rest types and
 the cache isn't updated.
 
 Note the difference between `rest` and `restCall`. If you don't want
-to use `nextEvent` login with `loginRest`. `loginRestGateway` uses
-a `Chan` that will fill up as time goes on.
+to use `nextEvent` you should login with `loginRest`. `loginRestGateway` 
+uses a `Chan` that will fill up as time goes on.
 
-```
-loginRest :: Auth -> IO RestPart
+```haskell
 rest :: FromJSON a => RestPart -> Request a -> IO (Resp a)
+loginRest :: Auth -> IO RestPart
 
-loginRestGateway :: Auth -> IO Discord
 restCall :: FromJSON a => Discord -> Request a -> IO (Resp a)
 nextEvent :: Discord -> IO Event
+loginRestGateway :: Auth -> IO Discord
 ```
 
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
