@@ -58,7 +58,7 @@ connectionLoop auth events log = loop ConnStart
                   _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
       (ConnReconnect tok seshID seqID) -> do
-          loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+          next <- try $ runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
             send conn (Resume tok seshID seqID) log
             writeChan log "Resuming???"
             eitherPayload <- getPayload conn log
@@ -73,6 +73,12 @@ connectionLoop auth events log = loop ConnStart
               Right payload -> do writeChan log ("Why did they send a: " <> show payload)
                                   pure ConnClosed
               Left e -> writeChan log ("message - error " <> show e) >> pure ConnClosed
+          case next :: Either SomeException ConnLoopState of
+            Left e -> do writeChan log ("exception - connecting: " <> show e)
+                         t <- getRandomR (3,10)
+                         threadDelay (t * 10^6)
+                         loop (ConnReconnect tok seshID seqID)
+            Right n -> loop n
 
 
 send :: Connection -> GatewaySendable -> Chan String -> IO ()
