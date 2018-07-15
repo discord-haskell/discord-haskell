@@ -72,7 +72,7 @@ instance FromJSON ReactionInfo where
 
 data PresenceInfo = PresenceInfo
   { presenceUserId  :: Snowflake
-  , presenceRoles   :: [Role]
+  , presenceRoles   :: [Snowflake]
   -- , presenceGame :: Maybe Activity
   , presenceGuildId :: Snowflake
   , presencetatus   :: String
