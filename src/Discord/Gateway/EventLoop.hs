@@ -118,15 +118,15 @@ startEventStream conn events (Bot auth) seshID interval seqN log = do
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("error - " <> show e)
                  ConnReconnect auth seshID <$> readIORef seqKey
-  handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey log)
+  handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey interval log)
                        (killThread heart)
 
-eventStream :: ConnectionData -> IORef Integer -> Chan String -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey log = loop
+eventStream :: ConnectionData -> IORef Integer -> Int -> Chan String -> IO ConnLoopState
+eventStream (ConnData conn seshID auth eventChan) seqKey interval log = loop
   where
   loop :: IO ConnLoopState
   loop = do
-    eitherPayload <- getPayload conn log
+    eitherPayload <- getPayloadTimeout conn interval log
     case eitherPayload :: Either ConnectionException GatewayReceivable of
       Left (CloseRequest code str) -> case code of
           -- see discord documentation on gateway close event codes
