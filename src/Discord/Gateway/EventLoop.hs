@@ -10,6 +10,7 @@ import Prelude hiding (log)
 
 import Control.Monad (forever, (<=<))
 import Control.Monad.Random (getRandomR)
+import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
 import Control.Exception.Safe (try, finally, handle, SomeException)
 import Control.Concurrent (threadDelay, killThread, forkIO)
@@ -78,6 +79,14 @@ send :: Connection -> GatewaySendable -> Chan String -> IO ()
 send conn payload log = do
   writeChan log ("message - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
+
+getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
+getPayloadTimeout conn interval log = do
+  res <- race (threadDelay (interval * 1000 * 3 `div` 2))
+              (getPayload conn log)
+  case res of
+    Left () -> pure (Right (InvalidSession True))
+    Right other -> pure other
 
 getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayload conn log = try $ do
