@@ -6,6 +6,7 @@ module Discord.Types.Guild where
 import Data.Time.Clock
 
 import Data.Aeson
+import qualified Data.Text as T
 
 import Discord.Types.Channel
 import Discord.Types.Prelude
@@ -13,7 +14,7 @@ import Discord.Types.Prelude
 -- |Representation of a guild member.
 data GuildMember = GuildMember
       { memberUser     :: User
-      , memberNick     :: Maybe String
+      , memberNick     :: Maybe T.Text
       , memberRoles    :: [Snowflake]
       , memberJoinedAt :: UTCTime
       , memberDeaf     :: Bool
@@ -36,12 +37,12 @@ instance FromJSON GuildMember where
 --   "Server"
 data Guild = Guild
       { guildId                  :: !Snowflake       -- ^ Gulid id
-      , guildName                ::  String          -- ^ Guild name (2 - 100 chars)
-      , guildIcon                ::  Maybe String    -- ^ Icon hash
-      , guildSplash              ::  Maybe String    -- ^ Splash hash
+      , guildName                ::  T.Text          -- ^ Guild name (2 - 100 chars)
+      , guildIcon                ::  Maybe T.Text    -- ^ Icon hash
+      , guildSplash              ::  Maybe T.Text    -- ^ Splash hash
       , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
       , guildPermissions         ::  Maybe Integer
-      , guildRegion              ::  String          -- ^ Guild voice region
+      , guildRegion              ::  T.Text          -- ^ Guild voice region
       , guildAfkId               ::  Maybe Snowflake -- ^ Id of afk channel
       , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
       , guildEmbedEnabled        ::  Maybe Bool      -- ^ Id of embedded channel
@@ -51,7 +52,7 @@ data Guild = Guild
       , guildExplicitFilterLevel :: !Integer
       , guildRoles               :: [Role]           -- ^ Array of 'Role' objects
       , guildEmojis              :: [Emoji]          -- ^ Array of 'Emoji' objects
-      , guildFeatures            :: [String]
+      , guildFeatures            :: [T.Text]
       , guildMultiFactAuth       :: !Integer
       , guildApplicationId       ::  Maybe Snowflake
       } deriving Show
@@ -124,7 +125,7 @@ instance FromJSON PartialGuild where
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
   { emojiId      :: Maybe Snowflake   -- ^ The emoji id
-  , emojiName    :: String            -- ^ The emoji name
+  , emojiName    :: T.Text            -- ^ The emoji name
   , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
   , emojiManaged :: Maybe Bool        -- ^ Whether this emoji is managed
   } deriving (Show)
@@ -143,7 +144,7 @@ instance FromJSON Emoji where
 data Role =
     Role {
         roleID      :: !Snowflake -- ^ The role id
-      , roleName    :: String                    -- ^ The role name
+      , roleName    :: T.Text                    -- ^ The role name
       , roleColor   :: Integer                   -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
       , rolePos     :: Integer                   -- ^ Position of this role
@@ -167,8 +168,8 @@ instance FromJSON Role where
 data VoiceRegion =
     VoiceRegion
       { regionId          :: !Snowflake -- ^ Unique id of the region
-      , regionName        :: String                    -- ^ Name of the region
-      , regionHostname    :: String                    -- ^ Example hostname for the region
+      , regionName        :: T.Text                    -- ^ Name of the region
+      , regionHostname    :: T.Text                    -- ^ Example hostname for the region
       , regionPort        :: Int                       -- ^ Example port for the region
       , regionVip         :: Bool                      -- ^ True if this is a VIP only server
       , regionOptimal     :: Bool                      -- ^ True for the closest server to a client
@@ -189,7 +190,7 @@ instance FromJSON VoiceRegion where
 
 -- | Represents a code to add a user to a guild
 data Invite = Invite
-      { inviteCode  ::  String    -- ^ The invite code
+      { inviteCode  ::  T.Text    -- ^ The invite code
       , inviteGuild :: !Snowflake -- ^ The guild the code will invite to
       , inviteChan  :: !Snowflake -- ^ The channel the code will invite to
       }
@@ -232,8 +233,8 @@ instance FromJSON InviteMeta where
 data Integration =
     Integration
       { integrationId       :: !Snowflake -- ^ Integration id
-      , integrationName     :: String                    -- ^ Integration name
-      , integrationType     :: String                    -- ^ Integration type (Twitch, Youtube, ect.)
+      , integrationName     :: T.Text                    -- ^ Integration name
+      , integrationType     :: T.Text                    -- ^ Integration type (Twitch, Youtube, ect.)
       , integrationEnabled  :: Bool                      -- ^ Is the integration enabled
       , integrationSyncing  :: Bool                      -- ^ Is the integration syncing
       , integrationRole     :: Snowflake                 -- ^ Id the integration uses for "subscribers"
@@ -261,8 +262,8 @@ instance FromJSON Integration where
 -- | Represents a third party account link.
 data IntegrationAccount =
   Account
-    { accountId   :: String -- ^ The id of the account.
-    , accountName :: String -- ^ The name of the account.
+    { accountId   :: T.Text -- ^ The id of the account.
+    , accountName :: T.Text -- ^ The name of the account.
     } deriving (Show)
 
 instance FromJSON IntegrationAccount where
