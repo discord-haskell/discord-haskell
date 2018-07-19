@@ -4,9 +4,9 @@ module Discord
   ( module Discord.Rest.Requests
   , module Discord.Types
   , Resp(..)
-  , Discord(..)
   , Cache(..)
-  , RestPart(..)
+  , Gateway(..)
+  , RestChan(..)
   , restCall
   , nextEvent
   , readCache
@@ -24,32 +24,31 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
-newtype RestPart = RestPart { rest :: forall a. FromJSON a => Request a -> IO (Resp a) }
+data NotLoggedIntoGateway = NotLoggedIntoGateway
 
-loginRest :: Auth -> IO RestPart
+loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway)
 loginRest auth = do
   restHandler <- createHandler auth
-  pure (RestPart (writeRestCall restHandler))
+  pure (restHandler, NotLoggedIntoGateway)
 
-
-
-data Discord = Discord
-  { _discordRest :: RestChan
-  , _discordEvents :: Chan Event
-  , _discordCache :: MVar Cache
-  }
-
-restCall :: FromJSON a => Discord -> Request a -> IO (Resp a)
-restCall d = writeRestCall (_discordRest d)
-
-nextEvent :: Discord -> IO Event
-nextEvent d = readChan (_discordEvents d)
-
-readCache :: Discord -> IO Cache
-readCache d = readMVar (_discordCache d)
-
-loginRestGateway :: Auth -> IO Discord
+loginRestGateway :: Auth -> IO (RestChan, Gateway)
 loginRestGateway auth = do
   restHandler  <- createHandler auth
   (chan, info) <- chanWebSocket auth
-  pure (Discord restHandler chan info)
+  pure (restHandler, Gateway chan info)
+
+
+data Gateway = Gateway
+  { _events :: Chan Event
+  , _cache :: MVar Cache
+  }
+
+restCall :: FromJSON a => (RestChan, x) -> Request a -> IO (Resp a)
+restCall (r,_) = writeRestCall r
+
+nextEvent :: (RestChan, Gateway) -> IO Event
+nextEvent (_,g) = readChan (_events g)
+
+readCache :: (RestChan, Gateway) -> IO Cache
+readCache (_,g) = readMVar (_cache g)
+
