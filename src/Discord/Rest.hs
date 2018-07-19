@@ -14,6 +14,7 @@ module Discord.Rest
   ) where
 
 import Data.Aeson
+import Data.Monoid ((<>))
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent (forkIO)
@@ -39,9 +40,9 @@ writeRestCall (RestChan c) req = do
   m <- newEmptyMVar
   writeChan c (prepareRequest req, m)
   r <- readMVar m
-  pure $ case decode <$> r of
-    Resp (Just o) -> Resp o
-    Resp Nothing  -> NoResp
+  pure $ case eitherDecode <$> r of
+    Resp (Right o) -> Resp o
+    Resp (Left er) -> BadResp ("parse error - " <> er)
     NoResp        -> NoResp
     BadResp err   -> BadResp err
 
