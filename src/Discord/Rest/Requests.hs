@@ -14,6 +14,7 @@ module Discord.Rest.Requests
   ) where
 
 
+import Data.Maybe (fromMaybe)
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import Data.Monoid (mempty, (<>))
@@ -101,7 +102,7 @@ data Request a where
   -- | Returns a guild 'Member' object for the specified user
   GetGuildMember           :: Snowflake -> Snowflake -> Request GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
-  ListGuildMembers         :: Snowflake -> Range -> Request [GuildMember]
+  ListGuildMembers         :: Snowflake -> GuildMembersTiming -> Request [GuildMember]
   -- | Adds a user to the guild, provided you have a valid oauth2 access token
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
@@ -212,6 +213,21 @@ messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
+
+data GuildMembersTiming = GuildMembersTiming
+                          { _guildMembersTimingLimit :: Maybe Int
+                          , _guildMembersTimingAfter :: Maybe Snowflake
+                          }
+
+guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
+guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
+  let limit = case mLimit of
+              Nothing -> mempty
+              Just lim -> "limit" R.=: lim
+      after = case mAfter of
+              Nothing -> mempty
+              Just aft -> "after" R.=: show aft
+  in limit <> after
 
 data ModifyChannelOptions = ModifyChannelOptions
   { modifyName                 :: Maybe String
