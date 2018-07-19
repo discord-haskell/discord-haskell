@@ -10,7 +10,6 @@ import Data.Default (def)
 import Control.Exception (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
-import Network.HTTP.Req ((=:))
 import qualified Data.Text as T
 import qualified Network.HTTP.Req as R
 

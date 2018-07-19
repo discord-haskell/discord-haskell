@@ -14,7 +14,6 @@ module Discord.Rest.Requests
   ) where
 
 
-import Data.Maybe (fromMaybe)
 import Data.Aeson
 import qualified Data.ByteString.Lazy as BL
 import Data.Monoid (mempty, (<>))
