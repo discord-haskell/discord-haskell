@@ -185,7 +185,7 @@ data Request a where
   ModifyCurrentUser    :: ToJSON o => o -> Request User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
-  GetCurrentUserGuilds :: Request Guild
+  GetCurrentUserGuilds :: Request [PartialGuild]
   -- | Leave a guild.
   LeaveGuild           :: Snowflake -> Request ()
   -- | Returns a list of DM 'Channel' objects
@@ -521,7 +521,7 @@ jsonRequest c = case c of
   (ModifyCurrentUser patch) ->
       Patch (users /: "@me")  (R.ReqBodyJson patch) mempty
 
-  (GetCurrentUserGuilds) -> Get users mempty
+  (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 
   (LeaveGuild guild) -> Delete (users /: "@me" /: "guilds" // guild) mempty
 
