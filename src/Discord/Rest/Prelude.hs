@@ -43,9 +43,9 @@ data JsonRequest where
 -- | Represents a range of 'Snowflake's
 data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
 
-maxRange :: Range
-maxRange = Range 0 18446744073709551615 100
---                       2^64 - 1
+instance Bounded Range where
+  minBound = Range 0 0 1
+  maxBound = Range 0 (2^64-1) 100
 
 -- | Convert a Range to a query string
 rangeToOption :: Range -> Option
