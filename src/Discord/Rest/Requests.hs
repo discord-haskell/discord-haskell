@@ -339,126 +339,175 @@ jsonRequest :: Request r -> JsonRequest
 jsonRequest c = case c of
   (GetChannel chan) ->
       Get (channels // chan) mempty
+
   (ModifyChannel chan patch) ->
       Patch (channels // chan) (R.ReqBodyJson patch) mempty
+
   (DeleteChannel chan) ->
       Delete (channels // chan) mempty
+
   (GetChannelMessages chan (n,timing)) ->
       let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> messageTimingToQuery timing
       in Get (channels // chan /: "messages") options
+
   (GetChannelMessage (chan, msg)) ->
       Get (channels // chan /: "messages" // msg) mempty
+
   (CreateMessage chan msg embed) ->
       let content = ["content" .= msg] <> maybeEmbed embed
           body = pure $ R.ReqBodyJson $ object content
       in Post (channels // chan /: "messages") body mempty
+
   (UploadFile chan fileName file) ->
       let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
+
   (CreateReaction (chan, msgid) (name, rID)) ->
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
       in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
              R.NoReqBody mempty
+
   (DeleteOwnReaction (chan, msgid) (name, rID)) ->
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
       in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
+
   (DeleteUserReaction (chan, msgid) (name, rID) uID) ->
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
       in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
+
   (GetReactions (chan, msgid) (name, rID) (n, timing)) ->
       let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
           n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
       in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
+
   (DeleteAllReactions (chan, msgid)) ->
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
+
   (EditMessage (chan, msg) new embed) ->
       let content = ["content" .= new] <> maybeEmbed embed
           body = R.ReqBodyJson $ object content
       in Patch (channels // chan /: "messages" // msg) body mempty
+
   (DeleteMessage (chan, msg)) ->
       Delete (channels // chan /: "messages" // msg) mempty
+
   (BulkDeleteMessage (chan, msgs)) ->
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
       in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
+
   (EditChannelPermissions chan perm patch) ->
       Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
+
   (CreateChannelInvite chan patch) ->
       Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+
   (DeleteChannelPermission chan perm) ->
       Delete (channels // chan /: "permissions" // perm) mempty
+
   (TriggerTypingIndicator chan) ->
       Post (channels // chan /: "typing") (pure R.NoReqBody) mempty
+
   (GetPinnedMessages chan) ->
       Get (channels // chan /: "pins") mempty
+
   (AddPinnedMessage chan msg) ->
       Put (channels // chan /: "pins" // msg) R.NoReqBody mempty
+
   (DeletePinnedMessage chan msg) ->
       Delete (channels // chan /: "pins" // msg) mempty
 
   (GetGuild guild) ->
       Get (guilds // guild) mempty
+
   (ModifyGuild guild patch) ->
       Patch (guilds // guild) (R.ReqBodyJson patch) mempty
+
   (DeleteGuild guild) ->
       Delete (guilds // guild) mempty
+
   (GetGuildChannels guild) ->
       Get (guilds // guild /: "channels") mempty
+
   (CreateGuildChannel guild patch) ->
       Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+
   (ModifyChanPosition guild patch) ->
       Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+
   (GetGuildMember guild member) ->
       Get (guilds // guild /: "members" // member) mempty
+
   (ListGuildMembers guild range) ->
       Get (guilds // guild /: "members") (guildMembersTimingToQuery range)
+
   (AddGuildMember guild user patch) ->
       Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
+
   (ModifyGuildMember guild member patch) ->
       let body = R.ReqBodyJson patch
       in Patch (guilds // guild /: "members" // member) body mempty
+
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
+
   (GetGuildBans guild) ->
       Get (guilds // guild /: "bans") mempty
+
   (CreateGuildBan guild user msgs) ->
       let body = R.ReqBodyJson (object ["delete-message-days" .= msgs])
       in Put (guilds // guild /: "bans" // user) body mempty
+
   (RemoveGuildBan guild ban) ->
       Delete (guilds // guild /: "bans" // ban) mempty
+
   (GetGuildRoles guild) ->
       Get (guilds // guild /: "roles") mempty
+
   (CreateGuildRole guild) ->
       Post (guilds // guild /: "roles") (pure R.NoReqBody) mempty
+
   (ModifyGuildRolePositions guild patch) ->
       Post (guilds // guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
   (ModifyGuildRole guild role patch) ->
       Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
+
   (DeleteGuildRole guild role) ->
       Delete (guilds // guild /: "roles" // role) mempty
+
   (GetGuildPruneCount guild days) ->
       Get (guilds // guild /: "prune") ("days" R.=: days)
+
   (BeginGuildPrune guild days) ->
       Post (guilds // guild /: "prune") (pure R.NoReqBody) ("days" R.=: days)
+
   (GetGuildVoiceRegions guild) ->
       Get (guilds // guild /: "regions") mempty
+
   (GetGuildInvites guild) ->
       Get (guilds // guild /: "invites") mempty
+
   (GetGuildIntegrations guild) ->
       Get (guilds // guild /: "integrations") mempty
+
   (CreateGuildIntegration guild patch) ->
       Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
+
   (ModifyGuildIntegration guild integ patch) ->
       let body = R.ReqBodyJson patch
       in Patch (guilds // guild /: "integrations" // integ) body mempty
+
   (DeleteGuildIntegration guild integ) ->
       Delete (guilds // guild /: "integrations" // integ) mempty
+
   (SyncGuildIntegration guild integ) ->
       Post (guilds // guild /: "integrations" // integ) (pure R.NoReqBody) mempty
+
   (GetGuildEmbed guild) ->
       Get (guilds // guild /: "integrations") mempty
 
