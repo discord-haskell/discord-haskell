@@ -40,20 +40,6 @@ data JsonRequest where
   Put    :: R.HttpBody a => R.Url 'R.Https -> a -> Option -> JsonRequest
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> Option -> JsonRequest
 
--- | Represents a range of 'Snowflake's
-data Range = Range { after :: Snowflake, before :: Snowflake, limit :: Int}
-
-instance Bounded Range where
-  minBound = Range 0 0 1
-  maxBound = Range 0 (2^64-1) 100
-
--- | Convert a Range to a query string
-rangeToOption :: Range -> Option
-rangeToOption (Range a b l)
-  =  "after"  =: show a
-  <> "before" =: show b
-  <> "limit"  =: show l
-
 -- | Same Monad as IO. Overwrite Req settings
 newtype RestIO a = RestIO { restIOtoIO :: IO a }
   deriving (Functor, Applicative, Monad, MonadIO)

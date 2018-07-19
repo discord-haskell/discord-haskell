@@ -6,7 +6,6 @@
 module Discord.Rest.HTTP
   ( restLoop
   , Resp(..)
-  , Range(..)
   ) where
 
 import Data.Semigroup ((<>))

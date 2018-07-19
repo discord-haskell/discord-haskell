@@ -8,10 +8,9 @@ module Discord.Rest
   ( module Discord.Rest.Requests
   , module Discord.Types
   , Resp(..)
-  , Range(..)
+  , RestChan(..)
   , writeRestCall
   , createHandler
-  , RestChan(..)
   ) where
 
 import Data.Aeson

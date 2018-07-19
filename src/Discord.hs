@@ -5,7 +5,6 @@ module Discord
   , module Discord.Types
   , Resp(..)
   , Discord(..)
-  , Range(..)
   , Cache(..)
   , RestPart(..)
   , restCall

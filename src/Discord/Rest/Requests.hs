@@ -311,7 +311,7 @@ majorRoute c = case c of
   (GetCurrentUser) ->                        "me "
   (GetUser _) ->                           "user "
   (ModifyCurrentUser _) ->          "modify_user "
-  (GetCurrentUserGuilds _) ->   "get_user_guilds "
+  (GetCurrentUserGuilds) ->     "get_user_guilds "
   (LeaveGuild g) ->                 "leave_guild " <> show g
   (GetUserDMs) ->                       "get_dms "
   (CreateDM _) ->                       "make_dm "
@@ -415,7 +415,7 @@ jsonRequest c = case c of
   (GetGuildMember guild member) ->
       Get (guilds // guild /: "members" // member) mempty
   (ListGuildMembers guild range) ->
-      Get (guilds // guild /: "members") (rangeToOption range)
+      Get (guilds // guild /: "members") (guildMembersTimingToQuery range)
   (AddGuildMember guild user patch) ->
       Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
   (ModifyGuildMember guild member patch) ->
@@ -461,6 +461,7 @@ jsonRequest c = case c of
       Post (guilds // guild /: "integrations" // integ) (pure R.NoReqBody) mempty
   (GetGuildEmbed guild) ->
       Get (guilds // guild /: "integrations") mempty
+
   (ModifyGuildEmbed guild patch) ->
       Patch (guilds // guild /: "embed") (R.ReqBodyJson patch) mempty
 
@@ -472,7 +473,7 @@ jsonRequest c = case c of
   (ModifyCurrentUser patch) ->
       Patch (users /: "@me")  (R.ReqBodyJson patch) mempty
 
-  (GetCurrentUserGuilds range) -> Get users $ rangeToOption range
+  (GetCurrentUserGuilds) -> Get users mempty
 
   (LeaveGuild guild) -> Delete (users /: "@me" /: "guilds" // guild) mempty
 
