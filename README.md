@@ -1,10 +1,9 @@
 # discord-haskell
 
-# Common Issues
+## Quick notes
 
-1) rest/gateway threads aren't killed on ^C in ghci (exit ghci and reopen to kill threads)
-2) cache isn't updated.
-3) missing some gateway & rest types
+rest/gateway background threads aren't killed on ^C in ghci 
+(exit ghci and reopen to kill threads)
 
 If you don't need to use `nextEvent` you should login with `loginRest`. 
 `loginRestGateway` uses a `Chan` that will fill up as time goes on.
@@ -13,6 +12,7 @@ If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
 The examples will work on the `master` branch. The `dev` branch
 has the most recent (potentially) breaking changes.
+
 
 ## Getting Started
 
@@ -60,12 +60,14 @@ I have since rewritten all of the rest and gateway logic.
 
 In roughly the order I'm working on them:
 
+- Add means of killing gateway/rest threads
 - Double check the REST request ADT matches the API
 - Add      [Activity object](https://discordapp.com/developers/docs/topics/gateway#activity-object) for PresenceInfo in the Event ADT
 - Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
 - Add neat [presence adt](https://discordapp.com/developers/docs/topics/gateway#presence-update) handling
 - Add all gateway types (emoji removed, etc)
 - Update channel types (fill out guildcategory)
+- Update cache with Events
 - More helpful README (examples, how to depend it this package)
 - Add gateway ToJSON for events
 - Update types JSON comments
