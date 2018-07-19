@@ -1,23 +1,13 @@
 # discord-haskell
 
-The library is usable for simple gateway & rest bots.
-The three largest largest issues are:
-1) in ghci, the gateway thread isn't killed on ^C (exit ghci and reopen to kill threads)
+# Common Issues
+
+1) rest/gateway threads aren't killed on ^C in ghci (exit ghci and reopen to kill threads)
 2) cache isn't updated.
-3) missing some gateway & rest types and
+3) missing some gateway & rest types
 
-Note the difference between `rest` and `restCall`. If you don't want
-to use `nextEvent` you should login with `loginRest`. `loginRestGateway` 
-uses a `Chan` that will fill up as time goes on.
-
-```haskell
-rest :: FromJSON a => RestPart -> Request a -> IO (Resp a)
-loginRest :: Auth -> IO RestPart
-
-restCall :: FromJSON a => Discord -> Request a -> IO (Resp a)
-nextEvent :: Discord -> IO Event
-loginRestGateway :: Auth -> IO Discord
-```
+If you don't need to use `nextEvent` you should login with `loginRest`. 
+`loginRestGateway` uses a `Chan` that will fill up as time goes on.
 
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
