@@ -13,19 +13,27 @@ restExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRest (Bot tok)
 
-  msg <- rest dis (CreateMessage 453207241294610444 "Creating a message" Nothing)
+  msg <- restCall dis (CreateMessage 453207241294610444 "Creating a message" Nothing)
   putStrLn ("Message object: " <> show msg)
 
   putStrLn ""
 
-  chan <- rest dis (GetChannel 453207241294610444)
+  chan <- restCall dis (GetChannel 453207241294610444)
   putStrLn ("Channel object: " <> show chan)
 
   putStrLn ""
 
+  {-
+  -- Fails with a type error because rest.hs uses 'loginRest' not 'loginRestGateway'
+  -- Couldn't match type ‘Discord.NotLoggedIntoGateway’ with ‘Gateway’
+  --     Expected type: (RestChan, Gateway)
+  --       Actual type: (RestChan, Discord.NotLoggedIntoGateway)
+  e <- nextEvent dis
+  -- -}
+
   case msg of
-    Resp m -> do r <- rest dis (CreateReaction (453207241294610444, messageId m)
-                                               ("🐮", Nothing))
+    Resp m -> do r <- restCall dis (CreateReaction (453207241294610444, messageId m)
+                                                   ("🐮", Nothing))
                  putStrLn ("Reaction resp: " <> show r)
     _ -> putStrLn "Creating the message failed, couldn't react"
 
