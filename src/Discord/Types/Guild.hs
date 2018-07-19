@@ -105,6 +105,22 @@ instance FromJSON GuildInfo where
               <*> o .: "members"
               <*> o .: "channels"
 
+data PartialGuild = PartialGuild
+      { partialguildId          :: Snowflake
+      , partialguildName        :: T.Text
+      , partialguildIcon        :: T.Text
+      , partialguildOwner       :: Bool
+      , partialguildPermissions :: Integer
+      } deriving Show
+
+instance FromJSON PartialGuild where
+  parseJSON = withObject "PartialGuild" $ \o ->
+    PartialGuild <$> o .: "id"
+                 <*> o .: "name"
+                 <*> o .: "icon"
+                 <*> o .: "owner"
+                 <*> o .: "permissions"
+
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
   { emojiId      :: Maybe Snowflake   -- ^ The emoji id
