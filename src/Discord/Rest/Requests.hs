@@ -186,7 +186,7 @@ data Request a where
   ModifyCurrentUser    :: ToJSON o => o -> Request User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
-  GetCurrentUserGuilds :: Range -> Request Guild
+  GetCurrentUserGuilds :: Request Guild
   -- | Leave a guild.
   LeaveGuild           :: Snowflake -> Request ()
   -- | Returns a list of DM 'Channel' objects
