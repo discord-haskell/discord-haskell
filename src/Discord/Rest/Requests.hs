@@ -197,7 +197,7 @@ data Request a where
 data ReactionTiming = BeforeReaction Snowflake
                     | AfterReaction Snowflake
 
-reactionTimingToQuery :: R.QueryParam p => ReactionTiming -> p
+reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
   (BeforeReaction snow) -> "before" R.=: show snow
   (AfterReaction snow) -> "after"  R.=: show snow
@@ -207,7 +207,7 @@ data MessageTiming = AroundMessage Snowflake
                    | BeforeMessage Snowflake
                    | AfterMessage Snowflake
 
-messageTimingToQuery :: R.QueryParam p => MessageTiming -> p
+messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
 messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
