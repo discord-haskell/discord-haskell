@@ -37,6 +37,12 @@ data ConnectionData = ConnData { connection :: Connection
                                , connChan :: Chan Event
                                }
 
+-- | Securely run a connection IO action. Send a close on exception
+connect :: (Connection -> IO a) -> IO a
+connect app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+                    finally (app conn)
+                            (sendClose conn ("" :: T.Text))
+
 connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
 connectionLoop auth events log = loop ConnStart
  where
@@ -46,41 +52,39 @@ connectionLoop auth events log = loop ConnStart
     case s of
       (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
-          loop <=< runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn ->
-            finally (do msg <- getPayload conn log
-                        case msg of
-                          Right (Hello interval) -> do
-                            send conn (Identify auth False 50 (0, 1)) log
-                            msg2 <- getPayload conn log
-                            case msg2 of
-                              Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
-                                writeChan events r
-                                startEventStream conn events auth seshID interval 0 log
-                              _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
-                          _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed)
-                    (sendClose conn (""::T.Text))
+          loop <=< connect $ \conn -> do
+            msg <- getPayload conn log
+            case msg of
+              Right (Hello interval) -> do
+                send conn (Identify auth False 50 (0, 1)) log
+                msg2 <- getPayload conn log
+                case msg2 of
+                  Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
+                    writeChan events r
+                    startEventStream conn events auth seshID interval 0 log
+                  _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
+              _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
 
       (ConnReconnect tok seshID seqID) -> do
-          next <- try $ runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn ->
-            finally (do send conn (Resume tok seshID seqID) log
-                        writeChan log "Resuming???"
-                        eitherPayload <- getPayload conn log
-                        case eitherPayload of
-                          Right (Hello interval) ->
-                              startEventStream conn events auth seshID interval seqID log
-                          Right (InvalidSession retry) -> do
-                              t <- getRandomR (1,5)
-                              writeChan log ("Invalid sesh, sleep:" <> show t)
-                              threadDelay (t * 10^6)
-                              pure $ if retry
-                                     then ConnReconnect tok seshID seqID
-                                     else ConnStart
-                          Right payload -> do
-                              writeChan log ("Why did they send a: " <> show payload)
-                              pure ConnClosed
-                          Left e ->
-                              writeChan log ("message - error " <> show e) >> pure ConnClosed)
-                    (sendClose conn (""::T.Text))
+          next <- try $ connect $ \conn -> do
+              send conn (Resume tok seshID seqID) log
+              writeChan log "Resuming???"
+              eitherPayload <- getPayload conn log
+              case eitherPayload of
+                  Right (Hello interval) ->
+                      startEventStream conn events auth seshID interval seqID log
+                  Right (InvalidSession retry) -> do
+                      t <- getRandomR (1,5)
+                      writeChan log ("Invalid sesh, sleep:" <> show t)
+                      threadDelay (t * 10^6)
+                      pure $ if retry
+                             then ConnReconnect tok seshID seqID
+                             else ConnStart
+                  Right payload -> do
+                      writeChan log ("Why did they send a: " <> show payload)
+                      pure ConnClosed
+                  Left e ->
+                      writeChan log ("message - error " <> show e) >> pure ConnClosed
           case next :: Either SomeException ConnLoopState of
             Left e -> do writeChan log ("exception - connecting: " <> show e)
                          t <- getRandomR (3,10)
