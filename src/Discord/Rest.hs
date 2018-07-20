@@ -25,19 +25,18 @@ import Discord.Rest.HTTP
 import Discord.Rest.Requests
 
 
-data RestChan = RestChan { _restChan :: Chan ((String, JsonRequest), MVar (Resp QL.ByteString))
-                         , _restThreadId :: ThreadId }
+newtype RestChan = RestChan (Chan ((String, JsonRequest), MVar (Resp QL.ByteString)))
 
 -- | Starts the http request thread. Please only call this once
-createHandler :: Auth -> IO RestChan
+createHandler :: Auth -> IO (RestChan, ThreadId)
 createHandler auth = do
   c <- newChan
   tid <- forkIO $ restLoop auth c
-  pure (RestChan c tid)
+  pure (RestChan c, tid)
 
 -- | Execute a request blocking until a response is received
 writeRestCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
-writeRestCall (RestChan c _) req = do
+writeRestCall (RestChan c) req = do
   m <- newEmptyMVar
   writeChan c (prepareRequest req, m)
   r <- readMVar m
