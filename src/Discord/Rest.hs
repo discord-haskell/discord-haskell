@@ -13,7 +13,7 @@ module Discord.Rest
   , createHandler
   ) where
 
-import Data.Aeson
+import Data.Aeson (FromJSON, eitherDecode)
 import Data.Monoid ((<>))
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
@@ -35,7 +35,7 @@ createHandler auth = do
   tid <- forkIO $ restLoop auth c
   pure (RestChan c tid)
 
--- | Execute a request blocking until a response is recieved
+-- | Execute a request blocking until a response is received
 writeRestCall :: FromJSON a => RestChan -> Request a -> IO (Resp a)
 writeRestCall (RestChan c _) req = do
   m <- newEmptyMVar
