@@ -32,6 +32,12 @@ data Resp a = Resp a
             | BadResp String
   deriving (Eq, Show, Functor)
 
+unpackResp :: Resp QL.ByteString -> String
+unpackResp r = case r of
+                 Resp a -> "Resp " <> QL.unpack a
+                 NoResp -> "NoResp"
+                 BadResp s -> "BadResp " <> s
+
 restLoop :: Auth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString))
                  -> Chan String -> IO ()
 restLoop auth urls log = loop M.empty
@@ -45,7 +51,7 @@ restLoop auth urls log = loop M.empty
                    loop ratelocker
       Available -> do let action = compileRequest auth request
                       (resp, retry) <- restIOtoIO (tryRequest action log)
-                      writeChan log ("rest - got response " <> show resp)
+                      writeChan log ("rest - got response " <> unpackResp resp)
                       case resp of
                         Resp "" -> putMVar thread (Resp "[]") -- empty should be ()
                         Resp bs -> putMVar thread (Resp bs)
