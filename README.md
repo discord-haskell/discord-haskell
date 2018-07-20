@@ -29,7 +29,8 @@ has the most recent (potentially) breaking changes.
 
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
-[examples/rest.hs](./examples/rest.hs), and
+[examples/rest.hs](./examples/rest.hs),
+[examples/cache.hs](./examples/cache.hs), and
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
 6 Add this library to your dependencies. The library
