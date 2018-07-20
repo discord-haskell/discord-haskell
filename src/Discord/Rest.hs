@@ -13,6 +13,7 @@ module Discord.Rest
   , createHandler
   ) where
 
+import Prelude hiding (log)
 import Data.Aeson (FromJSON, eitherDecode)
 import Data.Monoid ((<>))
 import Control.Concurrent.Chan

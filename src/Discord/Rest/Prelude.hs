@@ -6,6 +6,7 @@
 -- | Utility and base types and functions for the Discord Rest API
 module Discord.Rest.Prelude where
 
+import Prelude hiding (log)
 import Data.Default (def)
 import Control.Exception (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)

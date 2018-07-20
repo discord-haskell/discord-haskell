@@ -8,6 +8,7 @@ module Discord.Rest.HTTP
   , Resp(..)
   ) where
 
+import Prelude hiding (log)
 import Data.Semigroup ((<>))
 
 import Control.Monad.IO.Class (liftIO)

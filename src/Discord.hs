@@ -17,7 +17,7 @@ module Discord
 
 import Prelude hiding (log)
 import Control.Monad (forever)
-import Control.Concurrent (forkIO,ThreadId, killThread)
+import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Monoid ((<>))
