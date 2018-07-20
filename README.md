@@ -2,17 +2,17 @@
 
 ## Quick notes
 
-rest/gateway background threads aren't killed on ^C in ghci 
-(exit ghci and reopen to kill threads)
+Use `Control.Exception.finally` with `stopDiscord` to safely
+kill background threads.
+(otherwise exit ghci and reopen to kill threads)
 
 If you don't need to use `nextEvent` you should login with `loginRest`. 
-`loginRestGateway` uses a `Chan` that will fill up as time goes on.
+`loginRestGateway` will fill up a `Chan Event` as time goes on.
 
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
 The examples will work on the `master` branch. The `dev` branch
 has the most recent (potentially) breaking changes.
-
 
 ## Getting Started
 
