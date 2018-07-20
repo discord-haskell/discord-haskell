@@ -20,17 +20,15 @@ import Discord.Gateway.Cache
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-chanWebSocket :: Auth -> IO (Chan Event, MVar Cache, ThreadId)
-chanWebSocket auth = do
-  log <- newChan
+chanWebSocket :: Auth -> Chan String -> IO (Chan Event, MVar Cache, ThreadId)
+chanWebSocket auth log = do
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
   writeFile "the-log-of-discord-haskell.txt" ""
-  logid <- forkIO (logger log True)
   cache <- emptyCache
   cacheID <- forkIO $ addEvent cache eventsCache log
   tid <- forkIO $ finally (connectionLoop auth eventsWrite log)
-                          (threadDelay (2*10^6) >> killThread logid >> killThread cacheID)
+                          (killThread cacheID)
   pure (eventsWrite, cache, tid)
 
 
