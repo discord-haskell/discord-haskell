@@ -37,7 +37,7 @@ loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [(ThreadIdType, ThreadI
 loginRest auth = do
   log <- newChan
   logId <- forkIO (logger log True)
-  (restHandler, restId) <- createHandler auth
+  (restHandler, restId) <- createHandler auth log
   pure (restHandler, NotLoggedIntoGateway, [(ThreadLogger, logId),
                                             (ThreadRest, restId)])
 

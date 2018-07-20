@@ -31,8 +31,9 @@ data Resp a = Resp a
             | BadResp String
   deriving (Eq, Show, Functor)
 
-restLoop :: Auth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString)) -> IO ()
-restLoop auth urls = loop M.empty
+restLoop :: Auth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString))
+                 -> Chan String -> IO ()
+restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
     threadDelay (40 * 1000)
@@ -42,7 +43,8 @@ restLoop auth urls = loop M.empty
       Locked -> do writeChan urls ((route, request), thread)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
-                      (resp, retry) <- restIOtoIO (tryRequest action)
+                      (resp, retry) <- restIOtoIO (tryRequest action log)
+                      writeChan log ("rest - got response " <> show resp)
                       case resp of
                         Resp bs -> putMVar thread (Resp bs)
                         NoResp  -> putMVar thread NoResp
@@ -50,6 +52,7 @@ restLoop auth urls = loop M.empty
                         BadResp r -> putMVar thread (BadResp r)
                       case retry of
                         GlobalWait i -> do
+                            writeChan log ("rest - GLOBAL WAIT " <> show ((i - curtime) * 1000))
                             threadDelay $ round ((i - curtime + 0.1) * 1000)
                             loop ratelocker
                         PathWait i -> do
@@ -69,8 +72,8 @@ data Timeout = GlobalWait POSIXTime
              | NoLimit
 
 
-tryRequest :: RestIO R.LbsResponse -> RestIO (Resp QL.ByteString, Timeout)
-tryRequest action = do
+tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (Resp QL.ByteString, Timeout)
+tryRequest action log = do
   resp <- action
   next10 <- liftIO (round . (+10) <$> getPOSIXTime)
   let code   = R.responseStatusCode resp
@@ -79,7 +82,9 @@ tryRequest action = do
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       resetInt  = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
       reset  = fromIntegral resetInt
-  if | code == 429 -> pure (BadResp "Try Again", if global then GlobalWait reset
+  if | code == 429 -> do liftIO $ writeChan log ("rest - 429 RATE LIMITED global:"
+                                                 <> show global <> " reset:" <> show reset)
+                         pure (BadResp "Try Again", if global then GlobalWait reset
                                                            else PathWait reset)
      | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
      | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
