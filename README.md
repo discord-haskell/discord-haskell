@@ -56,14 +56,13 @@ extra-deps:
 This library was originally forked from
 [discord.hs](https://github.com/jano017/Discord.hs).
 After rewriting the gateway/rest loops and extending the types
-I think it makes far more sense to present this library as
+I think it makes more sense to present this library as
 separate form the source. The apis are not compatible.
 
 ## TO DO
 
 In roughly the order I'm working on them:
 
-- Add means of killing gateway/rest threads
 - Double check the REST request ADT matches the API
 - Add      [Activity object](https://discordapp.com/developers/docs/topics/gateway#activity-object) for PresenceInfo in the Event ADT
 - Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
