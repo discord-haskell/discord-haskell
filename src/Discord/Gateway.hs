@@ -34,10 +34,4 @@ chanWebSocket auth = do
   pure (eventsWrite, cache, tid)
 
 
-logger :: Chan String -> Bool -> IO ()
-logger log False = forever $ readChan log >>= \_ -> pure ()
-logger log True  = forever $ do
-  x <- readChan log
-  let line = x <> "\n\n"
-  appendFile "the-log-of-discord-haskell.txt" line
 
