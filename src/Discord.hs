@@ -15,9 +15,12 @@ module Discord
   , loginRestGateway
   ) where
 
-import Control.Concurrent (ThreadId, killThread)
+import Prelude hiding (log)
+import Control.Monad (forever)
+import Control.Concurrent (forkIO,ThreadId, killThread)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
+import Data.Monoid ((<>))
 import Data.Aeson
 
 import Discord.Rest
@@ -26,16 +29,27 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
-loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway)
-loginRest auth = do
-  restHandler <- createHandler auth
-  pure (restHandler, NotLoggedIntoGateway)
+data ThreadIdType = ThreadRest
+                  | ThreadGateway
+                  | ThreadLogger
 
-loginRestGateway :: Auth -> IO (RestChan, Gateway)
+loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [(ThreadIdType, ThreadId)])
+loginRest auth = do
+  log <- newChan
+  logId <- forkIO (logger log True)
+  (restHandler, restId) <- createHandler auth
+  pure (restHandler, NotLoggedIntoGateway, [(ThreadLogger, logId),
+                                            (ThreadRest, restId)])
+
+loginRestGateway :: Auth -> IO (RestChan, Gateway, [(ThreadIdType, ThreadId)])
 loginRestGateway auth = do
-  restHandler  <- createHandler auth
-  (chan, info, tid) <- chanWebSocket auth
-  pure (restHandler, Gateway chan info tid)
+  log <- newChan
+  logId <- forkIO (logger log True)
+  (restHandler, restId) <- createHandler auth
+  (chan, info, gateId) <- chanWebSocket auth log
+  pure (restHandler, Gateway chan info, [(ThreadLogger, logId),
+                                         (ThreadRest, restId),
+                                         (ThreadGateway, gateId)])
 
 
 data NotLoggedIntoGateway = NotLoggedIntoGateway
@@ -43,32 +57,20 @@ data NotLoggedIntoGateway = NotLoggedIntoGateway
 data Gateway = Gateway
   { _events :: Chan Event
   , _cache :: MVar Cache
-  , _gatewayThreadId :: ThreadId
   }
 
-restCall :: FromJSON a => (RestChan, x) -> Request a -> IO (Resp a)
-restCall (r,_) = writeRestCall r
+restCall :: FromJSON a => (RestChan, x, y) -> Request a -> IO (Resp a)
+restCall (r,_,_) = writeRestCall r
 
-nextEvent :: (RestChan, Gateway) -> IO Event
-nextEvent (_,g) = readChan (_events g)
+nextEvent :: (RestChan, Gateway, x) -> IO Event
+nextEvent (_,g,_) = readChan (_events g)
 
-readCache :: (RestChan, Gateway) -> IO Cache
-readCache (_,g) = readMVar (_cache g)
+readCache :: (RestChan, Gateway, x) -> IO Cache
+readCache (_,g,_) = readMVar (_cache g)
 
-stopDiscord :: KillableThread kt => (RestChan, kt) -> IO ()
-stopDiscord (r,g) = stopThread r >> stopThread g
+stopDiscord :: (x, y, [(z,ThreadId)]) -> IO ()
+stopDiscord (_,_,tid) = mapM_ (killThread . snd) tid
 
-class KillableThread t where
-  stopThread :: t -> IO ()
-
-instance KillableThread NotLoggedIntoGateway where
-  stopThread _ = pure ()
-
-instance KillableThread RestChan where
-  stopThread r = killThread (_restThreadId r)
-
-instance KillableThread Gateway where
-  stopThread g = killThread (_gatewayThreadId g)
 logger :: Chan String -> Bool -> IO ()
 logger log False = forever $ readChan log >>= \_ -> pure ()
 logger log True  = forever $ do
