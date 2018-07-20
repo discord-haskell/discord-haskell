@@ -33,7 +33,7 @@ has the most recent (potentially) breaking changes.
 [examples/cache.hs](./examples/cache.hs), and
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
-6 Add this library to your dependencies. The library
+6 Add this library to your dependencies. discord-haskell
 won't be uploaded to hackage for a while. In the meantime,
 use github. discord-haskell is version
 bound to match stackage lts-11.10
@@ -53,9 +53,11 @@ extra-deps:
 
 ## History
 
-I started discord-haskell by forking
-[discord.hs](https://github.com/jano017/Discord.hs), but
-I have since rewritten all of the rest and gateway logic.
+This library was originally forked from
+[discord.hs](https://github.com/jano017/Discord.hs).
+After rewriting the gateway/rest loops and extending the types
+I think it makes far more sense to present this library as
+separate form the source. The apis are not compatible.
 
 ## TO DO
 
