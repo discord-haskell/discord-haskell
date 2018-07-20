@@ -69,7 +69,7 @@ readCache :: (RestChan, Gateway, x) -> IO Cache
 readCache (_,g,_) = readMVar (_cache g)
 
 stopDiscord :: (x, y, [(z,ThreadId)]) -> IO ()
-stopDiscord (_,_,tid) = mapM_ (killThread . snd) tid
+stopDiscord (_,_,tid) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . snd) tid
 
 logger :: Chan String -> Bool -> IO ()
 logger log False = forever $ readChan log >>= \_ -> pure ()
