@@ -47,6 +47,7 @@ restLoop auth urls log = loop M.empty
                       (resp, retry) <- restIOtoIO (tryRequest action log)
                       writeChan log ("rest - got response " <> show resp)
                       case resp of
+                        Resp "" -> putMVar thread (Resp "[]") -- empty should be ()
                         Resp bs -> putMVar thread (Resp bs)
                         NoResp  -> putMVar thread NoResp
                         BadResp "Try Again" -> writeChan urls ((route,request), thread)
