@@ -9,10 +9,8 @@ module Discord.Gateway
 
 import Prelude hiding (log)
 import Control.Exception.Safe (finally)
-import Control.Concurrent.Chan (readChan, newChan, dupChan, Chan)
-import Control.Concurrent (threadDelay, forkIO, killThread, ThreadId, MVar)
-import Control.Monad (forever)
-import Data.Monoid ((<>))
+import Control.Concurrent.Chan (newChan, dupChan, Chan)
+import Control.Concurrent (forkIO, killThread, ThreadId, MVar)
 
 import Discord.Types (Auth, Event)
 import Discord.Gateway.EventLoop (connectionLoop)
