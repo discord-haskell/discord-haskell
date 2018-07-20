@@ -45,7 +45,7 @@ loginRestGateway :: Auth -> IO (RestChan, Gateway, [(ThreadIdType, ThreadId)])
 loginRestGateway auth = do
   log <- newChan
   logId <- forkIO (logger log True)
-  (restHandler, restId) <- createHandler auth
+  (restHandler, restId) <- createHandler auth log
   (chan, info, gateId) <- chanWebSocket auth log
   pure (restHandler, Gateway chan info, [(ThreadLogger, logId),
                                          (ThreadRest, restId),
