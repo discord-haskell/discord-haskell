@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import Control.Exception (finally)
 import Control.Monad (forever, when)
 import Data.Char (isSpace, toLower)
 import qualified Data.Text as T
@@ -14,14 +15,15 @@ pingpongExample = do
 
   dis <- loginRestGateway (Bot tok)
 
-  forever $ do
-      e <- nextEvent dis
-      case e of
-        MessageCreate m -> when (isPing (messageContent m)) $ do
-          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
-          putStrLn (show resp)
-          putStrLn ""
-        _ -> pure ()
+  finally (forever $ do
+              e <- nextEvent dis
+              case e of
+                  MessageCreate m -> when (isPing (messageContent m)) $ do
+                    resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+                    putStrLn (show resp)
+                    putStrLn ""
+                  _ -> pure ())
+          (stopDiscord dis)
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower

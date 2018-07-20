@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad (forever)
+import Control.Exception (finally)
 import Data.Char (isSpace)
 import Data.Monoid ((<>))
 import qualified Data.Text as T
@@ -13,7 +14,8 @@ gatewayExample :: IO ()
 gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Bot tok)
-  forever $ do
-    x <- nextEvent dis
-    putStrLn (show x <> "\n")
+  finally (forever $ do
+              x <- nextEvent dis
+              putStrLn (show x <> "\n") )
+          (stopDiscord dis)
 
