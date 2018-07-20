@@ -24,7 +24,7 @@ restExample = do
   putStrLn ""
 
   {-
-  -- Fails with a type error because rest.hs uses 'loginRest' not 'loginRestGateway'
+  -- Would fail with a type error because rest.hs uses 'loginRest' not 'loginRestGateway'
   -- Couldn't match type ‘Discord.NotLoggedIntoGateway’ with ‘Gateway’
   --     Expected type: (RestChan, Gateway)
   --       Actual type: (RestChan, Discord.NotLoggedIntoGateway)
