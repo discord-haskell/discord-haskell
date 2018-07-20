@@ -10,10 +10,12 @@ module Discord
   , restCall
   , nextEvent
   , readCache
+  , stopDiscord
   , loginRest
   , loginRestGateway
   ) where
 
+import Control.Concurrent (ThreadId, killThread)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Aeson
@@ -24,8 +26,6 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
-data NotLoggedIntoGateway = NotLoggedIntoGateway
-
 loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway)
 loginRest auth = do
   restHandler <- createHandler auth
@@ -34,13 +34,16 @@ loginRest auth = do
 loginRestGateway :: Auth -> IO (RestChan, Gateway)
 loginRestGateway auth = do
   restHandler  <- createHandler auth
-  (chan, info) <- chanWebSocket auth
-  pure (restHandler, Gateway chan info)
+  (chan, info, tid) <- chanWebSocket auth
+  pure (restHandler, Gateway chan info tid)
 
+
+data NotLoggedIntoGateway = NotLoggedIntoGateway
 
 data Gateway = Gateway
   { _events :: Chan Event
   , _cache :: MVar Cache
+  , _gatewayThreadId :: ThreadId
   }
 
 restCall :: FromJSON a => (RestChan, x) -> Request a -> IO (Resp a)
@@ -52,3 +55,17 @@ nextEvent (_,g) = readChan (_events g)
 readCache :: (RestChan, Gateway) -> IO Cache
 readCache (_,g) = readMVar (_cache g)
 
+stopDiscord :: KillableThread kt => (RestChan, kt) -> IO ()
+stopDiscord (r,g) = stopThread r >> stopThread g
+
+class KillableThread t where
+  stopThread :: t -> IO ()
+
+instance KillableThread NotLoggedIntoGateway where
+  stopThread _ = pure ()
+
+instance KillableThread RestChan where
+  stopThread r = killThread (_restThreadId r)
+
+instance KillableThread Gateway where
+  stopThread g = killThread (_gatewayThreadId g)
