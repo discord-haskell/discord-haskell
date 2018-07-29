@@ -29,27 +29,29 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
-data ThreadIdType = ThreadRest
-                  | ThreadGateway
-                  | ThreadLogger
+data ThreadIdType = ThreadRest ThreadId
+                  | ThreadGateway ThreadId
+                  | ThreadLogger ThreadId
 
-loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [(ThreadIdType, ThreadId)])
+loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [ThreadIdType])
 loginRest auth = do
   log <- newChan
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
-  pure (restHandler, NotLoggedIntoGateway, [(ThreadLogger, logId),
-                                            (ThreadRest, restId)])
+  pure (restHandler, NotLoggedIntoGateway, [ ThreadLogger logId
+                                           , ThreadRest restId
+                                           ])
 
-loginRestGateway :: Auth -> IO (RestChan, Gateway, [(ThreadIdType, ThreadId)])
+loginRestGateway :: Auth -> IO (RestChan, Gateway, [ThreadIdType])
 loginRestGateway auth = do
   log <- newChan
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
   (chan, info, gateId) <- chanWebSocket auth log
-  pure (restHandler, Gateway chan info, [(ThreadLogger, logId),
-                                         (ThreadRest, restId),
-                                         (ThreadGateway, gateId)])
+  pure (restHandler, Gateway chan info, [ ThreadLogger logId
+                                        , ThreadRest restId
+                                        , ThreadGateway gateId
+                                        ])
 
 
 data NotLoggedIntoGateway = NotLoggedIntoGateway
@@ -68,8 +70,13 @@ nextEvent (_,g,_) = readChan (_events g)
 readCache :: (RestChan, Gateway, x) -> IO Cache
 readCache (_,g,_) = readMVar (_cache g)
 
-stopDiscord :: (x, y, [(z,ThreadId)]) -> IO ()
-stopDiscord (_,_,tid) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . snd) tid
+stopDiscord :: (x, y, [ThreadIdType]) -> IO ()
+stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) is
+  where
+    toId t = case t of
+               ThreadRest a -> a
+               ThreadGateway a -> a
+               ThreadLogger a -> a
 
 logger :: Chan String -> Bool -> IO ()
 logger log False = forever $ readChan log >>= \_ -> pure ()
