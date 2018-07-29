@@ -64,15 +64,12 @@ separate form the source. The apis are not compatible.
 In roughly the order I'm working on them:
 
 - Double check the REST request ADT matches the API
-- Add      [Activity object](https://discordapp.com/developers/docs/topics/gateway#activity-object) for PresenceInfo in the Event ADT
-- Add neat [permission adt](https://discordapp.com/developers/docs/topics/permissions) handling
-- Add neat [presence adt](https://discordapp.com/developers/docs/topics/gateway#presence-update) handling
-- Add all gateway types (emoji removed, etc)
+- Add data types for
+[activities](https://discordapp.com/developers/docs/topics/gateway#activity-object),
+[permissions](https://discordapp.com/developers/docs/topics/permissions), and
+[presences](https://discordapp.com/developers/docs/topics/gateway#presence-update)
 - Update channel types (fill out guildcategory)
-- Update cache with Events
-- More helpful README (examples, how to depend it this package)
+- Modify cache with Events
 - Add gateway ToJSON for events
-- Update types JSON comments
+- Update comments to ADT types
 - Upload to Hackage
-- Rewrite rate-limiting loop to use a PSQueue for rate limited requests
-- Add the two other auth options besides Bot: Client & Bearer
