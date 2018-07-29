@@ -17,7 +17,7 @@ import Text.Read (readMaybe)
 import Discord.Types.Prelude
 import Discord.Types.Events
 
--- |Represents data sent and received with Discord servers
+-- | Represents data sent and received with Discord servers
 data GatewayReceivable
   = Dispatch Event Integer
   | HeartbeatRequest Integer

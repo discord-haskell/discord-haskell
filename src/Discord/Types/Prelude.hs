@@ -49,7 +49,7 @@ instance FromJSON Snowflake where
   parseJSON (String snowflake) = Snowflake <$> (return . read $ T.unpack snowflake)
   parseJSON _ = mzero
 
--- |Gets a creation date from a snowflake.
+-- | Gets a creation date from a snowflake.
 creationDate :: Snowflake -> UTCTime
 creationDate x = posixSecondsToUTCTime . realToFrac
   $ 1420070400 + quot (shiftR x 22) 1000

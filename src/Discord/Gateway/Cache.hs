@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# OPTIONS_HADDOCK prune, not-home #-}
 
--- |Query info about connected Guilds and Channels
+-- | Query info about connected Guilds and Channels
 module Discord.Gateway.Cache where
 
 import Prelude hiding (log)

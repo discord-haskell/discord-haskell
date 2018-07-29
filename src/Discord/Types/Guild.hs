@@ -11,7 +11,7 @@ import qualified Data.Text as T
 import Discord.Types.Channel
 import Discord.Types.Prelude
 
--- |Representation of a guild member.
+-- | Representation of a guild member.
 data GuildMember = GuildMember
       { memberUser     :: User
       , memberNick     :: Maybe T.Text

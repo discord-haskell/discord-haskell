@@ -19,7 +19,7 @@ import Discord.Types.Guild (Guild, Unavailable, GuildInfo,
                             GuildMember, Role, Emoji)
 
 
--- |Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
+-- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
 data Event =
     Ready                   Int User [Channel] [Unavailable] String
   | Resumed                 [T.Text]

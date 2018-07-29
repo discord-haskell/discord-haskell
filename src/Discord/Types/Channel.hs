@@ -15,7 +15,7 @@ import qualified Data.Vector as V
 
 import Discord.Types.Prelude
 
--- |Represents information about a user.
+-- | Represents information about a user.
 data User = User
   { userId       :: Snowflake    -- ^ The user's id.
   , userName     :: String       -- ^ The user's username, not unique across
@@ -57,7 +57,7 @@ data Channel
       , channelLastMessage :: Maybe Snowflake   -- ^ The id of the last message sent in the
                                                 --   channel
       }
-  -- |A voice channel in a guild.
+  -- | A voice channel in a guild.
   | Voice
       { channelId          :: Snowflake
       , channelGuild       :: Snowflake
@@ -117,7 +117,7 @@ instance FromJSON Channel where
                       <*> o .:? "guild_id" .!= 0
       _ -> fail ("Unknown channel type:" <> show type')
 
--- |If the channel is part of a guild (has a guild id field)
+-- | If the channel is part of a guild (has a guild id field)
 isGuildChannel :: Channel -> Bool
 isGuildChannel c = case c of
         GuildCategory{..} -> True
@@ -190,7 +190,7 @@ instance FromJSON Message where
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
 
--- |Represents an attached to a message file.
+-- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: Snowflake     -- ^ Attachment id
   , attachmentFilename :: String        -- ^ Name of attached file
@@ -211,7 +211,7 @@ instance FromJSON Attachment where
                <*> o .:? "height"
                <*> o .:? "width"
 
--- |An embed attached to a message.
+-- | An embed attached to a message.
 data Embed = Embed
   { embedTitle  :: String     -- ^ Title of the embed
   , embedType   :: String     -- ^ Type of embed (Always "rich" for webhooks)
@@ -320,7 +320,7 @@ instance ToJSON Embed where
         ) "fields"
       embed _ = id
 
--- |Represents a part of an embed.
+-- | Represents a part of an embed.
 data SubEmbed
   = Thumbnail
       String
