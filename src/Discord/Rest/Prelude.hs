@@ -22,7 +22,7 @@ authHeader auth =
           R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
-  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.3.0)"
+  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.4.0)"
 
 -- Append to an URL
 infixl 5 //
