@@ -29,10 +29,14 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
+-- | Thread Ids marked by what type they are
 data ThreadIdType = ThreadRest ThreadId
                   | ThreadGateway ThreadId
                   | ThreadLogger ThreadId
 
+data NotLoggedIntoGateway = NotLoggedIntoGateway
+
+-- | Start HTTP rest handler background threads
 loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [ThreadIdType])
 loginRest auth = do
   log <- newChan
@@ -42,6 +46,7 @@ loginRest auth = do
                                            , ThreadRest restId
                                            ])
 
+-- | Start HTTP rest handler and gateway background threads
 loginRestGateway :: Auth -> IO (RestChan, Gateway, [ThreadIdType])
 loginRestGateway auth = do
   log <- newChan
@@ -53,23 +58,26 @@ loginRestGateway auth = do
                                         , ThreadGateway gateId
                                         ])
 
-
-data NotLoggedIntoGateway = NotLoggedIntoGateway
-
+-- | Concurrency primitives that make up the gateway. Build a higher
+--   level interface over these
 data Gateway = Gateway
   { _events :: Chan Event
   , _cache :: MVar Cache
   }
 
+-- | Execute one http request and get a response
 restCall :: FromJSON a => (RestChan, x, y) -> Request a -> IO (Resp a)
 restCall (r,_,_) = writeRestCall r
 
+-- | Block until the gateway produces another event
 nextEvent :: (RestChan, Gateway, x) -> IO Event
 nextEvent (_,g,_) = readChan (_events g)
 
+-- | Access the current state of the gateway cache
 readCache :: (RestChan, Gateway, x) -> IO Cache
 readCache (_,g,_) = readMVar (_cache g)
 
+-- | Stop all the background threads
 stopDiscord :: (x, y, [ThreadIdType]) -> IO ()
 stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) is
   where
@@ -78,6 +86,7 @@ stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) 
                ThreadGateway a -> a
                ThreadLogger a -> a
 
+-- | Add anything from the Chan to the log file, forever
 logger :: Chan String -> Bool -> IO ()
 logger log False = forever $ readChan log >>= \_ -> pure ()
 logger log True  = forever $ do
