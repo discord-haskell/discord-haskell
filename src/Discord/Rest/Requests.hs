@@ -65,11 +65,11 @@ data Request a where
   -- | Deletes a group of messages.
   BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> Request ()
   -- | Edits a permission overrides for a channel.
-  EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> Request ()
+  -- todo EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> Request ()
   -- | Gets all instant invites to a channel.
   GetChannelInvites       :: Snowflake -> Request Object
   -- | Creates an instant invite to a channel.
-  CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> Request Object
+  -- todo CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> Request Object
   -- | Deletes a permission override from a channel.
   DeleteChannelPermission :: Snowflake -> Snowflake -> Request ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
@@ -267,9 +267,9 @@ majorRoute c = case c of
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
-  (EditChannelPermissions chan _ _) ->    "perms " <> show chan
+  -- todo (EditChannelPermissions chan _ _) ->    "perms " <> show chan
   (GetChannelInvites chan) ->           "invites " <> show chan
-  (CreateChannelInvite chan _) ->       "invites " <> show chan
+  -- todo (CreateChannelInvite chan _) ->       "invites " <> show chan
   (DeleteChannelPermission chan _) ->     "perms " <> show chan
   (TriggerTypingIndicator chan) ->          "tti " <> show chan
   (GetPinnedMessages chan) ->              "pins " <> show chan
@@ -397,14 +397,14 @@ jsonRequest c = case c of
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
       in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
 
-  (EditChannelPermissions chan perm patch) ->
-      Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+  -- todo (EditChannelPermissions chan perm patch) ->
+  --  Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
 
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
 
-  (CreateChannelInvite chan patch) ->
-      Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+  -- todo (CreateChannelInvite chan patch) ->
+  --  Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannelPermission chan perm) ->
       Delete (channels // chan /: "permissions" // perm) mempty
