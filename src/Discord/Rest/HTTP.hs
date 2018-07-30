@@ -38,25 +38,26 @@ unpackResp r = case r of
                  NoResp -> "NoResp"
                  BadResp s -> "BadResp " <> s
 
-restLoop :: Auth -> Chan ((String, JsonRequest), MVar (Resp QL.ByteString))
-                 -> Chan String -> IO ()
+restLoop :: Request r => Auth -> Chan (r, MVar (Resp QL.ByteString))
+                              -> Chan String
+                              -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
     threadDelay (40 * 1000)
-    ((route, request), thread) <- readChan urls
+    (req, thread) <- readChan urls
     curtime <- getPOSIXTime
-    case compareRate ratelocker route curtime of
-      Locked -> do writeChan urls ((route, request), thread)
+    case compareRate ratelocker (majorRoute req) curtime of
+      Locked -> do writeChan urls (req, thread)
                    loop ratelocker
-      Available -> do let action = compileRequest auth request
+      Available -> do let action = compileRequest auth (jsonRequest req)
                       (resp, retry) <- restIOtoIO (tryRequest action log)
                       writeChan log ("rest - got response " <> unpackResp resp)
                       case resp of
                         Resp "" -> putMVar thread (Resp "[]") -- empty should be ()
                         Resp bs -> putMVar thread (Resp bs)
                         NoResp  -> putMVar thread NoResp
-                        BadResp "Try Again" -> writeChan urls ((route,request), thread)
+                        BadResp "Try Again" -> writeChan urls (req, thread)
                         BadResp r -> putMVar thread (BadResp r)
                       case retry of
                         GlobalWait i -> do
@@ -64,7 +65,7 @@ restLoop auth urls log = loop M.empty
                             threadDelay $ round ((i - curtime + 0.1) * 1000)
                             loop ratelocker
                         PathWait i -> do
-                            loop $ M.insert route i ratelocker
+                            loop $ M.insert (majorRoute req) i ratelocker
                         NoLimit -> loop ratelocker
 
 compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited

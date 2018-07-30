@@ -38,6 +38,9 @@ data JsonRequest where
   Put    :: R.HttpBody a => R.Url 'R.Https -> a -> R.Option 'R.Https -> JsonRequest
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
 
+class Request a where
+  majorRoute :: a -> T.Text
+  jsonRequest :: a -> JsonRequest
 
 
 -- | Same Monad as IO. Overwrite Req settings
