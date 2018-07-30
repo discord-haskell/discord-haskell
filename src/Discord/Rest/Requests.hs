@@ -80,6 +80,13 @@ data Request a where
   AddPinnedMessage        :: (Snowflake, Snowflake) -> Request ()
   -- | Unpins a message.
   DeletePinnedMessage     :: (Snowflake, Snowflake) -> Request ()
+  -- | Adds a recipient to a Group DM using their access token
+  -- todo GroupDMAddRecipient     :: Snowflake -> Snowflake -> Request ()
+  -- | Removes a recipient from a Group DM
+  -- todo GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> Request ()
+
+
+
 
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: Snowflake -> Request Guild
