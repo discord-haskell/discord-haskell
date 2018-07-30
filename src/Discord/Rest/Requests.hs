@@ -77,9 +77,9 @@ data Request a where
   -- | Gets all pinned messages of a channel.
   GetPinnedMessages       :: Snowflake -> Request [Message]
   -- | Pins a message.
-  AddPinnedMessage        :: Snowflake -> Snowflake -> Request ()
+  AddPinnedMessage        :: (Snowflake, Snowflake) -> Request ()
   -- | Unpins a message.
-  DeletePinnedMessage     :: Snowflake -> Snowflake -> Request ()
+  DeletePinnedMessage     :: (Snowflake, Snowflake) -> Request ()
 
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: Snowflake -> Request Guild
@@ -273,8 +273,8 @@ majorRoute c = case c of
   (DeleteChannelPermission chan _) ->     "perms " <> show chan
   (TriggerTypingIndicator chan) ->          "tti " <> show chan
   (GetPinnedMessages chan) ->              "pins " <> show chan
-  (AddPinnedMessage chan _) ->              "pin " <> show chan
-  (DeletePinnedMessage chan _) ->           "pin " <> show chan
+  (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
+  (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
 
   (GetGuild g) ->                         "guild " <> show g
   (ModifyGuild g _) ->                    "guild " <> show g
@@ -415,10 +415,10 @@ jsonRequest c = case c of
   (GetPinnedMessages chan) ->
       Get (channels // chan /: "pins") mempty
 
-  (AddPinnedMessage chan msg) ->
+  (AddPinnedMessage (chan, msg)) ->
       Put (channels // chan /: "pins" // msg) R.NoReqBody mempty
 
-  (DeletePinnedMessage chan msg) ->
+  (DeletePinnedMessage (chan, msg)) ->
       Delete (channels // chan /: "pins" // msg) mempty
 
   (GetGuild guild) ->
