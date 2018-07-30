@@ -30,15 +30,15 @@ infixl 5 //
 (//) url part = url R./: T.pack (show part)
 
 
-type Option = R.Option 'R.Https
-
 -- | Represtents a HTTP request made to an API that supplies a Json response
 data JsonRequest where
-  Delete ::                 R.Url 'R.Https ->      Option -> JsonRequest
-  Get    ::                 R.Url 'R.Https ->      Option -> JsonRequest
-  Patch  :: R.HttpBody a => R.Url 'R.Https -> a -> Option -> JsonRequest
-  Put    :: R.HttpBody a => R.Url 'R.Https -> a -> Option -> JsonRequest
-  Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> Option -> JsonRequest
+  Delete ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
+  Get    ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
+  Patch  :: R.HttpBody a => R.Url 'R.Https -> a -> R.Option 'R.Https -> JsonRequest
+  Put    :: R.HttpBody a => R.Url 'R.Https -> a -> R.Option 'R.Https -> JsonRequest
+  Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
+
+
 
 -- | Same Monad as IO. Overwrite Req settings
 newtype RestIO a = RestIO { restIOtoIO :: IO a }
