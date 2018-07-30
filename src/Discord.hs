@@ -2,6 +2,9 @@
 
 module Discord
   ( module Discord.Types
+  , module Discord.Rest.Channel
+  , module Discord.Rest.Guild
+  , module Discord.Rest.User
   , Resp(..)
   , Cache(..)
   , Gateway(..)
@@ -23,6 +26,9 @@ import Data.Monoid ((<>))
 import Data.Aeson
 
 import Discord.Rest
+import Discord.Rest.Channel
+import Discord.Rest.Guild
+import Discord.Rest.User
 import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
