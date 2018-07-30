@@ -39,9 +39,8 @@ data JsonRequest where
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
 
 class Request a where
-  majorRoute :: a -> T.Text
+  majorRoute :: a -> String
   jsonRequest :: a -> JsonRequest
-
 
 -- | Same Monad as IO. Overwrite Req settings
 newtype RestIO a = RestIO { restIOtoIO :: IO a }
