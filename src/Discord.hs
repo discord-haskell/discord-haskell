@@ -1,8 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 
 module Discord
-  ( module Discord.Rest.Requests
-  , module Discord.Types
+  ( module Discord.Types
   , Resp(..)
   , Cache(..)
   , Gateway(..)
@@ -24,7 +23,6 @@ import Data.Monoid ((<>))
 import Data.Aeson
 
 import Discord.Rest
-import Discord.Rest.Requests
 import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
@@ -66,7 +64,7 @@ data Gateway = Gateway
   }
 
 -- | Execute one http request and get a response
-restCall :: FromJSON a => (RestChan, x, y) -> Request a -> IO (Resp a)
+restCall :: (FromJSON a, Request (r a)) => (RestChan, x, y) -> r a -> IO (Resp a)
 restCall (r,_,_) = writeRestCall r
 
 -- | Block until the gateway produces another event
@@ -80,11 +78,10 @@ readCache (_,g,_) = readMVar (_cache g)
 -- | Stop all the background threads
 stopDiscord :: (x, y, [ThreadIdType]) -> IO ()
 stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) is
-  where
-    toId t = case t of
-               ThreadRest a -> a
-               ThreadGateway a -> a
-               ThreadLogger a -> a
+  where toId t = case t of
+                   ThreadRest a -> a
+                   ThreadGateway a -> a
+                   ThreadLogger a -> a
 
 -- | Add anything from the Chan to the log file, forever
 logger :: Chan String -> Bool -> IO ()
