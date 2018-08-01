@@ -65,18 +65,10 @@ guilds = baseUrl /: "guilds"
 userJsonRequest :: EmojiRequest r -> JsonRequest
 userJsonRequest c = case c of
   (ListGuildEmojis g) -> Get (guilds // g) mempty
-  (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e)
+  (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty
   -- todo (CreateGuildEmoji g) -> Post ()
-  (ModifyGuildEmoji g e) -> Patch 
-  (DeleteGuildEmoji g e) -> "emoji " <> show g
+  (ModifyGuildEmoji g e o) -> Patch (guilds // g /: "emojis" // e)
+                                    (R.ReqBodyJson o)
+                                    mempty
+  (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty
 
-  (GetCurrentUser) -> Get (users /: "@me") mempty
-
-  (ModifyCurrentUser patch) ->
-      Patch (users /: "@me")  (R.ReqBodyJson patch) mempty
-
-  (LeaveGuild guild) -> Delete (users /: "@me" /: "guilds" // guild) mempty
-
-  (CreateDM user) ->
-      let body = R.ReqBodyJson $ object ["recipient_id" .= user]
-      in Post (users /: "@me" /: "channels") (pure body) mempty
