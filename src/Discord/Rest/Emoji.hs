@@ -48,11 +48,11 @@ instance ToJSON ModifyGuildEmojiOpts where
 
 userMajorRoute :: EmojiRequest a -> String
 userMajorRoute c = case c of
-  (ListGuildEmojis g) ->    "emoji " <> show g
-  (GetGuildEmoji g e) ->    "emoji " <> show g
+  (ListGuildEmojis g) ->      "emoji " <> show g
+  (GetGuildEmoji g _) ->      "emoji " <> show g
   -- todo (CreateGuildEmoji g) ->   "emoji " <> show g
-  (ModifyGuildEmoji g e) -> "emoji " <> show g
-  (DeleteGuildEmoji g e) -> "emoji " <> show g
+  (ModifyGuildEmoji g _ _) -> "emoji " <> show g
+  (DeleteGuildEmoji g _)   -> "emoji " <> show g
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
