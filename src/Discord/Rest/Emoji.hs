@@ -7,6 +7,7 @@
 -- | Provides actions for Channel API interactions
 module Discord.Rest.User
   ( EmojiRequest(..)
+  , ModifyGuildEmojiOpts(..)
   ) where
 
 import Data.Aeson
@@ -36,6 +37,14 @@ data EmojiRequest a where
   -- | Requires MANAGE_EMOJIS permission
   DeleteGuildEmoji :: Snowflake -> Snowflake -> EmojiRequest ()
 
+data ModifyGuildEmojiOpts = ModifyGuildEmojiOpts
+     { modifyGuildEmojiName  :: T.Text
+     , modifyGuildEmojiRoles :: [Snowflake]
+     }
+
+instance ToJSON ModifyGuildEmojiOpts where
+  toJSON (ModifyGuildEmojiOpts name roles) =
+    object [ "name" .= name, "roles" .= roles ]
 
 userMajorRoute :: EmojiRequest a -> String
 userMajorRoute c = case c of
