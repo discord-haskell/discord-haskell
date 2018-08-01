@@ -25,6 +25,7 @@ instance Request (GuildRequest a) where
 
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data GuildRequest a where
+  -- todo CreateGuild        :: So many parameters
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: Snowflake -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
