@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.User
+module Discord.Rest.Emoji
   ( EmojiRequest(..)
   , ModifyGuildEmojiOpts(..)
   ) where

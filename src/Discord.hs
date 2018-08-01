@@ -5,6 +5,7 @@ module Discord
   , module Discord.Rest.Channel
   , module Discord.Rest.Guild
   , module Discord.Rest.User
+  , module Discord.Rest.Emoji
   , Resp(..)
   , Cache(..)
   , Gateway(..)
@@ -29,6 +30,7 @@ import Discord.Rest
 import Discord.Rest.Channel
 import Discord.Rest.Guild
 import Discord.Rest.User
+import Discord.Rest.Emoji
 import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
