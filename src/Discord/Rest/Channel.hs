@@ -109,26 +109,26 @@ messageTimingToQuery t = case t of
   (AfterMessage snow) -> "after"  R.=: show snow
 
 data ModifyChannelOptions = ModifyChannelOptions
-  { modifyName                 :: Maybe String
-  , modifyPosition             :: Maybe Integer
-  , modifyTopic                :: Maybe String
-  , modifyNSFW                 :: Maybe Bool
-  , modifyBitrate              :: Maybe Integer
-  , modifyUserRateLimit        :: Maybe Integer
-  , modifyPermissionOverwrites :: Maybe [Overwrite]
-  , modifyParentId             :: Maybe Snowflake
+  { modifyChannelName                 :: Maybe String
+  , modifyChannelPosition             :: Maybe Integer
+  , modifyChannelTopic                :: Maybe String
+  , modifyChannelNSFW                 :: Maybe Bool
+  , modifyChannelBitrate              :: Maybe Integer
+  , modifyChannelUserRateLimit        :: Maybe Integer
+  , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
+  , modifyChannelParentId             :: Maybe Snowflake
   }
 
 instance ToJSON ModifyChannelOptions where
   toJSON ModifyChannelOptions{..} = object [(name, val) | (name, Just val) <-
-               [("name",                   toJSON <$> modifyName),
-                ("position",               toJSON <$> modifyPosition),
-                ("topic",                  toJSON <$> modifyTopic),
-                ("nsfw",                   toJSON <$> modifyNSFW),
-                ("bitrate",                toJSON <$> modifyBitrate),
-                ("user_limit",             toJSON <$> modifyUserRateLimit),
-                ("permission_overwrites",  toJSON <$> modifyPermissionOverwrites),
-                ("parent_id",              toJSON <$> modifyParentId) ] ]
+               [("name",       toJSON <$> modifyChannelName),
+                ("position",   toJSON <$> modifyChannelPosition),
+                ("topic",      toJSON <$> modifyChannelTopic),
+                ("nsfw",       toJSON <$> modifyChannelNSFW),
+                ("bitrate",    toJSON <$> modifyChannelBitrate),
+                ("user_limit", toJSON <$> modifyChannelUserRateLimit),
+                ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
+                ("parent_id",  toJSON <$> modifyChannelParentId) ] ]
 
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of
