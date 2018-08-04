@@ -33,8 +33,8 @@ has the most recent (potentially) breaking changes.
 3 Invite the bot to a server
 `https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
 
-4 Connect to the gateway once in order to send CreateMessage events
-[link to docs](https://discordapp.com/developers/docs/resources/channel#create-message)
+4 Connect to the gateway once in order to send CreateMessage events.
+[this is a discord requirement](https://discordapp.com/developers/docs/resources/channel#create-message)
 
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
