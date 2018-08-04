@@ -1,6 +1,8 @@
 # discord-haskell
 
-## Quick notes
+Please read `Notes` and `Getting Started` carefully
+
+## Notes
 
 `loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
 `nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
@@ -32,6 +34,7 @@ has the most recent (potentially) breaking changes.
 `https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
 
 4 Connect to the gateway once in order to send CreateMessage events
+[link to docs](https://discordapp.com/developers/docs/resources/channel#create-message)
 
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
