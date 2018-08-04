@@ -155,7 +155,7 @@ data Message = Message
                                            --   was sent in
   , messageAuthor       :: User            -- ^ The 'User' the message was sent
                                            --   by
-  , messageContent      :: T.Text          -- ^ Contents of the message
+  , messageText         :: T.Text          -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
   , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
   , messageTts          :: Bool            -- ^ Whether this message was a TTS

@@ -18,7 +18,7 @@ pingpongExample = do
   finally (forever $ do
               e <- nextEvent dis
               case e of
-                  MessageCreate m -> when (isPing (messageContent m)) $ do
+                  MessageCreate m -> when (isPing (messageText m)) $ do
                     resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
                     putStrLn (show resp)
                     putStrLn ""
