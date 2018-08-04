@@ -2,10 +2,6 @@
 
 ## Quick notes
 
-Use `Control.Exception.finally` with `stopDiscord` to safely
-kill background threads.
-(otherwise exit ghci and reopen to kill threads)
-
 `loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
 `nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
 gateway**
@@ -16,6 +12,10 @@ and returns info
 `nextEvent` gives `Event`s as they happen
 
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
+
+Use `Control.Exception.finally` with `stopDiscord` to safely
+kill background threads when running examples in ghci
+(otherwise exit ghci and reopen to kill threads)
 
 The examples will work on the `master` branch. The `dev` branch
 has the most recent (potentially) breaking changes.
