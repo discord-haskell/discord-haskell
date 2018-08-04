@@ -30,7 +30,7 @@ data GuildRequest a where
   GetGuild                 :: Snowflake -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
   --   Guild Update 'Event'.
-  ModifyGuild              :: ToJSON o => Snowflake -> o -> GuildRequest Guild
+  -- todo ModifyGuild              :: ToJSON o => Snowflake -> o -> GuildRequest Guild
   -- | Delete a guild permanently. User must be owner. Fires a Guild Delete 'Event'.
   DeleteGuild              :: Snowflake -> GuildRequest Guild
   -- | Returns a list of guild 'Channel' objects
@@ -38,11 +38,11 @@ data GuildRequest a where
   -- | Create a new 'Channel' object for the guild. Requires 'MANAGE_CHANNELS'
   --   permission. Returns the new 'Channel' object on success. Fires a Channel Create
   --   'Event'
-  CreateGuildChannel       :: ToJSON o => Snowflake -> o -> GuildRequest Channel
+  -- todo CreateGuildChannel       :: ToJSON o => Snowflake -> o -> GuildRequest Channel
   -- | Modify the positions of a set of channel objects for the guild. Requires
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
-  ModifyChanPosition       :: ToJSON o => Snowflake -> o -> GuildRequest [Channel]
+  -- todo ModifyChanPosition       :: ToJSON o => Snowflake -> o -> GuildRequest [Channel]
   -- | Returns a guild 'Member' object for the specified user
   GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
@@ -51,10 +51,10 @@ data GuildRequest a where
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
-  AddGuildMember           :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo AddGuildMember           :: ToJSON o => Snowflake -> Snowflake -> o
                                 -> GuildRequest GuildMember
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
-  ModifyGuildMember        :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo ModifyGuildMember        :: ToJSON o => Snowflake -> Snowflake -> o
                                 -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
@@ -77,10 +77,10 @@ data GuildRequest a where
   -- | Modify the positions of a set of role objects for the guild. Requires the
   --   'MANAGE_ROLES' permission. Returns a list of all of the guild's 'Role' objects
   --   on success. Fires multiple Guild Role Update 'Event's.
-  ModifyGuildRolePositions :: ToJSON o => Snowflake -> [o] -> GuildRequest [Role]
+  -- todo ModifyGuildRolePositions :: ToJSON o => Snowflake -> [o] -> GuildRequest [Role]
   -- | Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the
   --   updated 'Role' on success. Fires a Guild Role Update 'Event's.
-  ModifyGuildRole          :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo ModifyGuildRole          :: ToJSON o => Snowflake -> Snowflake -> o
                                 -> GuildRequest Role
   -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
   --   Delete 'Event'.
@@ -104,10 +104,10 @@ data GuildRequest a where
   GetGuildIntegrations     :: Snowflake -> GuildRequest [Integration]
   -- | Attach an 'Integration' object from the current user to the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  CreateGuildIntegration   :: ToJSON o => Snowflake -> o -> GuildRequest ()
+  -- todo CreateGuildIntegration   :: ToJSON o => Snowflake -> o -> GuildRequest ()
   -- | Modify the behavior and settings of a 'Integration' object for the guild.
   --   Requires the 'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  ModifyGuildIntegration   :: ToJSON o => Snowflake -> Snowflake -> o -> GuildRequest ()
+  -- todo ModifyGuildIntegration   :: ToJSON o => Snowflake -> Snowflake -> o -> GuildRequest ()
   -- | Delete the attached 'Integration' object for the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
   DeleteGuildIntegration   :: Snowflake -> Snowflake -> GuildRequest ()

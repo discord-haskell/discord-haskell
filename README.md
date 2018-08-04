@@ -63,7 +63,7 @@ separate form the source. The apis are not compatible.
 
 In roughly the order I'm working on them:
 
-- Double check the REST request ADT matches the API
+- Finish REST request ADT. Search for '\-\- todo' regex
 - Add data types for
 [activities](https://discordapp.com/developers/docs/topics/gateway#activity-object),
 [permissions](https://discordapp.com/developers/docs/topics/permissions), and

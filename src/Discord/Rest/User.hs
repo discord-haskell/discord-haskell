@@ -32,7 +32,7 @@ data UserRequest a where
   -- | Returns a 'User' for a given user ID
   GetUser              :: Snowflake -> UserRequest User
   -- | Modify the requestors user account settings. Returns a 'User' object on success.
-  ModifyCurrentUser    :: ToJSON o => o -> UserRequest User
+  -- todo ModifyCurrentUser    :: ToJSON o => o -> UserRequest User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
   GetCurrentUserGuilds :: UserRequest [PartialGuild]
