@@ -10,6 +10,7 @@ module Discord
   , Cache(..)
   , Gateway(..)
   , RestChan(..)
+  , Request(..)
   , restCall
   , nextEvent
   , readCache
