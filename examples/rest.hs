@@ -14,14 +14,10 @@ restExample = do
   dis <- loginRest (Auth tok)
 
   msg <- restCall dis (CreateMessage 453207241294610444 "Creating a message" Nothing)
-  putStrLn ("Message object: " <> show msg)
-
-  putStrLn ""
+  putStrLn ("Message object: " <> show msg <> "\n")
 
   chan <- restCall dis (GetChannel 453207241294610444)
-  putStrLn ("Channel object: " <> show chan)
-
-  putStrLn ""
+  putStrLn ("Channel object: " <> show chan <> "\n")
 
   -- NextEvent would fail with a type error because rest.hs uses
   --       'loginRest' not 'loginRestGateway'
