@@ -19,7 +19,7 @@ restExample = do
   chan <- restCall dis (GetChannel 453207241294610444)
   putStrLn ("Channel object: " <> show chan <> "\n")
 
-  -- NextEvent would fail with a type error because rest.hs uses
+  -- nextEvent would fail with a type error because rest.hs uses
   --       'loginRest' not 'loginRestGateway'
   --
   -- Couldn't match type ‘Discord.NotLoggedIntoGateway’ with ‘Gateway’
