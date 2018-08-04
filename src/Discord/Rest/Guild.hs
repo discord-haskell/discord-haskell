@@ -52,10 +52,10 @@ data GuildRequest a where
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
   -- todo AddGuildMember           :: ToJSON o => Snowflake -> Snowflake -> o
-                                -> GuildRequest GuildMember
+                                -- -> GuildRequest GuildMember
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
   -- todo ModifyGuildMember        :: ToJSON o => Snowflake -> Snowflake -> o
-                                -> GuildRequest ()
+                                -- -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: Snowflake -> Snowflake -> GuildRequest ()
@@ -81,7 +81,7 @@ data GuildRequest a where
   -- | Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the
   --   updated 'Role' on success. Fires a Guild Role Update 'Event's.
   -- todo ModifyGuildRole          :: ToJSON o => Snowflake -> Snowflake -> o
-                                -> GuildRequest Role
+                                -- -> GuildRequest Role
   -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
   --   Delete 'Event'.
   DeleteGuildRole          :: Snowflake -> Snowflake -> GuildRequest Role
@@ -138,31 +138,31 @@ guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
 guildMajorRoute :: GuildRequest a -> String
 guildMajorRoute c = case c of
   (GetGuild g) ->                         "guild " <> show g
-  (ModifyGuild g _) ->                    "guild " <> show g
+  -- (ModifyGuild g _) ->                    "guild " <> show g
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
-  (CreateGuildChannel g _) ->        "guild_chan " <> show g
-  (ModifyChanPosition g _) ->        "guild_chan " <> show g
+  -- (CreateGuildChannel g _) ->        "guild_chan " <> show g
+  -- (ModifyChanPosition g _) ->        "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
-  (AddGuildMember g _ _) ->          "guild_memb " <> show g
-  (ModifyGuildMember g _ _) ->       "guild_memb " <> show g
+  -- (AddGuildMember g _ _) ->          "guild_memb " <> show g
+  -- (ModifyGuildMember g _ _) ->       "guild_memb " <> show g
   (RemoveGuildMember g _) ->         "guild_memb " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
   (GetGuildRoles  g) ->             "guild_roles " <> show g
   (CreateGuildRole g) ->            "guild_roles " <> show g
-  (ModifyGuildRolePositions g _) -> "guild_roles " <> show g
-  (ModifyGuildRole g _ _) ->         "guild_role " <> show g
+  -- (ModifyGuildRolePositions g _) -> "guild_roles " <> show g
+  -- (ModifyGuildRole g _ _) ->         "guild_role " <> show g
   (DeleteGuildRole g _ ) ->          "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
   (BeginGuildPrune    g _) ->       "guild_prune " <> show g
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
   (GetGuildInvites g) ->            "guild_invit " <> show g
   (GetGuildIntegrations g) ->       "guild_integ " <> show g
-  (CreateGuildIntegration g _) ->   "guild_integ " <> show g
-  (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
+  -- (CreateGuildIntegration g _) ->   "guild_integ " <> show g
+  -- (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
   (DeleteGuildIntegration g _) ->   "guild_intgr " <> show g
   (SyncGuildIntegration g _) ->      "guild_sync " <> show g
   (GetGuildEmbed g) ->              "guild_embed " <> show g
@@ -182,8 +182,8 @@ guildJsonRequest c = case c of
   (GetGuild guild) ->
       Get (guilds // guild) mempty
 
-  (ModifyGuild guild patch) ->
-      Patch (guilds // guild) (R.ReqBodyJson patch) mempty
+  -- (ModifyGuild guild patch) ->
+      -- Patch (guilds // guild) (R.ReqBodyJson patch) mempty
 
   (DeleteGuild guild) ->
       Delete (guilds // guild) mempty
@@ -191,11 +191,11 @@ guildJsonRequest c = case c of
   (GetGuildChannels guild) ->
       Get (guilds // guild /: "channels") mempty
 
-  (CreateGuildChannel guild patch) ->
-      Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+  -- (CreateGuildChannel guild patch) ->
+      -- Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
 
-  (ModifyChanPosition guild patch) ->
-      Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+  -- (ModifyChanPosition guild patch) ->
+      -- Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildMember guild member) ->
       Get (guilds // guild /: "members" // member) mempty
@@ -203,12 +203,12 @@ guildJsonRequest c = case c of
   (ListGuildMembers guild range) ->
       Get (guilds // guild /: "members") (guildMembersTimingToQuery range)
 
-  (AddGuildMember guild user patch) ->
-      Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
+  -- (AddGuildMember guild user patch) ->
+      -- Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
 
-  (ModifyGuildMember guild member patch) ->
-      let body = R.ReqBodyJson patch
-      in Patch (guilds // guild /: "members" // member) body mempty
+  -- (ModifyGuildMember guild member patch) ->
+      -- let body = R.ReqBodyJson patch
+      -- in Patch (guilds // guild /: "members" // member) body mempty
 
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
@@ -229,10 +229,10 @@ guildJsonRequest c = case c of
   (CreateGuildRole guild) ->
       Post (guilds // guild /: "roles") (pure R.NoReqBody) mempty
 
-  (ModifyGuildRolePositions guild patch) ->
-      Post (guilds // guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
-  (ModifyGuildRole guild role patch) ->
-      Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
+  -- (ModifyGuildRolePositions guild patch) ->
+      -- Post (guilds // guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
+  -- (ModifyGuildRole guild role patch) ->
+      -- Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuildRole guild role) ->
       Delete (guilds // guild /: "roles" // role) mempty
@@ -252,12 +252,12 @@ guildJsonRequest c = case c of
   (GetGuildIntegrations guild) ->
       Get (guilds // guild /: "integrations") mempty
 
-  (CreateGuildIntegration guild patch) ->
-      Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
+  -- (CreateGuildIntegration guild patch) ->
+      -- Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
 
-  (ModifyGuildIntegration guild integ patch) ->
-      let body = R.ReqBodyJson patch
-      in Patch (guilds // guild /: "integrations" // integ) body mempty
+  -- (ModifyGuildIntegration guild integ patch) ->
+      -- let body = R.ReqBodyJson patch
+      -- in Patch (guilds // guild /: "integrations" // integ) body mempty
 
   (DeleteGuildIntegration guild integ) ->
       Delete (guilds // guild /: "integrations" // integ) mempty

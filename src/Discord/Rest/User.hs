@@ -48,7 +48,7 @@ userMajorRoute :: UserRequest a -> String
 userMajorRoute c = case c of
   (GetCurrentUser) ->                        "me "
   (GetUser _) ->                           "user "
-  (ModifyCurrentUser _) ->          "modify_user "
+  -- (ModifyCurrentUser _) ->          "modify_user "
   (GetCurrentUserGuilds) ->     "get_user_guilds "
   (LeaveGuild g) ->                 "leave_guild " <> show g
   (GetUserDMs) ->                       "get_dms "
@@ -68,8 +68,8 @@ userJsonRequest c = case c of
 
   (GetUser user) -> Get (users // user ) mempty
 
-  (ModifyCurrentUser patch) ->
-      Patch (users /: "@me")  (R.ReqBodyJson patch) mempty
+  -- (ModifyCurrentUser patch) ->
+      -- Patch (users /: "@me")  (R.ReqBodyJson patch) mempty
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 
