@@ -63,7 +63,7 @@ separate form the source. The apis are not compatible.
 
 In roughly the order I'm working on them:
 
-- Finish REST request ADT. Search for '\-\- todo' regex
+- Finish REST request ADT. Search for ``-\- todo` regex
 - Add data types for
 [activities](https://discordapp.com/developers/docs/topics/gateway#activity-object),
 [permissions](https://discordapp.com/developers/docs/topics/permissions), and
@@ -71,5 +71,5 @@ In roughly the order I'm working on them:
 - Update channel types (fill out guildcategory)
 - Modify cache with Events
 - Add gateway ToJSON for events
-- Update comments to ADT types
-- Upload to Hackage
+- Update comments on ADT types
+
