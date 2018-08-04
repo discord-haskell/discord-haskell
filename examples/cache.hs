@@ -11,7 +11,7 @@ import Discord
 cacheExample :: IO ()
 cacheExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  dis <- loginRestGateway (Bot tok)
+  dis <- loginRestGateway (Auth tok)
   cache <- readCache dis
 
   putStrLn ("Cached info from gateway: " <> show cache)

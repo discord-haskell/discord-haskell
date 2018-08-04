@@ -13,7 +13,7 @@ import Discord
 gatewayExample :: IO ()
 gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
-  dis <- loginRestGateway (Bot tok)
+  dis <- loginRestGateway (Auth tok)
   finally (forever $ do
               x <- nextEvent dis
               putStrLn (show x <> "\n") )

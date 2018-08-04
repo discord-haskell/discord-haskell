@@ -129,7 +129,7 @@ setSequence key i = writeIORef key i
 
 startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
                                -> Integer -> Chan String -> IO ConnLoopState
-startEventStream conn events (Bot auth) seshID interval seqN log = do
+startEventStream conn events (Auth auth) seshID interval seqN log = do
   seqKey <- newIORef seqN
   heart <- forkIO $ heartbeat conn interval seqKey log
 

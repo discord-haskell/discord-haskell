@@ -13,7 +13,7 @@ pingpongExample :: IO ()
 pingpongExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
 
-  dis <- loginRestGateway (Bot tok)
+  dis <- loginRestGateway (Auth tok)
 
   finally (forever $ do
               e <- nextEvent dis
