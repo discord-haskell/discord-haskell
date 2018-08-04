@@ -23,7 +23,7 @@ has the most recent (potentially) breaking changes.
 <https://discordapi.com/permissions.html>
 
 3 Invite the bot to a server
-<https://discordapp.com/oauth2/authorize?client_id=CLIENT_ID&scope=bot&permissions=PERMISSIONS>
+`https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
 
 4 Connect to the gateway once in order to send CreateMessage events
 
