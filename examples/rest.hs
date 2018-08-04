@@ -29,9 +29,9 @@ restExample = do
   -- e <- nextEvent dis
 
   case msg of
-    Resp m -> do r <- restCall dis (CreateReaction (453207241294610444, messageId m)
+    Right m -> do r <- restCall dis (CreateReaction (453207241294610444, messageId m)
                                                    ("🐮", Nothing))
-                 putStrLn ("Reaction resp: " <> show r)
+                  putStrLn ("Reaction resp: " <> show r)
     _ -> putStrLn "Creating the message failed, couldn't react"
 
 

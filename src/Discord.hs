@@ -6,7 +6,6 @@ module Discord
   , module Discord.Rest.Guild
   , module Discord.Rest.User
   , module Discord.Rest.Emoji
-  , Resp(..)
   , Cache(..)
   , Gateway(..)
   , RestChan(..)
@@ -73,7 +72,7 @@ data Gateway = Gateway
   }
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => (RestChan, x, y) -> r a -> IO (Resp a)
+restCall :: (FromJSON a, Request (r a)) => (RestChan, x, y) -> r a -> IO (Either String a)
 restCall (r,_,_) = writeRestCall r
 
 -- | Block until the gateway produces another event

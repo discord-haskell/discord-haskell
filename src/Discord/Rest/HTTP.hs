@@ -7,7 +7,6 @@ module Discord.Rest.HTTP
   ( restLoop
   , Request(..)
   , JsonRequest(..)
-  , Resp(..)
   ) where
 
 import Prelude hiding (log)
@@ -29,18 +28,12 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 import Discord.Rest.Prelude
 
-data Resp a = Resp a
-            | NoResp
-            | BadResp String
-  deriving (Eq, Show, Functor)
-
-unpackResp :: Resp QL.ByteString -> String
+unpackResp :: Either String QL.ByteString -> String
 unpackResp r = case r of
-                 Resp a -> "Resp " <> QL.unpack a
-                 NoResp -> "NoResp"
-                 BadResp s -> "BadResp " <> s
+                 Right a -> "Resp " <> QL.unpack a
+                 Left s -> "BadResp " <> s
 
-restLoop :: Auth -> Chan (String, JsonRequest, MVar (Resp QL.ByteString)) -> Chan String -> IO ()
+restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either String QL.ByteString)) -> Chan String -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
@@ -54,11 +47,10 @@ restLoop auth urls log = loop M.empty
                       (resp, retry) <- restIOtoIO (tryRequest action log)
                       writeChan log ("rest - got response " <> unpackResp resp)
                       case resp of
-                        Resp "" -> putMVar thread (Resp "[]") -- empty should be ()
-                        Resp bs -> putMVar thread (Resp bs)
-                        NoResp  -> putMVar thread NoResp
-                        BadResp "Try Again" -> writeChan urls (route, request, thread)
-                        BadResp r -> putMVar thread (BadResp r)
+                        Right "" -> putMVar thread (Right "[]") -- empty should be ()
+                        Right bs -> putMVar thread (Right bs)
+                        Left "Try Again" -> writeChan urls (route, request, thread)
+                        Left r -> putMVar thread (Left r)
                       case retry of
                         GlobalWait i -> do
                             writeChan log ("rest - GLOBAL WAIT " <> show ((i - curtime) * 1000))
@@ -80,7 +72,7 @@ data Timeout = GlobalWait POSIXTime
              | NoLimit
 
 
-tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (Resp QL.ByteString, Timeout)
+tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (Either String QL.ByteString, Timeout)
 tryRequest action log = do
   resp <- action
   next10 <- liftIO (round . (+10) <$> getPOSIXTime)
@@ -92,16 +84,16 @@ tryRequest action log = do
       reset  = fromIntegral resetInt
   if | code == 429 -> do liftIO $ writeChan log ("rest - 429 RATE LIMITED global:"
                                                  <> show global <> " reset:" <> show reset)
-                         pure (BadResp "Try Again", if global then GlobalWait reset
+                         pure (Left "Try Again", if global then GlobalWait reset
                                                            else PathWait reset)
-     | code `elem` [500,502] -> pure (BadResp "Try Again", NoLimit)
-     | inRange (200,299) code -> pure ( Resp (R.responseBody resp)
+     | code `elem` [500,502] -> pure (Left "Try Again", NoLimit)
+     | inRange (200,299) code -> pure ( Right (R.responseBody resp)
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | inRange (400,499) code -> pure ( BadResp (show code <> " - " <> Q.unpack status
-                                                           <> QL.unpack (R.responseBody resp))
+     | inRange (400,499) code -> pure ( Left (show code <> " - " <> Q.unpack status
+                                                        <> QL.unpack (R.responseBody resp))
                                       , if remain > 0 then NoLimit else PathWait reset )
      | otherwise -> let err = "Unexpected code: " ++ show code ++ " - " ++ Q.unpack status
-                    in pure (BadResp err, NoLimit)
+                    in pure (Left err, NoLimit)
 
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
