@@ -7,17 +7,17 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
--- | Sends a message and then gets a channel, printing the results
+-- | Get a channel, send a message, react to a message
 restExample :: IO ()
 restExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRest (Auth tok)
 
-  msg <- restCall dis (CreateMessage 453207241294610444 "Creating a message" Nothing)
-  putStrLn ("Message object: " <> show msg <> "\n")
-
   chan <- restCall dis (GetChannel 453207241294610444)
   putStrLn ("Channel object: " <> show chan <> "\n")
+
+  msg <- restCall dis (CreateMessage 453207241294610444 "Creating a message" Nothing)
+  putStrLn ("Message object: " <> show msg <> "\n")
 
   -- nextEvent would fail with a type error because rest.hs uses
   --       'loginRest' not 'loginRestGateway'

@@ -7,7 +7,7 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
--- | Prints every event as it happens
+-- | Print cached Gateway info
 cacheExample :: IO ()
 cacheExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"

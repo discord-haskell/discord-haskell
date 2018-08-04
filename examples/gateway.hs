@@ -14,8 +14,7 @@ gatewayExample :: IO ()
 gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Auth tok)
-  finally (forever $ do
-              x <- nextEvent dis
-              putStrLn (show x <> "\n") )
+  finally (forever $ do x <- nextEvent dis
+                        putStrLn (show x <> "\n") )
           (stopDiscord dis)
 
