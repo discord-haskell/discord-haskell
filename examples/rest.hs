@@ -23,13 +23,14 @@ restExample = do
 
   putStrLn ""
 
-  {-
-  -- Would fail with a type error because rest.hs uses 'loginRest' not 'loginRestGateway'
+  -- NextEvent would fail with a type error because rest.hs uses
+  --       'loginRest' not 'loginRestGateway'
+  --
   -- Couldn't match type ‘Discord.NotLoggedIntoGateway’ with ‘Gateway’
   --     Expected type: (RestChan, Gateway)
   --       Actual type: (RestChan, Discord.NotLoggedIntoGateway)
-  e <- nextEvent dis
-  -- -}
+  --
+  -- e <- nextEvent dis
 
   case msg of
     Resp m -> do r <- restCall dis (CreateReaction (453207241294610444, messageId m)
