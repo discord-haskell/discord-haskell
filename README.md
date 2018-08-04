@@ -39,7 +39,7 @@ use github. discord-haskell is version
 bound to match stackage lts-11.10
 
 ```
-# in stack.yaml
+# in stack.yaml (if using stack)
 extra-deps:
 - git: git@github.com:aquarial/discord-haskell.git
   commit: <most recent master commit>
