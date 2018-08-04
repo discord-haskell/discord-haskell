@@ -6,8 +6,14 @@ Use `Control.Exception.finally` with `stopDiscord` to safely
 kill background threads.
 (otherwise exit ghci and reopen to kill threads)
 
-If you don't need to use `nextEvent` you should login with `loginRest`. 
-`loginRestGateway` will fill up a `Chan Event` as time goes on.
+`loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
+`nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
+gateway**
+
+`restCall` takes `Request`s: `ChannelRequest EmojiRequest GuildRequest UserRequest`
+and returns info
+
+`nextEvent` gives `Event`s as they happen
 
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
