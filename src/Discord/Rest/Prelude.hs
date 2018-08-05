@@ -22,6 +22,8 @@ authHeader auth =
           R.header "Authorization" (formatAuth auth)
        <> R.header "User-Agent" agent
   where
+  -- | https://discordapp.com/developers/docs/reference#user-agent
+  -- Second place where the library version is noted
   agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 0.4.0)"
 
 -- Append to an URL
