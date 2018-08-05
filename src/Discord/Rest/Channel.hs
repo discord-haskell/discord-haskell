@@ -66,11 +66,11 @@ data ChannelRequest a where
   DeleteMessage           :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Deletes a group of messages.
   BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> ChannelRequest ()
-  -- | Edits a permission overrides for a channel.
+  -- todo | Edits a permission overrides for a channel.
   -- todo EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
   GetChannelInvites       :: Snowflake -> ChannelRequest Object
-  -- | Creates an instant invite to a channel.
+  -- todo | Creates an instant invite to a channel.
   -- todo CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> ChannelRequest Object
   -- | Deletes a permission override from a channel.
   DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
@@ -82,9 +82,9 @@ data ChannelRequest a where
   AddPinnedMessage        :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Unpins a message.
   DeletePinnedMessage     :: (Snowflake, Snowflake) -> ChannelRequest ()
-  -- | Adds a recipient to a Group DM using their access token
+  -- todo | Adds a recipient to a Group DM using their access token
   -- todo GroupDMAddRecipient     :: Snowflake -> Snowflake -> ChannelRequest ()
-  -- | Removes a recipient from a Group DM
+  -- todo | Removes a recipient from a Group DM
   -- todo GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
 
 
