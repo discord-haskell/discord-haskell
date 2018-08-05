@@ -27,8 +27,12 @@ library
                      , Discord.Rest
                      , Discord.Rest.Prelude
                      , Discord.Rest.HTTP
-                     , Discord.Rest.Requests
+                     , Discord.Rest.Emoji
+                     , Discord.Rest.User
+                     , Discord.Rest.Guild
+                     , Discord.Rest.Channel
                      , Discord.Types
+                     , Discord.Types.Prelude
                      , Discord.Types.Channel
                      , Discord.Types.Events
                      , Discord.Types.Gateway
