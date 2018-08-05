@@ -1,8 +1,9 @@
 name:                discord-haskell
+-- library version is also noted at src/Discord/Rest/Prelude.hs
 version:             0.4.0
-synopsis:            An API wrapper for Discord in Haskell
-description:         Provides an api wrapper and framework for writing
-                     bots against the Discord <https://discordapp.com/> API.
+synopsis:            Discord bot library for Haskell
+description:         Functions and data types to write discord bots.
+                     See docs: <https://discordapp.com/developers/docs/reference>
 homepage:            https://github.com/aquarial/discord-haskell
 license:             MIT
 license-file:        LICENSE
