@@ -72,15 +72,15 @@ data Gateway = Gateway
   }
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => (RestChan, x, y) -> r a -> IO (Either String a)
+restCall :: (FromJSON a, Request (r a)) => (RestChan, y, z) -> r a -> IO (Either String a)
 restCall (r,_,_) = writeRestCall r
 
 -- | Block until the gateway produces another event
-nextEvent :: (RestChan, Gateway, x) -> IO Event
+nextEvent :: (x, Gateway, z) -> IO Event
 nextEvent (_,g,_) = readChan (_events g)
 
 -- | Access the current state of the gateway cache
-readCache :: (RestChan, Gateway, x) -> IO Cache
+readCache :: (RestChan, Gateway, z) -> IO Cache
 readCache (_,g,_) = readMVar (_cache g)
 
 -- | Stop all the background threads
