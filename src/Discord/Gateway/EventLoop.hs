@@ -73,7 +73,7 @@ connectionLoop auth events sends log = loop ConnStart
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
-                writeChan send (Identify auth False 50 (0, 1))
+                sendTextData conn (encode (Identify auth False 50 (0, 1)))
                 msg2 <- getPayload conn log
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
@@ -84,7 +84,7 @@ connectionLoop auth events sends log = loop ConnStart
 
       (ConnReconnect tok seshID seqID) -> do
           next <- try $ connect sends log $ \conn send -> do
-              writeChan send (Resume tok seshID seqID)
+              sendTextData conn (encode (Resume tok seshID seqID))
               writeChan log "Resuming???"
               eitherPayload <- getPayload conn log
               case eitherPayload of
