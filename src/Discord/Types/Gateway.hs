@@ -31,10 +31,11 @@ data GatewayReceivable
 data GatewaySendable
   = Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
-  | StatusUpdate (Maybe Integer) (Maybe String)
-  | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
   | Resume T.Text String Integer
   | RequestGuildMembers Snowflake String Integer
+  | UpdateStatus (Maybe Integer) (Maybe String)
+  | UpdateStatusVoice Snowflake (Maybe Snowflake) Bool Bool
+
 
 
 instance FromJSON GatewayReceivable where
@@ -85,7 +86,7 @@ instance ToJSON GatewaySendable where
       , "shard" .= shard
       ]
     ]
-  toJSON (StatusUpdate idle game) = object [
+  toJSON (UpdateStatus idle game) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
         "idle_since" .= idle
@@ -94,7 +95,7 @@ instance ToJSON GatewaySendable where
         ]
       ]
     ]
-  toJSON (VoiceStatusUpdate guild channel mute deaf) = object [
+  toJSON (UpdateStatusVoice guild channel mute deaf) = object [
       "op" .= (4 :: Int)
     , "d"  .= object [
         "guild_id"   .= guild
