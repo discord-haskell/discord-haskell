@@ -46,6 +46,15 @@ data Sendables = Sendables { userSends :: Chan GatewaySendable
                            , gatewaySends :: Chan GatewaySendable
                            }
 
+sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
+sendableLoop conn sends log = forever $ do
+  -- send a ~120 events a min by delaying
+  threadDelay (round (10^6 * (62 / 120)))
+  let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
+      e = either id id
+  payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
+  writeChan log ("gateway - sending " <> QL.unpack (encode payload))
+  sendTextData conn (encode payload)
 
 connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
 connectionLoop auth events log = loop ConnStart
@@ -96,11 +105,6 @@ connectionLoop auth events log = loop ConnStart
                          loop (ConnReconnect tok seshID seqID)
             Right n -> loop n
 
-
-send :: Connection -> GatewaySendable -> Chan String -> IO ()
-send conn payload log = do
-  writeChan log ("message - sending " <> QL.unpack (encode payload))
-  sendTextData conn (encode payload)
 
 getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayloadTimeout conn interval log = do
