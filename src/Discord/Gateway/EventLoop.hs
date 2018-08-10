@@ -69,27 +69,27 @@ connectionLoop auth events sends log = loop ConnStart
     case s of
       (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
-          loop <=< connect $ \conn -> do
+          loop <=< connect sends log $ \conn send -> do
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
-                send conn (Identify auth False 50 (0, 1)) log
+                writeChan send (Identify auth False 50 (0, 1))
                 msg2 <- getPayload conn log
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events r
-                    startEventStream conn events auth seshID interval 0 log
+                    startEventStream conn events auth seshID interval 0 send log
                   _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
 
       (ConnReconnect tok seshID seqID) -> do
-          next <- try $ connect $ \conn -> do
-              send conn (Resume tok seshID seqID) log
+          next <- try $ connect sends log $ \conn send -> do
+              writeChan send (Resume tok seshID seqID)
               writeChan log "Resuming???"
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
-                      startEventStream conn events auth seshID interval seqID log
+                      startEventStream conn events auth seshID interval seqID send log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
                       writeChan log ("Invalid sesh, sleep:" <> show t)
