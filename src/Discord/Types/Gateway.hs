@@ -9,6 +9,8 @@ import System.Info
 
 import qualified Data.Text as T
 import Data.Monoid ((<>))
+import Data.Time (UTCTime)
+import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe (fromMaybe)
@@ -32,11 +34,42 @@ data GatewaySendable
   = Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
   | Resume T.Text String Integer
-  | RequestGuildMembers Snowflake String Integer
-  | UpdateStatus (Maybe Integer) (Maybe String)
-  | UpdateStatusVoice Snowflake (Maybe Snowflake) Bool Bool
+  | RequestGuildMembers RequestGuildMembersOpts
+  | UpdateStatus UpdateStatusOpts
+  | UpdateStatusVoice UpdateStatusVoiceOpts
 
+data RequestGuildMembersOpts = RequestGuildMembersOpts
+                             { requestGuildMemersGuildId :: Snowflake
+                             , requestGuildMemersSearchQuery :: T.Text
+                             , requestGuildMemersLimit :: Integer }
 
+data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
+                           { updateStatusVoiceGuildId :: Snowflake
+                           , updateStatusVoiceChannelId :: Maybe Snowflake
+                           , updateStatusVoiceIsMuted :: Snowflake
+                           , updateStatusVoiceIsDeaf :: Snowflake
+                           }
+
+data UpdateStatusOpts = UpdateStatusOpts
+                      { updateStatusSince :: Maybe UTCTime
+                      -- todo , updateStatusGame :: Activity
+                      , updateStatusNewStatus :: UpdateStatusTypes
+                      , updateStatusAFK :: Bool
+                      }
+
+data UpdateStatusTypes = UpdateStatusOnline
+                       | UpdateStatusDoNotDisturb
+                       | UpdateStatusAwayFromKeyboard
+                       | UpdateStatusInvisibleOffline
+                       | UpdateStatusOffline
+
+statusString :: UpdateStatusTypes -> T.Text
+statusString s = case s of
+  UpdateStatusOnline -> "online"
+  UpdateStatusDoNotDisturb -> "dnd"
+  UpdateStatusAwayFromKeyboard -> "idle"
+  UpdateStatusInvisibleOffline -> "invisible"
+  UpdateStatusOffline -> "offline"
 
 instance FromJSON GatewayReceivable where
   parseJSON = withObject "payload" $ \o -> do
@@ -86,16 +119,21 @@ instance ToJSON GatewaySendable where
       , "shard" .= shard
       ]
     ]
-  toJSON (UpdateStatus idle game) = object [
+  toJSON (UpdateStatus (UpdateStatusOpts since status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
-        "idle_since" .= idle
-      , "game"       .= object [
-          "name" .= game
-        ]
+        "since" .= case since of Nothing -> Nothing
+                                 Just s -> Just ((10^6) * (utcTimeToPOSIXSeconds s))
+      , "afk" .= afk
+      , "status" .= statusString status
+      , "game" .= (Nothing :: Maybe ())
+      -- todo , "game"       .= object [
+      --        "name" .= game
+      --      ]
       ]
     ]
-  toJSON (UpdateStatusVoice guild channel mute deaf) = object [
+  toJSON (UpdateStatusVoice (UpdateStatusVoiceOpts guild channel mute deaf)) =
+    object [
       "op" .= (4 :: Int)
     , "d"  .= object [
         "guild_id"   .= guild
@@ -112,7 +150,8 @@ instance ToJSON GatewaySendable where
       , "seq"        .= seqId
       ]
     ]
-  toJSON (RequestGuildMembers guild query limit) = object [
+  toJSON (RequestGuildMembers (RequestGuildMembersOpts guild query limit)) =
+    object [
       "op" .= (8 :: Int)
     , "d"  .= object [
         "guild_id" .= guild
