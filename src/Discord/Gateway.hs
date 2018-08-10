@@ -12,22 +12,23 @@ import Control.Exception.Safe (finally)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, killThread, ThreadId, MVar)
 
-import Discord.Types (Auth, Event)
+import Discord.Types (Auth, Event, GatewaySendable)
 import Discord.Gateway.EventLoop (connectionLoop)
 import Discord.Gateway.Cache
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-chanWebSocket :: Auth -> Chan String -> IO (Chan Event, MVar Cache, ThreadId)
+chanWebSocket :: Auth -> Chan String -> IO (Chan Event, Chan GatewaySendable, MVar Cache, ThreadId)
 chanWebSocket auth log = do
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
+  sends <- newChan
   writeFile "the-log-of-discord-haskell.txt" ""
   cache <- emptyCache
   cacheID <- forkIO $ addEvent cache eventsCache log
-  tid <- forkIO $ finally (connectionLoop auth eventsWrite log)
+  tid <- forkIO $ finally (connectionLoop auth eventsWrite sends log)
                           (killThread cacheID)
-  pure (eventsWrite, cache, tid)
+  pure (eventsWrite, sends, cache, tid)
 
 
 
