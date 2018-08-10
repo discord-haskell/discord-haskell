@@ -65,14 +65,6 @@ loginRestGateway auth = do
                                               , ThreadGateway gateId
                                               ])
 
--- | Concurrency primitives that make up the gateway. Build a higher
---   level interface over these
-data Gateway = Gateway
-  { _events :: Chan Event
-  , _cache :: MVar Cache
-  , _gatewayCommands :: Chan GatewaySendable
-  }
-
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => (RestChan, y, z) -> r a -> IO (Either String a)
 restCall (r,_,_) = writeRestCall r

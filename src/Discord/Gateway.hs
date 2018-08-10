@@ -3,7 +3,8 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Gateway
-  ( chanWebSocket
+  ( Gateway(..)
+  , chanWebSocket
   , module Discord.Types
   ) where
 
@@ -15,6 +16,14 @@ import Control.Concurrent (forkIO, killThread, ThreadId, MVar)
 import Discord.Types (Auth, Event, GatewaySendable)
 import Discord.Gateway.EventLoop (connectionLoop)
 import Discord.Gateway.Cache
+
+-- | Concurrency primitives that make up the gateway. Build a higher
+--   level interface over these
+data Gateway = Gateway
+  { _events :: Chan Event
+  , _cache :: MVar Cache
+  , _gatewayCommands :: Chan GatewaySendable
+  }
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
