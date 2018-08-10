@@ -4,7 +4,7 @@
 --   through a real-time Chan
 module Discord.Gateway
   ( Gateway(..)
-  , chanWebSocket
+  , startGatewayThread
   , module Discord.Types
   ) where
 
@@ -27,8 +27,8 @@ data Gateway = Gateway
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-chanWebSocket :: Auth -> Chan String -> IO (Chan Event, Chan GatewaySendable, MVar Cache, ThreadId)
-chanWebSocket auth log = do
+startGatewayThread :: Auth -> Chan String -> IO (Gateway, ThreadId)
+startGatewayThread auth log = do
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
   sends <- newChan
@@ -37,7 +37,7 @@ chanWebSocket auth log = do
   cacheID <- forkIO $ addEvent cache eventsCache log
   tid <- forkIO $ finally (connectionLoop auth eventsWrite sends log)
                           (killThread cacheID)
-  pure (eventsWrite, sends, cache, tid)
+  pure (Gateway eventsWrite cache sends, tid)
 
 
 

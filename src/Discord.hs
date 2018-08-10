@@ -59,11 +59,11 @@ loginRestGateway auth = do
   log <- newChan
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
-  (chan, sends, info, gateId) <- chanWebSocket auth log
-  pure (restHandler, Gateway chan info sends, [ ThreadLogger logId
-                                              , ThreadRest restId
-                                              , ThreadGateway gateId
-                                              ])
+  (gate, gateId) <- startGatewayThread auth log
+  pure (restHandler, gate, [ ThreadLogger logId
+                           , ThreadRest restId
+                           , ThreadGateway gateId
+                           ])
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => (RestChan, y, z) -> r a -> IO (Either String a)
