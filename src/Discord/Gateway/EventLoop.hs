@@ -42,6 +42,10 @@ connect :: (Connection -> IO a) -> IO a
 connect app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
                     finally (app conn)
                             (sendClose conn ("" :: T.Text))
+data Sendables = Sendables { userSends :: Chan GatewaySendable
+                           , gatewaySends :: Chan GatewaySendable
+                           }
+
 
 connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
 connectionLoop auth events log = loop ConnStart
