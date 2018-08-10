@@ -140,19 +140,19 @@ setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
 startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
-                               -> Integer -> Chan String -> IO ConnLoopState
-startEventStream conn events (Auth auth) seshID interval seqN log = do
+                               -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
+startEventStream conn events (Auth auth) seshID interval seqN send log = do
   seqKey <- newIORef seqN
   heart <- forkIO $ heartbeat send interval seqKey log
 
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("error - " <> show e)
                  ConnReconnect auth seshID <$> readIORef seqKey
-  handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey interval log)
+  handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey interval send log)
                        (killThread heart)
 
-eventStream :: ConnectionData -> IORef Integer -> Int -> Chan String -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey interval log = loop
+eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
+eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loop
   where
   loop :: IO ConnLoopState
   loop = do
@@ -172,7 +172,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval log = loop
                                       writeChan eventChan event
                                       loop
       Right (HeartbeatRequest sq) -> do setSequence seqKey sq
-                                        send conn (Heartbeat sq) log
+                                        writeChan send (Heartbeat sq)
                                         loop
       Right (Reconnect)      -> do writeChan log "Should reconnect"
                                    ConnReconnect auth seshID <$> readIORef seqKey
