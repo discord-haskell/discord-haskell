@@ -12,6 +12,7 @@ module Discord
   , Request(..)
   , restCall
   , nextEvent
+  , sendCommand
   , readCache
   , stopDiscord
   , loginRest
@@ -58,17 +59,18 @@ loginRestGateway auth = do
   log <- newChan
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
-  (chan, info, gateId) <- chanWebSocket auth log
-  pure (restHandler, Gateway chan info, [ ThreadLogger logId
-                                        , ThreadRest restId
-                                        , ThreadGateway gateId
-                                        ])
+  (chan, sends, info, gateId) <- chanWebSocket auth log
+  pure (restHandler, Gateway chan info sends, [ ThreadLogger logId
+                                              , ThreadRest restId
+                                              , ThreadGateway gateId
+                                              ])
 
 -- | Concurrency primitives that make up the gateway. Build a higher
 --   level interface over these
 data Gateway = Gateway
   { _events :: Chan Event
   , _cache :: MVar Cache
+  , _gatewayCommands :: Chan GatewaySendable
   }
 
 -- | Execute one http request and get a response
@@ -78,6 +80,13 @@ restCall (r,_,_) = writeRestCall r
 -- | Block until the gateway produces another event
 nextEvent :: (x, Gateway, z) -> IO Event
 nextEvent (_,g,_) = readChan (_events g)
+
+sendCommand :: (x, Gateway, z) -> GatewaySendable -> IO ()
+sendCommand (_,g,_) e = case e of
+                          Heartbeat _ -> pure ()
+                          Identify _ _ _ _ -> pure ()
+                          Resume _ _ _ -> pure ()
+                          _ -> writeChan (_gatewayCommands g) e
 
 -- | Access the current state of the gateway cache
 readCache :: (RestChan, Gateway, z) -> IO Cache
