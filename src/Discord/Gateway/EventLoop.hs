@@ -56,8 +56,9 @@ sendableLoop conn sends log = forever $ do
   writeChan log ("gateway - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
 
-connectionLoop :: Auth -> Chan Event -> Chan String -> IO ()
-connectionLoop auth events log = loop ConnStart
+
+connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
+connectionLoop auth events sends log = loop ConnStart
  where
   loop :: ConnLoopState -> IO ()
   loop s = do
