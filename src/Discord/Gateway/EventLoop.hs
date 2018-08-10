@@ -128,12 +128,12 @@ getPayload conn log = try $ do
                     writeChan log ("parse error Message - " <> show msg')
                     return (ParseError err)
 
-heartbeat :: Connection -> Int -> IORef Integer -> Chan String -> IO ()
-heartbeat conn interval seqKey log = do
+heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> Chan String -> IO ()
+heartbeat send interval seqKey log = do
   writeChan log "starting the heartbeat"
   forever $ do
     num <- readIORef seqKey
-    send conn (Heartbeat num) log
+    writeChan send (Heartbeat num)
     threadDelay (interval * 1000)
 
 setSequence :: IORef Integer -> Integer -> IO ()
@@ -143,7 +143,7 @@ startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
                                -> Integer -> Chan String -> IO ConnLoopState
 startEventStream conn events (Auth auth) seshID interval seqN log = do
   seqKey <- newIORef seqN
-  heart <- forkIO $ heartbeat conn interval seqKey log
+  heart <- forkIO $ heartbeat send interval seqKey log
 
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("error - " <> show e)
