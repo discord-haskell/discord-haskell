@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+import Control.Concurrent (forkIO, threadDelay)
 import Control.Monad (forever)
 import Control.Exception (finally)
 import Data.Char (isSpace)
@@ -14,6 +15,12 @@ gatewayExample :: IO ()
 gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Auth tok)
+
+  forkIO $ do
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusAwayFromKeyboard True))
+    threadDelay (3 * 10^6)
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusOnline False))
+
   finally (forever $ do x <- nextEvent dis
                         putStrLn (show x <> "\n") )
           (stopDiscord dis)
