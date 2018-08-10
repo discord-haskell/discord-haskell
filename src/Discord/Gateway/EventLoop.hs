@@ -37,11 +37,6 @@ data ConnectionData = ConnData { connection :: Connection
                                , connChan :: Chan Event
                                }
 
--- | Securely run a connection IO action. Send a close on exception
-connect :: (Connection -> IO a) -> IO a
-connect app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-                    finally (app conn)
-                            (sendClose conn ("" :: T.Text))
 data Sendables = Sendables { userSends :: Chan GatewaySendable
                            , gatewaySends :: Chan GatewaySendable
                            }
@@ -56,6 +51,14 @@ sendableLoop conn sends log = forever $ do
   writeChan log ("gateway - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
 
+-- | Securely run a connection IO action. Send a close on exception
+connect :: Chan GatewaySendable -> Chan String
+                -> (Connection -> Chan GatewaySendable -> IO a) -> IO a
+connect sends log app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+  gateSends <- newChan
+  sendsId <- forkIO (sendableLoop conn (Sendables sends gateSends) log)
+  finally (app conn gateSends)
+          (sendClose conn ("" :: T.Text) >> killThread sendsId)
 
 connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
 connectionLoop auth events sends log = loop ConnStart
