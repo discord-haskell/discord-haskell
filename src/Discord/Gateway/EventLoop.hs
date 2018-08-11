@@ -130,13 +130,16 @@ startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
                                -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
 startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
   seqKey <- newIORef seqN
-  heart <- forkIO $ heartbeat send interval seqKey log
-
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("error - " <> show e)
                  ConnReconnect auth seshID <$> readIORef seqKey
-  handle err $ finally (eventStream (ConnData conn seshID auth events) seqKey interval send log)
-                       (killThread heart)
+  handle err $ do
+    gateSends <- newChan
+    sendsId <- forkIO (sendableLoop conn (Sendables userSend gateSends) log)
+    heart <- forkIO $ heartbeat gateSends interval seqKey log
+
+    finally (eventStream (ConnData conn seshID auth events) seqKey interval gateSends log)
+            (killThread heart >> killThread sendsId)
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loop
