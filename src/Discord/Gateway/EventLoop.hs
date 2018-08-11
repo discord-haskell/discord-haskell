@@ -61,7 +61,7 @@ connect sends log app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding
           (sendClose conn ("" :: T.Text) >> killThread sendsId)
 
 connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
-connectionLoop auth events sends log = loop ConnStart
+connectionLoop auth events userSend log = loop ConnStart
  where
   loop :: ConnLoopState -> IO ()
   loop s = do
@@ -69,7 +69,7 @@ connectionLoop auth events sends log = loop ConnStart
     case s of
       (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
-          loop <=< connect sends log $ \conn send -> do
+          loop <=< connect userSend log $ \conn send -> do
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
@@ -83,9 +83,9 @@ connectionLoop auth events sends log = loop ConnStart
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
 
       (ConnReconnect tok seshID seqID) -> do
-          next <- try $ connect sends log $ \conn send -> do
-              sendTextData conn (encode (Resume tok seshID seqID))
+          next <- try $ connect userSend log $ \conn send -> do
               writeChan log "Resuming???"
+              sendTextData conn (encode (Resume tok seshID seqID))
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
