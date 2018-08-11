@@ -16,7 +16,7 @@ gatewayExample = do
   tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Auth tok)
 
-  forkIO $ do
+  _ <- forkIO $ do
     sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusAwayFromKeyboard True))
     threadDelay (3 * 10^6)
     sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusOnline False))
