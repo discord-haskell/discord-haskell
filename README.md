@@ -49,6 +49,7 @@ bound to match stackage lts-11.10
 
 ```
 # in stack.yaml (if using stack)
+resolver: lts-11.10
 extra-deps:
 - git: git@github.com:aquarial/discord-haskell.git
   commit: <most recent master commit>
@@ -72,7 +73,7 @@ separate form the source. The apis are not compatible.
 
 In roughly the order I'm working on them:
 
-- Finish REST request ADT. Search for ``-\- todo` regex
+- Finish REST request ADT. Search for `-- todo` pattern
 - Add data types for
 [activities](https://discordapp.com/developers/docs/topics/gateway#activity-object),
 [permissions](https://discordapp.com/developers/docs/topics/permissions), and
