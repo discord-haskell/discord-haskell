@@ -61,6 +61,7 @@ loginRestGateway auth = do
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
   (gate, gateId) <- startGatewayThread auth log
+  _ <- readCache (restHandler, gate, ()) -- delay
   pure (restHandler, gate, [ ThreadLogger logId
                            , ThreadRest restId
                            , ThreadGateway gateId
