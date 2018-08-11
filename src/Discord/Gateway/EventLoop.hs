@@ -65,7 +65,7 @@ connectionLoop auth events userSend log = loop ConnStart
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events r
-                    startEventStream conn events auth seshID interval 0 send log
+                    startEventStream conn events auth seshID interval 0 userSend log
                   _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
 
@@ -76,7 +76,7 @@ connectionLoop auth events userSend log = loop ConnStart
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
-                      startEventStream conn events auth seshID interval seqID send log
+                      startEventStream conn events auth seshID interval seqID userSend log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
                       writeChan log ("Invalid sesh, sleep:" <> show t)
@@ -128,7 +128,7 @@ setSequence key i = writeIORef key i
 
 startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
                                -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
-startEventStream conn events (Auth auth) seshID interval seqN send log = do
+startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
   seqKey <- newIORef seqN
   heart <- forkIO $ heartbeat send interval seqKey log
 
