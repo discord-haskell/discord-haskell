@@ -41,6 +41,7 @@ data ThreadIdType = ThreadRest ThreadId
                   | ThreadGateway ThreadId
                   | ThreadLogger ThreadId
 
+-- | As opposed to a Gateway object
 data NotLoggedIntoGateway = NotLoggedIntoGateway
 
 -- | Start HTTP rest handler background threads
@@ -73,6 +74,7 @@ restCall (r,_,_) = writeRestCall r
 nextEvent :: (x, Gateway, z) -> IO Event
 nextEvent (_,g,_) = readChan (_events g)
 
+-- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: (x, Gateway, z) -> GatewaySendable -> IO ()
 sendCommand (_,g,_) e = case e of
                           Heartbeat _ -> pure ()
