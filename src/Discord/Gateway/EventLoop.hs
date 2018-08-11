@@ -41,16 +41,6 @@ data Sendables = Sendables { userSends :: Chan GatewaySendable
                            , gatewaySends :: Chan GatewaySendable
                            }
 
-sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
-sendableLoop conn sends log = forever $ do
-  -- send a ~120 events a min by delaying
-  threadDelay (round (10^6 * (62 / 120)))
-  let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
-      e = either id id
-  payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
-  writeChan log ("gateway - sending " <> QL.unpack (encode payload))
-  sendTextData conn (encode payload)
-
 -- | Securely run a connection IO action. Send a close on exception
 connect :: Chan GatewaySendable -> Chan String
                 -> (Connection -> Chan GatewaySendable -> IO a) -> IO a
@@ -181,3 +171,14 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
       Right p -> writeChan log ("error - Invalid gateway payload: " <> show p) >> pure ConnClosed
+
+
+sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
+sendableLoop conn sends log = forever $ do
+  -- send a ~120 events a min by delaying
+  threadDelay (round (10^6 * (62 / 120)))
+  let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
+      e = either id id
+  payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
+  writeChan log ("gateway - sending " <> QL.unpack (encode payload))
+  sendTextData conn (encode payload)
