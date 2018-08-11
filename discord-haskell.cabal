@@ -7,8 +7,8 @@ description:         Functions and data types to write discord bots.
 homepage:            https://github.com/aquarial/discord-haskell
 license:             MIT
 license-file:        LICENSE
-author:              Karl, Joshua Koike
--- maintainer:
+author:              Karl
+maintainer:          ksfish5@gmail.com
 -- copyright:
 category:            Network
 build-type:          Simple
