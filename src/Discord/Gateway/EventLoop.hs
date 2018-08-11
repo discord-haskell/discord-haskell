@@ -42,13 +42,10 @@ data Sendables = Sendables { userSends :: Chan GatewaySendable
                            }
 
 -- | Securely run a connection IO action. Send a close on exception
-connect :: Chan GatewaySendable -> Chan String
-                -> (Connection -> Chan GatewaySendable -> IO a) -> IO a
-connect sends log app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-  gateSends <- newChan
-  sendsId <- forkIO (sendableLoop conn (Sendables sends gateSends) log)
-  finally (app conn gateSends)
-          (sendClose conn ("" :: T.Text) >> killThread sendsId)
+connect :: (Connection -> IO a) -> IO a
+connect app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
+  finally (app conn)
+          (sendClose conn ("" :: T.Text))
 
 connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
 connectionLoop auth events userSend log = loop ConnStart
@@ -59,7 +56,7 @@ connectionLoop auth events userSend log = loop ConnStart
     case s of
       (ConnClosed) -> writeChan log "Conn Closed"
       (ConnStart) -> do
-          loop <=< connect userSend log $ \conn send -> do
+          loop <=< connect $ \conn -> do
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
@@ -73,7 +70,7 @@ connectionLoop auth events userSend log = loop ConnStart
               _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
 
       (ConnReconnect tok seshID seqID) -> do
-          next <- try $ connect userSend log $ \conn send -> do
+          next <- try $ connect $ \conn -> do
               writeChan log "Resuming???"
               sendTextData conn (encode (Resume tok seshID seqID))
               eitherPayload <- getPayload conn log
