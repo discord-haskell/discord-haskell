@@ -99,10 +99,10 @@ connectionLoop auth events userSend log = loop ConnStart
 
 getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayloadTimeout conn interval log = do
-  res <- race (threadDelay (interval * 1000 * 3 `div` 2))
+  res <- race (threadDelay ((interval * 1000 * 3) `div` 2))
               (getPayload conn log)
   case res of
-    Left () -> pure (Right (InvalidSession True))
+    Left () -> pure (Right Reconnect)
     Right other -> pure other
 
 getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
@@ -117,6 +117,7 @@ getPayload conn log = try $ do
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> Chan String -> IO ()
 heartbeat send interval seqKey log = do
+  threadDelay (1 * 10^6)
   writeChan log "starting the heartbeat"
   forever $ do
     num <- readIORef seqKey
@@ -135,13 +136,14 @@ startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
                  ConnReconnect auth seshID <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
-    sendsId <- forkIO (sendableLoop conn (Sendables userSend gateSends) log)
+    sendsId <- forkIO $ sendableLoop conn (Sendables userSend gateSends) log
     heart <- forkIO $ heartbeat gateSends interval seqKey log
 
     finally (eventStream (ConnData conn seshID auth events) seqKey interval gateSends log)
             (killThread heart >> killThread sendsId)
 
-eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
+eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable
+                              -> Chan String -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loop
   where
   loop :: IO ConnLoopState
