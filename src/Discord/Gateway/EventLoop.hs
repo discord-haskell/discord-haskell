@@ -43,9 +43,7 @@ data Sendables = Sendables { userSends :: Chan GatewaySendable
 
 -- | Securely run a connection IO action. Send a close on exception
 connect :: (Connection -> IO a) -> IO a
-connect app = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
-  finally (app conn)
-          (sendClose conn ("" :: T.Text))
+connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
 connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
 connectionLoop auth events userSend log = loop ConnStart
