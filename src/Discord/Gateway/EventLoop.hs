@@ -50,9 +50,9 @@ connectionLoop auth events userSend log = loop ConnStart
  where
   loop :: ConnLoopState -> IO ()
   loop s = do
-    writeChan log ("conn loop: " <> show s)
+    writeChan log ("gateway - connection loop state " <> show s)
     case s of
-      (ConnClosed) -> writeChan log "Conn Closed"
+      (ConnClosed) -> pure ()
       (ConnStart) -> do
           loop <=< connect $ \conn -> do
             msg <- getPayload conn log
@@ -64,8 +64,8 @@ connectionLoop auth events userSend log = loop ConnStart
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events r
                     startEventStream conn events auth seshID interval 0 userSend log
-                  _ -> writeChan log ("received2: " <> show msg2) >> pure ConnClosed
-              _ -> writeChan log ("received1: " <> show msg) >> pure ConnClosed
+                  _ -> writeChan log ("gateway - connstart must be ready: " <> show msg2) >> pure ConnClosed
+              _ -> writeChan log ("gateway - connstart must be hello: " <> show msg) >> pure ConnClosed
 
       (ConnReconnect tok seshID seqID) -> do
           next <- try $ connect $ \conn -> do
@@ -76,18 +76,17 @@ connectionLoop auth events userSend log = loop ConnStart
                       startEventStream conn events auth seshID interval seqID userSend log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
-                      writeChan log ("Invalid sesh, sleep:" <> show t)
                       threadDelay (t * 10^6)
                       pure $ if retry
                              then ConnReconnect tok seshID seqID
                              else ConnStart
                   Right payload -> do
-                      writeChan log ("Why did they send a: " <> show payload)
+                      writeChan log ("gateway - connreconnect invalid response: " <> show payload)
                       pure ConnClosed
                   Left e ->
-                      writeChan log ("message - error " <> show e) >> pure ConnClosed
+                      writeChan log ("gateway - connreconnect error " <> show e) >> pure ConnClosed
           case next :: Either SomeException ConnLoopState of
-            Left e -> do writeChan log ("exception - connecting: " <> show e)
+            Left e -> do writeChan log ("gateway - connreconnect after eventStream error: " <> show e)
                          t <- getRandomR (3,10)
                          threadDelay (t * 10^6)
                          loop (ConnReconnect tok seshID seqID)
@@ -105,17 +104,16 @@ getPayloadTimeout conn interval log = do
 getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayload conn log = try $ do
   msg' <- receiveData conn
-  writeChan log ("message - received " <> QL.unpack msg')
+  writeChan log ("gateway - received " <> QL.unpack msg')
   case eitherDecode msg' of
     Right msg -> return msg
-    Left  err -> do writeChan log ("parse error Error - " <> err)
-                    writeChan log ("parse error Message - " <> show msg')
+    Left  err -> do writeChan log ("gateway - received parse Error - " <> err)
                     return (ParseError err)
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> Chan String -> IO ()
 heartbeat send interval seqKey log = do
   threadDelay (1 * 10^6)
-  writeChan log "starting the heartbeat"
+  writeChan log "gateway - starting heartbeat"
   forever $ do
     num <- readIORef seqKey
     writeChan send (Heartbeat num)
@@ -129,7 +127,7 @@ startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
 startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
-      err e = do writeChan log ("error - " <> show e)
+      err e = do writeChan log ("gateway - eventStream error: " <> show e)
                  ConnReconnect auth seshID <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
@@ -154,7 +152,8 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
           4014 -> ConnReconnect auth seshID <$> readIORef seqKey
-          e -> do writeChan log ("Closing connection because #" <> show e <> " " <> show str)
+          e -> do writeChan log ("gateway - Closing connection because #"
+                                         <> show e <> " " <> show str)
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do setSequence seqKey sq
@@ -169,7 +168,8 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                                       then ConnReconnect auth seshID <$> readIORef seqKey
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
-      Right p -> writeChan log ("error - Invalid gateway payload: " <> show p) >> pure ConnClosed
+      Right p -> do writeChan log ("gateway - Invalid gateway payload: " <> show p)
+                    pure ConnClosed
 
 
 sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
