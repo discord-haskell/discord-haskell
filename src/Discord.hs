@@ -10,6 +10,7 @@ module Discord
   , Gateway(..)
   , RestChan(..)
   , Request(..)
+  , ThreadIdType(..)
   , restCall
   , nextEvent
   , sendCommand
