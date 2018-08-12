@@ -22,7 +22,7 @@ import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection,
-                           sendClose, receiveData, sendTextData)
+                           receiveData, sendTextData)
 
 import Discord.Types
 
@@ -69,7 +69,6 @@ connectionLoop auth events userSend log = loop ConnStart
 
       (ConnReconnect tok seshID seqID) -> do
           next <- try $ connect $ \conn -> do
-              writeChan log "Resuming???"
               sendTextData conn (encode (Resume tok seshID seqID))
               eitherPayload <- getPayload conn log
               case eitherPayload of
