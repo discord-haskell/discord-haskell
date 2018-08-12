@@ -42,7 +42,10 @@ has the most recent (potentially) breaking changes.
 [examples/cache.hs](./examples/cache.hs), and
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
-6 Add this library to your dependencies. discord-haskell
+6 Skim documentation on 
+[hackage](https://hackage.haskell.org/package/discord-haskell-0.5.1)
+
+7 Add this library to your dependencies. discord-haskell
 won't be uploaded to hackage for a while. In the meantime,
 use github. discord-haskell is version
 bound to match stackage lts-11.10
