@@ -4,7 +4,6 @@
 **/.stack/*
 **/.stack-work/*
 cabal.sandbox.config
-dist/*
 docs/build
 shell.nix
 _cache
@@ -14,3 +13,5 @@ _site
 
 the-log-of-discord-haskell.txt
 examples/auth-token.secret
+upload-haddock.sh
+dist*
