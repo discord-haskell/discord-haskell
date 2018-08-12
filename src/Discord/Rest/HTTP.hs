@@ -45,7 +45,7 @@ restLoop auth urls log = loop M.empty
                    loop ratelocker
       Available -> do let action = compileRequest auth request
                       (resp, retry) <- restIOtoIO (tryRequest action log)
-                      writeChan log ("rest - got response " <> unpackResp resp)
+                      writeChan log ("rest - response " <> unpackResp resp)
                       case resp of
                         Right "" -> putMVar thread (Right "[]") -- empty should be ()
                         Right bs -> putMVar thread (Right bs)
@@ -53,7 +53,7 @@ restLoop auth urls log = loop M.empty
                         Left r -> putMVar thread (Left r)
                       case retry of
                         GlobalWait i -> do
-                            writeChan log ("rest - GLOBAL WAIT " <> show ((i - curtime) * 1000))
+                            writeChan log ("rest - GLOBAL WAIT LIMIT: " <> show ((i - curtime) * 1000))
                             threadDelay $ round ((i - curtime + 0.1) * 1000)
                             loop ratelocker
                         PathWait i -> loop $ M.insert route i ratelocker
