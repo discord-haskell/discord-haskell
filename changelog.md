@@ -1,8 +1,8 @@
 # Changelog
 
-### 0.5.2
+### dev
 
-Add CreateGuildEmojiPng request
+Add CreateGuildEmoji request
 
 ### 0.5.1
 
