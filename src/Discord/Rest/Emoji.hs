@@ -20,8 +20,8 @@ import Discord.Rest.Prelude
 import Discord.Types
 
 instance Request (EmojiRequest a) where
-  majorRoute = userMajorRoute
-  jsonRequest = userJsonRequest
+  majorRoute = emojiMajorRoute
+  jsonRequest = emojiJsonRequest
 
 
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
@@ -46,8 +46,8 @@ instance ToJSON ModifyGuildEmojiOpts where
   toJSON (ModifyGuildEmojiOpts name roles) =
     object [ "name" .= name, "roles" .= roles ]
 
-userMajorRoute :: EmojiRequest a -> String
-userMajorRoute c = case c of
+emojiMajorRoute :: EmojiRequest a -> String
+emojiMajorRoute c = case c of
   (ListGuildEmojis g) ->      "emoji " <> show g
   (GetGuildEmoji g _) ->      "emoji " <> show g
   -- todo (CreateGuildEmoji g) ->   "emoji " <> show g
@@ -62,7 +62,7 @@ baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
 guilds :: R.Url 'R.Https
 guilds = baseUrl /: "guilds"
 
-userJsonRequest :: EmojiRequest r -> JsonRequest
+emojiJsonRequest :: EmojiRequest r -> JsonRequest
 userJsonRequest c = case c of
   (ListGuildEmojis g) -> Get (guilds // g) mempty
   (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty

@@ -80,7 +80,7 @@ tryRequest action log = do
       status = R.responseStatusMessage resp
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      resetInt  = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
+      resetInt = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
       reset  = fromIntegral resetInt
   if | code == 429 -> do liftIO $ writeChan log ("rest - 429 RATE LIMITED global:"
                                                  <> show global <> " reset:" <> show reset)
