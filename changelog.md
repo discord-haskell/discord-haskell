@@ -1,5 +1,9 @@
 # Changelog
 
+### 0.5.2
+
+Add CreateGuildEmojiPng request
+
 ### 0.5.1
 
 sendCommand with GatewaySendable types
