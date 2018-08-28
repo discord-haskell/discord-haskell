@@ -84,8 +84,8 @@ data ChannelRequest a where
   DeletePinnedMessage     :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- todo | Adds a recipient to a Group DM using their access token
   -- todo GroupDMAddRecipient     :: Snowflake -> Snowflake -> ChannelRequest ()
-  -- todo | Removes a recipient from a Group DM
-  -- todo GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
+  -- | Removes a recipient from a Group DM
+  GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
 
 
 -- | Data constructor for GetReaction requests
@@ -155,6 +155,7 @@ channelMajorRoute c = case c of
   (GetPinnedMessages chan) ->              "pins " <> show chan
   (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
   (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
+  (GroupDMRemoveRecipient chan _) ->     "groupdm" <> show chan
 
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
@@ -254,4 +255,7 @@ channelJsonRequest c = case c of
 
   (DeletePinnedMessage (chan, msg)) ->
       Delete (channels // chan /: "pins" // msg) mempty
+
+  (GroupDMRemoveRecipient chan userid) ->
+      Delete (channels // chan // chan /: "recipients" // userid) mempty
 

@@ -2,7 +2,7 @@
 
 ### dev
 
-Add CreateGuildEmoji request
+Add requests: CreateGuildEmoji, GroupDMRemoveRecipient
 
 ### 0.5.1
 
