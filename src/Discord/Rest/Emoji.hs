@@ -59,17 +59,14 @@ parseEmojiImage :: Q.ByteString -> Either String EmojiImage
 parseEmojiImage bs =
   if Q.length bs > 256000
   then Left "Cannot create emoji - File is larger than 256kb"
-  else case decodeEmoji of
-         Left err -> Left ("Could not parse image or gif.\n\n" <> err)
-         Right im -> if is128 im
-                     then Left "Cannot create emoji - Image isn't 128x128"
-                     else Right (EmojiImage (Q.unpack (B64.encode bs)))
+  else case decodeGifImages bs of
+         Left e -> Left ("Could not parse image or gif.\n\n" <> e)
+         Right ims -> if all is128 gifs
+                      then Right (EmojiImage (Q.unpack (B64.encode bs)))
+                      else Left ("File is not 128x128")
   where
     is128 im = let (w,h) = imageDims im
-               in w /= 128 || h /= 128
-    decodeEmoji = case decodeImage bs of
-                    Left _ -> decodeGif bs
-                    Right i -> Right i
+               in w == 128 || h == 128
 
 
 emojiMajorRoute :: EmojiRequest a -> String
