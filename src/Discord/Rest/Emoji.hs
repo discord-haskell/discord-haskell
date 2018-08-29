@@ -73,8 +73,8 @@ parseEmojiImage bs =
                                                      <> Q.unpack (B64.encode bs)))
                           else Left ("Image is not 128x128")
   where
-    is128 im = let (w,h) = imageDims im
-               in w == 128 || h == 128
+    is128 im = let i = convertRGB8 im
+               in imageWidth i == 128 && imageHeight i == 128
 
 
 emojiMajorRoute :: EmojiRequest a -> String
@@ -108,22 +108,3 @@ emojiJsonRequest c = case c of
                                     (R.ReqBodyJson o)
                                     mempty
   (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty
-
-
--- Used internally for parseEmojiImage
-imageDims :: DynamicImage -> (Int, Int)
-imageDims di =
-  case di of
-    ImageY8 i -> (imageWidth i, imageHeight i)
-    ImageY16 i -> (imageWidth i, imageHeight i)
-    ImageYF i -> (imageWidth i, imageHeight i)
-    ImageYA8 i -> (imageWidth i, imageHeight i)
-    ImageYA16 i -> (imageWidth i, imageHeight i)
-    ImageRGB8 i -> (imageWidth i, imageHeight i)
-    ImageRGB16 i -> (imageWidth i, imageHeight i)
-    ImageRGBF i -> (imageWidth i, imageHeight i)
-    ImageRGBA8 i -> (imageWidth i, imageHeight i)
-    ImageRGBA16 i -> (imageWidth i, imageHeight i)
-    ImageYCbCr8 i -> (imageWidth i, imageHeight i)
-    ImageCMYK8 i -> (imageWidth i, imageHeight i)
-    ImageCMYK16 i -> (imageWidth i, imageHeight i)
