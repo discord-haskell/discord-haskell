@@ -10,6 +10,8 @@ module Discord.Rest.Channel
   , ReactionTiming(..)
   , MessageTiming(..)
   , ModifyChannelOptions(..)
+  , ChannelPermissionsOpts(..)
+  , ChannelPermissionsOptsType(..)
   ) where
 
 
@@ -66,8 +68,8 @@ data ChannelRequest a where
   DeleteMessage           :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Deletes a group of messages.
   BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> ChannelRequest ()
-  -- todo | Edits a permission overrides for a channel.
-  -- todo EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> ChannelRequest ()
+  -- | Edits a permission overrides for a channel.
+  EditChannelPermissions  :: Snowflake -> Snowflake -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
   GetChannelInvites       :: Snowflake -> ChannelRequest Object
   -- todo | Creates an instant invite to a channel.
@@ -130,6 +132,23 @@ instance ToJSON ModifyChannelOptions where
                 ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
                 ("parent_id",  toJSON <$> modifyChannelParentId) ] ]
 
+data ChannelPermissionsOpts = ChannelPermissionsOpts
+  { channelPermissionsOptsAllow :: Integer
+  , channelPermissionsOptsDeny :: Integer
+  , channelPermissionsOptsType :: ChannelPermissionsOptsType}
+
+data ChannelPermissionsOptsType = ChannelPermissionsOptsUser
+                                | ChannelPermissionsOptsRole
+
+instance ToJSON ChannelPermissionsOptsType where
+  toJSON t = case t of ChannelPermissionsOptsUser -> String "member"
+                       ChannelPermissionsOptsRole -> String "role"
+
+instance ToJSON ChannelPermissionsOpts where
+  toJSON (ChannelPermissionsOpts a d t) = object [ ("allow", toJSON a )
+                                                 , ("deny", toJSON d)
+                                                 , ("type", toJSON t)]
+
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of
   (GetChannel chan) ->                 "get_chan " <> show chan
@@ -147,7 +166,7 @@ channelMajorRoute c = case c of
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
-  -- todo (EditChannelPermissions chan _ _) ->    "perms " <> show chan
+  (EditChannelPermissions chan _ _) ->    "perms " <> show chan
   (GetChannelInvites chan) ->           "invites " <> show chan
   -- todo (CreateChannelInvite chan _) ->       "invites " <> show chan
   (DeleteChannelPermission chan _) ->     "perms " <> show chan
@@ -232,8 +251,8 @@ channelJsonRequest c = case c of
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
       in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
 
-  -- todo (EditChannelPermissions chan perm patch) ->
-  --  Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+  (EditChannelPermissions chan perm patch) ->
+      Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
 
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
