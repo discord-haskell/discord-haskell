@@ -172,11 +172,11 @@ channelMajorRoute c = case c of
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _ _) ->               "msg " <> show chan
   (UploadFile chan _ _) ->                  "msg " <> show chan
-  (CreateReaction (chan, _) _) ->          "react" <> show chan
-  (DeleteOwnReaction (chan, _) _) ->       "react" <> show chan
-  (DeleteUserReaction (chan, _) _ _) ->    "react" <> show chan
-  (GetReactions (chan, _) _ _) ->          "react" <> show chan
-  (DeleteAllReactions (chan, _)) ->        "react" <> show chan
+  (CreateReaction (chan, _) _) ->         "react " <> show chan
+  (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
+  (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
+  (GetReactions (chan, _) _ _) ->         "react " <> show chan
+  (DeleteAllReactions (chan, _)) ->       "react " <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
@@ -188,7 +188,7 @@ channelMajorRoute c = case c of
   (GetPinnedMessages chan) ->              "pins " <> show chan
   (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
   (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
-  (GroupDMRemoveRecipient chan _) ->     "groupdm" <> show chan
+  (GroupDMRemoveRecipient chan _) ->    "groupdm " <> show chan
 
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
