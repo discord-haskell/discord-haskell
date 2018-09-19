@@ -72,8 +72,8 @@ data ChannelRequest a where
   EditChannelPermissions  :: Snowflake -> Snowflake -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
   GetChannelInvites       :: Snowflake -> ChannelRequest Object
-  -- todo | Creates an instant invite to a channel.
-  -- todo CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> ChannelRequest Object
+  -- | Creates an instant invite to a channel.
+  CreateChannelInvite     :: Snowflake -> ChannelInviteOpts -> ChannelRequest Invite
   -- | Deletes a permission override from a channel.
   DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
@@ -109,6 +109,20 @@ messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
+
+data ChannelInviteOpts = ChannelInviteOpts
+  { channelInviteOptsMaxAgeSeconds          :: Maybe Integer
+  , channelInviteOptsMaxUsages              :: Maybe Integer
+  , channelInviteOptsIsTemporary            :: Maybe Bool
+  , channelInviteOptsDontReuseSimilarInvite :: Maybe Bool
+  }
+
+instance ToJSON ChannelInviteOpts where
+  toJSON ChannelInviteOpts{..} = object [(name, val) | (name, Just val) <-
+                         [("max_age",   toJSON <$> channelInviteOptsMaxAgeSeconds),
+                          ("max_uses",  toJSON <$> channelInviteOptsMaxUsages),
+                          ("temporary", toJSON <$> channelInviteOptsIsTemporary),
+                          ("unique",    toJSON <$> channelInviteOptsDontReuseSimilarInvite) ] ]
 
 data ModifyChannelOpts = ModifyChannelOpts
   { modifyChannelName                 :: Maybe String
@@ -168,7 +182,7 @@ channelMajorRoute c = case c of
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
   (EditChannelPermissions chan _ _) ->    "perms " <> show chan
   (GetChannelInvites chan) ->           "invites " <> show chan
-  -- todo (CreateChannelInvite chan _) ->       "invites " <> show chan
+  (CreateChannelInvite chan _) ->       "invites " <> show chan
   (DeleteChannelPermission chan _) ->     "perms " <> show chan
   (TriggerTypingIndicator chan) ->          "tti " <> show chan
   (GetPinnedMessages chan) ->              "pins " <> show chan
@@ -257,8 +271,8 @@ channelJsonRequest c = case c of
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
 
-  -- todo (CreateChannelInvite chan patch) ->
-  --  Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+  (CreateChannelInvite chan patch) ->
+      Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannelPermission chan perm) ->
       Delete (channels // chan /: "permissions" // perm) mempty
