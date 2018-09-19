@@ -84,8 +84,8 @@ data ChannelRequest a where
   AddPinnedMessage        :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Unpins a message.
   DeletePinnedMessage     :: (Snowflake, Snowflake) -> ChannelRequest ()
-  -- todo | Adds a recipient to a Group DM using their access token
-  -- todo GroupDMAddRecipient     :: Snowflake -> Snowflake -> ChannelRequest ()
+  -- | Adds a recipient to a Group DM using their access token
+  GroupDMAddRecipient     :: Snowflake -> GroupDMAddRecipientOpts -> ChannelRequest ()
   -- | Removes a recipient from a Group DM
   GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
 
@@ -163,6 +163,13 @@ instance ToJSON ChannelPermissionsOpts where
                                                  , ("deny", toJSON d)
                                                  , ("type", toJSON t)]
 
+-- | https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
+  { groupDMAddRecipientUserToAdd :: Snowflake
+  , groupDMAddRecipientUserToAddNickName :: T.Text
+  , groupDMAddRecipientGDMJoinAccessToken :: T.Text
+  }
+
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of
   (GetChannel chan) ->                 "get_chan " <> show chan
@@ -188,6 +195,7 @@ channelMajorRoute c = case c of
   (GetPinnedMessages chan) ->              "pins " <> show chan
   (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
   (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
+  (GroupDMAddRecipient chan _) ->       "groupdm " <> show chan
   (GroupDMRemoveRecipient chan _) ->    "groupdm " <> show chan
 
 
@@ -288,6 +296,12 @@ channelJsonRequest c = case c of
 
   (DeletePinnedMessage (chan, msg)) ->
       Delete (channels // chan /: "pins" // msg) mempty
+
+  (GroupDMAddRecipient chan (GroupDMAddRecipientOpts uid nick tok)) ->
+      Put (channels // chan // chan /: "recipients" // uid)
+          (R.ReqBodyJson (object [ ("access_token", toJSON tok)
+                                 , ("nick", toJSON nick)]))
+          mempty
 
   (GroupDMRemoveRecipient chan userid) ->
       Delete (channels // chan // chan /: "recipients" // userid) mempty
