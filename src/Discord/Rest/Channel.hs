@@ -9,7 +9,7 @@ module Discord.Rest.Channel
   ( ChannelRequest(..)
   , ReactionTiming(..)
   , MessageTiming(..)
-  , ModifyChannelOptions(..)
+  , ModifyChannelOpts(..)
   , ChannelPermissionsOpts(..)
   , ChannelPermissionsOptsType(..)
   ) where
@@ -36,7 +36,7 @@ data ChannelRequest a where
   -- | Gets a channel by its id.
   GetChannel              :: Snowflake -> ChannelRequest Channel
   -- | Edits channels options.
-  ModifyChannel           :: Snowflake -> ModifyChannelOptions -> ChannelRequest Channel
+  ModifyChannel           :: Snowflake -> ModifyChannelOpts -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
   DeleteChannel           :: Snowflake -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
@@ -110,7 +110,7 @@ messageTimingToQuery t = case t of
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
 
-data ModifyChannelOptions = ModifyChannelOptions
+data ModifyChannelOpts = ModifyChannelOpts
   { modifyChannelName                 :: Maybe String
   , modifyChannelPosition             :: Maybe Integer
   , modifyChannelTopic                :: Maybe String
@@ -121,8 +121,8 @@ data ModifyChannelOptions = ModifyChannelOptions
   , modifyChannelParentId             :: Maybe Snowflake
   }
 
-instance ToJSON ModifyChannelOptions where
-  toJSON ModifyChannelOptions{..} = object [(name, val) | (name, Just val) <-
+instance ToJSON ModifyChannelOpts where
+  toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
                [("name",       toJSON <$> modifyChannelName),
                 ("position",   toJSON <$> modifyChannelPosition),
                 ("topic",      toJSON <$> modifyChannelTopic),
