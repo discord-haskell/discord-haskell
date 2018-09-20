@@ -7,6 +7,7 @@
 -- | Provides actions for Channel API interactions
 module Discord.Rest.Guild
   ( GuildRequest(..)
+  , ModifyGuildOpts(..)
   , GuildMembersTiming(..)
   ) where
 

@@ -11,6 +11,7 @@ module Discord.Rest.Channel
   , MessageTiming(..)
   , ModifyChannelOpts(..)
   , ChannelPermissionsOpts(..)
+  , GroupDMAddRecipientOpts(..)
   , ChannelPermissionsOptsType(..)
   ) where
 
