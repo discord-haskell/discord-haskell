@@ -121,8 +121,8 @@ data GuildRequest a where
   ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
 data GuildMembersTiming = GuildMembersTiming
-                          { _guildMembersTimingLimit :: Maybe Int
-                          , _guildMembersTimingAfter :: Maybe Snowflake
+                          { guildMembersTimingLimit :: Maybe Int
+                          , guildMembersTimingAfter :: Maybe Snowflake
                           }
 
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
