@@ -15,6 +15,7 @@ import Data.Aeson
 import Data.Monoid (mempty, (<>))
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
+import qualified Data.Text as T
 
 import Discord.Rest.Prelude
 import Discord.Types
@@ -30,7 +31,7 @@ data GuildRequest a where
   GetGuild                 :: Snowflake -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
   --   Guild Update 'Event'.
-  -- todo ModifyGuild              :: ToJSON o => Snowflake -> o -> GuildRequest Guild
+  ModifyGuild              :: Snowflake -> ModifyGuildOpts -> GuildRequest Guild
   -- | Delete a guild permanently. User must be owner. Fires a Guild Delete 'Event'.
   DeleteGuild              :: Snowflake -> GuildRequest Guild
   -- | Returns a list of guild 'Channel' objects
@@ -120,6 +121,25 @@ data GuildRequest a where
   --   'GuildEmbed' object.
   ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
+-- | https://discordapp.com/developers/docs/resources/guild#modify-guild
+data ModifyGuildOpts = ModifyGuildOpts
+  { modifyGuildOptsName :: Maybe T.Text
+  , modifyGuildOptsAFKChannelId :: Maybe Snowflake
+  , modifyGuildOptsIcon :: Maybe T.Text
+  , modifyGuildOptsOwnerId :: Maybe Snowflake
+   -- Region
+   -- VerificationLevel
+   -- DefaultMessageNotification
+   -- ExplicitContentFilter
+  }
+
+instance ToJSON ModifyGuildOpts where
+  toJSON ModifyGuildOpts{..} =  object [(name, val) | (name, Just val) <-
+                                  [("name",            toJSON <$>  modifyGuildOptsName ),
+                                   ("afk_channel_id",  toJSON <$>  modifyGuildOptsAFKChannelId ),
+                                   ("icon",            toJSON <$>  modifyGuildOptsIcon ),
+                                   ("owner_id",        toJSON <$>  modifyGuildOptsOwnerId )] ]
+
 data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
                           , guildMembersTimingAfter :: Maybe Snowflake
@@ -138,7 +158,7 @@ guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
 guildMajorRoute :: GuildRequest a -> String
 guildMajorRoute c = case c of
   (GetGuild g) ->                         "guild " <> show g
-  -- (ModifyGuild g _) ->                    "guild " <> show g
+  (ModifyGuild g _) ->                    "guild " <> show g
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
   -- (CreateGuildChannel g _) ->        "guild_chan " <> show g
@@ -182,8 +202,8 @@ guildJsonRequest c = case c of
   (GetGuild guild) ->
       Get (guilds // guild) mempty
 
-  -- (ModifyGuild guild patch) ->
-      -- Patch (guilds // guild) (R.ReqBodyJson patch) mempty
+  (ModifyGuild guild patch) ->
+      Patch (guilds // guild) (R.ReqBodyJson patch) mempty
 
   (DeleteGuild guild) ->
       Delete (guilds // guild) mempty
