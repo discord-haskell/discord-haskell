@@ -171,6 +171,7 @@ data Message = Message
   , messageNonce        :: Maybe Snowflake -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
+  , messageGuild        :: Maybe Snowflake -- ^ The guild the message went to
   } deriving (Show, Eq)
 
 instance FromJSON Message where
@@ -189,6 +190,7 @@ instance FromJSON Message where
             <*> o .:  "embeds"
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
+            <*> o .:? "guild_id" .!= Nothing
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
