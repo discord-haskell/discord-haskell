@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Data.Monoid ((<>))
-import Data.Char (isSpace)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -10,7 +9,7 @@ import Discord
 -- | Get a channel, send a message, react to a message
 restExample :: IO ()
 restExample = do
-  tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
+  tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRest (Auth tok)
 
   chan <- restCall dis (GetChannel 453207241294610444)

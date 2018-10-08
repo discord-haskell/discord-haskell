@@ -2,7 +2,7 @@
 
 import Control.Exception (finally)
 import Control.Monad (forever, when)
-import Data.Char (isSpace, toLower)
+import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -11,7 +11,7 @@ import Discord
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
-  tok <- T.filter (not . isSpace) <$> TIO.readFile "./examples/auth-token.secret"
+  tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
 
   dis <- loginRestGateway (Auth tok)
 
