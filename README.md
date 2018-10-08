@@ -24,8 +24,8 @@ has the most recent (potentially) breaking changes.
 
 ## Getting Started
 
-1 Create a bot to get a clientid and secret
-<https://discordapp.com/developers/applications/me>
+1 Create a bot to get a token, clientid, and secret
+<https://discordapp.com/developers/applications/me> (connect with token)
 
 2 Figure out what permissions you need
 <https://discordapi.com/permissions.html>
