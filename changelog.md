@@ -4,6 +4,8 @@
 
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild
 
+Only add "Bot " prefix to secret token if it's not there
+
 ### 0.5.1
 
 sendCommand with GatewaySendable types
