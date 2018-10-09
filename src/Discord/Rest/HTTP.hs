@@ -54,23 +54,23 @@ restLoop auth urls log = loop M.empty
                         PathWait i -> loop $ M.insert route i ratelocker
                         NoLimit -> loop ratelocker
 
+data RateLimited = Available | Locked
+
 compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited
 compareRate ratelocker route curtime =
     case M.lookup route ratelocker of
       Just unlockTime -> if curtime < unlockTime then Locked else Available
       Nothing -> Available
 
-data RateLimited = Available | Locked
-
-data Timeout = GlobalWait POSIXTime
-             | PathWait POSIXTime
-             | NoLimit
-
 
 data RequestResponse = ResponseTryAgain
                      | ResponseByteString QL.ByteString
                      | ResponseErrorCode Int Q.ByteString
     deriving (Show)
+
+data Timeout = GlobalWait POSIXTime
+             | PathWait POSIXTime
+             | NoLimit
 
 tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (RequestResponse, Timeout)
 tryRequest action log = do
@@ -107,4 +107,3 @@ compileRequest auth request = action
     (Put    url body opts) -> R.req R.PUT    url body        R.lbsResponse (authopt <> opts)
     (Post   url body opts) -> do b <- body
                                  R.req R.POST   url b        R.lbsResponse (authopt <> opts)
-
