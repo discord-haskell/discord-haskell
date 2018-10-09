@@ -22,8 +22,8 @@ data Cache = Cache
 emptyCache :: IO (MVar Cache)
 emptyCache = newEmptyMVar
 
-addEvent :: MVar Cache -> Chan Event -> Chan String -> IO ()
-addEvent cache eventChan log = do
+cacheAddEventLoopFork :: MVar Cache -> Chan Event -> Chan String -> IO ()
+cacheAddEventLoopFork cache eventChan log = do
       ready <- readChan eventChan
       case ready of
         (Ready _ user dmChannels _unavailableGuilds _) -> do
@@ -32,7 +32,7 @@ addEvent cache eventChan log = do
           loop
         _ -> do
           writeChan log ("Cache error - expected Ready, but got " <> show ready)
-          addEvent cache eventChan log
+          cacheAddEventLoopFork cache eventChan log
   where
   loop :: IO ()
   loop = do

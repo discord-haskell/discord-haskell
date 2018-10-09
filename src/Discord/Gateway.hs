@@ -34,7 +34,7 @@ startGatewayThread auth log = do
   sends <- newChan
   writeFile "the-log-of-discord-haskell.txt" ""
   cache <- emptyCache
-  cacheID <- forkIO $ addEvent cache eventsCache log
+  cacheID <- forkIO $ cacheAddEventLoopFork cache eventsCache log
   tid <- forkIO $ finally (connectionLoop auth eventsWrite sends log)
                           (killThread cacheID)
   pure (Gateway eventsWrite cache sends, tid)
