@@ -19,13 +19,13 @@ import Data.Aeson (FromJSON, eitherDecode)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent (forkIO, ThreadId)
-import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Discord.Types
 import Discord.Rest.HTTP
 
-newtype RestChan = RestChan (Chan (String, JsonRequest, MVar (Either (Int, Q.ByteString) QL.ByteString)))
+newtype RestChan = RestChan (Chan (String, JsonRequest,
+                                   MVar (Either RestCallException QL.ByteString)))
 
 -- | Starts the http request thread. Please only call this once
 createHandler :: Auth -> Chan String -> IO (RestChan, ThreadId)
@@ -43,9 +43,6 @@ writeRestCall (RestChan c) req = do
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
     Right (Left er) -> Left (RestCallNoParse er (fromRight "" r))
-    Left (code,status) -> Left (RestCallErrorCode code status)
+    Left e -> Left e
 
-data RestCallException = RestCallErrorCode Int Q.ByteString
-                       | RestCallNoParse String QL.ByteString
-  deriving (Show, Eq)
 

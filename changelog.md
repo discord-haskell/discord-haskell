@@ -4,6 +4,8 @@
 
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild
 
+restCall passes errors as an ADT, including underling http exceptions
+
 Only add "Bot " prefix to secret token if it's not there
 
 ### 0.5.1

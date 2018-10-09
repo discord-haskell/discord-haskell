@@ -7,6 +7,7 @@ module Discord.Rest.HTTP
   ( restLoop
   , Request(..)
   , JsonRequest(..)
+  , RestCallException(..)
   ) where
 
 import Prelude hiding (log)
@@ -14,6 +15,7 @@ import Data.Semigroup ((<>))
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
+import Control.Exception.Safe (try)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Ix (inRange)
@@ -28,7 +30,13 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 import Discord.Rest.Prelude
 
-restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either (Int, Q.ByteString) QL.ByteString)) -> Chan String -> IO ()
+data RestCallException = RestCallErrorCode Int Q.ByteString
+                       | RestCallNoParse String QL.ByteString
+                       | RestCallHttpException R.HttpException
+  deriving (Show)
+
+restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallException QL.ByteString))
+                 -> Chan String -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
@@ -39,20 +47,28 @@ restLoop auth urls log = loop M.empty
       Locked -> do writeChan urls (route, request, thread)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
-                      (resp, retry) <- restIOtoIO (tryRequest action log)
-                      writeChan log ("rest - response " <> show resp)
-                      case resp of
-                        ResponseTryAgain -> writeChan urls (route, request, thread)
-                        ResponseByteString "" -> putMVar thread (Right "[]") -- decode "[]" == () for
-                        ResponseByteString bs -> putMVar thread (Right bs)   --      expected empty calls
-                        ResponseErrorCode e s -> putMVar thread (Left (e,s))
-                      case retry of
-                        GlobalWait i -> do
-                            writeChan log ("rest - GLOBAL WAIT LIMIT: " <> show ((i - curtime) * 1000))
-                            threadDelay $ round ((i - curtime + 0.1) * 1000)
-                            loop ratelocker
-                        PathWait i -> loop $ M.insert route i ratelocker
-                        NoLimit -> loop ratelocker
+                      reqIO <- try $ restIOtoIO (tryRequest action log)
+                      case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
+                        Left e -> do
+                          writeChan log ("rest - http exception " <> show e)
+                          putMVar thread (Left (RestCallHttpException e))
+                          loop ratelocker
+                        Right (resp, retry) -> do
+                          writeChan log ("rest - response " <> show resp)
+                          case resp of
+                            -- decode "[]" == () for expected empty calls
+                            ResponseByteString "" -> putMVar thread (Right "[]")
+                            ResponseByteString bs -> putMVar thread (Right bs)
+                            ResponseErrorCode e s -> putMVar thread (Left (RestCallErrorCode e s))
+                            ResponseTryAgain -> writeChan urls (route, request, thread)
+                          case retry of
+                            GlobalWait i -> do
+                                writeChan log ("rest - GLOBAL WAIT LIMIT: "
+                                                    <> show ((i - curtime) * 1000))
+                                threadDelay $ round ((i - curtime + 0.1) * 1000)
+                                loop ratelocker
+                            PathWait i -> loop $ M.insert route i ratelocker
+                            NoLimit -> loop ratelocker
 
 data RateLimited = Available | Locked
 
