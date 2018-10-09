@@ -28,12 +28,7 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 import Discord.Rest.Prelude
 
-unpackResp :: Either String QL.ByteString -> String
-unpackResp r = case r of
-                 Right a -> "Resp " <> QL.unpack a
-                 Left s -> "BadResp " <> s
-
-restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either String QL.ByteString)) -> Chan String -> IO ()
+restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either (Int, Q.ByteString) QL.ByteString)) -> Chan String -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
@@ -45,12 +40,12 @@ restLoop auth urls log = loop M.empty
                    loop ratelocker
       Available -> do let action = compileRequest auth request
                       (resp, retry) <- restIOtoIO (tryRequest action log)
-                      writeChan log ("rest - response " <> unpackResp resp)
+                      writeChan log ("rest - response " <> show resp)
                       case resp of
-                        Right "" -> putMVar thread (Right "[]") -- empty should be ()
-                        Right bs -> putMVar thread (Right bs)
-                        Left "Try Again" -> writeChan urls (route, request, thread)
-                        Left r -> putMVar thread (Left r)
+                        ResponseTryAgain -> writeChan urls (route, request, thread)
+                        ResponseByteString "" -> putMVar thread (Right "[]") -- decode "[]" == () for
+                        ResponseByteString bs -> putMVar thread (Right bs)   --      expected empty calls
+                        ResponseErrorCode e s -> putMVar thread (Left (e,s))
                       case retry of
                         GlobalWait i -> do
                             writeChan log ("rest - GLOBAL WAIT LIMIT: " <> show ((i - curtime) * 1000))
@@ -72,7 +67,12 @@ data Timeout = GlobalWait POSIXTime
              | NoLimit
 
 
-tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (Either String QL.ByteString, Timeout)
+data RequestResponse = ResponseTryAgain
+                     | ResponseByteString QL.ByteString
+                     | ResponseErrorCode Int Q.ByteString
+    deriving (Show)
+
+tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (RequestResponse, Timeout)
 tryRequest action log = do
   resp <- action
   next10 <- liftIO (round . (+10) <$> getPOSIXTime)
@@ -84,16 +84,14 @@ tryRequest action log = do
       reset  = fromIntegral resetInt
   if | code == 429 -> do liftIO $ writeChan log ("rest - 429 RATE LIMITED global:"
                                                  <> show global <> " reset:" <> show reset)
-                         pure (Left "Try Again", if global then GlobalWait reset
+                         pure (ResponseTryAgain, if global then GlobalWait reset
                                                            else PathWait reset)
-     | code `elem` [500,502] -> pure (Left "Try Again", NoLimit)
-     | inRange (200,299) code -> pure ( Right (R.responseBody resp)
+     | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
+     | inRange (200,299) code -> pure ( ResponseByteString (R.responseBody resp)
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | inRange (400,499) code -> pure ( Left (show code <> " - " <> Q.unpack status
-                                                        <> QL.unpack (R.responseBody resp))
+     | inRange (400,499) code -> pure (ResponseErrorCode code status
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | otherwise -> let err = "Unexpected code: " ++ show code ++ " - " ++ Q.unpack status
-                    in pure (Left err, NoLimit)
+     | otherwise -> pure (ResponseErrorCode code status, NoLimit)
 
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack

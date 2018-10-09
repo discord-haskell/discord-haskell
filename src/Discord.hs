@@ -9,6 +9,7 @@ module Discord
   , Cache(..)
   , Gateway(..)
   , RestChan(..)
+  , RestCallException(..)
   , Request(..)
   , ThreadIdType(..)
   , restCall
@@ -69,7 +70,8 @@ loginRestGateway auth = do
                            ])
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => (RestChan, y, z) -> r a -> IO (Either String a)
+restCall :: (FromJSON a, Request (r a)) =>
+                     (RestChan, y, z) -> r a -> IO (Either RestCallException a)
 restCall (r,_,_) = writeRestCall r
 
 -- | Block until the gateway produces another event
