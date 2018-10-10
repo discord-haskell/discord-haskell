@@ -17,7 +17,6 @@ import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
-import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss (runSecureClient)
@@ -32,7 +31,7 @@ data GatewayException = GatewayExceptionCouldNotConnect
 
 data ConnLoopState = ConnStart
                    | ConnClosed
-                   | ConnReconnect T.Text String Integer
+                   | ConnReconnect Auth String Integer
   deriving Show
 
 -- | Securely run a connection IO action. Send a close on exception
@@ -58,7 +57,7 @@ connectionLoop auth events userSend log = loop ConnStart
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events (Right r)
-                    startEventStream conn events auth seshID interval 0 userSend log
+                    startEventStream (ConnData conn seshID auth events) interval 0 userSend log
                   _ -> writeChan log ("gateway - connstart must be ready: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("gateway - connstart must be hello: " <> show msg) >> pure ConnClosed
           case next :: Either IOError ConnLoopState of
@@ -69,18 +68,18 @@ connectionLoop auth events userSend log = loop ConnStart
                          loop ConnStart
             Right n -> loop n
 
-      (ConnReconnect tok seshID seqID) -> do
+      (ConnReconnect (Auth tok) seshID seqID) -> do
           next <- try $ connect $ \conn -> do
               sendTextData conn (encode (Resume tok seshID seqID))
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
-                      startEventStream conn events auth seshID interval seqID userSend log
+                      startEventStream (ConnData conn seshID auth events) interval seqID userSend log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
                       threadDelay (t * 10^6)
                       pure $ if retry
-                             then ConnReconnect tok seshID seqID
+                             then ConnReconnect (Auth tok) seshID seqID
                              else ConnStart
                   Right payload -> do
                       writeChan log ("gateway - connreconnect invalid response: " <> show payload)
@@ -91,7 +90,7 @@ connectionLoop auth events userSend log = loop ConnStart
             Left e -> do writeChan log ("gateway - connreconnect after eventStream error: " <> show e)
                          t <- getRandomR (3,10)
                          threadDelay (t * 10^6)
-                         loop (ConnReconnect tok seshID seqID)
+                         loop (ConnReconnect (Auth tok) seshID seqID)
             Right n -> loop n
 
 
@@ -124,27 +123,27 @@ heartbeat send interval seqKey log = do
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
-startEventStream :: Connection -> Chan (Either GatewayException Event) -> Auth -> String -> Int
-                               -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
-startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
-  seqKey <- newIORef seqN
-  let err :: SomeException -> IO ConnLoopState
-      err e = do writeChan log ("gateway - eventStream error: " <> show e)
-                 ConnReconnect auth seshID <$> readIORef seqKey
-  handle err $ do
-    gateSends <- newChan
-    sendsId <- forkIO $ sendableLoop conn (Sendables userSend gateSends) log
-    heart <- forkIO $ heartbeat gateSends interval seqKey log
-
-    finally (eventStream (ConnData conn seshID auth events) seqKey interval gateSends log)
-            (killThread heart >> killThread sendsId)
-
 -- | What we need to start an event stream
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: String
-                               , connAuth :: T.Text
+                               , connAuth :: Auth
                                , connChan :: Chan (Either GatewayException Event)
                                }
+
+startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
+startEventStream conndata interval seqN userSend log = do
+  seqKey <- newIORef seqN
+  let err :: SomeException -> IO ConnLoopState
+      err e = do writeChan log ("gateway - eventStream error: " <> show e)
+                 ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
+  handle err $ do
+    gateSends <- newChan
+    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends) log
+    heart <- forkIO $ heartbeat gateSends interval seqKey log
+
+    finally (eventStream conndata seqKey interval gateSends log)
+            (killThread heart >> killThread sendsId)
+
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable
                               -> Chan String -> IO ConnLoopState
