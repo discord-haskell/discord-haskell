@@ -17,6 +17,7 @@ import Control.Concurrent (threadDelay, killThread, forkIO)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
+import qualified Data.Text as T
 import qualified Data.ByteString.Lazy.Char8 as QL
 
 import Wuss (runSecureClient)
@@ -26,9 +27,10 @@ import GHC.IO.Exception (IOError)
 
 import Discord.Types
 
-data GatewayException = GatewayExceptionCouldNotConnect
-                      | GatewayExceptionUnexpected GatewayReceivable
-                      | GatewayExceptionConnection ConnectionException
+data GatewayException = GatewayExceptionCouldNotConnect T.Text
+                      | GatewayExceptionEventParseError String T.Text
+                      | GatewayExceptionUnexpected GatewayReceivable T.Text
+                      | GatewayExceptionConnection ConnectionException T.Text
   deriving (Show)
 
 data ConnLoopState = ConnStart
@@ -61,18 +63,22 @@ connectionLoop auth events userSend log = loop ConnStart
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events (Right r)
                     startEventStream (ConnData conn seshID auth events) interval 0 userSend log
-                  Right m -> do writeChan events (Left (GatewayExceptionUnexpected m))
+                  Right m -> do writeChan events (Left (GatewayExceptionUnexpected m
+                                                         "Response to Identify must be Ready"))
                                 pure ConnClosed
-                  Left ce -> do writeChan events (Left (GatewayExceptionConnection ce))
+                  Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
+                                                         "Response to Identify"))
                                 pure ConnClosed
               Right m -> do writeChan log ("gateway - first message must be hello: " <> show msg)
-                            writeChan events (Left (GatewayExceptionUnexpected m))
+                            writeChan events (Left (GatewayExceptionUnexpected m
+                                                      "Response to connecting must be hello"))
                             pure ConnClosed
-              Left ce -> do writeChan events (Left (GatewayExceptionConnection ce))
+              Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
+                                                     "Response to connecting"))
                             pure ConnClosed
           case next :: Either IOError ConnLoopState of
-            Left _ -> do writeChan log ("gateway - IO Error on connection")
-                         writeChan events (Left GatewayExceptionCouldNotConnect)
+            Left _ -> do writeChan events (Left (GatewayExceptionCouldNotConnect
+                                                  "IOError in gateway Connection"))
                          loop ConnClosed
             Right n -> loop n
 
@@ -90,16 +96,15 @@ connectionLoop auth events userSend log = loop ConnStart
                              then ConnReconnect (Auth tok) seshID seqID
                              else ConnStart
                   Right payload -> do
-                      writeChan log ("gateway - connreconnect invalid response: " <> show payload)
-                      writeChan events (Left (GatewayExceptionUnexpected payload))
+                      writeChan events (Left (GatewayExceptionUnexpected payload
+                                               "Response to Resume must be Hello/Invalid Session"))
                       pure ConnClosed
                   Left e -> do
-                      writeChan log ("gateway - connreconnect error " <> show e)
-                      writeChan events (Left (GatewayExceptionConnection e))
+                      writeChan events (Left (GatewayExceptionConnection e
+                                               "Could not ConnReconnect"))
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
-            Left e -> do writeChan log ("gateway - connreconnect after eventStream error: " <> show e)
-                         t <- getRandomR (3,10)
+            Left _ -> do t <- getRandomR (3,10)
                          threadDelay (t * 10^6)
                          loop (ConnReconnect (Auth tok) seshID seqID)
             Right n -> loop n
@@ -149,7 +154,7 @@ startEventStream conndata interval seqN userSend log = do
                  ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
-    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends) log
+    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends)
     heart <- forkIO $ heartbeat gateSends interval seqKey log
 
     finally (eventStream conndata seqKey interval gateSends log)
@@ -171,7 +176,8 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
           4014 -> ConnReconnect auth seshID <$> readIORef seqKey
-          e -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)))
+          _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
+                                              "Normal event loop close request"))
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do setSequence seqKey sq
@@ -185,8 +191,12 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                                       then ConnReconnect auth seshID <$> readIORef seqKey
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
-      Right p -> do writeChan eventChan (Left (GatewayExceptionUnexpected p))
-                    pure ConnClosed
+      Right (Hello e) -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello e)
+                                                             "Normal event loop"))
+                            pure ConnClosed
+      Right (ParseError e) -> do writeChan eventChan (Left (GatewayExceptionEventParseError e
+                                                             "Normal event loop"))
+                                 pure ConnClosed
 
 data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset on reconnect
                              userSends :: Chan GatewaySendable -- ^ Things the user wants to send
@@ -194,8 +204,8 @@ data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset o
                            , gatewaySends :: Chan GatewaySendable
                            }
 
-sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
-sendableLoop conn sends log = forever $ do
+sendableLoop :: Connection -> Sendables -> IO ()
+sendableLoop conn sends = forever $ do
   -- send a ~120 events a min by delaying
   threadDelay (round (10^6 * (62 / 120)))
   let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
