@@ -8,7 +8,7 @@ module Discord.Gateway.EventLoop where
 
 import Prelude hiding (log)
 
-import Control.Monad (forever, (<=<))
+import Control.Monad (forever)
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
@@ -23,24 +23,24 @@ import qualified Data.ByteString.Lazy.Char8 as QL
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection,
                            receiveData, sendTextData)
+import GHC.IO.Exception (IOError)
 
 import Discord.Types
+
+data GatewayException = GatewayExceptionCouldNotConnect
+  deriving (Show, Eq)
 
 data ConnLoopState = ConnStart
                    | ConnClosed
                    | ConnReconnect T.Text String Integer
   deriving Show
 
-data ConnectionData = ConnData { connection :: Connection
-                               , connSessionID :: String
-                               , connAuth :: T.Text
-                               , connChan :: Chan Event
-                               }
 -- | Securely run a connection IO action. Send a close on exception
 connect :: (Connection -> IO a) -> IO a
 connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
-connectionLoop :: Auth -> Chan Event -> Chan GatewaySendable -> Chan String -> IO ()
+connectionLoop :: Auth -> Chan (Either GatewayException Event) -> Chan GatewaySendable
+                       -> Chan String -> IO ()
 connectionLoop auth events userSend log = loop ConnStart
  where
   loop :: ConnLoopState -> IO ()
@@ -49,7 +49,7 @@ connectionLoop auth events userSend log = loop ConnStart
     case s of
       (ConnClosed) -> pure ()
       (ConnStart) -> do
-          loop <=< connect $ \conn -> do
+          next <- try $ connect $ \conn -> do
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
@@ -57,10 +57,17 @@ connectionLoop auth events userSend log = loop ConnStart
                 msg2 <- getPayload conn log
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
-                    writeChan events r
+                    writeChan events (Right r)
                     startEventStream conn events auth seshID interval 0 userSend log
                   _ -> writeChan log ("gateway - connstart must be ready: " <> show msg2) >> pure ConnClosed
               _ -> writeChan log ("gateway - connstart must be hello: " <> show msg) >> pure ConnClosed
+          case next :: Either IOError ConnLoopState of
+            Left _ -> do writeChan log ("gateway - IO Error on connectiong")
+                         writeChan events (Left GatewayExceptionCouldNotConnect)
+                         t <- getRandomR (10,20)
+                         threadDelay (t * 10^6)
+                         loop ConnStart
+            Right n -> loop n
 
       (ConnReconnect tok seshID seqID) -> do
           next <- try $ connect $ \conn -> do
@@ -117,7 +124,7 @@ heartbeat send interval seqKey log = do
 setSequence :: IORef Integer -> Integer -> IO ()
 setSequence key i = writeIORef key i
 
-startEventStream :: Connection -> Chan Event -> Auth -> String -> Int
+startEventStream :: Connection -> Chan (Either GatewayException Event) -> Auth -> String -> Int
                                -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
 startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
   seqKey <- newIORef seqN
@@ -131,6 +138,13 @@ startEventStream conn events (Auth auth) seshID interval seqN userSend log = do
 
     finally (eventStream (ConnData conn seshID auth events) seqKey interval gateSends log)
             (killThread heart >> killThread sendsId)
+
+-- | What we need to start an event stream
+data ConnectionData = ConnData { connection :: Connection
+                               , connSessionID :: String
+                               , connAuth :: T.Text
+                               , connChan :: Chan (Either GatewayException Event)
+                               }
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable
                               -> Chan String -> IO ConnLoopState
@@ -152,7 +166,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do setSequence seqKey sq
-                                      writeChan eventChan event
+                                      writeChan eventChan (Right event)
                                       loop
       Right (HeartbeatRequest sq) -> do setSequence seqKey sq
                                         writeChan send (Heartbeat sq)
