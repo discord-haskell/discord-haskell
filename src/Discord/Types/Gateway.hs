@@ -37,11 +37,13 @@ data GatewaySendable
   | RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
+  deriving (Show)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
                              { requestGuildMemersGuildId :: Snowflake
                              , requestGuildMemersSearchQuery :: T.Text
                              , requestGuildMemersLimit :: Integer }
+  deriving (Show)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            { updateStatusVoiceGuildId :: Snowflake
@@ -49,6 +51,7 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            , updateStatusVoiceIsMuted :: Snowflake
                            , updateStatusVoiceIsDeaf :: Snowflake
                            }
+  deriving (Show)
 
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusSince :: Maybe UTCTime
@@ -56,12 +59,14 @@ data UpdateStatusOpts = UpdateStatusOpts
                       , updateStatusNewStatus :: UpdateStatusTypes
                       , updateStatusAFK :: Bool
                       }
+  deriving (Show)
 
 data UpdateStatusTypes = UpdateStatusOnline
                        | UpdateStatusDoNotDisturb
                        | UpdateStatusAwayFromKeyboard
                        | UpdateStatusInvisibleOffline
                        | UpdateStatusOffline
+  deriving (Show)
 
 statusString :: UpdateStatusTypes -> T.Text
 statusString s = case s of
