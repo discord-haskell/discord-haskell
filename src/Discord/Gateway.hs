@@ -4,24 +4,24 @@
 --   through a real-time Chan
 module Discord.Gateway
   ( Gateway(..)
+  , GatewayException(..)
   , startGatewayThread
   , module Discord.Types
   ) where
 
 import Prelude hiding (log)
-import Control.Exception.Safe (finally)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, killThread, ThreadId, MVar)
+import Control.Concurrent (forkIO, ThreadId, MVar)
 
 import Discord.Types (Auth, Event, GatewaySendable)
-import Discord.Gateway.EventLoop (connectionLoop)
+import Discord.Gateway.EventLoop (connectionLoop, GatewayException(..))
 import Discord.Gateway.Cache
 
 -- | Concurrency primitives that make up the gateway. Build a higher
 --   level interface over these
 data Gateway = Gateway
-  { _events :: Chan Event
-  , _cache :: MVar Cache
+  { _events :: Chan (Either GatewayException Event)
+  , _cache :: MVar (Either GatewayException Cache)
   , _gatewayCommands :: Chan GatewaySendable
   }
 
@@ -32,10 +32,9 @@ startGatewayThread auth log = do
   eventsWrite <- newChan
   eventsCache <- dupChan eventsWrite
   sends <- newChan
-  cache <- emptyCache
-  cacheID <- forkIO $ cacheAddEventLoopFork cache eventsCache log
-  tid <- forkIO $ finally (connectionLoop auth eventsWrite sends log)
-                          (killThread cacheID)
+  cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
+  _ <- forkIO $ cacheAddEventLoopFork cache eventsCache log
+  tid <- forkIO $ connectionLoop auth eventsWrite sends log
   pure (Gateway eventsWrite cache sends, tid)
 
 
