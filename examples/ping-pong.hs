@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Exception (finally)
-import Control.Monad (forever, when)
+import Control.Monad (when)
 import Data.Char (toLower)
+import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -15,14 +16,18 @@ pingpongExample = do
 
   dis <- loginRestGateway (Auth tok)
 
-  finally (forever $ do
-              e <- nextEvent dis
-              case e of
-                  MessageCreate m -> when (isPing (messageText m)) $ do
-                    resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
-                    putStrLn (show resp)
-                    putStrLn ""
-                  _ -> pure ())
+  finally (let loop = do
+                  e <- nextEvent dis
+                  case e of
+                      Left er -> putStrLn ("Event error: " <> show er)
+                      Right (MessageCreate m) -> do
+                        when (isPing (messageText m)) $ do
+                          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+                          putStrLn (show resp)
+                          putStrLn ""
+                        loop
+                      _ -> do loop
+           in loop)
           (stopDiscord dis)
 
 isPing :: T.Text -> Bool
