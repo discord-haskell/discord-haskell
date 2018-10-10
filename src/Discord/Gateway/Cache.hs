@@ -6,6 +6,7 @@ module Discord.Gateway.Cache where
 
 import Prelude hiding (log)
 import Data.Monoid ((<>))
+import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
@@ -30,7 +31,8 @@ cacheAddEventLoopFork cache eventChan log = do
         Right (Ready _ user dmChannels _unavailableGuilds _) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
           putMVar cache (Right (Cache user dmChans M.empty M.empty))
-          loop
+          _ <- forkIO loop
+          pure ()
         Right r -> do
           writeChan log ("cache - expected Ready event, but got " <> show r)
           cacheAddEventLoopFork cache eventChan log

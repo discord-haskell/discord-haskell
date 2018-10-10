@@ -33,8 +33,8 @@ startGatewayThread auth log = do
   eventsCache <- dupChan eventsWrite
   sends <- newChan
   cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
-  _ <- forkIO $ cacheAddEventLoopFork cache eventsCache log
   tid <- forkIO $ connectionLoop auth eventsWrite sends log
+  cacheAddEventLoopFork cache eventsCache log
   pure (Gateway eventsWrite cache sends, tid)
 
 
