@@ -50,6 +50,7 @@ data NotLoggedIntoGateway = NotLoggedIntoGateway
 loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [ThreadIdType])
 loginRest auth = do
   log <- newChan
+  writeFile "the-log-of-discord-haskell.txt" ""
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
   pure (restHandler, NotLoggedIntoGateway, [ ThreadLogger logId
@@ -60,6 +61,7 @@ loginRest auth = do
 loginRestGateway :: Auth -> IO (RestChan, Gateway, [ThreadIdType])
 loginRestGateway auth = do
   log <- newChan
+  writeFile "the-log-of-discord-haskell.txt" ""
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
   (gate, gateId) <- startGatewayThread auth log
