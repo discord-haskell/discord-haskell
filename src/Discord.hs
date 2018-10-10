@@ -10,6 +10,7 @@ module Discord
   , Gateway(..)
   , RestChan(..)
   , RestCallException(..)
+  , GatewayException(..)
   , Request(..)
   , ThreadIdType(..)
   , restCall

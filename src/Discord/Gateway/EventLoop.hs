@@ -65,7 +65,11 @@ connectionLoop auth events userSend log = loop ConnStart
                                 pure ConnClosed
                   Left ce -> do writeChan events (Left (GatewayExceptionConnection ce))
                                 pure ConnClosed
-              _ -> writeChan log ("gateway - connstart must be hello: " <> show msg) >> pure ConnClosed
+              Right m -> do writeChan log ("gateway - first message must be hello: " <> show msg)
+                            writeChan events (Left (GatewayExceptionUnexpected m))
+                            pure ConnClosed
+              Left ce -> do writeChan events (Left (GatewayExceptionConnection ce))
+                            pure ConnClosed
           case next :: Either IOError ConnLoopState of
             Left _ -> do writeChan log ("gateway - IO Error on connection")
                          writeChan events (Left GatewayExceptionCouldNotConnect)
@@ -87,9 +91,12 @@ connectionLoop auth events userSend log = loop ConnStart
                              else ConnStart
                   Right payload -> do
                       writeChan log ("gateway - connreconnect invalid response: " <> show payload)
+                      writeChan events (Left (GatewayExceptionUnexpected payload))
                       pure ConnClosed
-                  Left e ->
-                      writeChan log ("gateway - connreconnect error " <> show e) >> pure ConnClosed
+                  Left e -> do
+                      writeChan log ("gateway - connreconnect error " <> show e)
+                      writeChan events (Left (GatewayExceptionConnection e))
+                      pure ConnClosed
           case next :: Either SomeException ConnLoopState of
             Left e -> do writeChan log ("gateway - connreconnect after eventStream error: " <> show e)
                          t <- getRandomR (3,10)
@@ -164,8 +171,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
           4014 -> ConnReconnect auth seshID <$> readIORef seqKey
-          e -> do writeChan log ("gateway - Closing connection because #"
-                                         <> show e <> " " <> show str)
+          e -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)))
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do setSequence seqKey sq
