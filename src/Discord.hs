@@ -65,7 +65,6 @@ loginRestGateway auth = do
   logId <- forkIO (logger log True)
   (restHandler, restId) <- createHandler auth log
   (gate, gateId) <- startGatewayThread auth log
-  _ <- readCache (restHandler, gate, ()) -- delay
   pure (restHandler, gate, [ ThreadLogger logId
                            , ThreadRest restId
                            , ThreadGateway gateId
@@ -76,8 +75,9 @@ restCall :: (FromJSON a, Request (r a)) =>
                      (RestChan, y, z) -> r a -> IO (Either RestCallException a)
 restCall (r,_,_) = writeRestCall r
 
--- | Block until the gateway produces another event
-nextEvent :: (x, Gateway, z) -> IO Event
+-- | Block until the gateway produces another event. Once an exception is returned,
+--    only return that exception
+nextEvent :: (x, Gateway, z) -> IO (Either GatewayException Event)
 nextEvent (_,g,_) = readChan (_events g)
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
@@ -89,7 +89,7 @@ sendCommand (_,g,_) e = case e of
                           _ -> writeChan (_gatewayCommands g) e
 
 -- | Access the current state of the gateway cache
-readCache :: (RestChan, Gateway, z) -> IO Cache
+readCache :: (RestChan, Gateway, z) -> IO (Either GatewayException Cache)
 readCache (_,g,_) = readMVar (_cache g)
 
 -- | Stop all the background threads
