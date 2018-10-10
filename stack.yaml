@@ -5,6 +5,6 @@ packages:
 resolver: lts-11.10
 
 extra-deps: []
-
-nix:
-  packages: [ zlib, gmp ]
+# 
+# nix:
+#   packages: [ zlib, gmp ]
