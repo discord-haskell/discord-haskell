@@ -36,11 +36,6 @@ data ConnectionData = ConnData { connection :: Connection
                                , connAuth :: T.Text
                                , connChan :: Chan Event
                                }
-
-data Sendables = Sendables { userSends :: Chan GatewaySendable
-                           , gatewaySends :: Chan GatewaySendable
-                           }
-
 -- | Securely run a connection IO action. Send a close on exception
 connect :: (Connection -> IO a) -> IO a
 connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
@@ -171,6 +166,11 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
       Right p -> do writeChan log ("gateway - Invalid gateway payload: " <> show p)
                     pure ConnClosed
 
+data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset on reconnect
+                             userSends :: Chan GatewaySendable -- ^ Things the user wants to send
+                            -- | Things the library needs to send. Resets to empty on reconnect
+                           , gatewaySends :: Chan GatewaySendable
+                           }
 
 sendableLoop :: Connection -> Sendables -> Chan [Char] -> IO ()
 sendableLoop conn sends log = forever $ do
