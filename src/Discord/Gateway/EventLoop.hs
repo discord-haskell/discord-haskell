@@ -27,7 +27,9 @@ import GHC.IO.Exception (IOError)
 import Discord.Types
 
 data GatewayException = GatewayExceptionCouldNotConnect
-  deriving (Show, Eq)
+                      | GatewayExceptionUnexpected GatewayReceivable
+                      | GatewayExceptionConnection ConnectionException
+  deriving (Show)
 
 data ConnLoopState = ConnStart
                    | ConnClosed
@@ -48,6 +50,7 @@ connectionLoop auth events userSend log = loop ConnStart
     case s of
       (ConnClosed) -> pure ()
       (ConnStart) -> do
+          -- only try-catch an IO Error
           next <- try $ connect $ \conn -> do
             msg <- getPayload conn log
             case msg of
@@ -58,14 +61,15 @@ connectionLoop auth events userSend log = loop ConnStart
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events (Right r)
                     startEventStream (ConnData conn seshID auth events) interval 0 userSend log
-                  _ -> writeChan log ("gateway - connstart must be ready: " <> show msg2) >> pure ConnClosed
+                  Right m -> do writeChan events (Left (GatewayExceptionUnexpected m))
+                                pure ConnClosed
+                  Left ce -> do writeChan events (Left (GatewayExceptionConnection ce))
+                                pure ConnClosed
               _ -> writeChan log ("gateway - connstart must be hello: " <> show msg) >> pure ConnClosed
           case next :: Either IOError ConnLoopState of
-            Left _ -> do writeChan log ("gateway - IO Error on connectiong")
+            Left _ -> do writeChan log ("gateway - IO Error on connection")
                          writeChan events (Left GatewayExceptionCouldNotConnect)
-                         t <- getRandomR (10,20)
-                         threadDelay (t * 10^6)
-                         loop ConnStart
+                         loop ConnClosed
             Right n -> loop n
 
       (ConnReconnect (Auth tok) seshID seqID) -> do
