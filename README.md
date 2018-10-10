@@ -8,11 +8,6 @@ Please read `Notes` and `Getting Started` carefully
 `nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
 gateway**
 
-`restCall` takes `Request`s: `ChannelRequest EmojiRequest GuildRequest UserRequest`
-and returns info
-
-`nextEvent` gives `Event`s as they happen
-
 If the library crashes look at `the-log-of-discord-haskell.txt` file.
 
 Use `Control.Exception.finally` with `stopDiscord` to safely
@@ -45,10 +40,9 @@ has the most recent (potentially) breaking changes.
 6 Skim documentation on 
 [hackage](https://hackage.haskell.org/package/discord-haskell-0.5.1)
 
-7 Add this library to your dependencies. discord-haskell
-won't be uploaded to hackage for a while. In the meantime,
-use github. discord-haskell is version
-bound to match stackage lts-11.10
+7 Add this library to your dependencies. discord-haskell is on hackage
+with strict version bounds to stackage lts-11.10. You can also use
+the github repo.
 
 ```
 # in stack.yaml (if using stack)
