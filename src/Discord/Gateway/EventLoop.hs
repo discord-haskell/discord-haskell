@@ -180,13 +180,12 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
       Right (HeartbeatRequest sq) -> do setSequence seqKey sq
                                         writeChan send (Heartbeat sq)
                                         loop
-      Right (Reconnect)      -> do writeChan log "Should reconnect"
-                                   ConnReconnect auth seshID <$> readIORef seqKey
+      Right (Reconnect)      -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (InvalidSession retry) -> if retry
                                       then ConnReconnect auth seshID <$> readIORef seqKey
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
-      Right p -> do writeChan log ("gateway - Invalid gateway payload: " <> show p)
+      Right p -> do writeChan eventChan (Left (GatewayExceptionUnexpected p))
                     pure ConnClosed
 
 data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset on reconnect
@@ -202,5 +201,4 @@ sendableLoop conn sends log = forever $ do
   let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
       e = either id id
   payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
-  writeChan log ("gateway - sending " <> QL.unpack (encode payload))
   sendTextData conn (encode payload)
