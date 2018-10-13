@@ -2,9 +2,11 @@
 
 ### dev
 
+### 0.5.2
+
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild
 
-restCall passes errors as an ADT, including underling http exceptions
+restCall, readCache pass errors as an ADT, including underling http exceptions
 
 Only add "Bot " prefix to secret token if it's not there
 

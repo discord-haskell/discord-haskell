@@ -1,6 +1,6 @@
 name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
-version:             0.5.1
+version:             0.5.2
 synopsis:            Write bots for Discord in Haskell
 description:         Functions and data types to write discord bots.
                      Official discord docs <https://discordapp.com/developers/docs/reference>.
