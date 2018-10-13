@@ -2,7 +2,7 @@
 
 ### dev
 
-### 0.5.2
+### 0.6.0
 
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild
 
