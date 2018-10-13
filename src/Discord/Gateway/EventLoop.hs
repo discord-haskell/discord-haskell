@@ -44,10 +44,10 @@ connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
 connectionLoop :: Auth -> Chan (Either GatewayException Event) -> Chan GatewaySendable
                        -> Chan String -> IO ()
-connectionLoop auth events userSend log = loop ConnStart
+connectionLoop auth events userSend log = loop ConnStart 0
  where
-  loop :: ConnLoopState -> IO ()
-  loop s = do
+  loop :: ConnLoopState -> Int -> IO ()
+  loop s retries = do
     writeChan log ("gateway - connection loop state " <> show s)
     case s of
       (ConnClosed) -> pure ()
@@ -79,8 +79,8 @@ connectionLoop auth events userSend log = loop ConnStart
           case next :: Either IOError ConnLoopState of
             Left _ -> do writeChan events (Left (GatewayExceptionCouldNotConnect
                                                   "IOError in gateway Connection"))
-                         loop ConnClosed
-            Right n -> loop n
+                         loop ConnClosed 0
+            Right n -> loop n 0
 
       (ConnReconnect (Auth tok) seshID seqID) -> do
           next <- try $ connect $ \conn -> do
@@ -104,10 +104,14 @@ connectionLoop auth events userSend log = loop ConnStart
                                                "Could not ConnReconnect"))
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
-            Left _ -> do t <- getRandomR (3,10)
-                         threadDelay (t * 10^6)
-                         loop (ConnReconnect (Auth tok) seshID seqID)
-            Right n -> loop n
+            Left _ -> if (retries < 5)
+                      then do t <- getRandomR (3,10)
+                              threadDelay (t * 10^6)
+                              loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
+                      else do writeChan events (Left (GatewayExceptionCouldNotConnect
+                                                      "Too many retries failed"))
+                              loop ConnClosed 0
+            Right n -> loop n 0
 
 
 getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
