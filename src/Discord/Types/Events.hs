@@ -36,7 +36,7 @@ data Event =
   | GuildIntegrationsUpdate Snowflake
   | GuildMemberAdd          Snowflake GuildMember
   | GuildMemberRemove       Snowflake User
-  | GuildMemberUpdate       Snowflake [Snowflake] User String
+  | GuildMemberUpdate       Snowflake [Snowflake] User (Maybe String)
   | GuildMemberChunk        Snowflake [GuildMember]
   | GuildRoleCreate         Snowflake Role
   | GuildRoleUpdate         Snowflake Role
