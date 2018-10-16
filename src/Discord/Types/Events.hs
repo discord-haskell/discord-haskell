@@ -36,7 +36,7 @@ data Event =
   | GuildIntegrationsUpdate Snowflake
   | GuildMemberAdd          Snowflake GuildMember
   | GuildMemberRemove       Snowflake User
-  | GuildMemberUpdate       Snowflake [Snowflake] User String
+  | GuildMemberUpdate       Snowflake [Snowflake] User (Maybe String)
   | GuildMemberChunk        Snowflake [GuildMember]
   | GuildRoleCreate         Snowflake Role
   | GuildRoleUpdate         Snowflake Role
@@ -135,7 +135,7 @@ eventParse t o = case t of
     "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate <$> o .: "guild_id"
                                                      <*> o .: "roles"
                                                      <*> o .: "user"
-                                                     <*> o .: "nick"
+                                                     <*> o .:? "nick"
     "GUILD_MEMBER_CHUNK"        -> GuildMemberChunk <$> o .: "guild_id" <*> o .: "members"
     "GUILD_ROLE_CREATE"         -> GuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
