@@ -8,8 +8,6 @@ Please read `Notes` and `Getting Started` carefully
 `nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
 gateway**
 
-If the library crashes look at `the-log-of-discord-haskell.txt` file.
-
 Use `Control.Exception.finally` with `stopDiscord` to safely
 kill background threads when running examples in ghci
 (otherwise exit ghci and reopen to kill threads)
