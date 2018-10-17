@@ -9,6 +9,7 @@ module Discord.Rest.Channel
   ( ChannelRequest(..)
   , ReactionTiming(..)
   , MessageTiming(..)
+  , ChannelInviteOpts(..)
   , ModifyChannelOpts(..)
   , ChannelPermissionsOpts(..)
   , GroupDMAddRecipientOpts(..)
