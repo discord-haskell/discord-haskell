@@ -30,7 +30,7 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 import Discord.Rest.Prelude
 
-data RestCallException = RestCallErrorCode Int Q.ByteString
+data RestCallException = RestCallErrorCode Int Q.ByteString Q.ByteString
                        | RestCallNoParse String QL.ByteString
                        | RestCallHttpException R.HttpException
   deriving (Show)
@@ -59,7 +59,8 @@ restLoop auth urls log = loop M.empty
                             -- decode "[]" == () for expected empty calls
                             ResponseByteString "" -> putMVar thread (Right "[]")
                             ResponseByteString bs -> putMVar thread (Right bs)
-                            ResponseErrorCode e s -> putMVar thread (Left (RestCallErrorCode e s))
+                            ResponseErrorCode e s b ->
+                              putMVar thread (Left (RestCallErrorCode e s b))
                             ResponseTryAgain -> writeChan urls (route, request, thread)
                           case retry of
                             GlobalWait i -> do
@@ -81,7 +82,7 @@ compareRate ratelocker route curtime =
 
 data RequestResponse = ResponseTryAgain
                      | ResponseByteString QL.ByteString
-                     | ResponseErrorCode Int Q.ByteString
+                     | ResponseErrorCode Int Q.ByteString Q.ByteString
     deriving (Show)
 
 data Timeout = GlobalWait POSIXTime
@@ -92,7 +93,8 @@ tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (RequestResponse, Ti
 tryRequest action log = do
   resp <- action
   next10 <- liftIO (round . (+10) <$> getPOSIXTime)
-  let code   = R.responseStatusCode resp
+  let body   = R.responseBody resp
+      code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
@@ -103,11 +105,11 @@ tryRequest action log = do
                          pure (ResponseTryAgain, if global then GlobalWait reset
                                                            else PathWait reset)
      | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
-     | inRange (200,299) code -> pure ( ResponseByteString (R.responseBody resp)
+     | inRange (200,299) code -> pure ( ResponseByteString body
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | inRange (400,499) code -> pure (ResponseErrorCode code status
+     | inRange (400,499) code -> pure (ResponseErrorCode code status (QL.toStrict body)
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | otherwise -> pure (ResponseErrorCode code status, NoLimit)
+     | otherwise -> pure (ResponseErrorCode code status (QL.toStrict body), NoLimit)
 
 readMaybeBS :: Read a => Q.ByteString -> Maybe a
 readMaybeBS = readMaybe . Q.unpack
