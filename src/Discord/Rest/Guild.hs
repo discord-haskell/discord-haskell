@@ -44,7 +44,7 @@ data GuildRequest a where
   -- | Modify the positions of a set of channel objects for the guild. Requires
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
-  -- todo ModifyChanPosition       :: ToJSON o => Snowflake -> o -> GuildRequest [Channel]
+  ModifyChanPositions      :: Snowflake -> [(Snowflake,Int)] -> GuildRequest [Channel]
   -- | Returns a guild 'Member' object for the specified user
   GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
@@ -163,7 +163,7 @@ guildMajorRoute c = case c of
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
   -- (CreateGuildChannel g _) ->        "guild_chan " <> show g
-  -- (ModifyChanPosition g _) ->        "guild_chan " <> show g
+  (ModifyChanPositions g _) ->       "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   -- (AddGuildMember g _ _) ->          "guild_memb " <> show g
@@ -215,8 +215,10 @@ guildJsonRequest c = case c of
   -- (CreateGuildChannel guild patch) ->
       -- Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
 
-  -- (ModifyChanPosition guild patch) ->
-      -- Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+  (ModifyChanPositions guild newlocs) ->
+      let patch = map (\(a, b) -> object [("id", toJSON a)
+                                        ,("position", toJSON b)]) newlocs
+      in Patch (guilds // guild /: "channels") (R.ReqBodyJson patch) mempty
 
   (GetGuildMember guild member) ->
       Get (guilds // guild /: "members" // member) mempty

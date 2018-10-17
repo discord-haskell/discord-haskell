@@ -2,6 +2,8 @@
 
 ### dev
 
+Add requests: ModifyChanPositions
+
 ### 0.6.0
 
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild
