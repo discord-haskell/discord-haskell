@@ -6,6 +6,9 @@ Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/chan
 
 Add requests: ModifyChanPositions
 
+Changed constructors of Channel to have prefix "Channel", isGuildChannel --> channelIsInGuild
+
+
 ### 0.6.0
 
 Add requests: CreateGuildEmoji, GroupDMRemoveRecipient, ModifyCurrentUser, EditChannelPermissions, CreateChannelInvite, GroupDMAddRecipient, ModifyGuild

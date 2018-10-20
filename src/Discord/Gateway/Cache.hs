@@ -76,6 +76,6 @@ adjustCache minfo event = case event of
   _ -> minfo
 
 setChanGuildID :: Snowflake -> Channel -> Channel
-setChanGuildID s c = if isGuildChannel c
+setChanGuildID s c = if channelIsInGuild c
                      then c { channelGuild = s }
                      else c

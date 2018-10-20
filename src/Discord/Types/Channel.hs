@@ -46,7 +46,7 @@ instance FromJSON User where
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
   -- | A text channel in a guild.
-  = Text
+  = ChannelText
       { channelId          :: Snowflake   -- ^ The id of the channel (Will be equal to
                                           --   the guild if it's the "general" channel).
       , channelGuild       :: Snowflake   -- ^ The id of the guild.
@@ -58,7 +58,7 @@ data Channel
                                                 --   channel
       }
   -- | A voice channel in a guild.
-  | Voice
+  | ChannelVoice
       { channelId          :: Snowflake
       , channelGuild       :: Snowflake
       , channelName        :: String
@@ -69,17 +69,17 @@ data Channel
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
-  | DirectMessage
+  | ChannelDirectMessage
       { channelId          :: Snowflake
       , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
       , channelLastMessage :: Maybe Snowflake
       }
-  | GroupDM
+  | ChannelGroupDM
       { channelId          :: Snowflake
       , channelRecipients  :: [User]
       , channelLastMessage :: Maybe Snowflake
       }
-  | GuildCategory
+  | ChannelGuildCategory
       { channelId          :: Snowflake
       , channelGuild       :: Snowflake
       } deriving (Show, Eq)
@@ -89,40 +89,40 @@ instance FromJSON Channel where
     type' <- (o .: "type") :: Parser Int
     case type' of
       0 ->
-        Text  <$> o .:  "id"
-              <*> o .:? "guild_id" .!= 0
-              <*> o .:  "name"
-              <*> o .:  "position"
-              <*> o .:  "permission_overwrites"
-              <*> o .:? "topic" .!= ""
-              <*> o .:? "last_message_id"
+        ChannelText  <$> o .:  "id"
+                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "name"
+                     <*> o .:  "position"
+                     <*> o .:  "permission_overwrites"
+                     <*> o .:? "topic" .!= ""
+                     <*> o .:? "last_message_id"
       1 ->
-        DirectMessage <$> o .:  "id"
-                      <*> o .:  "recipients"
-                      <*> o .:? "last_message_id"
+        ChannelDirectMessage <$> o .:  "id"
+                             <*> o .:  "recipients"
+                             <*> o .:? "last_message_id"
       2 ->
-        Voice <$> o .:  "id"
-              <*> o .:? "guild_id" .!= 0
-              <*> o .:  "name"
-              <*> o .:  "position"
-              <*> o .:  "permission_overwrites"
-              <*> o .:  "bitrate"
-              <*> o .:  "user_limit"
+        ChannelVoice <$> o .:  "id"
+                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "name"
+                     <*> o .:  "position"
+                     <*> o .:  "permission_overwrites"
+                     <*> o .:  "bitrate"
+                     <*> o .:  "user_limit"
       3 ->
-        GroupDM <$> o .:  "id"
-                <*> o .:  "recipients"
-                <*> o .:? "last_message_id"
+        ChannelGroupDM <$> o .:  "id"
+                       <*> o .:  "recipients"
+                       <*> o .:? "last_message_id"
       4 ->
-        GuildCategory <$> o .: "id"
-                      <*> o .:? "guild_id" .!= 0
+        ChannelGuildCategory <$> o .: "id"
+                             <*> o .:? "guild_id" .!= 0
       _ -> fail ("Unknown channel type:" <> show type')
 
 -- | If the channel is part of a guild (has a guild id field)
-isGuildChannel :: Channel -> Bool
-isGuildChannel c = case c of
-        GuildCategory{..} -> True
-        Text{..} -> True
-        Voice{..}  -> True
+channelIsInGuild :: Channel -> Bool
+channelIsInGuild c = case c of
+        ChannelGuildCategory{..} -> True
+        ChannelText{..} -> True
+        ChannelVoice{..}  -> True
         _ -> False
 
 -- | Permission overwrites for a channel.
