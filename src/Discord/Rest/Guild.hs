@@ -45,7 +45,7 @@ data GuildRequest a where
   -- | Modify the positions of a set of channel objects for the guild. Requires
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
-  ModifyChanPositions      :: Snowflake -> [(Snowflake,Int)] -> GuildRequest [Channel]
+  ModifyGuildChannelPositions      :: Snowflake -> [(Snowflake,Int)] -> GuildRequest [Channel]
   -- | Returns a guild 'Member' object for the specified user
   GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
@@ -74,9 +74,9 @@ data GuildRequest a where
   -- | Returns a list of 'Role' objects for the guild. Requires the 'MANAGE_ROLES'
   --   permission
   GetGuildRoles            :: Snowflake -> GuildRequest [Role]
-  -- | Create a new 'Role' for the guild. Requires the 'MANAGE_ROLES' permission.
-  --   Returns the new role object on success. Fires a Guild Role Create 'Event'.
-  CreateGuildRole          :: Snowflake -> GuildRequest Role
+  -- -- | Create a new 'Role' for the guild. Requires the 'MANAGE_ROLES' permission.
+  -- --   Returns the new role object on success. Fires a Guild Role Create 'Event'.
+  -- CreateGuildRole          :: Snowflake -> GuildRequest Role
   -- | Modify the positions of a set of role objects for the guild. Requires the
   --   'MANAGE_ROLES' permission. Returns a list of all of the guild's 'Role' objects
   --   on success. Fires multiple Guild Role Update 'Event's.
@@ -202,7 +202,7 @@ guildMajorRoute c = case c of
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
   (CreateGuildChannel g _ _ _) ->    "guild_chan " <> show g
-  (ModifyChanPositions g _) ->       "guild_chan " <> show g
+  (ModifyGuildChannelPositions _) ->       "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   -- (AddGuildMember g _ _) ->          "guild_memb " <> show g
@@ -211,13 +211,13 @@ guildMajorRoute c = case c of
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
-  (GetGuildRoles  g) ->             "guild_roles " <> show g
-  (CreateGuildRole g) ->            "guild_roles " <> show g
+  (GetGuildRoles g) ->              "guild_roles " <> show g
+  -- (CreateGuildRole g) ->            "guild_roles " <> show g
   -- (ModifyGuildRolePositions g _) -> "guild_roles " <> show g
   -- (ModifyGuildRole g _ _) ->         "guild_role " <> show g
   (DeleteGuildRole g _ ) ->          "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
-  (BeginGuildPrune    g _) ->       "guild_prune " <> show g
+  (BeginGuildPrune g _) ->       "guild_prune " <> show g
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
   (GetGuildInvites g) ->            "guild_invit " <> show g
   (GetGuildIntegrations g) ->       "guild_integ " <> show g
@@ -255,7 +255,7 @@ guildJsonRequest c = case c of
       Post (guilds // guild /: "channels")
            (pure (R.ReqBodyJson (createChannelOptsToJSON name perms patch))) mempty
 
-  (ModifyChanPositions guild newlocs) ->
+  (ModifyGuildChannelPositions guild newlocs) ->
       let patch = map (\(a, b) -> object [("id", toJSON a)
                                          ,("position", toJSON b)]) newlocs
       in Patch (guilds // guild /: "channels") (R.ReqBodyJson patch) mempty
@@ -289,8 +289,8 @@ guildJsonRequest c = case c of
   (GetGuildRoles guild) ->
       Get (guilds // guild /: "roles") mempty
 
-  (CreateGuildRole guild) ->
-      Post (guilds // guild /: "roles") (pure R.NoReqBody) mempty
+  -- (CreateGuildRole guild) ->
+  --     Post (guilds // guild /: "roles") (pure R.NoReqBody) mempty
 
   -- (ModifyGuildRolePositions guild patch) ->
       -- Post (guilds // guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
