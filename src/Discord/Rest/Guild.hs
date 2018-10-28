@@ -7,6 +7,7 @@
 -- | Provides actions for Channel API interactions
 module Discord.Rest.Guild
   ( GuildRequest(..)
+  , CreateGuildChannelOpts(..)
   , ModifyGuildOpts(..)
   , GuildMembersTiming(..)
   ) where
@@ -40,7 +41,7 @@ data GuildRequest a where
   -- | Create a new 'Channel' object for the guild. Requires 'MANAGE_CHANNELS'
   --   permission. Returns the new 'Channel' object on success. Fires a Channel Create
   --   'Event'
-  -- todo CreateGuildChannel       :: ToJSON o => Snowflake -> o -> GuildRequest Channel
+  CreateGuildChannel       :: Snowflake -> T.Text -> [Overwrite] -> CreateGuildChannelOpts -> GuildRequest Channel
   -- | Modify the positions of a set of channel objects for the guild. Requires
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
@@ -122,17 +123,55 @@ data GuildRequest a where
   --   'GuildEmbed' object.
   ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
 
+data CreateGuildChannelOpts
+  = CreateGuildChannelOptsText {
+    createGuildChannelOptsTopic :: Maybe T.Text
+  , createGuildChannelOptsUserMessageRateDelay :: Maybe Integer
+  , createGuildChannelOptsIsNSFW :: Maybe Bool
+  , createGuildChannelOptsCategoryId :: Maybe Snowflake }
+  | CreateGuildChannelOptsVoice {
+    createGuildChannelOptsBitrate :: Maybe Integer
+  , createGuildChannelOptsMaxUsers :: Maybe Integer
+  , createGuildChannelOptsCategoryId :: Maybe Snowflake }
+  | CreateGuildChannelOptsCategory
+  deriving (Show, Eq)
+
+createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
+createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <- optsJSON]
+  where
+  optsJSON = case opts of
+    CreateGuildChannelOptsText{..} ->
+                          [("name",                  Just (String name))
+                          ,("type",                  Just (Number 0))
+                          ,("permission_overwrites", toJSON <$> Just perms)
+                          ,("topic",                 toJSON <$> createGuildChannelOptsTopic)
+                          ,("rate_limit_per_user",   toJSON <$> createGuildChannelOptsUserMessageRateDelay)
+                          ,("nsfw",                  toJSON <$> createGuildChannelOptsIsNSFW)
+                          ,("parent_id",             toJSON <$> createGuildChannelOptsCategoryId)]
+    CreateGuildChannelOptsVoice{..} ->
+                          [("name",                  Just (String name))
+                          ,("type",                  Just (Number 2))
+                          ,("permission_overwrites", toJSON <$> Just perms)
+                          ,("bitrate",               toJSON <$> createGuildChannelOptsBitrate)
+                          ,("user_limit",            toJSON <$> createGuildChannelOptsMaxUsers)
+                          ,("parent_id",             toJSON <$> createGuildChannelOptsCategoryId)]
+    CreateGuildChannelOptsCategory ->
+                          [("name",                  Just (String name))
+                          ,("type",                  Just (Number 4))
+                          ,("permission_overwrites", toJSON <$> Just perms)]
+
+
 -- | https://discordapp.com/developers/docs/resources/guild#modify-guild
 data ModifyGuildOpts = ModifyGuildOpts
-  { modifyGuildOptsName :: Maybe T.Text
+  { modifyGuildOptsName         :: Maybe T.Text
   , modifyGuildOptsAFKChannelId :: Maybe Snowflake
-  , modifyGuildOptsIcon :: Maybe T.Text
-  , modifyGuildOptsOwnerId :: Maybe Snowflake
+  , modifyGuildOptsIcon         :: Maybe T.Text
+  , modifyGuildOptsOwnerId      :: Maybe Snowflake
    -- Region
    -- VerificationLevel
    -- DefaultMessageNotification
    -- ExplicitContentFilter
-  }
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyGuildOpts where
   toJSON ModifyGuildOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -162,7 +201,7 @@ guildMajorRoute c = case c of
   (ModifyGuild g _) ->                    "guild " <> show g
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
-  -- (CreateGuildChannel g _) ->        "guild_chan " <> show g
+  (CreateGuildChannel g _ _ _) ->    "guild_chan " <> show g
   (ModifyChanPositions g _) ->       "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
@@ -212,12 +251,13 @@ guildJsonRequest c = case c of
   (GetGuildChannels guild) ->
       Get (guilds // guild /: "channels") mempty
 
-  -- (CreateGuildChannel guild patch) ->
-      -- Post (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+  (CreateGuildChannel guild name perms patch) ->
+      Post (guilds // guild /: "channels")
+           (pure (R.ReqBodyJson (createChannelOptsToJSON name perms patch))) mempty
 
   (ModifyChanPositions guild newlocs) ->
       let patch = map (\(a, b) -> object [("id", toJSON a)
-                                        ,("position", toJSON b)]) newlocs
+                                         ,("position", toJSON b)]) newlocs
       in Patch (guilds // guild /: "channels") (R.ReqBodyJson patch) mempty
 
   (GetGuildMember guild member) ->

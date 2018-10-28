@@ -4,7 +4,7 @@ Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/chan
 
 ### dev
 
-Add requests: ModifyChanPositions
+Add requests: ModifyChanPositions, CreateGuildChannel
 
 Changed constructors of Channel to have prefix "Channel", isGuildChannel --> channelIsInGuild
 
