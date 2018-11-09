@@ -14,4 +14,6 @@ cacheExample = do
   cache <- readCache dis
 
   putStrLn ("Cached info from gateway: " <> show cache)
+  
+  stopDiscord dis
 
