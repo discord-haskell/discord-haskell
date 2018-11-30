@@ -16,19 +16,21 @@ pingpongExample = do
 
   dis <- loginRestGateway (Auth tok)
 
-  finally (let loop = do
-                  e <- nextEvent dis
-                  case e of
-                      Left er -> putStrLn ("Event error: " <> show er)
-                      Right (MessageCreate m) -> do
-                        when (isPing (messageText m)) $ do
-                          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
-                          putStrLn (show resp)
-                          putStrLn ""
-                        loop
-                      _ -> do loop
-           in loop)
+  finally (pingloop dis)
           (stopDiscord dis)
+
+pingloop :: (RestChan, Gateway, z) -> IO ()
+pingloop dis = do
+  e <- nextEvent dis
+  case e of
+      Left er -> putStrLn ("Event error: " <> show er)
+      Right (MessageCreate m) -> do
+        when (isPing (messageText m)) $ do
+          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+          putStrLn (show resp)
+          putStrLn ""
+      _ -> pure ()
+  pingloop dis
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower
