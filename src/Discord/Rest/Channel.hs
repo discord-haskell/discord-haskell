@@ -105,12 +105,14 @@ reactionTimingToQuery t = case t of
 data MessageTiming = AroundMessage Snowflake
                    | BeforeMessage Snowflake
                    | AfterMessage Snowflake
+                   | LatestMessages
 
 messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
 messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
+  (LatestMessages) -> mempty
 
 data ChannelInviteOpts = ChannelInviteOpts
   { channelInviteOptsMaxAgeSeconds          :: Maybe Integer
