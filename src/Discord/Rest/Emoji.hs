@@ -9,7 +9,6 @@
 module Discord.Rest.Emoji
   ( EmojiRequest(..)
   , ModifyGuildEmojiOpts(..)
-  , EmojiImage
   , parseEmojiImage
   ) where
 
@@ -37,7 +36,7 @@ data EmojiRequest a where
   -- | Emoji object for the given guild and emoji ID
   GetGuildEmoji :: Snowflake -> Snowflake -> EmojiRequest Emoji
   -- | Create a new guild emoji (static&animated). Requires MANAGE_EMOJIS permission.
-  CreateGuildEmoji :: Snowflake -> T.Text -> EmojiImage -> EmojiRequest Emoji
+  CreateGuildEmoji :: Snowflake -> T.Text -> EmojiImageParsed -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
   ModifyGuildEmoji :: Snowflake -> Snowflake -> ModifyGuildEmojiOpts -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
@@ -53,9 +52,9 @@ instance ToJSON ModifyGuildEmojiOpts where
     object [ "name" .= name, "roles" .= roles ]
 
 
-data EmojiImage = EmojiImage [Char]
+data EmojiImageParsed = EmojiImageParsed String
 
-parseEmojiImage :: Q.ByteString -> Either String EmojiImage
+parseEmojiImage :: Q.ByteString -> Either String EmojiImageParsed
 parseEmojiImage bs =
   if Q.length bs > 256000
   then Left "Cannot create emoji - File is larger than 256kb"
@@ -63,12 +62,12 @@ parseEmojiImage bs =
          (Left e1, Left e2) -> Left ("Could not parse image or gif: " <> e1
                                                            <> " and " <> e2)
          (Right ims, _) -> if all is128 ims
-                           then Right (EmojiImage ("data:text/plain;"
-                                                     <> "base64,"
-                                                     <> Q.unpack (B64.encode bs)))
+                           then Right (EmojiImageParsed ("data:text/plain;"
+                                                      <> "base64,"
+                                                      <> Q.unpack (B64.encode bs)))
                            else Left ("The frames are not all 128x128")
          (_, Right im) -> if is128 im
-                          then Right (EmojiImage ("data:text/plain;"
+                          then Right (EmojiImageParsed ("data:text/plain;"
                                                      <> "base64,"
                                                      <> Q.unpack (B64.encode bs)))
                           else Left ("Image is not 128x128")
@@ -97,7 +96,7 @@ emojiJsonRequest :: EmojiRequest r -> JsonRequest
 emojiJsonRequest c = case c of
   (ListGuildEmojis g) -> Get (guilds // g) mempty
   (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty
-  (CreateGuildEmoji g name (EmojiImage im)) ->
+  (CreateGuildEmoji g name (EmojiImageParsed im)) ->
                    Post (guilds // g /: "emojis")
                         (pure (R.ReqBodyJson (object [ "name" .= name
                                                      , "image" .= im
