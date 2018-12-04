@@ -244,7 +244,8 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) (name, rID)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+      let emoji = "" <> name <> (case rID of Just i -> ":" <> (T.pack (show i))
+                                             Nothing -> "")
       in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
              R.NoReqBody mempty
 
