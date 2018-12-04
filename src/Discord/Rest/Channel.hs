@@ -50,17 +50,13 @@ data ChannelRequest a where
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile              :: Snowflake -> T.Text -> BL.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
-  CreateReaction          :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> ChannelRequest ()
+  CreateReaction          :: (Snowflake, Snowflake) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
-  DeleteOwnReaction       :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> ChannelRequest ()
+  DeleteOwnReaction       :: (Snowflake, Snowflake) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction someone else added
-  DeleteUserReaction      :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> Snowflake -> ChannelRequest ()
+  DeleteUserReaction      :: (Snowflake, Snowflake) -> Snowflake -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
-  GetReactions            :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> (Int, ReactionTiming) -> ChannelRequest ()
+  GetReactions            :: (Snowflake, Snowflake) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
   -- | Delete all reactions on a message
   DeleteAllReactions      :: (Snowflake, Snowflake) -> ChannelRequest ()
   -- | Edits a message content.
@@ -243,23 +239,18 @@ channelJsonRequest c = case c of
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
 
-  (CreateReaction (chan, msgid) (name, rID)) ->
-      let emoji = "" <> name <> (case rID of Just i -> ":" <> (T.pack (show i))
-                                             Nothing -> "")
-      in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
+  (CreateReaction (chan, msgid) emoji) ->
+      Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
              R.NoReqBody mempty
 
-  (DeleteOwnReaction (chan, msgid) (name, rID)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
+  (DeleteOwnReaction (chan, msgid) emoji) ->
+      Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
 
-  (DeleteUserReaction (chan, msgid) (name, rID) uID) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
+  (DeleteUserReaction (chan, msgid) uID emoji) ->
+      Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
 
-  (GetReactions (chan, msgid) (name, rID) (n, timing)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-          n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+  (GetReactions (chan, msgid) emoji (n, timing)) ->
+      let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
       in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
 
