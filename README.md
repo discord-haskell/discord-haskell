@@ -36,7 +36,7 @@ has the most recent (potentially) breaking changes.
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
 6 Skim documentation on 
-[hackage](https://hackage.haskell.org/package/discord-haskell-0.6.0)
+[hackage](https://hackage.haskell.org/package/discord-haskell)
 
 7 Add this library to your dependencies. discord-haskell is on hackage
 with strict version bounds to stackage lts-11.10. You can also use
