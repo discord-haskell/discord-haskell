@@ -36,61 +36,61 @@ instance Request (ChannelRequest a) where
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data ChannelRequest a where
   -- | Gets a channel by its id.
-  GetChannel              :: Snowflake -> ChannelRequest Channel
+  GetChannel              :: ChannelId -> ChannelRequest Channel
   -- | Edits channels options.
-  ModifyChannel           :: Snowflake -> ModifyChannelOpts -> ChannelRequest Channel
+  ModifyChannel           :: ChannelId -> ModifyChannelOpts -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
-  DeleteChannel           :: Snowflake -> ChannelRequest Channel
+  DeleteChannel           :: ChannelId -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: Snowflake -> (Int, MessageTiming) -> ChannelRequest [Message]
+  GetChannelMessages      :: ChannelId -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
-  GetChannelMessage       :: (Snowflake, Snowflake) -> ChannelRequest Message
+  GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
-  CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> ChannelRequest Message
+  CreateMessage           :: ChannelId -> T.Text -> Maybe Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
-  CreateMessageUploadFile              :: Snowflake -> T.Text -> BL.ByteString -> ChannelRequest Message
+  CreateMessageUploadFile :: ChannelId -> T.Text -> BL.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
-  CreateReaction          :: (Snowflake, Snowflake) -> T.Text -> ChannelRequest ()
+  CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
-  DeleteOwnReaction       :: (Snowflake, Snowflake) -> T.Text -> ChannelRequest ()
+  DeleteOwnReaction       :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction someone else added
-  DeleteUserReaction      :: (Snowflake, Snowflake) -> Snowflake -> T.Text -> ChannelRequest ()
+  DeleteUserReaction      :: (ChannelId, MessageId) -> UserId -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
-  GetReactions            :: (Snowflake, Snowflake) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
+  GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
   -- | Delete all reactions on a message
-  DeleteAllReactions      :: (Snowflake, Snowflake) -> ChannelRequest ()
+  DeleteAllReactions      :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
-  EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed
+  EditMessage             :: (ChannelId, MessageId) -> T.Text -> Maybe Embed
                                                     -> ChannelRequest Message
   -- | Deletes a message.
-  DeleteMessage           :: (Snowflake, Snowflake) -> ChannelRequest ()
+  DeleteMessage           :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Deletes a group of messages.
-  BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> ChannelRequest ()
+  BulkDeleteMessage       :: (ChannelId, [MessageId]) -> ChannelRequest ()
   -- | Edits a permission overrides for a channel.
-  EditChannelPermissions  :: Snowflake -> Snowflake -> ChannelPermissionsOpts -> ChannelRequest ()
+  EditChannelPermissions  :: ChannelId -> OverwriteId -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
-  GetChannelInvites       :: Snowflake -> ChannelRequest Object
+  GetChannelInvites       :: ChannelId -> ChannelRequest Object
   -- | Creates an instant invite to a channel.
-  CreateChannelInvite     :: Snowflake -> ChannelInviteOpts -> ChannelRequest Invite
+  CreateChannelInvite     :: ChannelId -> ChannelInviteOpts -> ChannelRequest Invite
   -- | Deletes a permission override from a channel.
-  DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
+  DeleteChannelPermission :: ChannelId -> OverwriteId -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
-  TriggerTypingIndicator  :: Snowflake -> ChannelRequest ()
+  TriggerTypingIndicator  :: ChannelId -> ChannelRequest ()
   -- | Gets all pinned messages of a channel.
-  GetPinnedMessages       :: Snowflake -> ChannelRequest [Message]
+  GetPinnedMessages       :: ChannelId -> ChannelRequest [Message]
   -- | Pins a message.
-  AddPinnedMessage        :: (Snowflake, Snowflake) -> ChannelRequest ()
+  AddPinnedMessage        :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Unpins a message.
-  DeletePinnedMessage     :: (Snowflake, Snowflake) -> ChannelRequest ()
+  DeletePinnedMessage     :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Adds a recipient to a Group DM using their access token
-  GroupDMAddRecipient     :: Snowflake -> GroupDMAddRecipientOpts -> ChannelRequest ()
+  GroupDMAddRecipient     :: ChannelId -> GroupDMAddRecipientOpts -> ChannelRequest ()
   -- | Removes a recipient from a Group DM
-  GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
+  GroupDMRemoveRecipient  :: ChannelId -> UserId -> ChannelRequest ()
 
 
 -- | Data constructor for GetReaction requests
-data ReactionTiming = BeforeReaction Snowflake
-                    | AfterReaction Snowflake
+data ReactionTiming = BeforeReaction MessageId
+                    | AfterReaction MessageId
 
 reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
@@ -98,9 +98,9 @@ reactionTimingToQuery t = case t of
   (AfterReaction snow) -> "after"  R.=: show snow
 
 -- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
-data MessageTiming = AroundMessage Snowflake
-                   | BeforeMessage Snowflake
-                   | AfterMessage Snowflake
+data MessageTiming = AroundMessage MessageId
+                   | BeforeMessage MessageId
+                   | AfterMessage MessageId
                    | LatestMessages
 
 messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
@@ -132,7 +132,7 @@ data ModifyChannelOpts = ModifyChannelOpts
   , modifyChannelBitrate              :: Maybe Integer
   , modifyChannelUserRateLimit        :: Maybe Integer
   , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
-  , modifyChannelParentId             :: Maybe Snowflake
+  , modifyChannelParentId             :: Maybe ChannelId
   }
 
 instance ToJSON ModifyChannelOpts where
@@ -165,7 +165,7 @@ instance ToJSON ChannelPermissionsOpts where
 
 -- | https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
 data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
-  { groupDMAddRecipientUserToAdd :: Snowflake
+  { groupDMAddRecipientUserToAdd :: UserId
   , groupDMAddRecipientUserToAddNickName :: T.Text
   , groupDMAddRecipientGDMJoinAccessToken :: T.Text
   }

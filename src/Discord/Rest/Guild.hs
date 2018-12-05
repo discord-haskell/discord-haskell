@@ -30,109 +30,109 @@ instance Request (GuildRequest a) where
 data GuildRequest a where
   -- todo CreateGuild        :: So many parameters
   -- | Returns the new 'Guild' object for the given id
-  GetGuild                 :: Snowflake -> GuildRequest Guild
+  GetGuild                 :: GuildId -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
   --   Guild Update 'Event'.
-  ModifyGuild              :: Snowflake -> ModifyGuildOpts -> GuildRequest Guild
+  ModifyGuild              :: GuildId -> ModifyGuildOpts -> GuildRequest Guild
   -- | Delete a guild permanently. User must be owner. Fires a Guild Delete 'Event'.
-  DeleteGuild              :: Snowflake -> GuildRequest Guild
+  DeleteGuild              :: GuildId -> GuildRequest Guild
   -- | Returns a list of guild 'Channel' objects
-  GetGuildChannels         :: Snowflake -> GuildRequest [Channel]
+  GetGuildChannels         :: GuildId -> GuildRequest [Channel]
   -- | Create a new 'Channel' object for the guild. Requires 'MANAGE_CHANNELS'
   --   permission. Returns the new 'Channel' object on success. Fires a Channel Create
   --   'Event'
-  CreateGuildChannel       :: Snowflake -> T.Text -> [Overwrite] -> CreateGuildChannelOpts -> GuildRequest Channel
+  CreateGuildChannel       :: GuildId -> T.Text -> [Overwrite] -> CreateGuildChannelOpts -> GuildRequest Channel
   -- | Modify the positions of a set of channel objects for the guild. Requires
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
-  ModifyGuildChannelPositions      :: Snowflake -> [(Snowflake,Int)] -> GuildRequest [Channel]
+  ModifyGuildChannelPositions      :: GuildId -> [(ChannelId,Int)] -> GuildRequest [Channel]
   -- | Returns a guild 'Member' object for the specified user
-  GetGuildMember           :: Snowflake -> Snowflake -> GuildRequest GuildMember
+  GetGuildMember           :: GuildId -> UserId -> GuildRequest GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
-  ListGuildMembers         :: Snowflake -> GuildMembersTiming -> GuildRequest [GuildMember]
+  ListGuildMembers         :: GuildId -> GuildMembersTiming -> GuildRequest [GuildMember]
   -- | Adds a user to the guild, provided you have a valid oauth2 access token
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
-  -- todo AddGuildMember           :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo AddGuildMember           :: ToJSON o => GuildId -> UserId -> o
                                 -- -> GuildRequest GuildMember
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
-  -- todo ModifyGuildMember        :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo ModifyGuildMember        :: ToJSON o => GuildId -> UserId -> o
                                 -- -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
-  RemoveGuildMember        :: Snowflake -> Snowflake -> GuildRequest ()
+  RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
   -- | Returns a list of 'User' objects that are banned from this guild. Requires the
   --   'BAN_MEMBERS' permission
-  GetGuildBans             :: Snowflake -> GuildRequest [User]
+  GetGuildBans             :: GuildId -> GuildRequest [User]
   -- | Create a guild ban, and optionally Delete previous messages sent by the banned
   --   user. Requires the 'BAN_MEMBERS' permission. Fires a Guild Ban Add 'Event'.
-  CreateGuildBan           :: Snowflake -> Snowflake -> Integer -> GuildRequest ()
+  CreateGuildBan           :: GuildId -> UserId -> Integer -> GuildRequest ()
   -- | Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
   --   Fires a Guild Ban Remove 'Event'.
-  RemoveGuildBan           :: Snowflake -> Snowflake -> GuildRequest ()
+  RemoveGuildBan           :: GuildId -> UserId -> GuildRequest ()
   -- | Returns a list of 'Role' objects for the guild. Requires the 'MANAGE_ROLES'
   --   permission
-  GetGuildRoles            :: Snowflake -> GuildRequest [Role]
+  GetGuildRoles            :: GuildId -> GuildRequest [Role]
   -- -- | Create a new 'Role' for the guild. Requires the 'MANAGE_ROLES' permission.
   -- --   Returns the new role object on success. Fires a Guild Role Create 'Event'.
-  -- CreateGuildRole          :: Snowflake -> GuildRequest Role
+  -- CreateGuildRole          :: GuildId -> GuildRequest Role
   -- | Modify the positions of a set of role objects for the guild. Requires the
   --   'MANAGE_ROLES' permission. Returns a list of all of the guild's 'Role' objects
   --   on success. Fires multiple Guild Role Update 'Event's.
-  -- todo ModifyGuildRolePositions :: ToJSON o => Snowflake -> [o] -> GuildRequest [Role]
+  -- todo ModifyGuildRolePositions :: ToJSON o => GuildId -> [o] -> GuildRequest [Role]
   -- | Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the
   --   updated 'Role' on success. Fires a Guild Role Update 'Event's.
-  -- todo ModifyGuildRole          :: ToJSON o => Snowflake -> Snowflake -> o
+  -- todo ModifyGuildRole          :: ToJSON o => GuildId -> RoleId -> o
                                 -- -> GuildRequest Role
   -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
   --   Delete 'Event'.
-  DeleteGuildRole          :: Snowflake -> Snowflake -> GuildRequest Role
+  DeleteGuildRole          :: GuildId -> RoleId -> GuildRequest Role
   -- | Returns an object with one 'pruned' key indicating the number of members
   --   that would be removed in a prune operation. Requires the 'KICK_MEMBERS'
   --   permission.
-  GetGuildPruneCount       :: Snowflake -> Integer -> GuildRequest Object
+  GetGuildPruneCount       :: GuildId -> Integer -> GuildRequest Object
   -- | Begin a prune operation. Requires the 'KICK_MEMBERS' permission. Returns an
   --   object with one 'pruned' key indicating the number of members that were removed
   --   in the prune operation. Fires multiple Guild Member Remove 'Events'.
-  BeginGuildPrune          :: Snowflake -> Integer -> GuildRequest Object
+  BeginGuildPrune          :: GuildId -> Integer -> GuildRequest Object
   -- | Returns a list of 'VoiceRegion' objects for the guild. Unlike the similar /voice
   --   route, this returns VIP servers when the guild is VIP-enabled.
-  GetGuildVoiceRegions     :: Snowflake -> GuildRequest [VoiceRegion]
+  GetGuildVoiceRegions     :: GuildId -> GuildRequest [VoiceRegion]
   -- | Returns a list of 'Invite' objects for the guild. Requires the 'MANAGE_GUILD'
   --   permission.
-  GetGuildInvites          :: Snowflake -> GuildRequest [Invite]
+  GetGuildInvites          :: GuildId -> GuildRequest [Invite]
   -- | Return a list of 'Integration' objects for the guild. Requires the 'MANAGE_GUILD'
   --   permission.
-  GetGuildIntegrations     :: Snowflake -> GuildRequest [Integration]
+  GetGuildIntegrations     :: GuildId -> GuildRequest [Integration]
   -- | Attach an 'Integration' object from the current user to the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  -- todo CreateGuildIntegration   :: ToJSON o => Snowflake -> o -> GuildRequest ()
+  -- todo CreateGuildIntegration   :: ToJSON o => GuildId -> o -> GuildRequest ()
   -- | Modify the behavior and settings of a 'Integration' object for the guild.
   --   Requires the 'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  -- todo ModifyGuildIntegration   :: ToJSON o => Snowflake -> Snowflake -> o -> GuildRequest ()
+  -- todo ModifyGuildIntegration   :: ToJSON o => GuildId -> IntegrationId -> o -> GuildRequest ()
   -- | Delete the attached 'Integration' object for the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  DeleteGuildIntegration   :: Snowflake -> Snowflake -> GuildRequest ()
+  DeleteGuildIntegration   :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
-  SyncGuildIntegration     :: Snowflake -> Snowflake -> GuildRequest ()
+  SyncGuildIntegration     :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Returns the 'GuildEmbed' object. Requires the 'MANAGE_GUILD' permission.
-  GetGuildEmbed            :: Snowflake -> GuildRequest GuildEmbed
+  GetGuildEmbed            :: GuildId -> GuildRequest GuildEmbed
   -- | Modify a 'GuildEmbed' object for the guild. All attributes may be passed in with
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildEmbed' object.
-  ModifyGuildEmbed         :: Snowflake -> GuildEmbed -> GuildRequest GuildEmbed
+  ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
 
 data CreateGuildChannelOpts
   = CreateGuildChannelOptsText {
     createGuildChannelOptsTopic :: Maybe T.Text
   , createGuildChannelOptsUserMessageRateDelay :: Maybe Integer
   , createGuildChannelOptsIsNSFW :: Maybe Bool
-  , createGuildChannelOptsCategoryId :: Maybe Snowflake }
+  , createGuildChannelOptsCategoryId :: Maybe ChannelId }
   | CreateGuildChannelOptsVoice {
     createGuildChannelOptsBitrate :: Maybe Integer
   , createGuildChannelOptsMaxUsers :: Maybe Integer
-  , createGuildChannelOptsCategoryId :: Maybe Snowflake }
+  , createGuildChannelOptsCategoryId :: Maybe ChannelId }
   | CreateGuildChannelOptsCategory
   deriving (Show, Eq)
 
@@ -164,9 +164,9 @@ createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <
 -- | https://discordapp.com/developers/docs/resources/guild#modify-guild
 data ModifyGuildOpts = ModifyGuildOpts
   { modifyGuildOptsName         :: Maybe T.Text
-  , modifyGuildOptsAFKChannelId :: Maybe Snowflake
+  , modifyGuildOptsAFKChannelId :: Maybe ChannelId
   , modifyGuildOptsIcon         :: Maybe T.Text
-  , modifyGuildOptsOwnerId      :: Maybe Snowflake
+  , modifyGuildOptsOwnerId      :: Maybe UserId
    -- Region
    -- VerificationLevel
    -- DefaultMessageNotification
@@ -182,7 +182,7 @@ instance ToJSON ModifyGuildOpts where
 
 data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
-                          , guildMembersTimingAfter :: Maybe Snowflake
+                          , guildMembersTimingAfter :: Maybe UserId
                           }
 
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https

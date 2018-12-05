@@ -37,18 +37,18 @@ data UserRequest a where
   --   the email scope, which returns the object with an email.
   GetCurrentUser       :: UserRequest User
   -- | Returns a 'User' for a given user ID
-  GetUser              :: Snowflake -> UserRequest User
+  GetUser              :: UserId -> UserRequest User
   -- | Modify user's username & avatar pic
   ModifyCurrentUser    :: T.Text -> CurrentUserAvatar -> UserRequest User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
   GetCurrentUserGuilds :: UserRequest [PartialGuild]
   -- | Leave a guild.
-  LeaveGuild           :: Snowflake -> UserRequest ()
+  LeaveGuild           :: GuildId -> UserRequest ()
   -- | Returns a list of DM 'Channel' objects
   GetUserDMs           :: UserRequest [Channel]
   -- | Create a new DM channel with a user. Returns a DM 'Channel' object.
-  CreateDM             :: Snowflake -> UserRequest Channel
+  CreateDM             :: UserId -> UserRequest Channel
 
 -- | Formatted avatar data https://discordapp.com/developers/docs/resources/user#avatar-data
 data CurrentUserAvatar = CurrentUserAvatar String

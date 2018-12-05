@@ -32,19 +32,19 @@ instance Request (EmojiRequest a) where
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data EmojiRequest a where
   -- | List of emoji objects for the given guild. Requires MANAGE_EMOJIS permission.
-  ListGuildEmojis :: Snowflake -> EmojiRequest [Emoji]
+  ListGuildEmojis :: GuildId -> EmojiRequest [Emoji]
   -- | Emoji object for the given guild and emoji ID
-  GetGuildEmoji :: Snowflake -> Snowflake -> EmojiRequest Emoji
+  GetGuildEmoji :: GuildId -> EmojiId -> EmojiRequest Emoji
   -- | Create a new guild emoji (static&animated). Requires MANAGE_EMOJIS permission.
-  CreateGuildEmoji :: Snowflake -> T.Text -> EmojiImageParsed -> EmojiRequest Emoji
+  CreateGuildEmoji :: GuildId -> T.Text -> EmojiImageParsed -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
-  ModifyGuildEmoji :: Snowflake -> Snowflake -> ModifyGuildEmojiOpts -> EmojiRequest Emoji
+  ModifyGuildEmoji :: GuildId -> EmojiId -> ModifyGuildEmojiOpts -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
-  DeleteGuildEmoji :: Snowflake -> Snowflake -> EmojiRequest ()
+  DeleteGuildEmoji :: GuildId -> EmojiId -> EmojiRequest ()
 
 data ModifyGuildEmojiOpts = ModifyGuildEmojiOpts
      { modifyGuildEmojiName  :: T.Text
-     , modifyGuildEmojiRoles :: [Snowflake]
+     , modifyGuildEmojiRoles :: [RoleId]
      }
 
 instance ToJSON ModifyGuildEmojiOpts where

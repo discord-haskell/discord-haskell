@@ -4,6 +4,8 @@ Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/chan
 
 ### 0.6.1
 
+Snowflake -> named id
+
 Add requests: ModifyChanPositions, CreateGuildChannel
 
 Changed constructors of Channel to have prefix "Channel", isGuildChannel --> channelIsInGuild

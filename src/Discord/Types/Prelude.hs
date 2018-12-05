@@ -45,9 +45,18 @@ instance FromJSON Snowflake where
   parseJSON (String snowflake) = Snowflake <$> (return . read $ T.unpack snowflake)
   parseJSON _ = mzero
 
+type ChannelId = Snowflake
+type GuildId = Snowflake
+type MessageId = Snowflake
+type EmojiId = Snowflake
+type UserId = Snowflake
+type OverwriteId = Snowflake
+type RoleId = Snowflake
+type IntegrationId = Snowflake
+
 -- | Gets a creation date from a snowflake.
-creationDate :: Snowflake -> UTCTime
-creationDate x = posixSecondsToUTCTime . realToFrac
+snowflakeCreationDate :: Snowflake -> UTCTime
+snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
   $ 1420070400 + quot (shiftR x 22) 1000
 
 -- | Default timestamp
