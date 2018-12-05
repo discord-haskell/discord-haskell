@@ -1,19 +1,8 @@
 # discord-haskell
 
-Please read `Notes` and `Getting Started` carefully
-
-## Notes
-
-`loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
-`nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
-gateway**
-
-Use `Control.Exception.finally` with `stopDiscord` to safely
-kill background threads when running examples in ghci
-(otherwise exit ghci and reopen to kill threads)
-
-The examples will work on the `master` branch. The `dev` branch
-has the most recent (potentially) breaking changes.
+Please refer to `Getting Started` and `Notes` when 
+relevant. Hours of debugging can save you 
+minutes of reading.
 
 ## Getting Started
 
@@ -39,12 +28,12 @@ has the most recent (potentially) breaking changes.
 [hackage](https://hackage.haskell.org/package/discord-haskell)
 
 7 Add this library to your dependencies. discord-haskell is on hackage
-with strict version bounds to stackage lts-11.10. You can also use
+with strict version bounds to stackage lts-12.10. You can also use
 the github repo.
 
 ```
 # in stack.yaml (if using stack)
-resolver: lts-11.10
+resolver: lts-12.10
 extra-deps:
 - git: git@github.com:aquarial/discord-haskell.git
   commit: <most recent master commit>
@@ -55,6 +44,22 @@ extra-deps:
                      , discord-haskell
 
 ```
+
+## Notes
+
+`loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
+`nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
+gateway**
+
+Use `Control.Exception.finally` with `stopDiscord` to safely
+kill background threads when running examples in ghci
+(otherwise exit ghci and reopen to kill threads)
+
+The examples will work on the `master` branch. The `dev` branch
+has the most recent (potentially) breaking changes.
+
+To get the format to use for Emoji, type `\:emoji:` into 
+a discord chat. You should copy-paste that into the request.
 
 ## History
 
