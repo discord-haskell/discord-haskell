@@ -11,7 +11,8 @@ restExample :: IO ()
 restExample = do
   tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRest (Auth tok)
-  let chanid = 453207241294610444
+  let chanid = 517170652092825610
+      -- guildid = 453207241294610444
 
   chan <- restCall dis (GetChannel chanid)
   putStrLn ("Channel object: " <> show chan <> "\n")
@@ -20,8 +21,7 @@ restExample = do
   putStrLn ("Message object: " <> show msg <> "\n")
 
   case msg of
-    Right m -> do r <- restCall dis (CreateReaction (chanid, messageId m)
-                                                   ("🐮", Nothing))
+    Right m -> do r <- restCall dis (CreateReaction (chanid, messageId m) "🐮")
                   putStrLn ("Reaction resp: " <> show r)
     _ -> putStrLn "Creating the message failed, couldn't react"
 
