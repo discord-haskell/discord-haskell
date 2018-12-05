@@ -2,12 +2,13 @@
 
 Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/changelog.md) for changes not merged into master yet
 
-### dev
+### 0.6.1
 
 Add requests: ModifyChanPositions, CreateGuildChannel
 
 Changed constructors of Channel to have prefix "Channel", isGuildChannel --> channelIsInGuild
 
+Change Emoji Id ADTs
 
 ### 0.6.0
 
