@@ -16,11 +16,11 @@ pingpongExample = do
 
   dis <- loginRestGateway (Auth tok)
 
-  finally (pingloop dis)
+  finally (loopingPing dis)
           (stopDiscord dis)
 
-pingloop :: (RestChan, Gateway, z) -> IO ()
-pingloop dis = do
+loopingPing :: (RestChan, Gateway, z) -> IO ()
+loopingPing dis = do
   e <- nextEvent dis
   case e of
       Left er -> putStrLn ("Event error: " <> show er)
@@ -30,7 +30,7 @@ pingloop dis = do
           putStrLn (show resp)
           putStrLn ""
       _ -> pure ()
-  pingloop dis
+  loopingPing dis
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower
