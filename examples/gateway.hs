@@ -15,9 +15,11 @@ gatewayExample = do
   dis <- loginRestGateway (Auth tok)
 
   _ <- forkIO $ do
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusAwayFromKeyboard True))
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing
+                                    UpdateStatusAwayFromKeyboard True))
     threadDelay (3 * 10^6)
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing UpdateStatusOnline False))
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing
+                                    UpdateStatusOnline False))
 
   finally (let loop = do
                   e <- nextEvent dis

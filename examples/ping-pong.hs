@@ -26,7 +26,7 @@ pingloop dis = do
       Left er -> putStrLn ("Event error: " <> show er)
       Right (MessageCreate m) -> do
         when (isPing (messageText m)) $ do
-          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!" Nothing)
+          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
           putStrLn (show resp)
           putStrLn ""
       _ -> pure ()

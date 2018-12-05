@@ -46,7 +46,9 @@ data ChannelRequest a where
   -- | Gets a message in a channel by its id.
   GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
-  CreateMessage           :: ChannelId -> T.Text -> Maybe Embed -> ChannelRequest Message
+  CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
+  -- | Sends a message with an Embed to a channel.
+  CreateMessageEmbed      :: ChannelId -> T.Text -> Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile :: ChannelId -> T.Text -> BL.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
@@ -177,7 +179,8 @@ channelMajorRoute c = case c of
   (DeleteChannel chan) ->              "mod_chan " <> show chan
   (GetChannelMessages chan _) ->            "msg " <> show chan
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
-  (CreateMessage chan _ _) ->               "msg " <> show chan
+  (CreateMessage chan _) ->                 "msg " <> show chan
+  (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
   (CreateReaction (chan, _) _) ->         "react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
@@ -234,8 +237,13 @@ channelJsonRequest c = case c of
   (GetChannelMessage (chan, msg)) ->
       Get (channels // chan /: "messages" // msg) mempty
 
-  (CreateMessage chan msg embed) ->
-      let content = ["content" .= msg] <> maybeEmbed embed
+  (CreateMessage chan msg) ->
+      let content = ["content" .= msg]
+          body = pure $ R.ReqBodyJson $ object content
+      in Post (channels // chan /: "messages") body mempty
+
+  (CreateMessageEmbed chan msg embed) ->
+      let content = ["content" .= msg] <> maybeEmbed (Just embed)
           body = pure $ R.ReqBodyJson $ object content
       in Post (channels // chan /: "messages") body mempty
 

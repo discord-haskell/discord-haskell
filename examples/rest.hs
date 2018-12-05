@@ -17,7 +17,7 @@ restExample = do
   chan <- restCall dis (GetChannel chanid)
   putStrLn ("Channel object: " <> show chan <> "\n")
 
-  msg <- restCall dis (CreateMessage chanid "Creating a message" Nothing)
+  msg <- restCall dis (CreateMessage chanid "Creating a message")
   putStrLn ("Message object: " <> show msg <> "\n")
 
   case msg of

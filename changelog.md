@@ -2,7 +2,7 @@
 
 Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/changelog.md) for changes not merged into master yet
 
-### 0.6.1
+### 0.7.0
 
 Snowflake -> named id
 
