@@ -21,9 +21,15 @@ restExample = do
   putStrLn ("Message object: " <> show msg <> "\n")
 
   case msg of
-    Right m -> do r <- restCall dis (CreateReaction (chanid, messageId m) "🐮")
-                  putStrLn ("Reaction resp: " <> show r)
+    Right m -> do r0 <- restCall dis (CreateReaction (chanid, messageId m) "🐮")
+                  putStrLn ("Reaction resp: " <> show r0)
+                  r1 <- restCall dis (CreateReaction (chanid, messageId m)
+                                             "<customemoji:519649707388174337>")
+                                             -- type \:emoji: in discord
+                  putStrLn ("Reaction resp: " <> show r1)
     _ -> putStrLn "Creating the message failed, couldn't react"
+
+  stopDiscord dis
 
   -- nextEvent would fail with a type error because rest.hs uses
   --       'loginRest' not 'loginRestGateway'
