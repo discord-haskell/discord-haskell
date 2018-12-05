@@ -198,6 +198,11 @@ channelMajorRoute c = case c of
   (GroupDMAddRecipient chan _) ->       "groupdm " <> show chan
   (GroupDMRemoveRecipient chan _) ->    "groupdm " <> show chan
 
+cleanupEmoji :: T.Text -> T.Text
+cleanupEmoji emoji =
+  let noAngles = T.replace "<" "" (T.replace ">" "" emoji)
+  in case T.stripPrefix ":" noAngles of Just a -> "custom:" <> a
+                                        Nothing -> noAngles
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
@@ -240,19 +245,23 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
-      Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
+      let e = cleanupEmoji emoji
+      in Put (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" )
              R.NoReqBody mempty
 
   (DeleteOwnReaction (chan, msgid) emoji) ->
-      Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
+      let e = cleanupEmoji emoji
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" ) mempty
 
   (DeleteUserReaction (chan, msgid) uID emoji) ->
-      Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
+      let e = cleanupEmoji emoji
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e // uID ) mempty
 
   (GetReactions (chan, msgid) emoji (n, timing)) ->
-      let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+      let e = cleanupEmoji emoji
+          n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
-      in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
+      in Get (channels // chan /: "messages" // msgid /: "reactions" /: e) options
 
   (DeleteAllReactions (chan, msgid)) ->
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
