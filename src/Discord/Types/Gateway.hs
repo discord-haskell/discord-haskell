@@ -63,14 +63,14 @@ data UpdateStatusOpts = UpdateStatusOpts
 
 data Activity = Activity
               { activityName :: T.Text
-              , activityType :: ActivityTypes
+              , activityType :: ActivityType
               , activityUrl :: Maybe T.Text
               }
   deriving (Show)
 
-data ActivityTypes = ActivityTypeGame
-                   | ActivityTypeStreaming
-                   | ActivityTypeListening
+data ActivityType = ActivityTypeGame
+                  | ActivityTypeStreaming
+                  | ActivityTypeListening
   deriving (Enum, Show)
 
 data UpdateStatusTypes = UpdateStatusOnline
