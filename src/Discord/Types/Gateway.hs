@@ -40,9 +40,9 @@ data GatewaySendable
   deriving (Show)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
-                             { requestGuildMemersGuildId :: Snowflake
-                             , requestGuildMemersSearchQuery :: T.Text
-                             , requestGuildMemersLimit :: Integer }
+                             { requestGuildMembersGuildId :: Snowflake
+                             , requestGuildMembersSearchQuery :: T.Text
+                             , requestGuildMembersLimit :: Integer }
   deriving (Show)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
@@ -55,11 +55,23 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
 
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusSince :: Maybe UTCTime
-                      -- todo , updateStatusGame :: Activity
+                      , updateStatusGame :: Maybe Activity
                       , updateStatusNewStatus :: UpdateStatusTypes
                       , updateStatusAFK :: Bool
                       }
   deriving (Show)
+
+data Activity = Activity
+              { activityName :: T.Text
+              , activityType :: ActivityType
+              , activityUrl :: Maybe T.Text
+              }
+  deriving (Show)
+
+data ActivityType = ActivityTypeGame
+                  | ActivityTypeStreaming
+                  | ActivityTypeListening
+  deriving (Enum, Show)
 
 data UpdateStatusTypes = UpdateStatusOnline
                        | UpdateStatusDoNotDisturb
@@ -124,17 +136,19 @@ instance ToJSON GatewaySendable where
       , "shard" .= shard
       ]
     ]
-  toJSON (UpdateStatus (UpdateStatusOpts since status afk)) = object [
+  toJSON (UpdateStatus (UpdateStatusOpts since game status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
         "since" .= case since of Nothing -> Nothing
                                  Just s -> Just ((10^6) * (utcTimeToPOSIXSeconds s))
       , "afk" .= afk
       , "status" .= statusString status
-      , "game" .= (Nothing :: Maybe ())
-      -- todo , "game"       .= object [
-      --        "name" .= game
-      --      ]
+      , "game" .= case game of Nothing -> Nothing
+                               Just a -> Just $ object [
+                                           "name" .= activityName a
+                                         , "type" .= (fromEnum $ activityType a :: Int)
+                                         , "url" .= activityUrl a
+                                         ]
       ]
     ]
   toJSON (UpdateStatusVoice (UpdateStatusVoiceOpts guild channel mute deaf)) =
