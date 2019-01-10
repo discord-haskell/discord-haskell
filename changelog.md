@@ -2,6 +2,14 @@
 
 Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/changelog.md) for changes not merged into master yet
 
+### 0.7.1
+
+Typo in RequestGuildMemberOpts fields fixed. [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files)
+
+Added Activity, ActivityType ADT [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files)
+
+UpdateStatusTypes became UpdateStatusType (singular ADT)
+
 ### 0.7.0
 
 Snowflake -> named id
