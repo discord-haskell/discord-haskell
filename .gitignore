@@ -15,3 +15,4 @@ the-log-of-discord-haskell.txt
 examples/auth-token.secret
 upload-haddock.sh
 dist*
+
