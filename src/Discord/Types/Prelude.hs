@@ -23,9 +23,9 @@ data Auth = Auth T.Text
 
 -- | Formats the token for use with the REST API
 formatAuth :: Auth -> Q.ByteString
-formatAuth (Auth token) = TE.encodeUtf8 $ bot <> token
-  where
-    bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
+formatAuth (Auth givenTok) = let token = T.strip givenTok
+                                 bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
+                             in TE.encodeUtf8 $ bot <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
 authToken :: Auth -> T.Text
