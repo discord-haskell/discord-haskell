@@ -174,8 +174,9 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
     eitherPayload <- getPayloadTimeout conn interval log
     case eitherPayload :: Either ConnectionException GatewayReceivable of
       Left (CloseRequest code str) -> case code of
-          -- see discord documentation on gateway close event codes
+          -- see Discord and MDN documentation on gateway close event codes
           1000 -> ConnReconnect auth seshID <$> readIORef seqKey
+          1001 -> ConnReconnect auth seshID <$> readIORef seqKey
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
