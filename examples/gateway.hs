@@ -14,11 +14,17 @@ gatewayExample = do
   tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
   dis <- loginRestGateway (Auth tok)
 
+  --  data UpdateStatusOpts
+  --  = UpdateStatusOpts {updateStatusSince :: Maybe UTCTime,
+  --                      updateStatusGame :: Maybe Activity,
+  --                      updateStatusNewStatus :: UpdateStatusType,
+  --                      updateStatusAFK :: Bool}
+
   _ <- forkIO $ do
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing Nothing
                                     UpdateStatusAwayFromKeyboard True))
     threadDelay (3 * 10^6)
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing
+    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing Nothing
                                     UpdateStatusOnline False))
 
   finally (let loop = do
