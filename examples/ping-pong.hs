@@ -29,8 +29,8 @@ loopingPing dis = do
           resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
           putStrLn (show resp)
           putStrLn ""
-      _ -> pure ()
-  loopingPing dis
+        loopingPing dis
+      _ -> loopingPing dis
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower
