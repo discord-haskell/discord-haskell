@@ -56,7 +56,7 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusSince :: Maybe UTCTime
                       , updateStatusGame :: Maybe Activity
-                      , updateStatusNewStatus :: UpdateStatusTypes
+                      , updateStatusNewStatus :: UpdateStatusType
                       , updateStatusAFK :: Bool
                       }
   deriving (Show)
@@ -73,14 +73,14 @@ data ActivityType = ActivityTypeGame
                   | ActivityTypeListening
   deriving (Enum, Show)
 
-data UpdateStatusTypes = UpdateStatusOnline
-                       | UpdateStatusDoNotDisturb
-                       | UpdateStatusAwayFromKeyboard
-                       | UpdateStatusInvisibleOffline
-                       | UpdateStatusOffline
+data UpdateStatusType = UpdateStatusOnline
+                      | UpdateStatusDoNotDisturb
+                      | UpdateStatusAwayFromKeyboard
+                      | UpdateStatusInvisibleOffline
+                      | UpdateStatusOffline
   deriving (Show)
 
-statusString :: UpdateStatusTypes -> T.Text
+statusString :: UpdateStatusType -> T.Text
 statusString s = case s of
   UpdateStatusOnline -> "online"
   UpdateStatusDoNotDisturb -> "dnd"
