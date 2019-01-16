@@ -28,7 +28,7 @@ minutes of reading.
 [Channels](https://discordapp.com/developers/docs/resources/channel#get-channel),
 [Emoji](https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis),
 [Guilds](https://discordapp.com/developers/docs/resources/guild#get-guild),
-etc. Most endpoints are covered, with very similar names. `List Guild Emojis` 
+etc. Most endpoints are covered with very similar names. `List Guild Emojis`
 becomes `ListGuildEmojis`. You can use `:info` liberally on type constructors to
 explore the ADTs.
 
