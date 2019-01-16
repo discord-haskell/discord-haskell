@@ -4,11 +4,13 @@ Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/chan
 
 ### 0.7.1
 
-Typo in RequestGuildMemberOpts fields fixed. [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files)
+[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed. 
 
-Added Activity, ActivityType ADT [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files)
+[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Added Activity, ActivityType ADT 
 
 UpdateStatusTypes became UpdateStatusType (singular ADT)
+
+[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/7) Retry connection on 1001 websocket close 
 
 ### 0.7.0
 
