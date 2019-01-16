@@ -24,8 +24,16 @@ minutes of reading.
 [examples/cache.hs](./examples/cache.hs), and
 [examples/ping-pong.hs](./examples/ping-pong.hs)
 
-6 Skim documentation on 
-[hackage](https://hackage.haskell.org/package/discord-haskell)
+6 Understand what's available to the bot. Rest API calls can modify
+[Channels](https://discordapp.com/developers/docs/resources/channel#get-channel),
+[Emoji](https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis),
+[Guilds](https://discordapp.com/developers/docs/resources/guild#get-guild),
+etc. Most endpoints are covered, with very similar names. `List Guild Emojis` 
+becomes `ListGuildEmojis`. You can use `:info` liberally on type constructors to
+explore the ADTs.
+
+[Gateway Events](https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-events)
+provide the other source of info, using `nextEvent` and `sendCommand`. Use `:info` to explore `Event` and `GatewaySendable` ADTs.
 
 7 Add this library to your dependencies. discord-haskell is on hackage
 with strict version bounds to stackage lts-12.10. You can also use
@@ -48,7 +56,7 @@ extra-deps:
 ## Notes
 
 `loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
-`nextEvent`, and `readCache`. **Use `loginRest` if you don't need the 
+`nextEvent`, `sendCommand`, and `readCache`. **Use `loginRest` if you don't need the 
 gateway**
 
 Use `Control.Exception.finally` with `stopDiscord` to safely
@@ -59,7 +67,10 @@ The examples will work on the `master` branch. The `dev` branch
 has the most recent (potentially) breaking changes.
 
 To get the format to use for Emoji, type `\:emoji:` into 
-a discord chat. You should copy-paste that into the request.
+a discord chat. You should copy-paste that into the request. This
+can be a bit finicky.  The equivilant of `:thumbsup::skin-tone-3:`
+is `"👍\127997"` for example, and a custom emoji will look
+like `<name:id_number>` or `name:id_number`
 
 ## History
 
