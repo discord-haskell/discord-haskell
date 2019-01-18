@@ -14,7 +14,6 @@ module Discord.Rest
   ) where
 
 import Prelude hiding (log)
-import Data.Either (fromRight)
 import Data.Aeson (FromJSON, eitherDecode)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
@@ -42,7 +41,8 @@ writeRestCall (RestChan c) req = do
   r <- readMVar m
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
-    Right (Left er) -> Left (RestCallNoParse er (fromRight "" r))
+    Right (Left er) -> Left (RestCallNoParse er (case r of Right x -> x
+                                                           Left _ -> ""))
     Left e -> Left e
 
 
