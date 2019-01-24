@@ -1,7 +1,5 @@
 # Changelog
 
-Go to the [dev branch](https://github.com/aquarial/discord-haskell/blob/dev/changelog.md) for changes not merged into master yet
-
 ### 0.7.1
 
 [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed. 
