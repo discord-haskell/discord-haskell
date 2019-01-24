@@ -68,7 +68,7 @@ has the most recent (potentially) breaking changes.
 
 To get the format to use for Emoji, type `\:emoji:` into 
 a discord chat. You should copy-paste that into the request. This
-can be a bit finicky.  The equivilant of `:thumbsup::skin-tone-3:`
+can be a bit finicky.  The equivalent of `:thumbsup::skin-tone-3:`
 is `"👍\127997"` for example, and a custom emoji will look
 like `<name:id_number>` or `name:id_number`
 
