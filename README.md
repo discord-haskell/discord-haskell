@@ -4,6 +4,11 @@ Please refer to `Getting Started` and `Notes` when
 relevant. Hours of debugging can save you 
 minutes of reading.
 
+Recent change: `master` branch has the potentially broken, most
+recent commits, `stable` has the most recent working version.
+Pull requests are automatically made against `master` and it's
+nice to merge pull requests to test them.
+
 ## Getting Started
 
 1 Create a bot to get a token, clientid, and secret
@@ -44,7 +49,7 @@ the github repo.
 resolver: lts-12.10
 extra-deps:
 - git: git@github.com:aquarial/discord-haskell.git
-  commit: <most recent master commit>
+  commit: <most recent stable commit>
   extra-dep: true
 
 # in project.cabal
@@ -63,7 +68,7 @@ Use `Control.Exception.finally` with `stopDiscord` to safely
 kill background threads when running examples in ghci
 (otherwise exit ghci and reopen to kill threads)
 
-The examples will work on the `master` branch. The `dev` branch
+The examples will work on the `stable` branch. The `master` branch
 has the most recent (potentially) breaking changes.
 
 To get the format to use for Emoji, type `\:emoji:` into 
