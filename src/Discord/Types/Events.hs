@@ -13,41 +13,41 @@ import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Text as T
 
-import Discord.Types.Prelude (Snowflake)
+import Discord.Types.Prelude
 import Discord.Types.Channel
-import Discord.Types.Guild (Guild, Unavailable, GuildInfo,
+import Discord.Types.Guild (Guild, GuildUnavailable, GuildInfo,
                             GuildMember, Role, Emoji)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Int User [Channel] [Unavailable] String
+    Ready                   Int User [Channel] [GuildUnavailable] String
   | Resumed                 [T.Text]
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
   | ChannelDelete           Channel
-  | ChannelPinsUpdate       Snowflake (Maybe UTCTime)
+  | ChannelPinsUpdate       ChannelId (Maybe UTCTime)
   | GuildCreate             Guild GuildInfo
   | GuildUpdate             Guild
-  | GuildDelete             Unavailable
-  | GuildBanAdd             Snowflake User
-  | GuildBanRemove          Snowflake User
-  | GuildEmojiUpdate        Snowflake [Emoji]
-  | GuildIntegrationsUpdate Snowflake
-  | GuildMemberAdd          Snowflake GuildMember
-  | GuildMemberRemove       Snowflake User
-  | GuildMemberUpdate       Snowflake [Snowflake] User (Maybe String)
-  | GuildMemberChunk        Snowflake [GuildMember]
-  | GuildRoleCreate         Snowflake Role
-  | GuildRoleUpdate         Snowflake Role
-  | GuildRoleDelete         Snowflake Snowflake
+  | GuildDelete             GuildUnavailable
+  | GuildBanAdd             GuildId User
+  | GuildBanRemove          GuildId User
+  | GuildEmojiUpdate        GuildId [Emoji]
+  | GuildIntegrationsUpdate GuildId
+  | GuildMemberAdd          GuildId GuildMember
+  | GuildMemberRemove       GuildId User
+  | GuildMemberUpdate       GuildId [RoleId] User (Maybe String)
+  | GuildMemberChunk        GuildId [GuildMember]
+  | GuildRoleCreate         GuildId Role
+  | GuildRoleUpdate         GuildId Role
+  | GuildRoleDelete         GuildId RoleId
   | MessageCreate           Message
   | MessageUpdate           Message
-  | MessageDelete           Snowflake Snowflake
-  | MessageDeleteBulk       Snowflake [Snowflake]
+  | MessageDelete           ChannelId MessageId
+  | MessageDeleteBulk       ChannelId [MessageId]
   | MessageReactionAdd      ReactionInfo
   | MessageReactionRemove   ReactionInfo
-  | MessageReactionRemoveAll Snowflake Snowflake
+  | MessageReactionRemoveAll ChannelId MessageId
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
   | UserUpdate              User
@@ -57,9 +57,9 @@ data Event =
   deriving Show
 
 data ReactionInfo = ReactionInfo
-  { reactionUserId    :: Snowflake
-  , reactionChannelId :: Snowflake
-  , reactionMessageId :: Snowflake
+  { reactionUserId    :: UserId
+  , reactionChannelId :: ChannelId
+  , reactionMessageId :: MessageId
   , reactionEmoji     :: Emoji
   } deriving Show
 
@@ -71,10 +71,10 @@ instance FromJSON ReactionInfo where
                  <*> o .: "emoji"
 
 data PresenceInfo = PresenceInfo
-  { presenceUserId  :: Snowflake
-  , presenceRoles   :: [Snowflake]
+  { presenceUserId  :: UserId
+  , presenceRoles   :: [RoleId]
   -- , presenceGame :: Maybe Activity
-  , presenceGuildId :: Snowflake
+  , presenceGuildId :: GuildId
   , presenceStatus  :: String
   } deriving Show
 
@@ -87,8 +87,8 @@ instance FromJSON PresenceInfo where
                  <*> o .: "status"
 
 data TypingInfo = TypingInfo
-  { typingUserId    :: Snowflake
-  , typingChannelId :: Snowflake
+  { typingUserId    :: UserId
+  , typingChannelId :: ChannelId
   , typingTimestamp :: UTCTime
   } deriving Show
 

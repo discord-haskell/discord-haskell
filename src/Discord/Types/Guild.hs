@@ -36,25 +36,25 @@ instance FromJSON GuildMember where
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 data Guild = Guild
-      { guildId                  :: !Snowflake       -- ^ Gulid id
-      , guildName                ::  T.Text          -- ^ Guild name (2 - 100 chars)
-      , guildIcon                ::  Maybe T.Text    -- ^ Icon hash
-      , guildSplash              ::  Maybe T.Text    -- ^ Splash hash
-      , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
-      , guildPermissions         ::  Maybe Integer
-      , guildRegion              ::  T.Text          -- ^ Guild voice region
-      , guildAfkId               ::  Maybe Snowflake -- ^ Id of afk channel
-      , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
-      , guildEmbedEnabled        ::  Maybe Bool      -- ^ Id of embedded channel
-      , guildEmbedChannel        ::  Maybe Snowflake -- ^ Id of embedded channel
-      , guildVerificationLevel   :: !Integer         -- ^ Level of verification
-      , guildNotification        :: !Integer         -- ^ Level of default notifications
-      , guildExplicitFilterLevel :: !Integer
+      { guildId                  :: GuildId       -- ^ Gulid id
+      , guildName                :: T.Text          -- ^ Guild name (2 - 100 chars)
+      , guildIcon                :: Maybe T.Text    -- ^ Icon hash
+      , guildSplash              :: Maybe T.Text    -- ^ Splash hash
+      , guildOwnerId             :: UserId       -- ^ Guild owner id
+      , guildPermissions         :: Maybe Integer
+      , guildRegion              :: T.Text          -- ^ Guild voice region
+      , guildAfkId               :: Maybe ChannelId -- ^ Id of afk channel
+      , guildAfkTimeout          :: Integer         -- ^ Afk timeout in seconds
+      , guildEmbedEnabled        :: Maybe Bool      -- ^ Id of embedded channel
+      , guildEmbedChannel        :: Maybe ChannelId -- ^ Id of embedded channel
+      , guildVerificationLevel   :: Integer         -- ^ Level of verification
+      , guildNotification        :: Integer         -- ^ Level of default notifications
+      , guildExplicitFilterLevel :: Integer
       , guildRoles               :: [Role]           -- ^ Array of 'Role' objects
       , guildEmojis              :: [Emoji]          -- ^ Array of 'Emoji' objects
       , guildFeatures            :: [T.Text]
       , guildMultiFactAuth       :: !Integer
-      , guildApplicationId       ::  Maybe Snowflake
+      , guildApplicationId       :: Maybe Snowflake
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Guild where
@@ -79,13 +79,13 @@ instance FromJSON Guild where
           <*> o .:  "mfa_level"
           <*> o .:? "application_id"
 
-data Unavailable = Unavailable
-      { idOnceAvailable :: !Snowflake
+data GuildUnavailable = GuildUnavailable
+      { idOnceAvailable :: GuildId
       } deriving (Show, Eq, Ord)
 
-instance FromJSON Unavailable where
-  parseJSON = withObject "Unavailable" $ \o ->
-       Unavailable <$> o .: "id"
+instance FromJSON GuildUnavailable where
+  parseJSON = withObject "GuildUnavailable" $ \o ->
+       GuildUnavailable <$> o .: "id"
 
 data GuildInfo = GuildInfo
       { guildJoinedAt    :: UTCTime
@@ -107,7 +107,7 @@ instance FromJSON GuildInfo where
               <*> o .: "channels"
 
 data PartialGuild = PartialGuild
-      { partialGuildId          :: Snowflake
+      { partialGuildId          :: GuildId
       , partialGuildName        :: T.Text
       , partialGuildIcon        :: Maybe T.Text
       , partialGuildOwner       :: Bool
@@ -124,9 +124,9 @@ instance FromJSON PartialGuild where
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId      :: Maybe Snowflake   -- ^ The emoji id
+  { emojiId      :: Maybe EmojiId   -- ^ The emoji id
   , emojiName    :: T.Text            -- ^ The emoji name
-  , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
+  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
   , emojiManaged :: Maybe Bool        -- ^ Whether this emoji is managed
   } deriving (Show, Eq, Ord)
 
@@ -143,7 +143,7 @@ instance FromJSON Emoji where
 --   (guild) and channel context.
 data Role =
     Role {
-        roleID      :: !Snowflake -- ^ The role id
+        roleID      :: RoleId -- ^ The role id
       , roleName    :: T.Text                    -- ^ The role name
       , roleColor   :: Integer                   -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
@@ -167,7 +167,7 @@ instance FromJSON Role where
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion =
     VoiceRegion
-      { regionId          :: !Snowflake -- ^ Unique id of the region
+      { regionId          :: Snowflake -- ^ Unique id of the region
       , regionName        :: T.Text                    -- ^ Name of the region
       , regionHostname    :: T.Text                    -- ^ Example hostname for the region
       , regionPort        :: Int                       -- ^ Example port for the region
@@ -192,7 +192,7 @@ instance FromJSON VoiceRegion where
 data Invite = Invite
       { inviteCode  :: T.Text    -- ^ The invite code
       , inviteGuildId :: Maybe GuildId -- ^ The guild the code will invite to
-      , inviteChannelId  :: ChannelId -- ^ The channel the code will invite to
+      , inviteChannelId :: ChannelId -- ^ The channel the code will invite to
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Invite where
@@ -239,7 +239,7 @@ data Integration =
       , integrationType     :: T.Text                    -- ^ Integration type (Twitch, Youtube, ect.)
       , integrationEnabled  :: Bool                      -- ^ Is the integration enabled
       , integrationSyncing  :: Bool                      -- ^ Is the integration syncing
-      , integrationRole     :: Snowflake                 -- ^ Id the integration uses for "subscribers"
+      , integrationRole     :: RoleId                 -- ^ Id the integration uses for "subscribers"
       , integrationBehavior :: Integer                   -- ^ The behavior of expiring subscribers
       , integrationGrace    :: Integer                   -- ^ The grace period before expiring subscribers
       , integrationOwner    :: User                      -- ^ The user of the integration
@@ -275,8 +275,8 @@ instance FromJSON IntegrationAccount where
 -- | Represents an image to be used in third party sites to link to a discord channel
 data GuildEmbed =
     GuildEmbed
-      { embedEnabled :: !Bool      -- ^ Whether the embed is enabled
-      , embedChannel :: !Snowflake -- ^ The embed channel id
+      { embedEnabled :: Bool      -- ^ Whether the embed is enabled
+      , embedChannel :: ChannelId -- ^ The embed channel id
       }
 
 instance FromJSON GuildEmbed where
