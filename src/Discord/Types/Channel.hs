@@ -17,7 +17,7 @@ import Discord.Types.Prelude
 
 -- | Represents information about a user.
 data User = User
-  { userId       :: Snowflake    -- ^ The user's id.
+  { userId       :: UserId    -- ^ The user's id.
   , userName     :: String       -- ^ The user's username, not unique across
                                  --   the platform.
   , userDiscrim  :: String       -- ^ The user's 4-digit discord-tag.
@@ -46,20 +46,20 @@ instance FromJSON User where
 data Channel
   -- | A text channel in a guild.
   = ChannelText
-      { channelId          :: Snowflake   -- ^ The id of the channel (Will be equal to
+      { channelId          :: ChannelId   -- ^ The id of the channel (Will be equal to
                                           --   the guild if it's the "general" channel).
-      , channelGuild       :: Snowflake   -- ^ The id of the guild.
+      , channelGuild       :: GuildId   -- ^ The id of the guild.
       , channelName        :: String      -- ^ The name of the guild (2 - 1000 characters).
       , channelPosition    :: Integer     -- ^ The storing position of the channel.
       , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
       , channelTopic       :: String      -- ^ The topic of the channel. (0 - 1024 chars).
-      , channelLastMessage :: Maybe Snowflake   -- ^ The id of the last message sent in the
+      , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       }
   -- | A voice channel in a guild.
   | ChannelVoice
-      { channelId          :: Snowflake
-      , channelGuild       :: Snowflake
+      { channelId          :: ChannelId
+      , channelGuild       :: GuildId
       , channelName        :: String
       , channelPosition    :: Integer
       , channelPermissions :: [Overwrite]
@@ -69,18 +69,18 @@ data Channel
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
   | ChannelDirectMessage
-      { channelId          :: Snowflake
+      { channelId          :: ChannelId
       , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
-      , channelLastMessage :: Maybe Snowflake
+      , channelLastMessage :: Maybe MessageId
       }
   | ChannelGroupDM
-      { channelId          :: Snowflake
+      { channelId          :: ChannelId
       , channelRecipients  :: [User]
-      , channelLastMessage :: Maybe Snowflake
+      , channelLastMessage :: Maybe MessageId
       }
   | ChannelGuildCategory
-      { channelId          :: Snowflake
-      , channelGuild       :: Snowflake
+      { channelId          :: ChannelId
+      , channelGuild       :: GuildId
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Channel where
@@ -126,7 +126,7 @@ channelIsInGuild c = case c of
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
-  { overwriteId    :: Snowflake -- ^ 'Role' or 'User' id
+  { overwriteId    :: OverwriteId -- ^ 'Role' or 'User' id
   , overwriteType  :: String    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
@@ -149,10 +149,10 @@ instance ToJSON Overwrite where
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
-  { messageId           :: Snowflake       -- ^ The id of the message
-  , messageChannel      :: Snowflake       -- ^ Id of the channel the message
+  { messageId           :: MessageId       -- ^ The id of the message
+  , messageChannel      :: ChannelId       -- ^ Id of the channel the message
                                            --   was sent in
-  , messageAuthor       :: User            -- ^ The 'User' the message was sent
+  , messageAuthor       :: Either WebhookId User -- ^ The 'User' the message was sent
                                            --   by
   , messageText         :: T.Text          -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
@@ -163,14 +163,14 @@ data Message = Message
                                            --   everyone
   , messageMentions     :: [User]          -- ^ 'User's specifically mentioned in
                                            --   the message
-  , messageMentionRoles :: [Snowflake]     -- ^ 'Role's specifically mentioned in
+  , messageMentionRoles :: [RoleId]     -- ^ 'Role's specifically mentioned in
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
   , messageEmbeds       :: [Embed]         -- ^ Any embedded content
   , messageNonce        :: Maybe Snowflake -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
-  , messageGuild        :: Maybe Snowflake -- ^ The guild the message went to
+  , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
   } deriving (Show, Eq)
 
 instance FromJSON Message where
