@@ -191,14 +191,16 @@ instance FromJSON VoiceRegion where
 -- | Represents a code to add a user to a guild
 data Invite = Invite
       { inviteCode  :: T.Text    -- ^ The invite code
-      , inviteGuild :: Maybe PartialGuild -- ^ The guild the code will invite to
-      , inviteChannelId  :: Snowflake -- ^ The channel the code will invite to
+      , inviteGuildId :: Maybe GuildId -- ^ The guild the code will invite to
+      , inviteChannelId  :: ChannelId -- ^ The channel the code will invite to
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Invite where
   parseJSON = withObject "Invite" $ \o ->
     Invite <$>  o .: "code"
-           <*> ((o .:? "guild"))
+           <*> (do g <- o .:? "guild"
+                   case g of Just g2 -> g2 .: "id"
+                             Nothing -> pure Nothing)
            <*> ((o .:  "channel") >>= (.: "id"))
 
 -- | Invite code with additional metadata
