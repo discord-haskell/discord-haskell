@@ -10,14 +10,10 @@ module Discord.Rest.Invite
   ( InviteRequest(..)
   ) where
 
-import Data.Aeson
-import Data.Monoid (mempty, (<>))
-import Codec.Picture
+import Data.Monoid (mempty)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
-import qualified Data.ByteString.Char8 as Q
-import qualified Data.ByteString.Base64 as B64
 
 import Discord.Rest.Prelude
 import Discord.Types
@@ -34,7 +30,7 @@ data InviteRequest a where
 
 inviteMajorRoute :: InviteRequest a -> String
 inviteMajorRoute c = case c of
-  (GetInvite code) ->      "invite "
+  (GetInvite _) ->      "invite "
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
