@@ -21,7 +21,7 @@ nice to merge pull requests to test them.
 `https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
 
 4 Connect to the gateway once in order to send CreateMessage events.
-[this is a discord requirement](https://discordapp.com/developers/docs/resources/channel#create-message)
+[This is a discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
 
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
@@ -34,7 +34,7 @@ nice to merge pull requests to test them.
 [Emoji](https://discordapp.com/developers/docs/resources/emoji#list-guild-emojis),
 [Guilds](https://discordapp.com/developers/docs/resources/guild#get-guild),
 etc. Most endpoints are covered with very similar names. `List Guild Emojis`
-becomes `ListGuildEmojis`. You can use `:info` liberally on type constructors to
+becomes `ListGuildEmojis`. You can use `:info` in `ghci` on type constructors to
 explore the ADTs.
 
 [Gateway Events](https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-events)
@@ -91,8 +91,7 @@ In roughly the order I'm working on them:
 
 - Finish REST request ADT. Search for `-- todo` pattern
 - Add data types for
-[activities](https://discordapp.com/developers/docs/topics/gateway#activity-object),
-[permissions](https://discordapp.com/developers/docs/topics/permissions), and
+[permissions](https://discordapp.com/developers/docs/topics/permissions) and
 [presences](https://discordapp.com/developers/docs/topics/gateway#presence-update)
 - Update channel types (fill out guildcategory)
 - Modify cache with Events

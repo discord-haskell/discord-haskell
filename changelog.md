@@ -1,5 +1,13 @@
 # Changelog
 
+### master
+
+Message Author changed from `User` to `Either WebhookId User`
+
+Add Webhook ADT
+
+Add requests: GetInvite
+
 ### 0.7.1
 
 [t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed. 
