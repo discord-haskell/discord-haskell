@@ -40,16 +40,16 @@ data GatewaySendable
   deriving (Show)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
-                             { requestGuildMembersGuildId :: Snowflake
+                             { requestGuildMembersGuildId :: GuildId
                              , requestGuildMembersSearchQuery :: T.Text
                              , requestGuildMembersLimit :: Integer }
   deriving (Show)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
-                           { updateStatusVoiceGuildId :: Snowflake
-                           , updateStatusVoiceChannelId :: Maybe Snowflake
-                           , updateStatusVoiceIsMuted :: Snowflake
-                           , updateStatusVoiceIsDeaf :: Snowflake
+                           { updateStatusVoiceGuildId :: GuildId
+                           , updateStatusVoiceChannelId :: Maybe ChannelId
+                           , updateStatusVoiceIsMuted :: Bool
+                           , updateStatusVoiceIsDeaf :: Bool
                            }
   deriving (Show)
 
