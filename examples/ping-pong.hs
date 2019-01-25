@@ -25,12 +25,17 @@ loopingPing dis = do
   case e of
       Left er -> putStrLn ("Event error: " <> show er)
       Right (MessageCreate m) -> do
-        when (isPing (messageText m)) $ do
+        when (isPing (messageText m) && not (fromBot m)) $ do
           resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
           putStrLn (show resp)
           putStrLn ""
         loopingPing dis
       _ -> loopingPing dis
+
+fromBot :: Message -> Bool
+fromBot m = case messageAuthor m of
+              Right u -> userIsBot u
+              Left webhookid -> True
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower
