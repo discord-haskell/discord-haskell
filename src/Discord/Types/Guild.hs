@@ -119,7 +119,7 @@ instance FromJSON PartialGuild where
     PartialGuild <$> o .:  "id"
                  <*> o .:  "name"
                  <*> o .:? "icon"
-                 <*> o .:  "owner"
+                 <*> o .:?  "owner" .!= False
                  <*> o .:  "permissions"
 
 -- | Represents an emoticon (emoji)
