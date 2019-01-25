@@ -14,24 +14,21 @@ restExample = do
   let chanid = 517170652092825610
       guildid = 453207241294610444
 
-  -- chan <- restCall dis (GetChannel chanid)
-  -- putStrLn ("Channel object: " <> show chan <> "\n")
+  chan <- restCall dis (GetChannel chanid)
+  putStrLn ("Channel object: " <> show chan <> "\n")
 
-  -- msg <- restCall dis (CreateMessage chanid "Creating a message")
-  -- putStrLn ("Message object: " <> show msg <> "\n")
+  msg <- restCall dis (CreateMessage chanid "Creating a message")
+  putStrLn ("Message object: " <> show msg <> "\n")
 
-  -- case msg of
-  --   Right m -> do r0 <- restCall dis (CreateReaction (chanid, messageId m) "🐮")
-  --                 putStrLn ("Reaction resp: " <> show r0)
-  --                 r1 <- restCall dis (CreateReaction (chanid, messageId m)
-  --                                            "<customemoji:519649707388174337>")
-  --                                            -- type \:emoji: in discord
-  --                 putStrLn ("Reaction resp: " <> show r1)
-  --   _ -> putStrLn "Creating the message failed, couldn't react"
+  case msg of
+    Right m -> do r0 <- restCall dis (CreateReaction (chanid, messageId m) "🐮")
+                  putStrLn ("Reaction resp: " <> show r0)
+                  r1 <- restCall dis (CreateReaction (chanid, messageId m)
+                                             "<customemoji:519649707388174337>")
+                                             -- type \:emoji: in discord
+                  putStrLn ("Reaction resp: " <> show r1)
+    _ -> putStrLn "Creating the message failed, couldn't react"
 
-
-  e <- restCall dis (GetGuildInvites guildid)
-  print e
 
   stopDiscord dis
 
