@@ -16,9 +16,9 @@ import Discord.Gateway.EventLoop
 
 data Cache = Cache
             { _currentUser :: User
-            , _dmChannels :: M.Map Snowflake Channel
-            , _guilds :: M.Map Snowflake (Guild, GuildInfo)
-            , _channels :: M.Map Snowflake Channel
+            , _dmChannels :: M.Map ChannelId Channel
+            , _guilds :: M.Map GuildId (Guild, GuildInfo)
+            , _channels :: M.Map ChannelId Channel
             } deriving (Show)
 
 emptyCache :: IO (MVar (Either GatewayException Cache))
@@ -75,7 +75,7 @@ adjustCache minfo event = case event of
   --  putMVar cache m2
   _ -> minfo
 
-setChanGuildID :: Snowflake -> Channel -> Channel
+setChanGuildID :: GuildId -> Channel -> Channel
 setChanGuildID s c = if channelIsInGuild c
                      then c { channelGuild = s }
                      else c
