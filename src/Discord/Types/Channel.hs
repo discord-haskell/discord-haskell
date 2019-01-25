@@ -42,6 +42,18 @@ instance FromJSON User where
          <*> o .:? "verified"
          <*> o .:? "email"
 
+
+data Webhook = Webhook
+  { webhookId :: WebhookId
+  , webhookToken :: T.Text
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON Webhook where
+  parseJSON = withObject "Webhook" $ \o ->
+    Webhook <$> o .:  "id"
+            <*> o .:  "token"
+
+
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
   -- | A text channel in a guild.
@@ -177,7 +189,10 @@ instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
     Message <$> o .:  "id"
             <*> o .:  "channel_id"
-            <*> o .:? "author" .!= Webhook
+            <*> (do isW <- o .:? "webhook_id"
+                    case isW :: Maybe WebhookId of
+                      Nothing -> Right <$> o .: "author"
+                      Just w -> pure (Left w))
             <*> o .:? "content" .!= ""
             <*> o .:? "timestamp" .!= epochTime
             <*> o .:? "edited_timestamp"
