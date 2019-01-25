@@ -19,7 +19,7 @@ data GuildMember = GuildMember
       , memberJoinedAt :: UTCTime
       , memberDeaf     :: Bool
       , memberMute     :: Bool
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON GuildMember where
   parseJSON = withObject "GuildMember" $ \o ->
@@ -55,7 +55,7 @@ data Guild = Guild
       , guildFeatures            :: [T.Text]
       , guildMultiFactAuth       :: !Integer
       , guildApplicationId       ::  Maybe Snowflake
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Guild where
   parseJSON = withObject "Guild" $ \o ->
@@ -81,7 +81,7 @@ instance FromJSON Guild where
 
 data Unavailable = Unavailable
       { idOnceAvailable :: !Snowflake
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Unavailable where
   parseJSON = withObject "Unavailable" $ \o ->
@@ -95,7 +95,7 @@ data GuildInfo = GuildInfo
       , guildMembers     :: [GuildMember]
       , guildChannels    :: [Channel]     -- ^ Channels in the guild (sent in GuildCreate)
    -- , guildPresences   :: [Presence]
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON GuildInfo where
   parseJSON = withObject "GuildInfo" $ \o ->
@@ -112,7 +112,7 @@ data PartialGuild = PartialGuild
       , partialGuildIcon        :: Maybe T.Text
       , partialGuildOwner       :: Bool
       , partialGuildPermissions :: Integer
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON PartialGuild where
   parseJSON = withObject "PartialGuild" $ \o ->
@@ -128,7 +128,7 @@ data Emoji = Emoji
   , emojiName    :: T.Text            -- ^ The emoji name
   , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
   , emojiManaged :: Maybe Bool        -- ^ Whether this emoji is managed
-  } deriving (Show)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Emoji where
   parseJSON = withObject "Emoji" $ \o ->
@@ -151,7 +151,7 @@ data Role =
       , rolePerms   :: Integer                   -- ^ Permission bit set
       , roleManaged :: Bool                      -- ^ Whether this role is managed by an integration
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Ord)
 
 instance FromJSON Role where
   parseJSON = withObject "Role" $ \o ->
@@ -175,7 +175,7 @@ data VoiceRegion =
       , regionOptimal     :: Bool                      -- ^ True for the closest server to a client
       , regionDepreciated :: Bool                      -- ^ Whether this is a deprecated region
       , regionCustom      :: Bool                      -- ^ Whether this is a custom region
-      } deriving (Show)
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON VoiceRegion where
   parseJSON = withObject "VoiceRegion" $ \o ->
@@ -193,7 +193,7 @@ data Invite = Invite
       { inviteCode  :: T.Text    -- ^ The invite code
       , inviteGuild :: Maybe PartialGuild -- ^ The guild the code will invite to
       , inviteChannelId  :: Snowflake -- ^ The channel the code will invite to
-      }
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Invite where
   parseJSON = withObject "Invite" $ \o ->
@@ -243,7 +243,7 @@ data Integration =
       , integrationOwner    :: User                      -- ^ The user of the integration
       , integrationAccount  :: IntegrationAccount        -- ^ The account the integration links to
       , integrationSync     :: UTCTime                   -- ^ When the integration was last synced
-      } deriving (Show)
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Integration where
   parseJSON = withObject "Integration" $ \o ->
@@ -264,7 +264,7 @@ data IntegrationAccount =
   Account
     { accountId   :: T.Text -- ^ The id of the account.
     , accountName :: T.Text -- ^ The name of the account.
-    } deriving (Show)
+    } deriving (Show, Eq, Ord)
 
 instance FromJSON IntegrationAccount where
   parseJSON = withObject "Account" $ \o ->

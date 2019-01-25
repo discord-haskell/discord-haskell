@@ -29,11 +29,10 @@ data User = User
   , userVerified :: Maybe Bool   -- ^ Whether the email on this account has
                                  --   been verified.
   , userEmail    :: Maybe String -- ^ The user's email.
-  }
-  | Webhook deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON User where
-  parseJSON = withObject "Useer" $ \o ->
+  parseJSON = withObject "User" $ \o ->
     User <$> o .:  "id"
          <*> o .:  "username"
          <*> o .:  "discriminator"
@@ -82,7 +81,7 @@ data Channel
   | ChannelGuildCategory
       { channelId          :: Snowflake
       , channelGuild       :: Snowflake
-      } deriving (Show, Eq)
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Channel where
   parseJSON = withObject "Channel" $ \o -> do
@@ -131,7 +130,7 @@ data Overwrite = Overwrite
   , overwriteType  :: String    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Overwrite where
   parseJSON = withObject "Overwrite" $ \o ->
