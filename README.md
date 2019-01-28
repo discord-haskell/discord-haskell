@@ -1,8 +1,8 @@
 # discord-haskell
 
 Please refer to `Getting Started` and `Notes` when 
-relevant. Hours of debugging can save you 
-minutes of reading.
+relevant. A few minutes of reading can save you 
+hours of debugging.
 
 Recent change: `master` branch has the potentially broken, most
 recent commits, `stable` has the most recent working version.
@@ -11,7 +11,7 @@ nice to merge pull requests to test them.
 
 ## Getting Started
 
-1 Create a bot to get a token, clientid, and secret
+1 Create a bot to get a token, client ID, and secret
 <https://discordapp.com/developers/applications/me> (connect with token)
 
 2 Figure out what permissions you need
@@ -21,7 +21,7 @@ nice to merge pull requests to test them.
 `https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
 
 4 Connect to the gateway once in order to send CreateMessage events.
-[This is a discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
+[This is a Discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
 
 5 Look at the examples.
 [examples/gateway.hs](./examples/gateway.hs),
@@ -62,11 +62,11 @@ extra-deps:
 
 `loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
 `nextEvent`, `sendCommand`, and `readCache`. **Use `loginRest` if you don't need the 
-gateway**
+gateway.**
 
 Use `Control.Exception.finally` with `stopDiscord` to safely
 kill background threads when running examples in ghci
-(otherwise exit ghci and reopen to kill threads)
+(otherwise exit ghci and reopen to kill threads).
 
 The examples will work on the `stable` branch. The `master` branch
 has the most recent (potentially) breaking changes.
@@ -75,7 +75,7 @@ To get the format to use for Emoji, type `\:emoji:` into
 a discord chat. You should copy-paste that into the request. This
 can be a bit finicky.  The equivalent of `:thumbsup::skin-tone-3:`
 is `"👍\127997"` for example, and a custom emoji will look
-like `<name:id_number>` or `name:id_number`
+like `<name:id_number>` or `name:id_number`.
 
 ## History
 
@@ -83,7 +83,7 @@ This library was originally forked from
 [discord.hs](https://github.com/jano017/Discord.hs).
 After rewriting the gateway/rest loops and extending the types
 I think it makes more sense to present this library as
-separate form the source. The apis are not compatible.
+separate from the source. The APIs are not compatible.
 
 ## TO DO
 
