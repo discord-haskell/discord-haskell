@@ -1,3 +1,5 @@
 create a file named auth-token.secret and add your token (not the secret id) from
 https://discordapp.com/developers/applications/me
 
+This is the Bot token (NOT CLIENT SECRET) from developer portal under the settings tab
+
