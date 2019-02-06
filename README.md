@@ -11,14 +11,18 @@ nice to merge pull requests to test them.
 
 ## Getting Started
 
-1 Create a bot to get a token, client ID, and secret
-<https://discordapp.com/developers/applications/me> (connect with token)
+1 Create an application at the Developer Portal:
+<https://discordapp.com/developers/applications>.
 
-2 Figure out what permissions you need
-<https://discordapi.com/permissions.html>
+2 Add a 'Bot User' using the settings pane on the left. Take
+note of `CLIENT ID` on this page.
 
-3 Invite the bot to a server
-`https://discordapp.com/oauth2/authorize?client_id= <CLIENT_ID> &scope=bot&permissions= <PERMISSIONS>`
+3 Use the BOT PERMISSIONS tab to compute a Permissions Int
+(this does not immediately affect anything, hold onto this number)
+
+3 Invite the bot to a server filling in the `<>` information.
+Client ID and Permissions come from previous steps.
+`https://discordapp.com/oauth2/authorize?client_id=<CLIENT_ID>&scope=bot&permissions=<PERMISSIONS>`
 
 4 Connect to the gateway once in order to send CreateMessage events.
 [This is a Discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
