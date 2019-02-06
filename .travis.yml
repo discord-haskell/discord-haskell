@@ -9,6 +9,13 @@
 # explicitly request legacy non-sudo based build environment
 sudo: required
 
+# Caching so the next build will be fast too.
+cache:
+  directories:
+  - $HOME/.ghc
+  - $HOME/.cabal
+  - $HOME/.stack
+
 # The following lines enable several GHC versions and/or HP versions
 # to be tested; often it's enough to test only against the last
 # release of a major GHC version. Setting HPVER implictly sets
