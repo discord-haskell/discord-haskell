@@ -39,11 +39,11 @@ install:
 script:
  - if [ -f configure.ac ]; then autoreconf -i; fi
  # -v2 provides useful information for debugging
- - cabal configure -v2  --minimize-conflict-set # --enable-tests --enable-benchmarks 
+ - cabal configure -v2  # --enable-tests --enable-benchmarks 
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal build --minimize-conflict-set
+ - cabal build 
 
 # - cabal test
  - cabal check
