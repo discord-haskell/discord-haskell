@@ -49,7 +49,7 @@ install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - travis_retry cabal update
- - cabal install --only-dependencies --enable-tests --enable-benchmarks
+ - cabal install --only-dependencies # --enable-tests --enable-benchmarks
 
 # Here starts the actual work to be performed for the package under
 # test; any command which exits with a non-zero exit code causes the
@@ -57,7 +57,7 @@ install:
 script:
  - if [ -f configure.ac ]; then autoreconf -i; fi
  # -v2 provides useful information for debugging
- - cabal configure --enable-tests --enable-benchmarks -v2
+ - cabal configure -v2 # --enable-tests --enable-benchmarks 
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
