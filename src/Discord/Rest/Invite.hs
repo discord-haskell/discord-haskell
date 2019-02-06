@@ -26,11 +26,14 @@ instance Request (InviteRequest a) where
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data InviteRequest a where
   -- | Get invite for given code
-  GetInvite :: T.Text -> InviteRequest [Invite]
+  GetInvite :: T.Text -> InviteRequest Invite
+  -- | Delete invite by code
+  DeleteInvite :: T.Text -> InviteRequest Invite
 
 inviteMajorRoute :: InviteRequest a -> String
 inviteMajorRoute c = case c of
-  (GetInvite _) ->      "invite "
+  (GetInvite _) ->     "invite "
+  (DeleteInvite _) ->  "invite "
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
@@ -43,3 +46,4 @@ invite = baseUrl /: "invites"
 inviteJsonRequest :: InviteRequest r -> JsonRequest
 inviteJsonRequest c = case c of
   (GetInvite g) -> Get (invite R./: g) mempty
+  (DeleteInvite g) -> Delete (invite R./: g) mempty

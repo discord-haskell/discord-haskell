@@ -6,7 +6,7 @@ Message Author changed from `User` to `Either WebhookId User`
 
 Add Webhook ADT
 
-Add requests: GetInvite
+Add requests: GetInvite, DeleteInvite
 
 UpdateStatusVoiceOpts takes Bool for Mute
 
