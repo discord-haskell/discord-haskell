@@ -21,7 +21,6 @@ cache:
 # release of a major GHC version. Setting HPVER implictly sets
 # GHCVER. Omit lines with versions you don't need/want testing for.
 env:
-# wuss (required package) needs base 4.9.0, meaning GHCVER 8.0.1
  - CABALVER=1.24 GHCVER=8.0.1   # 4.9
  - CABALVER=2.0  GHCVER=8.2.2   # 4.10
  - CABALVER=head GHCVER=head
@@ -38,7 +37,6 @@ install:
  - cabal --version
  - echo "$(ghc --version) [$(ghc --print-project-git-commit-id 2> /dev/null || echo '?')]"
  - travis_retry cabal update
- - cabal install --only-dependencies # --enable-tests --enable-benchmarks
 
 # Here starts the actual work to be performed for the package under
 # test; any command which exits with a non-zero exit code causes the
@@ -50,7 +48,7 @@ script:
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal build 
+ - cabal build --max-backjumps 4000 -v2
 
 # - cabal test
  - cabal check
@@ -58,15 +56,15 @@ script:
  # tests that a source-distribution can be generated
  - cabal sdist
 
- # check that the generated source-distribution can be built & installed
- - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
-   cd dist/;
-   if [ -f "$SRC_TGZ" ]; then
-      cabal install --force-reinstalls "$SRC_TGZ";
-   else
-      echo "expected '$SRC_TGZ' not found";
-      exit 1;
-   fi
+# # check that the generated source-distribution can be built & installed
+# - export SRC_TGZ=$(cabal info . | awk '{print $2 ".tar.gz";exit}') ;
+#   cd dist/;
+#   if [ -f "$SRC_TGZ" ]; then
+#      cabal install --force-reinstalls "$SRC_TGZ";
+#   else
+#      echo "expected '$SRC_TGZ' not found";
+#      exit 1;
+#   fi
 
 # EOF
 
