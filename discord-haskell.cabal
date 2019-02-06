@@ -31,6 +31,7 @@ library
                      , Discord.Rest
                      , Discord.Rest.Prelude
                      , Discord.Rest.HTTP
+                     , Discord.Rest.Invite
                      , Discord.Rest.Emoji
                      , Discord.Rest.User
                      , Discord.Rest.Guild
@@ -38,7 +39,6 @@ library
                      , Discord.Types
                      , Discord.Types.Prelude
                      , Discord.Types.Channel
-                     , Discord.Types.Invite
                      , Discord.Types.Events
                      , Discord.Types.Gateway
                      , Discord.Types.Guild
