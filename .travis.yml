@@ -48,7 +48,7 @@ script:
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal build --max-backjumps 4000 -v2
+ - cabal build -v2
 
 # - cabal test
  - cabal check
