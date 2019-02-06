@@ -15,7 +15,7 @@ maintainer:          ksfish5@gmail.com
 -- copyright:
 category:            Network
 build-type:          Simple
--- extra-source-files:
+extra-source-files:  changelog.md
 cabal-version:       >=1.10
 
 library
