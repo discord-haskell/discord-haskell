@@ -1,5 +1,7 @@
 # Changelog
 
+View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
+
 ### master
 
 Message Author changed from `User` to `Either WebhookId User`
