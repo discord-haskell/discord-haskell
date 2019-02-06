@@ -38,6 +38,7 @@ library
                      , Discord.Types
                      , Discord.Types.Prelude
                      , Discord.Types.Channel
+                     , Discord.Types.Invite
                      , Discord.Types.Events
                      , Discord.Types.Gateway
                      , Discord.Types.Guild
