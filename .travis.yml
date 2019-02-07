@@ -32,12 +32,11 @@ before_cache:
 # to be tested; often it's enough to test only against the last
 # release of a major GHC version. Setting HPVER implictly sets
 # GHCVER. Omit lines with versions you don't need/want testing for.
-env:
- - CABALVER=1.24  GHCVER=8.0.1   # 4.9
- - CABALVER=2.0   GHCVER=8.2.2   # 4.10
- - CABALVER=head  GHCVER=head
-
 matrix:
+  include:
+    - CABALVER=1.24  GHCVER=8.0.1   # 4.9
+    - CABALVER=2.0   GHCVER=8.2.2   # 4.10
+    - CABALVER=head  GHCVER=head
   allow_failures:
     - env: CABALVER=head
     - env: GHCVER=head
