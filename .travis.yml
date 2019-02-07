@@ -3,6 +3,7 @@
 
 
 # NB: don't set `language: haskell` here
+language: c
 
 # See also https://github.com/hvr/multi-ghc-travis for more information
 
@@ -34,9 +35,9 @@ before_cache:
 # GHCVER. Omit lines with versions you don't need/want testing for.
 matrix:
   include:
-    - CABALVER=1.24  GHCVER=8.0.1   # 4.9
-    - CABALVER=2.0   GHCVER=8.2.2   # 4.10
-    - CABALVER=head  GHCVER=head
+    - env: CABALVER=1.24  GHCVER=8.0.1   # 4.9
+    - env: CABALVER=2.0   GHCVER=8.2.2   # 4.10
+    - env: CABALVER=head  GHCVER=head
   allow_failures:
     - env: CABALVER=head
     - env: GHCVER=head
