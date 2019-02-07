@@ -1,4 +1,6 @@
-# discord-haskell
+# discord-haskell [![Build](https://travis-ci.org/aquarial/discord-haskell.svg?branch=master)](https://travis-ci.org/aquarial/discord-haskell.svg?branch=master)
+
+https://travis-ci.org/aquarial/discord-haskell.svg?branch=master
 
 Please refer to `Getting Started` and `Notes` when 
 relevant. A few minutes of reading can save you 
