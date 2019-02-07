@@ -1,4 +1,4 @@
-# discord-haskell [![Build](https://travis-ci.org/aquarial/discord-haskell.svg?branch=master)](https://travis-ci.org/aquarial/discord-haskell.svg?branch=master)
+# discord-haskell [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
 
 https://travis-ci.org/aquarial/discord-haskell.svg?branch=master
 
