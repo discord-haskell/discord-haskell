@@ -65,7 +65,7 @@ script:
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal build
+ - cabal new-build
 
  # - cabal test
  - cabal check
