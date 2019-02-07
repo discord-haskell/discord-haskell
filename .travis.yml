@@ -17,7 +17,6 @@ cache:
   - $HOME/.ghc
   - $HOME/.cabal
   - $HOME/.stack
-  - /opt/ghc/
 
 before_cache:
   - rm -fv $HOME/.cabal/packages/hackage.haskell.org/build-reports.log
@@ -38,7 +37,6 @@ matrix:
     - env: CABALVER=1.24 GHCVER=8.0.1   # 4.9
     - env: CABALVER=2.0 GHCVER=8.2.2   # 4.10
     - env: CABALVER=head GHCVER=head
-  allow_failures:
   allow_failures:
     - env: CABALVER=head GHCVER=head
 
@@ -67,7 +65,7 @@ script:
 
  # this builds all libraries and executables
  # (including tests/benchmarks)
- - cabal new-build
+ - cabal build
 
  # - cabal test
  - cabal check
