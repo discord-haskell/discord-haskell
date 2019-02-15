@@ -4,6 +4,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ### master
 
+`MessageUpdate` does not contain a full Message object, just `ChannelId` `MessageId`
+
 Message Author changed from `User` to `Either WebhookId User`
 
 Add Webhook ADT
