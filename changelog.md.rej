@@ -1,0 +1,18 @@
+diff a/changelog.md b/changelog.md	(rejected hunks)
+@@ -18,13 +20,13 @@ UpdateStatusVoiceOpts takes Bool for Mute
+ 
+ ### 0.7.1
+ 
+-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed. 
++[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed.
+ 
+-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Added Activity, ActivityType ADT 
++[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Added Activity, ActivityType ADT
+ 
+ UpdateStatusTypes became UpdateStatusType (singular ADT)
+ 
+-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/7) Retry connection on 1001 websocket close 
++[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/7) Retry connection on 1001 websocket close
+ 
+ ### 0.7.0
+ 

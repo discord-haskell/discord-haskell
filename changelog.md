@@ -4,7 +4,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ### master
 
-### 0.8.1
+### 0.8.0
 
 `MessageUpdate` does not contain a full Message object, just `ChannelId` `MessageId`
 
