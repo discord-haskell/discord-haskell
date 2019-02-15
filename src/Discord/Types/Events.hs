@@ -42,7 +42,7 @@ data Event =
   | GuildRoleUpdate         GuildId Role
   | GuildRoleDelete         GuildId RoleId
   | MessageCreate           Message
-  | MessageUpdate           Message
+  | MessageUpdate           ChannelId MessageId
   | MessageDelete           ChannelId MessageId
   | MessageDeleteBulk       ChannelId [MessageId]
   | MessageReactionAdd      ReactionInfo
@@ -140,8 +140,8 @@ eventParse t o = case t of
     "GUILD_ROLE_CREATE"         -> GuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_DELETE"         -> GuildRoleDelete  <$> o .: "guild_id" <*> o .: "role"
-    "MESSAGE_CREATE"            -> MessageCreate             <$> reparse o
-    "MESSAGE_UPDATE"            -> MessageUpdate             <$> reparse o
+    "MESSAGE_CREATE"            -> MessageCreate     <$> reparse o
+    "MESSAGE_UPDATE"            -> MessageUpdate     <$> o .: "channel_id" <*> o .: "id"
     "MESSAGE_DELETE"            -> MessageDelete     <$> o .: "channel_id" <*> o .: "id"
     "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
     "MESSAGE_REACTION_ADD"      -> MessageReactionAdd <$> reparse o
