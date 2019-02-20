@@ -4,6 +4,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ### master
 
+[MP2E](https://github.com/aquarial/discord-haskell/pull/11) Fixed parse error on GuildRoleDelete: role_id instead of role
+
 ### 0.8.0
 
 `MessageUpdate` does not contain a full Message object, just `ChannelId` `MessageId`
