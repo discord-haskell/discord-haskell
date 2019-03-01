@@ -1,22 +1,29 @@
 name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
 version:             0.8.1
-synopsis:            Write bots for Discord in Haskell
 description:         Functions and data types to write discord bots.
                      Official discord docs <https://discordapp.com/developers/docs/reference>.
                      .
                      See the project readme for quickstart notes
                      <https://github.com/aquarial/discord-haskell#discord-haskell>
+synopsis:            Write bots for Discord in Haskell
 homepage:            https://github.com/aquarial/discord-haskell
+bug-reports:         https://github.com/aquarial/discord-haskell/issues
 license:             MIT
 license-file:        LICENSE
 author:              Karl
 maintainer:          ksfish5@gmail.com
--- copyright:
+copyright:           2019 Karl
 category:            Network
 build-type:          Simple
-extra-source-files:  changelog.md
+extra-doc-files:     README.md
+                   , changelog.md
 cabal-version:       >=1.10
+
+
+source-repository head
+  type:                git
+  location:            https://github.com/aquarial/discord-haskell.git
 
 library
   ghc-options:         -Wall
@@ -63,6 +70,3 @@ library
                      , websockets >=0.12.5.1 && <0.13
                      , wuss >=1.1.10 &&  <1.2
 
-source-repository head
-  type : git
-  location: https://github.com/aquarial/discord-haskell
