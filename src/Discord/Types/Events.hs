@@ -126,8 +126,8 @@ eventParse t o = case t of
     "GUILD_CREATE"              -> GuildCreate               <$> reparse o <*> reparse o
     "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> GuildDelete               <$> reparse o
-    "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> reparse o
-    "GUILD_BAN_REMOVE"          -> GuildBanRemove <$> o .: "guild_id" <*> reparse o
+    "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
+    "GUILD_BAN_REMOVE"          -> GuildBanRemove <$> o .: "guild_id" <*> o .: "user"
     "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
     "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> o .: "guild_id"
     "GUILD_MEMBER_ADD"          -> GuildMemberAdd <$> o .: "guild_id" <*> reparse o
