@@ -4,6 +4,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ### master
 
+[MP2E](https://github.com/aquarial/discord-haskell/pull/14) Fixed parse error on GuildBanAdd + GuildBanRevoke: user\_object instead the whole object
+
 ### 0.8.1
 
 [MP2E](https://github.com/aquarial/discord-haskell/pull/11) Fixed parse error on GuildRoleDelete: role_id instead of role
