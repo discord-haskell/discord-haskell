@@ -71,6 +71,7 @@ data Activity = Activity
 data ActivityType = ActivityTypeGame
                   | ActivityTypeStreaming
                   | ActivityTypeListening
+                  | ActivityTypeWatching
   deriving (Enum, Show)
 
 data UpdateStatusType = UpdateStatusOnline
