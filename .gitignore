@@ -1,5 +1,5 @@
 .cabal-sandbox/*
-.stack-work/*
+.stack-work
 .stack/*
 **/.stack/*
 **/.stack-work/*
