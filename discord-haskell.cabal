@@ -1,3 +1,4 @@
+cabal-version:       2.2
 name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
 version:             0.8.2
@@ -18,7 +19,6 @@ category:            Network
 build-type:          Simple
 extra-doc-files:     README.md
                    , changelog.md
-cabal-version:       1.18
 
 source-repository head
   type:                git
