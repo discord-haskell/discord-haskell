@@ -19,6 +19,7 @@ import Control.Exception.Safe (try)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Ix (inRange)
+import Data.List (isPrefixOf)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
@@ -68,8 +69,14 @@ restLoop auth urls log = loop M.empty
                                                     <> show ((i - curtime) * 1000))
                                 threadDelay $ round ((i - curtime + 0.1) * 1000)
                                 loop ratelocker
-                            PathWait i -> loop $ M.insert route i ratelocker
+                            PathWait i -> loop $ M.insert route (if isPrefixOf "add_react " route
+                                                                 then curtime + 0.25 else i)
+                                                          ratelocker
                             NoLimit -> loop ratelocker
+
+-- Note: we hardcode delay for CreateReaction ("add_react")
+-- why the headers are wrong: https://github.com/discordapp/discord-api-docs/issues/182
+-- why I chose to hardcode it: https://github.com/aquarial/discord-haskell/issues/16
 
 data RateLimited = Available | Locked
 

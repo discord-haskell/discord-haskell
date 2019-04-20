@@ -182,7 +182,7 @@ channelMajorRoute c = case c of
   (CreateMessage chan _) ->                 "msg " <> show chan
   (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
-  (CreateReaction (chan, _) _) ->         "react " <> show chan
+  (CreateReaction (chan, _) _) ->     "add_react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
   (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
   (GetReactions (chan, _) _ _) ->         "react " <> show chan
