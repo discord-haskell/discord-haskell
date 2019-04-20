@@ -18,8 +18,7 @@ category:            Network
 build-type:          Simple
 extra-doc-files:     README.md
                    , changelog.md
-cabal-version:       >=1.10
-
+cabal-version:       1.18
 
 source-repository head
   type:                git
