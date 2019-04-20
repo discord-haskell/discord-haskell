@@ -2,7 +2,12 @@
 
 View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
 
-### master
+## master
+
+
+### 0.8.2
+
+Hardcode CreateReaction delay so bots can add reactions 4 times faster
 
 [MP2E](https://github.com/aquarial/discord-haskell/pull/14) Fixed parse error on GuildBanAdd + GuildBanRevoke: user\_object instead the whole object
 
