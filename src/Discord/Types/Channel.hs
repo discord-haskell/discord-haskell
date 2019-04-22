@@ -22,6 +22,7 @@ data User = User
   , userDiscrim  :: String       -- ^ The user's 4-digit discord-tag.
   , userAvatar   :: Maybe String -- ^ The user's avatar hash.
   , userIsBot    :: Bool         -- ^ User is an OAuth2 application.
+  , userIsWebhook:: Bool         -- ^ User is a webhook
   , userMfa      :: Maybe Bool   -- ^ User has two factor authentication enabled on the account.
   , userVerified :: Maybe Bool   -- ^ Whether the email has been verified.
   , userEmail    :: Maybe String -- ^ The user's email.
@@ -34,6 +35,7 @@ instance FromJSON User where
          <*> o .:  "discriminator"
          <*> o .:? "avatar"
          <*> o .:? "bot" .!= False
+         <*> pure False -- webhook
          <*> o .:? "mfa_enabled"
          <*> o .:? "verified"
          <*> o .:? "email"
@@ -160,7 +162,7 @@ data Message = Message
   { messageId           :: MessageId       -- ^ The id of the message
   , messageChannel      :: ChannelId       -- ^ Id of the channel the message
                                            --   was sent in
-  , messageAuthor       :: Either WebhookId User -- ^ The 'User' the message was sent
+  , messageAuthor       :: User            -- ^ The 'User' the message was sent
                                            --   by
   , messageText         :: T.Text          -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
@@ -186,9 +188,10 @@ instance FromJSON Message where
     Message <$> o .:  "id"
             <*> o .:  "channel_id"
             <*> (do isW <- o .:? "webhook_id"
+                    a <- o .: "author"
                     case isW :: Maybe WebhookId of
-                      Nothing -> Right <$> o .: "author"
-                      Just w -> pure (Left w))
+                      Nothing -> pure a
+                      Just _ -> pure $ a { userIsWebhook = True })
             <*> o .:? "content" .!= ""
             <*> o .:? "timestamp" .!= epochTime
             <*> o .:? "edited_timestamp"
