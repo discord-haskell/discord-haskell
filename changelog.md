@@ -4,6 +4,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+Simplify Message Author from `Either WebhookId User` to `User`
 
 ### 0.8.2
 
