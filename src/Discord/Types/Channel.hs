@@ -17,17 +17,13 @@ import Discord.Types.Prelude
 
 -- | Represents information about a user.
 data User = User
-  { userId       :: UserId    -- ^ The user's id.
-  , userName     :: String       -- ^ The user's username, not unique across
-                                 --   the platform.
+  { userId       :: UserId       -- ^ The user's id.
+  , userName     :: String       -- ^ The user's username (not unique)
   , userDiscrim  :: String       -- ^ The user's 4-digit discord-tag.
   , userAvatar   :: Maybe String -- ^ The user's avatar hash.
-  , userIsBot    :: Bool         -- ^ Whether the user belongs to an OAuth2
-                                 --   application.
-  , userMfa      :: Maybe Bool   -- ^ Whether the user has two factor
-                                 --   authentication enabled on the account.
-  , userVerified :: Maybe Bool   -- ^ Whether the email on this account has
-                                 --   been verified.
+  , userIsBot    :: Bool         -- ^ User is an OAuth2 application.
+  , userMfa      :: Maybe Bool   -- ^ User has two factor authentication enabled on the account.
+  , userVerified :: Maybe Bool   -- ^ Whether the email has been verified.
   , userEmail    :: Maybe String -- ^ The user's email.
   } deriving (Show, Eq, Ord)
 
