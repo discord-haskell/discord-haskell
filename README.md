@@ -1,7 +1,7 @@
 # discord-haskell [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
 
-Please refer to `Getting Started` and `Notes` when 
-relevant. A few minutes of reading can save you 
+Please refer to `Getting Started` and `Notes` when
+relevant. A few minutes of reading can save you
 hours of debugging.
 
 Recent change: `master` branch has the potentially broken, most
@@ -17,17 +17,16 @@ nice to merge pull requests to test them.
 2 Add a 'Bot User' using the settings pane on the left. Take
 note of `CLIENT ID` on this page.
 
-3 Use the BOT PERMISSIONS tab to compute a Permissions Int
-(this does not immediately affect anything, hold onto this number)
+3 Use the BOT PERMISSIONS tab to compute a Permissions Int to use for step 3
 
-3 Invite the bot to a server filling in the `<>` information.
+3 Invite the bot to a server filling in the `<information>` below.
 Client ID and Permissions come from previous steps.
 `https://discordapp.com/oauth2/authorize?client_id=<CLIENT_ID>&scope=bot&permissions=<PERMISSIONS>`
 
-4 Connect to the gateway once in order to send CreateMessage events.
+4 Tos end `CreateMessage` events with restCall, you must connect to the gateway at least once. Try running `examples/gateway.hs` with your token to satisfy this.
 [This is a Discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
 
-5 Look at the examples.
+5 Look at the examples to get an idea of how the library is used.
 [examples/gateway.hs](./examples/gateway.hs),
 [examples/rest.hs](./examples/rest.hs),
 [examples/cache.hs](./examples/cache.hs), and
@@ -44,9 +43,9 @@ explore the ADTs.
 [Gateway Events](https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-events)
 provide the other source of info, using `nextEvent` and `sendCommand`. Use `:info` to explore `Event` and `GatewaySendable` ADTs.
 
-7 Add this library to your dependencies. discord-haskell is on hackage
-with strict version bounds to stackage lts-12.10. You can also use
-the github repo.
+7 Add this library to your dependencies. discord-haskell is on hackage,
+open an issue if the dependencies are too strict and you can't
+add it to your project.. You can also use the github repo.
 
 ```
 # in stack.yaml (if using stack)
@@ -65,7 +64,7 @@ extra-deps:
 ## Notes
 
 `loginRest` allows `restCall`. `loginRestGateway` allows `restCall`,
-`nextEvent`, `sendCommand`, and `readCache`. **Use `loginRest` if you don't need the 
+`nextEvent`, `sendCommand`, and `readCache`. **Use `loginRest` if you don't need the
 gateway.**
 
 Use `Control.Exception.finally` with `stopDiscord` to safely
@@ -75,7 +74,7 @@ kill background threads when running examples in ghci
 The examples will work on the `stable` branch. The `master` branch
 has the most recent (potentially) breaking changes.
 
-To get the format to use for Emoji, type `\:emoji:` into 
+To get the format to use for Emoji, type `\:emoji:` into
 a discord chat. You should copy-paste that into the request. This
 can be a bit finicky.  The equivalent of `:thumbsup::skin-tone-3:`
 is `"👍\127997"` for example, and a custom emoji will look
