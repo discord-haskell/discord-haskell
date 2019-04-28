@@ -80,6 +80,15 @@ can be a bit finicky.  The equivalent of `:thumbsup::skin-tone-3:`
 is `"👍\127997"` for example, and a custom emoji will look
 like `<name:id_number>` or `name:id_number`.
 
+## Debugging
+
+If something goes wrong with the library please open an issue. It is helpful,
+but not always necessary, to attach a log of what's going on when the library
+crashes.
+
+Use `loginRestGatewayWithLog :: Auth -> String -> IO (stuff)` to write the events to
+a file. Remember to remove sensitive information before posting.
+
 ## History
 
 This library was originally forked from

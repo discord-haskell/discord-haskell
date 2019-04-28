@@ -21,6 +21,7 @@ module Discord
   , stopDiscord
   , loginRest
   , loginRestGateway
+  , loginRestGatewayWithLog
   ) where
 
 import Prelude hiding (log)
@@ -53,8 +54,7 @@ data NotLoggedIntoGateway = NotLoggedIntoGateway
 loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [ThreadIdType])
 loginRest auth = do
   log <- newChan
-  -- writeFile "the-log-of-discord-haskell.txt" ""
-  logId <- forkIO (logger log False)
+  logId <- forkIO (logger log False "")
   (restHandler, restId) <- createHandler auth log
   pure (restHandler, NotLoggedIntoGateway, [ ThreadLogger logId
                                            , ThreadRest restId
@@ -64,8 +64,19 @@ loginRest auth = do
 loginRestGateway :: Auth -> IO (RestChan, Gateway, [ThreadIdType])
 loginRestGateway auth = do
   log <- newChan
-  -- writeFile "the-log-of-discord-haskell.txt" ""
-  logId <- forkIO (logger log False)
+  logId <- forkIO (logger log False "")
+  (restHandler, restId) <- createHandler auth log
+  (gate, gateId) <- startGatewayThread auth log
+  pure (restHandler, gate, [ ThreadLogger logId
+                           , ThreadRest restId
+                           , ThreadGateway gateId
+                           ])
+
+-- | Start HTTP rest handler and gateway background threads
+loginRestGatewayWithLog :: Auth -> String -> IO (RestChan, Gateway, [ThreadIdType])
+loginRestGatewayWithLog auth path = do
+  log <- newChan
+  logId <- forkIO (logger log True path)
   (restHandler, restId) <- createHandler auth log
   (gate, gateId) <- startGatewayThread auth log
   pure (restHandler, gate, [ ThreadLogger logId
@@ -104,9 +115,9 @@ stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) 
                    ThreadLogger a -> a
 
 -- | Add anything from the Chan to the log file, forever
-logger :: Chan String -> Bool -> IO ()
-logger log False = forever $ readChan log >>= \_ -> pure ()
-logger log True  = forever $ do
+logger :: Chan String -> Bool -> String -> IO ()
+logger log False _ = forever $ readChan log >>= \_ -> pure ()
+logger log True  f = forever $ do
   x <- readChan log
   let line = x <> "\n\n"
-  appendFile "the-log-of-discord-haskell.txt" line
+  appendFile f line
