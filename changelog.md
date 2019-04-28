@@ -4,7 +4,11 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+## 0.8.3
+
 Simplify Message Author from `Either WebhookId User` to `User`
+
+Add `loginRestGatewayWithLog`
 
 ### 0.8.2
 
