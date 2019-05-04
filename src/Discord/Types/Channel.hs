@@ -8,6 +8,7 @@ import qualified Data.Text as T
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
+import Data.Default (Default, def)
 import Data.Time.Clock
 import Data.Monoid ((<>))
 import qualified Data.HashMap.Strict as HM
@@ -213,23 +214,34 @@ instance FromJSON Attachment where
 
 -- | An embed attached to a message.
 data Embed = Embed
-  { embedTitle  :: String     -- ^ Title of the embed
-  , embedType   :: String     -- ^ Type of embed (Always "rich" for webhooks)
-  , embedDesc   :: String     -- ^ Description of embed
-  , embedUrl    :: String     -- ^ URL of embed
-  , embedTime   :: UTCTime    -- ^ The time of the embed content
-  , embedColor  :: Integer    -- ^ The embed color
+  { embedTitle  :: Maybe String     -- ^ Title of the embed
+  , embedType   :: Maybe String     -- ^ Type of embed (Always "rich" for webhooks)
+  , embedDesc   :: Maybe String     -- ^ Description of embed
+  , embedUrl    :: Maybe String     -- ^ URL of embed
+  , embedTime   :: Maybe UTCTime    -- ^ The time of the embed content
+  , embedColor  :: Maybe Integer    -- ^ The embed color
   , embedFields :: [SubEmbed] -- ^ Fields of the embed
   } deriving (Show, Read, Eq)
 
+instance Default Embed where
+  def = Embed
+    { embedTitle  = Nothing
+    , embedType   = Nothing
+    , embedDesc   = Nothing
+    , embedUrl    = Nothing
+    , embedTime   = Nothing
+    , embedColor  = Nothing
+    , embedFields = []
+    }
+
 instance FromJSON Embed where
   parseJSON = withObject "Embed" $ \o ->
-    Embed <$> o .:? "title" .!= "Untitled"
-          <*> o .:  "type"
-          <*> o .:? "description" .!= ""
-          <*> o .:? "url" .!= ""
-          <*> o .:? "timestamp" .!= epochTime
-          <*> o .:? "color" .!= 0
+    Embed <$> o .: "title"
+          <*> o .: "type"
+          <*> o .: "description"
+          <*> o .: "url"
+          <*> o .: "timestamp"
+          <*> o .: "color"
           <*> sequence (HM.foldrWithKey to_embed [] o)
     where
       to_embed k (Object v) a = case k of
