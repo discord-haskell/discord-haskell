@@ -9,7 +9,11 @@ module Discord.Rest.Channel
   ( ChannelRequest(..)
   , ReactionTiming(..)
   , MessageTiming(..)
-  , ModifyChannelOptions(..)
+  , ChannelInviteOpts(..)
+  , ModifyChannelOpts(..)
+  , ChannelPermissionsOpts(..)
+  , GroupDMAddRecipientOpts(..)
+  , ChannelPermissionsOptsType(..)
   ) where
 
 
@@ -32,65 +36,63 @@ instance Request (ChannelRequest a) where
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data ChannelRequest a where
   -- | Gets a channel by its id.
-  GetChannel              :: Snowflake -> ChannelRequest Channel
+  GetChannel              :: ChannelId -> ChannelRequest Channel
   -- | Edits channels options.
-  ModifyChannel           :: Snowflake -> ModifyChannelOptions -> ChannelRequest Channel
+  ModifyChannel           :: ChannelId -> ModifyChannelOpts -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
-  DeleteChannel           :: Snowflake -> ChannelRequest Channel
+  DeleteChannel           :: ChannelId -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: Snowflake -> (Int, MessageTiming) -> ChannelRequest [Message]
+  GetChannelMessages      :: ChannelId -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
-  GetChannelMessage       :: (Snowflake, Snowflake) -> ChannelRequest Message
+  GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
-  CreateMessage           :: Snowflake -> T.Text -> Maybe Embed -> ChannelRequest Message
+  CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
+  -- | Sends a message with an Embed to a channel.
+  CreateMessageEmbed      :: ChannelId -> T.Text -> Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
-  UploadFile              :: Snowflake -> FilePath -> BL.ByteString -> ChannelRequest Message
+  CreateMessageUploadFile :: ChannelId -> T.Text -> BL.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
-  CreateReaction          :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> ChannelRequest ()
+  CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
-  DeleteOwnReaction       :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> ChannelRequest ()
+  DeleteOwnReaction       :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction someone else added
-  DeleteUserReaction      :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> Snowflake -> ChannelRequest ()
+  DeleteUserReaction      :: (ChannelId, MessageId) -> UserId -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
-  GetReactions            :: (Snowflake, Snowflake) -> (T.Text, Maybe Snowflake)
-                                                    -> (Int, ReactionTiming) -> ChannelRequest ()
+  GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
   -- | Delete all reactions on a message
-  DeleteAllReactions      :: (Snowflake, Snowflake) -> ChannelRequest ()
+  DeleteAllReactions      :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
-  EditMessage             :: (Snowflake, Snowflake) -> T.Text -> Maybe Embed
+  EditMessage             :: (ChannelId, MessageId) -> T.Text -> Maybe Embed
                                                     -> ChannelRequest Message
   -- | Deletes a message.
-  DeleteMessage           :: (Snowflake, Snowflake) -> ChannelRequest ()
+  DeleteMessage           :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Deletes a group of messages.
-  BulkDeleteMessage       :: (Snowflake, [Snowflake]) -> ChannelRequest ()
-  -- todo | Edits a permission overrides for a channel.
-  -- todo EditChannelPermissions  :: ToJSON o  => Snowflake -> Snowflake -> o -> ChannelRequest ()
+  BulkDeleteMessage       :: (ChannelId, [MessageId]) -> ChannelRequest ()
+  -- | Edits a permission overrides for a channel.
+  EditChannelPermissions  :: ChannelId -> OverwriteId -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
-  GetChannelInvites       :: Snowflake -> ChannelRequest Object
-  -- todo | Creates an instant invite to a channel.
-  -- todo CreateChannelInvite     :: ToJSON o  => Snowflake -> o -> ChannelRequest Object
+  GetChannelInvites       :: ChannelId -> ChannelRequest Object
+  -- | Creates an instant invite to a channel.
+  CreateChannelInvite     :: ChannelId -> ChannelInviteOpts -> ChannelRequest Invite
   -- | Deletes a permission override from a channel.
-  DeleteChannelPermission :: Snowflake -> Snowflake -> ChannelRequest ()
+  DeleteChannelPermission :: ChannelId -> OverwriteId -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
-  TriggerTypingIndicator  :: Snowflake -> ChannelRequest ()
+  TriggerTypingIndicator  :: ChannelId -> ChannelRequest ()
   -- | Gets all pinned messages of a channel.
-  GetPinnedMessages       :: Snowflake -> ChannelRequest [Message]
+  GetPinnedMessages       :: ChannelId -> ChannelRequest [Message]
   -- | Pins a message.
-  AddPinnedMessage        :: (Snowflake, Snowflake) -> ChannelRequest ()
+  AddPinnedMessage        :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Unpins a message.
-  DeletePinnedMessage     :: (Snowflake, Snowflake) -> ChannelRequest ()
-  -- todo | Adds a recipient to a Group DM using their access token
-  -- todo GroupDMAddRecipient     :: Snowflake -> Snowflake -> ChannelRequest ()
-  -- todo | Removes a recipient from a Group DM
-  -- todo GroupDMRemoveRecipient  :: Snowflake -> Snowflake -> ChannelRequest ()
+  DeletePinnedMessage     :: (ChannelId, MessageId) -> ChannelRequest ()
+  -- | Adds a recipient to a Group DM using their access token
+  GroupDMAddRecipient     :: ChannelId -> GroupDMAddRecipientOpts -> ChannelRequest ()
+  -- | Removes a recipient from a Group DM
+  GroupDMRemoveRecipient  :: ChannelId -> UserId -> ChannelRequest ()
 
 
 -- | Data constructor for GetReaction requests
-data ReactionTiming = BeforeReaction Snowflake
-                    | AfterReaction Snowflake
+data ReactionTiming = BeforeReaction MessageId
+                    | AfterReaction MessageId
 
 reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
@@ -98,17 +100,33 @@ reactionTimingToQuery t = case t of
   (AfterReaction snow) -> "after"  R.=: show snow
 
 -- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
-data MessageTiming = AroundMessage Snowflake
-                   | BeforeMessage Snowflake
-                   | AfterMessage Snowflake
+data MessageTiming = AroundMessage MessageId
+                   | BeforeMessage MessageId
+                   | AfterMessage MessageId
+                   | LatestMessages
 
 messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
 messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
+  (LatestMessages) -> mempty
 
-data ModifyChannelOptions = ModifyChannelOptions
+data ChannelInviteOpts = ChannelInviteOpts
+  { channelInviteOptsMaxAgeSeconds          :: Maybe Integer
+  , channelInviteOptsMaxUsages              :: Maybe Integer
+  , channelInviteOptsIsTemporary            :: Maybe Bool
+  , channelInviteOptsDontReuseSimilarInvite :: Maybe Bool
+  }
+
+instance ToJSON ChannelInviteOpts where
+  toJSON ChannelInviteOpts{..} = object [(name, val) | (name, Just val) <-
+                         [("max_age",   toJSON <$> channelInviteOptsMaxAgeSeconds),
+                          ("max_uses",  toJSON <$> channelInviteOptsMaxUsages),
+                          ("temporary", toJSON <$> channelInviteOptsIsTemporary),
+                          ("unique",    toJSON <$> channelInviteOptsDontReuseSimilarInvite) ] ]
+
+data ModifyChannelOpts = ModifyChannelOpts
   { modifyChannelName                 :: Maybe String
   , modifyChannelPosition             :: Maybe Integer
   , modifyChannelTopic                :: Maybe String
@@ -116,11 +134,11 @@ data ModifyChannelOptions = ModifyChannelOptions
   , modifyChannelBitrate              :: Maybe Integer
   , modifyChannelUserRateLimit        :: Maybe Integer
   , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
-  , modifyChannelParentId             :: Maybe Snowflake
+  , modifyChannelParentId             :: Maybe ChannelId
   }
 
-instance ToJSON ModifyChannelOptions where
-  toJSON ModifyChannelOptions{..} = object [(name, val) | (name, Just val) <-
+instance ToJSON ModifyChannelOpts where
+  toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
                [("name",       toJSON <$> modifyChannelName),
                 ("position",   toJSON <$> modifyChannelPosition),
                 ("topic",      toJSON <$> modifyChannelTopic),
@@ -130,6 +148,30 @@ instance ToJSON ModifyChannelOptions where
                 ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
                 ("parent_id",  toJSON <$> modifyChannelParentId) ] ]
 
+data ChannelPermissionsOpts = ChannelPermissionsOpts
+  { channelPermissionsOptsAllow :: Integer
+  , channelPermissionsOptsDeny :: Integer
+  , channelPermissionsOptsType :: ChannelPermissionsOptsType}
+
+data ChannelPermissionsOptsType = ChannelPermissionsOptsUser
+                                | ChannelPermissionsOptsRole
+
+instance ToJSON ChannelPermissionsOptsType where
+  toJSON t = case t of ChannelPermissionsOptsUser -> String "member"
+                       ChannelPermissionsOptsRole -> String "role"
+
+instance ToJSON ChannelPermissionsOpts where
+  toJSON (ChannelPermissionsOpts a d t) = object [ ("allow", toJSON a )
+                                                 , ("deny", toJSON d)
+                                                 , ("type", toJSON t)]
+
+-- | https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
+  { groupDMAddRecipientUserToAdd :: UserId
+  , groupDMAddRecipientUserToAddNickName :: T.Text
+  , groupDMAddRecipientGDMJoinAccessToken :: T.Text
+  }
+
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of
   (GetChannel chan) ->                 "get_chan " <> show chan
@@ -137,25 +179,33 @@ channelMajorRoute c = case c of
   (DeleteChannel chan) ->              "mod_chan " <> show chan
   (GetChannelMessages chan _) ->            "msg " <> show chan
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
-  (CreateMessage chan _ _) ->               "msg " <> show chan
-  (UploadFile chan _ _) ->                  "msg " <> show chan
-  (CreateReaction (chan, _) _) ->          "react" <> show chan
-  (DeleteOwnReaction (chan, _) _) ->       "react" <> show chan
-  (DeleteUserReaction (chan, _) _ _) ->    "react" <> show chan
-  (GetReactions (chan, _) _ _) ->          "react" <> show chan
-  (DeleteAllReactions (chan, _)) ->        "react" <> show chan
+  (CreateMessage chan _) ->                 "msg " <> show chan
+  (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
+  (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
+  (CreateReaction (chan, _) _) ->     "add_react " <> show chan
+  (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
+  (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
+  (GetReactions (chan, _) _ _) ->         "react " <> show chan
+  (DeleteAllReactions (chan, _)) ->       "react " <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
-  -- todo (EditChannelPermissions chan _ _) ->    "perms " <> show chan
+  (EditChannelPermissions chan _ _) ->    "perms " <> show chan
   (GetChannelInvites chan) ->           "invites " <> show chan
-  -- todo (CreateChannelInvite chan _) ->       "invites " <> show chan
+  (CreateChannelInvite chan _) ->       "invites " <> show chan
   (DeleteChannelPermission chan _) ->     "perms " <> show chan
   (TriggerTypingIndicator chan) ->          "tti " <> show chan
   (GetPinnedMessages chan) ->              "pins " <> show chan
   (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
   (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
+  (GroupDMAddRecipient chan _) ->       "groupdm " <> show chan
+  (GroupDMRemoveRecipient chan _) ->    "groupdm " <> show chan
 
+cleanupEmoji :: T.Text -> T.Text
+cleanupEmoji emoji =
+  let noAngles = T.replace "<" "" (T.replace ">" "" emoji)
+  in case T.stripPrefix ":" noAngles of Just a -> "custom:" <> a
+                                        Nothing -> noAngles
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
@@ -187,34 +237,39 @@ channelJsonRequest c = case c of
   (GetChannelMessage (chan, msg)) ->
       Get (channels // chan /: "messages" // msg) mempty
 
-  (CreateMessage chan msg embed) ->
-      let content = ["content" .= msg] <> maybeEmbed embed
+  (CreateMessage chan msg) ->
+      let content = ["content" .= msg]
           body = pure $ R.ReqBodyJson $ object content
       in Post (channels // chan /: "messages") body mempty
 
-  (UploadFile chan fileName file) ->
-      let part = partFileRequestBody "file" fileName $ RequestBodyLBS file
+  (CreateMessageEmbed chan msg embed) ->
+      let content = ["content" .= msg] <> maybeEmbed (Just embed)
+          body = pure $ R.ReqBodyJson $ object content
+      in Post (channels // chan /: "messages") body mempty
+
+  (CreateMessageUploadFile chan fileName file) ->
+      let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyLBS file
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
 
-  (CreateReaction (chan, msgid) (name, rID)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-      in Put (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" )
+  (CreateReaction (chan, msgid) emoji) ->
+      let e = cleanupEmoji emoji
+      in Put (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" )
              R.NoReqBody mempty
 
-  (DeleteOwnReaction (chan, msgid) (name, rID)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji /: "@me" ) mempty
+  (DeleteOwnReaction (chan, msgid) emoji) ->
+      let e = cleanupEmoji emoji
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" ) mempty
 
-  (DeleteUserReaction (chan, msgid) (name, rID) uID) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: emoji // uID ) mempty
+  (DeleteUserReaction (chan, msgid) uID emoji) ->
+      let e = cleanupEmoji emoji
+      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e // uID ) mempty
 
-  (GetReactions (chan, msgid) (name, rID) (n, timing)) ->
-      let emoji = "" <> name <> maybe "" ((<>) ":" . T.pack . show) rID
+  (GetReactions (chan, msgid) emoji (n, timing)) ->
+      let e = cleanupEmoji emoji
           n' = if n < 1 then 1 else (if n > 100 then 100 else n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
-      in Get (channels // chan /: "messages" // msgid /: "reactions" /: emoji ) options
+      in Get (channels // chan /: "messages" // msgid /: "reactions" /: e) options
 
   (DeleteAllReactions (chan, msgid)) ->
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
@@ -231,14 +286,14 @@ channelJsonRequest c = case c of
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
       in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
 
-  -- todo (EditChannelPermissions chan perm patch) ->
-  --  Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+  (EditChannelPermissions chan perm patch) ->
+      Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
 
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
 
-  -- todo (CreateChannelInvite chan patch) ->
-  --  Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+  (CreateChannelInvite chan patch) ->
+      Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannelPermission chan perm) ->
       Delete (channels // chan /: "permissions" // perm) mempty
@@ -254,4 +309,13 @@ channelJsonRequest c = case c of
 
   (DeletePinnedMessage (chan, msg)) ->
       Delete (channels // chan /: "pins" // msg) mempty
+
+  (GroupDMAddRecipient chan (GroupDMAddRecipientOpts uid nick tok)) ->
+      Put (channels // chan // chan /: "recipients" // uid)
+          (R.ReqBodyJson (object [ ("access_token", toJSON tok)
+                                 , ("nick", toJSON nick)]))
+          mempty
+
+  (GroupDMRemoveRecipient chan userid) ->
+      Delete (channels // chan // chan /: "recipients" // userid) mempty
 

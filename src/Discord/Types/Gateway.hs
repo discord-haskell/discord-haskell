@@ -9,6 +9,8 @@ import System.Info
 
 import qualified Data.Text as T
 import Data.Monoid ((<>))
+import Data.Time (UTCTime)
+import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe (fromMaybe)
@@ -31,11 +33,61 @@ data GatewayReceivable
 data GatewaySendable
   = Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
-  | StatusUpdate (Maybe Integer) (Maybe String)
-  | VoiceStatusUpdate Snowflake (Maybe Snowflake) Bool Bool
   | Resume T.Text String Integer
-  | RequestGuildMembers Snowflake String Integer
+  | RequestGuildMembers RequestGuildMembersOpts
+  | UpdateStatus UpdateStatusOpts
+  | UpdateStatusVoice UpdateStatusVoiceOpts
+  deriving (Show)
 
+data RequestGuildMembersOpts = RequestGuildMembersOpts
+                             { requestGuildMembersGuildId :: GuildId
+                             , requestGuildMembersSearchQuery :: T.Text
+                             , requestGuildMembersLimit :: Integer }
+  deriving (Show)
+
+data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
+                           { updateStatusVoiceGuildId :: GuildId
+                           , updateStatusVoiceChannelId :: Maybe ChannelId
+                           , updateStatusVoiceIsMuted :: Bool
+                           , updateStatusVoiceIsDeaf :: Bool
+                           }
+  deriving (Show)
+
+data UpdateStatusOpts = UpdateStatusOpts
+                      { updateStatusSince :: Maybe UTCTime
+                      , updateStatusGame :: Maybe Activity
+                      , updateStatusNewStatus :: UpdateStatusType
+                      , updateStatusAFK :: Bool
+                      }
+  deriving (Show)
+
+data Activity = Activity
+              { activityName :: T.Text
+              , activityType :: ActivityType
+              , activityUrl :: Maybe T.Text
+              }
+  deriving (Show)
+
+data ActivityType = ActivityTypeGame
+                  | ActivityTypeStreaming
+                  | ActivityTypeListening
+                  | ActivityTypeWatching
+  deriving (Enum, Show)
+
+data UpdateStatusType = UpdateStatusOnline
+                      | UpdateStatusDoNotDisturb
+                      | UpdateStatusAwayFromKeyboard
+                      | UpdateStatusInvisibleOffline
+                      | UpdateStatusOffline
+  deriving (Show)
+
+statusString :: UpdateStatusType -> T.Text
+statusString s = case s of
+  UpdateStatusOnline -> "online"
+  UpdateStatusDoNotDisturb -> "dnd"
+  UpdateStatusAwayFromKeyboard -> "idle"
+  UpdateStatusInvisibleOffline -> "invisible"
+  UpdateStatusOffline -> "offline"
 
 instance FromJSON GatewayReceivable where
   parseJSON = withObject "payload" $ \o -> do
@@ -85,16 +137,23 @@ instance ToJSON GatewaySendable where
       , "shard" .= shard
       ]
     ]
-  toJSON (StatusUpdate idle game) = object [
+  toJSON (UpdateStatus (UpdateStatusOpts since game status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
-        "idle_since" .= idle
-      , "game"       .= object [
-          "name" .= game
-        ]
+        "since" .= case since of Nothing -> Nothing
+                                 Just s -> Just ((10^6) * (utcTimeToPOSIXSeconds s))
+      , "afk" .= afk
+      , "status" .= statusString status
+      , "game" .= case game of Nothing -> Nothing
+                               Just a -> Just $ object [
+                                           "name" .= activityName a
+                                         , "type" .= (fromEnum $ activityType a :: Int)
+                                         , "url" .= activityUrl a
+                                         ]
       ]
     ]
-  toJSON (VoiceStatusUpdate guild channel mute deaf) = object [
+  toJSON (UpdateStatusVoice (UpdateStatusVoiceOpts guild channel mute deaf)) =
+    object [
       "op" .= (4 :: Int)
     , "d"  .= object [
         "guild_id"   .= guild
@@ -111,7 +170,8 @@ instance ToJSON GatewaySendable where
       , "seq"        .= seqId
       ]
     ]
-  toJSON (RequestGuildMembers guild query limit) = object [
+  toJSON (RequestGuildMembers (RequestGuildMembersOpts guild query limit)) =
+    object [
       "op" .= (8 :: Int)
     , "d"  .= object [
         "guild_id" .= guild

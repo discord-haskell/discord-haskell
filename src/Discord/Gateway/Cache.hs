@@ -6,40 +6,51 @@ module Discord.Gateway.Cache where
 
 import Prelude hiding (log)
 import Data.Monoid ((<>))
+import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
 
 import Discord.Types
+import Discord.Gateway.EventLoop
 
 data Cache = Cache
             { _currentUser :: User
-            , _dmChannels :: M.Map Snowflake Channel
-            , _guilds :: M.Map Snowflake (Guild, GuildInfo)
-            , _channels :: M.Map Snowflake Channel
+            , _dmChannels :: M.Map ChannelId Channel
+            , _guilds :: M.Map GuildId (Guild, GuildInfo)
+            , _channels :: M.Map ChannelId Channel
             } deriving (Show)
 
-emptyCache :: IO (MVar Cache)
+emptyCache :: IO (MVar (Either GatewayException Cache))
 emptyCache = newEmptyMVar
 
-addEvent :: MVar Cache -> Chan Event -> Chan String -> IO ()
-addEvent cache eventChan log = do
+cacheAddEventLoopFork :: MVar (Either GatewayException Cache) -> Chan (Either GatewayException Event) -> Chan String -> IO ()
+cacheAddEventLoopFork cache eventChan log = do
       ready <- readChan eventChan
       case ready of
-        (Ready _ user dmChannels _unavailableGuilds _) -> do
+        Right (Ready _ user dmChannels _unavailableGuilds _) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-          putMVar cache (Cache user dmChans M.empty M.empty)
-          loop
-        _ -> do
-          writeChan log ("Cache error - expected Ready, but got " <> show ready)
-          addEvent cache eventChan log
+          putMVar cache (Right (Cache user dmChans M.empty M.empty))
+          _ <- forkIO loop
+          pure ()
+        Right r -> do
+          writeChan log ("cache - expected Ready event, but got " <> show r)
+          cacheAddEventLoopFork cache eventChan log
+        Left e -> do
+          writeChan log "cache - gateway exception, stopping cache"
+          putMVar cache (Left e)
   where
   loop :: IO ()
   loop = do
-    event <- readChan eventChan
+    eventOrExcept <- readChan eventChan
     minfo <- takeMVar cache
-    putMVar cache (adjustCache minfo event)
-    loop
+    case (eventOrExcept, minfo) of
+      (_, Left _) -> pure () -- never happen bc we stop loop once cache has an exception
+      (Left exception, _) -> do putMVar cache (Left exception)
+                                -- stop cache loop
+      (Right event, Right info) -> do
+        putMVar cache (Right (adjustCache info event))
+        loop
 
 adjustCache :: Cache -> Event -> Cache
 adjustCache minfo event = case event of
@@ -64,7 +75,7 @@ adjustCache minfo event = case event of
   --  putMVar cache m2
   _ -> minfo
 
-setChanGuildID :: Snowflake -> Channel -> Channel
-setChanGuildID s c = if isGuildChannel c
+setChanGuildID :: GuildId -> Channel -> Channel
+setChanGuildID s c = if channelIsInGuild c
                      then c { channelGuild = s }
                      else c

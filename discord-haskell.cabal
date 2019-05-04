@@ -1,19 +1,28 @@
+cabal-version:       2.0
 name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
-version:             0.5.0
-synopsis:            Discord bot library for Haskell
+version:             0.8.3
 description:         Functions and data types to write discord bots.
-                     See docs: <https://discordapp.com/developers/docs/reference>
+                     Official discord docs <https://discordapp.com/developers/docs/reference>.
+                     .
+                     See the project readme for quickstart notes
+                     <https://github.com/aquarial/discord-haskell#discord-haskell>
+synopsis:            Write bots for Discord in Haskell
 homepage:            https://github.com/aquarial/discord-haskell
+bug-reports:         https://github.com/aquarial/discord-haskell/issues
 license:             MIT
 license-file:        LICENSE
-author:              Karl, Joshua Koike
--- maintainer:
--- copyright:
+author:              Karl
+maintainer:          ksfish5@gmail.com
+copyright:           2019 Karl
 category:            Network
 build-type:          Simple
--- extra-source-files:
-cabal-version:       >=1.10
+extra-doc-files:     README.md
+                   , changelog.md
+
+source-repository head
+  type:                git
+  location:            https://github.com/aquarial/discord-haskell.git
 
 library
   ghc-options:         -Wall
@@ -28,6 +37,7 @@ library
                      , Discord.Rest
                      , Discord.Rest.Prelude
                      , Discord.Rest.HTTP
+                     , Discord.Rest.Invite
                      , Discord.Rest.Emoji
                      , Discord.Rest.User
                      , Discord.Rest.Guild
@@ -39,24 +49,23 @@ library
                      , Discord.Types.Gateway
                      , Discord.Types.Guild
   build-depends:
-                       base >=4.10.1.0 && <4.11
-                     , aeson >=1.2.4.0 && <1.3
-                     , async >=2.1.1.1 && <2.2
+                       base >=4 && <5
+                     , aeson >=1.3.1.1 && <1.5
+                     , async >=2.2.1 && <2.3
                      , bytestring >=0.10.8.2 && <0.11
-                     , containers >=0.5.10.2 && <0.6
+                     , base64-bytestring >=1.0.0.1 && <1.1
+                     , containers >=0.5.11.0 && <0.7
                      , data-default >=0.7.1.1 && <0.8
-                     , http-client >=0.5.12.1 && <0.6
-                     , iso8601-time >=0.1.4 && <0.2
-                     , MonadRandom >=0.5.1 && <0.6
-                     , req >=1.0.0 && <1.1
+                     , http-client >=0.5.13.1 && <0.6
+                     , iso8601-time >=0.1.5 && <0.2
+                     , MonadRandom >=0.5.1.1 && <0.6
+                     , req >=1.1.0 && <1.3
+                     , JuicyPixels >=3.2.9.5 && <3.4
                      , safe-exceptions >=0.1.7.0 && <0.2
                      , text >=1.2.3.0 && <1.3
                      , time >=1.8.0.2 && <1.9
                      , unordered-containers >=0.2.9.0 && <0.3
                      , vector >=0.12.0.1 && <0.13
-                     , websockets >=0.12.4.1 && <0.13
-                     , wuss >=1.1.9 && <1.2
+                     , websockets >=0.12.5.1 && <0.13
+                     , wuss >=1.1.10 &&  <1.2
 
-source-repository head
-  type : git
-  location: https://github.com/aquarial/discord-haskell

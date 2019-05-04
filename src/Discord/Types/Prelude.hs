@@ -23,7 +23,9 @@ data Auth = Auth T.Text
 
 -- | Formats the token for use with the REST API
 formatAuth :: Auth -> Q.ByteString
-formatAuth (Auth token) = "Bot "    <> TE.encodeUtf8 token
+formatAuth (Auth givenTok) = let token = T.strip givenTok
+                                 bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
+                             in TE.encodeUtf8 $ bot <> token
 
 -- | Get the raw token formatted for use with the websocket gateway
 authToken :: Auth -> T.Text
@@ -43,9 +45,19 @@ instance FromJSON Snowflake where
   parseJSON (String snowflake) = Snowflake <$> (return . read $ T.unpack snowflake)
   parseJSON _ = mzero
 
+type ChannelId = Snowflake
+type GuildId = Snowflake
+type MessageId = Snowflake
+type EmojiId = Snowflake
+type UserId = Snowflake
+type OverwriteId = Snowflake
+type RoleId = Snowflake
+type IntegrationId = Snowflake
+type WebhookId = Snowflake
+
 -- | Gets a creation date from a snowflake.
-creationDate :: Snowflake -> UTCTime
-creationDate x = posixSecondsToUTCTime . realToFrac
+snowflakeCreationDate :: Snowflake -> UTCTime
+snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
   $ 1420070400 + quot (shiftR x 22) 1000
 
 -- | Default timestamp

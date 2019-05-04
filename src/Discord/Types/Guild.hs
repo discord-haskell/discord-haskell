@@ -19,7 +19,7 @@ data GuildMember = GuildMember
       , memberJoinedAt :: UTCTime
       , memberDeaf     :: Bool
       , memberMute     :: Bool
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON GuildMember where
   parseJSON = withObject "GuildMember" $ \o ->
@@ -36,26 +36,26 @@ instance FromJSON GuildMember where
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 data Guild = Guild
-      { guildId                  :: !Snowflake       -- ^ Gulid id
-      , guildName                ::  T.Text          -- ^ Guild name (2 - 100 chars)
-      , guildIcon                ::  Maybe T.Text    -- ^ Icon hash
-      , guildSplash              ::  Maybe T.Text    -- ^ Splash hash
-      , guildOwnerId             :: !Snowflake       -- ^ Guild owner id
-      , guildPermissions         ::  Maybe Integer
-      , guildRegion              ::  T.Text          -- ^ Guild voice region
-      , guildAfkId               ::  Maybe Snowflake -- ^ Id of afk channel
-      , guildAfkTimeout          :: !Integer         -- ^ Afk timeout in seconds
-      , guildEmbedEnabled        ::  Maybe Bool      -- ^ Id of embedded channel
-      , guildEmbedChannel        ::  Maybe Snowflake -- ^ Id of embedded channel
-      , guildVerificationLevel   :: !Integer         -- ^ Level of verification
-      , guildNotification        :: !Integer         -- ^ Level of default notifications
-      , guildExplicitFilterLevel :: !Integer
+      { guildId                  :: GuildId       -- ^ Gulid id
+      , guildName                :: T.Text          -- ^ Guild name (2 - 100 chars)
+      , guildIcon                :: Maybe T.Text    -- ^ Icon hash
+      , guildSplash              :: Maybe T.Text    -- ^ Splash hash
+      , guildOwnerId             :: UserId       -- ^ Guild owner id
+      , guildPermissions         :: Maybe Integer
+      , guildRegion              :: T.Text          -- ^ Guild voice region
+      , guildAfkId               :: Maybe ChannelId -- ^ Id of afk channel
+      , guildAfkTimeout          :: Integer         -- ^ Afk timeout in seconds
+      , guildEmbedEnabled        :: Maybe Bool      -- ^ Id of embedded channel
+      , guildEmbedChannel        :: Maybe ChannelId -- ^ Id of embedded channel
+      , guildVerificationLevel   :: Integer         -- ^ Level of verification
+      , guildNotification        :: Integer         -- ^ Level of default notifications
+      , guildExplicitFilterLevel :: Integer
       , guildRoles               :: [Role]           -- ^ Array of 'Role' objects
       , guildEmojis              :: [Emoji]          -- ^ Array of 'Emoji' objects
       , guildFeatures            :: [T.Text]
       , guildMultiFactAuth       :: !Integer
-      , guildApplicationId       ::  Maybe Snowflake
-      } deriving Show
+      , guildApplicationId       :: Maybe Snowflake
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Guild where
   parseJSON = withObject "Guild" $ \o ->
@@ -79,13 +79,13 @@ instance FromJSON Guild where
           <*> o .:  "mfa_level"
           <*> o .:? "application_id"
 
-data Unavailable = Unavailable
-      { idOnceAvailable :: !Snowflake
-      } deriving Show
+data GuildUnavailable = GuildUnavailable
+      { idOnceAvailable :: GuildId
+      } deriving (Show, Eq, Ord)
 
-instance FromJSON Unavailable where
-  parseJSON = withObject "Unavailable" $ \o ->
-       Unavailable <$> o .: "id"
+instance FromJSON GuildUnavailable where
+  parseJSON = withObject "GuildUnavailable" $ \o ->
+       GuildUnavailable <$> o .: "id"
 
 data GuildInfo = GuildInfo
       { guildJoinedAt    :: UTCTime
@@ -95,7 +95,7 @@ data GuildInfo = GuildInfo
       , guildMembers     :: [GuildMember]
       , guildChannels    :: [Channel]     -- ^ Channels in the guild (sent in GuildCreate)
    -- , guildPresences   :: [Presence]
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON GuildInfo where
   parseJSON = withObject "GuildInfo" $ \o ->
@@ -107,28 +107,28 @@ instance FromJSON GuildInfo where
               <*> o .: "channels"
 
 data PartialGuild = PartialGuild
-      { partialGuildId          :: Snowflake
+      { partialGuildId          :: GuildId
       , partialGuildName        :: T.Text
       , partialGuildIcon        :: Maybe T.Text
       , partialGuildOwner       :: Bool
       , partialGuildPermissions :: Integer
-      } deriving Show
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON PartialGuild where
   parseJSON = withObject "PartialGuild" $ \o ->
     PartialGuild <$> o .:  "id"
                  <*> o .:  "name"
                  <*> o .:? "icon"
-                 <*> o .:  "owner"
+                 <*> o .:?  "owner" .!= False
                  <*> o .:  "permissions"
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId      :: Maybe Snowflake   -- ^ The emoji id
+  { emojiId      :: Maybe EmojiId   -- ^ The emoji id
   , emojiName    :: T.Text            -- ^ The emoji name
-  , emojiRoles   :: Maybe [Snowflake] -- ^ Roles the emoji is active for
+  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
   , emojiManaged :: Maybe Bool        -- ^ Whether this emoji is managed
-  } deriving (Show)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Emoji where
   parseJSON = withObject "Emoji" $ \o ->
@@ -143,7 +143,7 @@ instance FromJSON Emoji where
 --   (guild) and channel context.
 data Role =
     Role {
-        roleID      :: !Snowflake -- ^ The role id
+        roleID      :: RoleId -- ^ The role id
       , roleName    :: T.Text                    -- ^ The role name
       , roleColor   :: Integer                   -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
@@ -151,7 +151,7 @@ data Role =
       , rolePerms   :: Integer                   -- ^ Permission bit set
       , roleManaged :: Bool                      -- ^ Whether this role is managed by an integration
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
-    } deriving (Show, Eq)
+    } deriving (Show, Eq, Ord)
 
 instance FromJSON Role where
   parseJSON = withObject "Role" $ \o ->
@@ -167,7 +167,7 @@ instance FromJSON Role where
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion =
     VoiceRegion
-      { regionId          :: !Snowflake -- ^ Unique id of the region
+      { regionId          :: Snowflake -- ^ Unique id of the region
       , regionName        :: T.Text                    -- ^ Name of the region
       , regionHostname    :: T.Text                    -- ^ Example hostname for the region
       , regionPort        :: Int                       -- ^ Example port for the region
@@ -175,7 +175,7 @@ data VoiceRegion =
       , regionOptimal     :: Bool                      -- ^ True for the closest server to a client
       , regionDepreciated :: Bool                      -- ^ Whether this is a deprecated region
       , regionCustom      :: Bool                      -- ^ Whether this is a custom region
-      } deriving (Show)
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON VoiceRegion where
   parseJSON = withObject "VoiceRegion" $ \o ->
@@ -190,16 +190,18 @@ instance FromJSON VoiceRegion where
 
 -- | Represents a code to add a user to a guild
 data Invite = Invite
-      { inviteCode  ::  T.Text    -- ^ The invite code
-      , inviteGuild :: !Snowflake -- ^ The guild the code will invite to
-      , inviteChan  :: !Snowflake -- ^ The channel the code will invite to
-      }
+      { inviteCode  :: T.Text    -- ^ The invite code
+      , inviteGuildId :: Maybe GuildId -- ^ The guild the code will invite to
+      , inviteChannelId :: ChannelId -- ^ The channel the code will invite to
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Invite where
   parseJSON = withObject "Invite" $ \o ->
     Invite <$>  o .: "code"
-           <*> ((o .: "guild")   >>= (.: "id"))
-           <*> ((o .: "channel") >>= (.: "id"))
+           <*> (do g <- o .:? "guild"
+                   case g of Just g2 -> g2 .: "id"
+                             Nothing -> pure Nothing)
+           <*> ((o .:  "channel") >>= (.: "id"))
 
 -- | Invite code with additional metadata
 data InviteWithMeta = InviteWithMeta Invite InviteMeta
@@ -237,13 +239,13 @@ data Integration =
       , integrationType     :: T.Text                    -- ^ Integration type (Twitch, Youtube, ect.)
       , integrationEnabled  :: Bool                      -- ^ Is the integration enabled
       , integrationSyncing  :: Bool                      -- ^ Is the integration syncing
-      , integrationRole     :: Snowflake                 -- ^ Id the integration uses for "subscribers"
+      , integrationRole     :: RoleId                 -- ^ Id the integration uses for "subscribers"
       , integrationBehavior :: Integer                   -- ^ The behavior of expiring subscribers
       , integrationGrace    :: Integer                   -- ^ The grace period before expiring subscribers
       , integrationOwner    :: User                      -- ^ The user of the integration
       , integrationAccount  :: IntegrationAccount        -- ^ The account the integration links to
       , integrationSync     :: UTCTime                   -- ^ When the integration was last synced
-      } deriving (Show)
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON Integration where
   parseJSON = withObject "Integration" $ \o ->
@@ -264,7 +266,7 @@ data IntegrationAccount =
   Account
     { accountId   :: T.Text -- ^ The id of the account.
     , accountName :: T.Text -- ^ The name of the account.
-    } deriving (Show)
+    } deriving (Show, Eq, Ord)
 
 instance FromJSON IntegrationAccount where
   parseJSON = withObject "Account" $ \o ->
@@ -273,8 +275,8 @@ instance FromJSON IntegrationAccount where
 -- | Represents an image to be used in third party sites to link to a discord channel
 data GuildEmbed =
     GuildEmbed
-      { embedEnabled :: !Bool      -- ^ Whether the embed is enabled
-      , embedChannel :: !Snowflake -- ^ The embed channel id
+      { embedEnabled :: Bool      -- ^ Whether the embed is enabled
+      , embedChannel :: ChannelId -- ^ The embed channel id
       }
 
 instance FromJSON GuildEmbed where
