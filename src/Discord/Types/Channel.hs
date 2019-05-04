@@ -251,12 +251,12 @@ instance Default Embed where
 
 instance FromJSON Embed where
   parseJSON = withObject "Embed" $ \o ->
-    Embed <$> o .: "title"
-          <*> o .: "type"
-          <*> o .: "description"
-          <*> o .: "url"
-          <*> o .: "timestamp"
-          <*> o .: "color"
+    Embed <$> o .:? "title"
+          <*> o .:? "type"
+          <*> o .:? "description"
+          <*> o .:? "url"
+          <*> o .:? "timestamp"
+          <*> o .:? "color"
           <*> sequence (HM.foldrWithKey to_embed [] o)
     where
       to_embed k (Object v) a = case k of
