@@ -4,13 +4,12 @@
 -- | Data structures pertaining to Discord Channels
 module Discord.Types.Channel where
 
-import qualified Data.Text as T
-
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Default (Default, def)
-import Data.Time.Clock
 import Data.Monoid ((<>))
+import Data.Text (Text)
+import Data.Time.Clock
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 
@@ -44,7 +43,7 @@ instance FromJSON User where
 
 data Webhook = Webhook
   { webhookId :: WebhookId
-  , webhookToken :: T.Text
+  , webhookToken :: Text
   } deriving (Show, Eq, Ord)
 
 instance FromJSON Webhook where
@@ -59,7 +58,7 @@ data Channel
   = ChannelText
       { channelId          :: ChannelId   -- ^ The id of the channel (Will be equal to
                                           --   the guild if it's the "general" channel).
-      , channelGuild       :: GuildId   -- ^ The id of the guild.
+      , channelGuild       :: GuildId     -- ^ The id of the guild.
       , channelName        :: String      -- ^ The name of the guild (2 - 1000 characters).
       , channelPosition    :: Integer     -- ^ The storing position of the channel.
       , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
@@ -165,7 +164,7 @@ data Message = Message
                                            --   was sent in
   , messageAuthor       :: User            -- ^ The 'User' the message was sent
                                            --   by
-  , messageText         :: T.Text          -- ^ Contents of the message
+  , messageText         :: Text            -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
   , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
   , messageTts          :: Bool            -- ^ Whether this message was a TTS
@@ -174,7 +173,7 @@ data Message = Message
                                            --   everyone
   , messageMentions     :: [User]          -- ^ 'User's specifically mentioned in
                                            --   the message
-  , messageMentionRoles :: [RoleId]     -- ^ 'Role's specifically mentioned in
+  , messageMentionRoles :: [RoleId]        -- ^ 'Role's specifically mentioned in
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
   , messageEmbeds       :: [Embed]         -- ^ Any embedded content
@@ -229,24 +228,24 @@ instance FromJSON Attachment where
 
 -- | An embed attached to a message.
 data Embed = Embed
-  { embedTitle  :: Maybe String     -- ^ Title of the embed
-  , embedType   :: Maybe String     -- ^ Type of embed (Always "rich" for webhooks)
-  , embedDesc   :: Maybe String     -- ^ Description of embed
-  , embedUrl    :: Maybe String     -- ^ URL of embed
-  , embedTime   :: Maybe UTCTime    -- ^ The time of the embed content
-  , embedColor  :: Maybe Integer    -- ^ The embed color
-  , embedFields :: [SubEmbed] -- ^ Fields of the embed
+  { embedTitle       :: Maybe String     -- ^ Title of the embed
+  , embedType        :: Maybe String     -- ^ Type of embed (Always "rich" for webhooks)
+  , embedDescription :: Maybe String     -- ^ Description of embed
+  , embedUrl         :: Maybe String     -- ^ URL of embed
+  , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
+  , embedColor       :: Maybe Integer    -- ^ The embed color
+  , embedFields      :: [SubEmbed]       -- ^ Fields of the embed
   } deriving (Show, Read, Eq)
 
 instance Default Embed where
   def = Embed
-    { embedTitle  = Nothing
-    , embedType   = Nothing
-    , embedDesc   = Nothing
-    , embedUrl    = Nothing
-    , embedTime   = Nothing
-    , embedColor  = Nothing
-    , embedFields = []
+    { embedTitle       = Nothing
+    , embedType        = Nothing
+    , embedDescription = Nothing
+    , embedUrl         = Nothing
+    , embedTimestamp   = Nothing
+    , embedColor       = Nothing
+    , embedFields      = []
     }
 
 instance FromJSON Embed where
@@ -293,20 +292,20 @@ instance ToJSON Embed where
   toJSON (Embed {..}) = object
     [ "title"       .= embedTitle
     , "type"        .= embedType
-    , "description" .= embedDesc
+    , "description" .= embedDescription
     , "url"         .= embedUrl
-    , "timestamp"   .= embedTime
+    , "timestamp"   .= embedTimestamp
     , "color"       .= embedColor
     ] |> makeSubEmbeds embedFields
     where
-      (|>) :: Value -> HM.HashMap T.Text Value -> Value
+      (|>) :: Value -> HM.HashMap Text Value -> Value
       (|>) (Object o) hm = Object $ HM.union o hm
       (|>) _          _  = error "Type mismatch"
 
-      makeSubEmbeds :: [SubEmbed] -> HM.HashMap T.Text Value
+      makeSubEmbeds :: [SubEmbed] -> HM.HashMap Text Value
       makeSubEmbeds = foldr embed HM.empty
 
-      embed :: SubEmbed -> HM.HashMap T.Text Value -> HM.HashMap T.Text Value
+      embed :: SubEmbed -> HM.HashMap Text Value -> HM.HashMap Text Value
       embed (Thumbnail url _ height width) =
         HM.alter (\_ -> Just $ object
           [ "url"    .= url
