@@ -33,9 +33,7 @@ loopingPing dis = do
       _ -> loopingPing dis
 
 fromBot :: Message -> Bool
-fromBot m = case messageAuthor m of
-              Right u -> userIsBot u
-              Left _webhookid -> True
+fromBot m = userIsBot (messageAuthor m)
 
 isPing :: T.Text -> Bool
 isPing = T.isPrefixOf "ping" . T.map toLower
