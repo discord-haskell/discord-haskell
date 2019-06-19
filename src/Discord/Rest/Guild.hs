@@ -9,6 +9,7 @@ module Discord.Rest.Guild
   ( GuildRequest(..)
   , CreateGuildChannelOpts(..)
   , ModifyGuildOpts(..)
+  , AddGuildMemberOpts(..)
   , GuildMembersTiming(..)
   ) where
 
@@ -54,8 +55,8 @@ data GuildRequest a where
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
-  -- todo AddGuildMember           :: ToJSON o => GuildId -> UserId -> o
-                                -- -> GuildRequest GuildMember
+  AddGuildMember           :: GuildId -> UserId -> AddGuildMemberOpts
+                                      -> GuildRequest GuildMember
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
   -- todo ModifyGuildMember        :: ToJSON o => GuildId -> UserId -> o
                                 -- -> GuildRequest ()
@@ -122,6 +123,22 @@ data GuildRequest a where
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildEmbed' object.
   ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
+
+data AddGuildMemberOpts = AddGuildMemberOpts
+  { addGuildMemberOptsAccessToken :: T.Text
+  , addGuildMemberOptsNickname    :: Maybe T.Text
+  , addGuildMemberOptsRoles       :: Maybe [RoleId]
+  , addGuildMemberOptsIsMuted     :: Maybe Bool
+  , addGuildMemberOptsIsDeafened  :: Maybe Bool
+  } deriving (Show, Eq)
+
+instance ToJSON AddGuildMemberOpts where
+  toJSON AddGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
+                                  [("access_token", toJSON <$> Just addGuildMemberOptsAccessToken ),
+                                   ("nick",         toJSON <$> addGuildMemberOptsNickname ),
+                                   ("roles",        toJSON <$> addGuildMemberOptsRoles ),
+                                   ("mute",         toJSON <$> addGuildMemberOptsIsMuted ),
+                                   ("deaf",         toJSON <$> addGuildMemberOptsIsDeafened )]]
 
 data CreateGuildChannelOpts
   = CreateGuildChannelOptsText {
@@ -205,9 +222,9 @@ guildMajorRoute c = case c of
   (ModifyGuildChannelPositions g _) ->  "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
-  -- (AddGuildMember g _ _) ->          "guild_memb " <> show g
+  (AddGuildMember g _ _) ->         "guild_membs " <> show g
   -- (ModifyGuildMember g _ _) ->       "guild_memb " <> show g
-  (RemoveGuildMember g _) ->         "guild_memb " <> show g
+  (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
@@ -266,8 +283,8 @@ guildJsonRequest c = case c of
   (ListGuildMembers guild range) ->
       Get (guilds // guild /: "members") (guildMembersTimingToQuery range)
 
-  -- (AddGuildMember guild user patch) ->
-      -- Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
+  (AddGuildMember guild user patch) ->
+      Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
 
   -- (ModifyGuildMember guild member patch) ->
       -- let body = R.ReqBodyJson patch
