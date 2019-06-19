@@ -23,7 +23,7 @@ note of `CLIENT ID` on this page.
 Client ID and Permissions come from previous steps.
 `https://discordapp.com/oauth2/authorize?client_id=<CLIENT_ID>&scope=bot&permissions=<PERMISSIONS>`
 
-4 Tos end `CreateMessage` events with restCall, you must connect to the gateway at least once. Try running `examples/gateway.hs` with your token to satisfy this.
+4 To send `CreateMessage` events with restCall, you must connect to the gateway at least once. Try running `examples/gateway.hs` with your token to satisfy this.
 [This is a Discord requirement.](https://discordapp.com/developers/docs/resources/channel#create-message)
 
 5 Look at the examples to get an idea of how the library is used.
