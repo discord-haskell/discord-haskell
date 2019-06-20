@@ -13,7 +13,7 @@ module Discord.Rest.Guild
   , ModifyGuildMemberOpts(..)
   , GuildMembersTiming(..)
   , CreateGuildBanOpts(..)
-  , CreateGuildRoleOpts(..)
+  , ModifyGuildRoleOpts(..)
   ) where
 
 
@@ -88,15 +88,14 @@ data GuildRequest a where
   GetGuildRoles            :: GuildId -> GuildRequest [Role]
   -- | Create a new 'Role' for the guild. Requires the 'MANAGE_ROLES' permission.
   --   Returns the new role object on success. Fires a Guild Role Create 'Event'.
-  CreateGuildRole          :: GuildId -> CreateGuildRoleOpts -> GuildRequest Role
+  CreateGuildRole          :: GuildId -> ModifyGuildRoleOpts -> GuildRequest Role
   -- | Modify the positions of a set of role objects for the guild. Requires the
   --   'MANAGE_ROLES' permission. Returns a list of all of the guild's 'Role' objects
   --   on success. Fires multiple Guild Role Update 'Event's.
   ModifyGuildRolePositions :: GuildId -> [(RoleId, Integer)] -> GuildRequest [Role]
   -- | Modify a guild role. Requires the 'MANAGE_ROLES' permission. Returns the
   --   updated 'Role' on success. Fires a Guild Role Update 'Event's.
-  -- todo ModifyGuildRole          :: ToJSON o => GuildId -> RoleId -> o
-                                -- -> GuildRequest Role
+  ModifyGuildRole          :: GuildId -> RoleId -> ModifyGuildRoleOpts -> GuildRequest Role
   -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
   --   Delete 'Event'.
   DeleteGuildRole          :: GuildId -> RoleId -> GuildRequest Role
@@ -146,21 +145,21 @@ instance ToJSON CreateGuildBanOpts where
                              toJSON <$> createGuildBanOptsDeleteLastNMessages ),
                         ("reason", toJSON <$> createGuildBanOptsReason )]]
 
-data CreateGuildRoleOpts = CreateGuildRoleOpts
-  { createGuildRoleOptsName        :: Maybe T.Text
-  , createGuildRoleOptsPermissions :: Maybe Integer
-  , createGuildRoleOptsColor       :: Maybe Integer
-  , createGuildRoleOptsSeparateSidebar :: Bool
-  , createGuildRoleOptsMentionable :: Bool
+data ModifyGuildRoleOpts = ModifyGuildRoleOpts
+  { modifyGuildRoleOptsName        :: Maybe T.Text
+  , modifyGuildRoleOptsPermissions :: Maybe Integer
+  , modifyGuildRoleOptsColor       :: Maybe Integer
+  , modifyGuildRoleOptsSeparateSidebar :: Bool
+  , modifyGuildRoleOptsMentionable :: Bool
   } deriving (Show, Eq)
 
-instance ToJSON CreateGuildRoleOpts where
-  toJSON CreateGuildRoleOpts{..} =  object [(name, val) | (name, Just val) <-
-                       [("name",  toJSON <$> createGuildRoleOptsName ),
-                        ("permissions",  toJSON <$> createGuildRoleOptsPermissions ),
-                        ("color", toJSON <$> createGuildRoleOptsColor ),
-                        ("hoist",  toJSON <$> Just createGuildRoleOptsSeparateSidebar ),
-                        ("mentionable",  toJSON <$> Just createGuildRoleOptsMentionable )]]
+instance ToJSON ModifyGuildRoleOpts where
+  toJSON ModifyGuildRoleOpts{..} =  object [(name, val) | (name, Just val) <-
+                       [("name",        toJSON <$> modifyGuildRoleOptsName ),
+                        ("permissions", toJSON <$> modifyGuildRoleOptsPermissions ),
+                        ("color",       toJSON <$> modifyGuildRoleOptsColor ),
+                        ("hoist",       toJSON <$> Just modifyGuildRoleOptsSeparateSidebar ),
+                        ("mentionable", toJSON <$> Just modifyGuildRoleOptsMentionable )]]
 
 data AddGuildMemberOpts = AddGuildMemberOpts
   { addGuildMemberOptsAccessToken :: T.Text
@@ -288,7 +287,7 @@ guildMajorRoute c = case c of
   (GetGuildRoles g) ->              "guild_roles " <> show g
   (CreateGuildRole g _) ->          "guild_roles " <> show g
   (ModifyGuildRolePositions g _) -> "guild_roles " <> show g
-  -- (ModifyGuildRole g _ _) ->         "guild_role " <> show g
+  (ModifyGuildRole g _ _) ->         "guild_role " <> show g
   (DeleteGuildRole g _ ) ->          "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
   (BeginGuildPrune g _) ->       "guild_prune " <> show g
@@ -380,8 +379,8 @@ guildJsonRequest c = case c of
       let body = map (\(role, pos) -> object ["id".=role, "position".=pos]) patch
       in Post (guilds // guild /: "roles") (pure (R.ReqBodyJson body)) mempty
 
-  -- (ModifyGuildRole guild role patch) ->
-      -- Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
+  (ModifyGuildRole guild role patch) ->
+       Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuildRole guild role) ->
       Delete (guilds // guild /: "roles" // role) mempty
