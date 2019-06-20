@@ -69,12 +69,15 @@ data GuildRequest a where
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
-  -- | Returns a list of 'User' objects that are banned from this guild. Requires the
+  -- | Returns a list of 'Ban' objects for users that are banned from this guild. Requires the
   --   'BAN_MEMBERS' permission
-  GetGuildBans             :: GuildId -> GuildRequest [User]
+  GetGuildBans             :: GuildId -> GuildRequest [Ban]
+  -- | Returns a 'Ban' object for the user banned from this guild. Requires the
+  --   'BAN_MEMBERS' permission
+  GetGuildBan              :: GuildId -> UserId -> GuildRequest Ban
   -- | Create a guild ban, and optionally Delete previous messages sent by the banned
   --   user. Requires the 'BAN_MEMBERS' permission. Fires a Guild Ban Add 'Event'.
-  CreateGuildBan           :: GuildId -> UserId -> Integer -> GuildRequest ()
+  CreateGuildBan           :: GuildId -> UserId -> GuildBanOpts -> GuildRequest ()
   -- | Remove the ban for a user. Requires the 'BAN_MEMBERS' permissions.
   --   Fires a Guild Ban Remove 'Event'.
   RemoveGuildBan           :: GuildId -> UserId -> GuildRequest ()
@@ -129,6 +132,17 @@ data GuildRequest a where
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildEmbed' object.
   ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
+
+data CreateGuildBanOpts = CreateGuildBanOpts
+  { createGuildBanOptsDeleteLastNMessages :: Maybe Int
+  , createGuildBanOptsReason              :: Maybe T.Text
+  } deriving (Show, Eq)
+
+instance ToJSON CreateGuildBanOpts where
+  toJSON CreateGuildBanOpts{..} =  object [(name, val) | (name, Just val) <-
+                       [("delete-message-days",
+                             toJSON <$> createGuildBanOptsDeleteLastNMessages ),
+                        ("reason", toJSON <$> createGuildBanOptsReason )]]
 
 data AddGuildMemberOpts = AddGuildMemberOpts
   { addGuildMemberOptsAccessToken :: T.Text
@@ -248,6 +262,7 @@ guildMajorRoute c = case c of
   (AddGuildMemberRole g _ _) ->     "guild_membs " <> show g
   (RemoveGuildMemberRole g _ _) ->  "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
+  (GetGuildBan g _) ->                "guild_bans " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
@@ -326,12 +341,12 @@ guildJsonRequest c = case c of
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
 
-  (GetGuildBans guild) ->
-      Get (guilds // guild /: "bans") mempty
+  (GetGuildBan guild user) -> Get (guilds // guild /: "bans" // user) mempty
 
-  (CreateGuildBan guild user msgs) ->
-      let body = R.ReqBodyJson (object ["delete-message-days" .= msgs])
-      in Put (guilds // guild /: "bans" // user) body mempty
+  (GetGuildBans guild) -> Get (guilds // guild /: "bans") mempty
+
+  (CreateGuildBan guild user patch) ->
+      Put (guilds // guild /: "bans" // user) (R.ReqBodyJson patch) mempty
 
   (RemoveGuildBan guild ban) ->
       Delete (guilds // guild /: "bans" // ban) mempty

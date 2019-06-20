@@ -6,7 +6,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 [marcotoniut](https://github.com/aquarial/discord-haskell/pull/18) Improved changed Embed ADT to have optional fields, and improved two field names
 
-Add `ModifyGuildMember`, `AddGuildMember`, `AddGuildMemberRole`, `AddGuildMemberRole`, `RemoveGuildmembeRole` rest data types
+Add `ModifyGuildMember`, `AddGuildMember`, `AddGuildMemberRole`, `AddGuildMemberRole`, `RemoveGuildmembeRole`, `GetGuildBan` rest data types
 
 ## 0.8.3
 
