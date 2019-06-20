@@ -10,6 +10,7 @@ module Discord.Rest.Guild
   , CreateGuildChannelOpts(..)
   , ModifyGuildOpts(..)
   , AddGuildMemberOpts(..)
+  , ModifyGuildMemberOpts(..)
   , GuildMembersTiming(..)
   ) where
 
@@ -56,10 +57,9 @@ data GuildRequest a where
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
   AddGuildMember           :: GuildId -> UserId -> AddGuildMemberOpts
-                                      -> GuildRequest GuildMember
+                                      -> GuildRequest ()
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
-  -- todo ModifyGuildMember        :: ToJSON o => GuildId -> UserId -> o
-                                -- -> GuildRequest ()
+  ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
@@ -135,11 +135,25 @@ data AddGuildMemberOpts = AddGuildMemberOpts
 instance ToJSON AddGuildMemberOpts where
   toJSON AddGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
                                   [("access_token", toJSON <$> Just addGuildMemberOptsAccessToken ),
-                                   ("nick",         toJSON <$> addGuildMemberOptsNickname ),
-                                   ("roles",        toJSON <$> addGuildMemberOptsRoles ),
-                                   ("mute",         toJSON <$> addGuildMemberOptsIsMuted ),
-                                   ("deaf",         toJSON <$> addGuildMemberOptsIsDeafened )]]
+                                   ("nick",   toJSON <$> addGuildMemberOptsNickname ),
+                                   ("roles",  toJSON <$> addGuildMemberOptsRoles ),
+                                   ("mute",   toJSON <$> addGuildMemberOptsIsMuted ),
+                                   ("deaf",   toJSON <$> addGuildMemberOptsIsDeafened )]]
+data ModifyGuildMemberOpts = ModifyGuildMemberOpts
+  { modifyGuildMemberOptsNickname      :: Maybe T.Text
+  , modifyGuildMemberOptsRoles         :: Maybe [RoleId]
+  , modifyGuildMemberOptsIsMuted       :: Maybe Bool
+  , modifyGuildMemberOptsIsDeafened    :: Maybe Bool
+  , modifyGuildMemberOptsMoveToChannel :: Maybe ChannelId
+  } deriving (Show, Eq)
 
+instance ToJSON ModifyGuildMemberOpts where
+  toJSON ModifyGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
+                                  [("nick",  toJSON <$> modifyGuildMemberOptsNickname ),
+                                   ("roles", toJSON <$> modifyGuildMemberOptsRoles ),
+                                   ("mute",  toJSON <$> modifyGuildMemberOptsIsMuted ),
+                                   ("deaf",  toJSON <$> modifyGuildMemberOptsIsDeafened ),
+                                   ("channel_id", toJSON <$> modifyGuildMemberOptsMoveToChannel)]]
 data CreateGuildChannelOpts
   = CreateGuildChannelOptsText {
     createGuildChannelOptsTopic :: Maybe T.Text
@@ -223,7 +237,7 @@ guildMajorRoute c = case c of
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   (AddGuildMember g _ _) ->         "guild_membs " <> show g
-  -- (ModifyGuildMember g _ _) ->       "guild_memb " <> show g
+  (ModifyGuildMember g _ _) ->      "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
@@ -286,9 +300,8 @@ guildJsonRequest c = case c of
   (AddGuildMember guild user patch) ->
       Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
 
-  -- (ModifyGuildMember guild member patch) ->
-      -- let body = R.ReqBodyJson patch
-      -- in Patch (guilds // guild /: "members" // member) body mempty
+  (ModifyGuildMember guild member patch) ->
+      Patch (guilds // guild /: "members" // member) (R.ReqBodyJson patch) mempty
 
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
