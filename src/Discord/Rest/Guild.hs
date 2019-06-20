@@ -62,6 +62,10 @@ data GuildRequest a where
   ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest ()
   -- | Modify the nickname of the current user
   ModifyCurrentUserNick    :: GuildId -> T.Text -> GuildRequest ()
+  -- | Add a member to a guild role. Requires 'MANAGE_ROLES' permission.
+  AddGuildMemberRole    :: GuildId -> UserId -> RoleId -> GuildRequest ()
+  -- | Remove a member from a guild role. Requires 'MANAGE_ROLES' permission.
+  RemoveGuildMemberRole    :: GuildId -> UserId -> RoleId -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
@@ -241,6 +245,8 @@ guildMajorRoute c = case c of
   (AddGuildMember g _ _) ->         "guild_membs " <> show g
   (ModifyGuildMember g _ _) ->      "guild_membs " <> show g
   (ModifyCurrentUserNick g _) ->    "guild_membs " <> show g
+  (AddGuildMemberRole g _ _) ->     "guild_membs " <> show g
+  (RemoveGuildMemberRole g _ _) ->  "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
@@ -309,6 +315,13 @@ guildJsonRequest c = case c of
   (ModifyCurrentUserNick guild name) ->
       let patch = object ["nick" .= name]
       in Patch (guilds // guild /: "members/@me/nick") (R.ReqBodyJson patch) mempty
+
+  (AddGuildMemberRole guild user role) ->
+      let body = R.ReqBodyJson (object [])
+      in Put (guilds // guild /: "members" // user /: "roles" // role) body mempty
+
+  (RemoveGuildMemberRole guild user role) ->
+      Delete (guilds // guild /: "members" // user /: "roles" // role) mempty
 
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
