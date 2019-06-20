@@ -235,12 +235,12 @@ guildMajorRoute c = case c of
   (DeleteGuild g) ->                      "guild " <> show g
   (GetGuildChannels g) ->            "guild_chan " <> show g
   (CreateGuildChannel g _ _ _) ->    "guild_chan " <> show g
-  (ModifyGuildChannelPositions g _) ->  "guild_chan " <> show g
+  (ModifyGuildChannelPositions g _) -> "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   (AddGuildMember g _ _) ->         "guild_membs " <> show g
   (ModifyGuildMember g _ _) ->      "guild_membs " <> show g
-  (ModifyCurrentUserNick g _) ->   "guild_membs " <> show g
+  (ModifyCurrentUserNick g _) ->    "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
