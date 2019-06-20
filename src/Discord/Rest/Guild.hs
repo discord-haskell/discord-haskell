@@ -60,6 +60,8 @@ data GuildRequest a where
                                       -> GuildRequest ()
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
   ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest ()
+  -- | Modify the nickname of the current user
+  ModifyCurrentUserNick    :: GuildId -> T.Text -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
@@ -238,6 +240,7 @@ guildMajorRoute c = case c of
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   (AddGuildMember g _ _) ->         "guild_membs " <> show g
   (ModifyGuildMember g _ _) ->      "guild_membs " <> show g
+  (ModifyCurrentUserNick g _) ->   "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
@@ -302,6 +305,10 @@ guildJsonRequest c = case c of
 
   (ModifyGuildMember guild member patch) ->
       Patch (guilds // guild /: "members" // member) (R.ReqBodyJson patch) mempty
+
+  (ModifyCurrentUserNick guild name) ->
+      let patch = object ["nick" .= name]
+      in Patch (guilds // guild /: "members/@me/nick") (R.ReqBodyJson patch) mempty
 
   (RemoveGuildMember guild user) ->
       Delete (guilds // guild /: "members" // user) mempty
