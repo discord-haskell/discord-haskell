@@ -188,6 +188,15 @@ instance FromJSON VoiceRegion where
                 <*> o .: "deprecated"
                 <*> o .: "custom"
 
+-- | Info about a Ban
+data Ban = Ban
+      { banReason  :: T.Text
+      , banUser    :: User
+      } deriving (Show, Eq, Ord)
+
+instance FromJSON Ban where
+  parseJSON = withObject "Ban" $ \o -> Ban <$> o .: "reason" <*> o .: "user"
+
 -- | Represents a code to add a user to a guild
 data Invite = Invite
       { inviteCode  :: T.Text    -- ^ The invite code
