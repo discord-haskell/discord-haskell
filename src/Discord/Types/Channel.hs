@@ -44,12 +44,14 @@ instance FromJSON User where
 data Webhook = Webhook
   { webhookId :: WebhookId
   , webhookToken :: Text
+  , webhookChannelId :: ChannelId
   } deriving (Show, Eq, Ord)
 
 instance FromJSON Webhook where
   parseJSON = withObject "Webhook" $ \o ->
     Webhook <$> o .:  "id"
             <*> o .:  "token"
+            <*> o .:  "channel_id"
 
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
