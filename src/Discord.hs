@@ -7,6 +7,7 @@ module Discord
   , module Discord.Rest.User
   , module Discord.Rest.Invite
   , module Discord.Rest.Emoji
+  , module Discord.Rest.Voice
   , Cache(..)
   , Gateway(..)
   , RestChan(..)
@@ -38,6 +39,7 @@ import Discord.Rest.Guild
 import Discord.Rest.User
 import Discord.Rest.Invite
 import Discord.Rest.Emoji
+import Discord.Rest.Voice
 import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache

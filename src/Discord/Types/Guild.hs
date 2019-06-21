@@ -167,22 +167,18 @@ instance FromJSON Role where
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion =
     VoiceRegion
-      { regionId          :: Snowflake -- ^ Unique id of the region
-      , regionName        :: T.Text                    -- ^ Name of the region
-      , regionHostname    :: T.Text                    -- ^ Example hostname for the region
-      , regionPort        :: Int                       -- ^ Example port for the region
-      , regionVip         :: Bool                      -- ^ True if this is a VIP only server
-      , regionOptimal     :: Bool                      -- ^ True for the closest server to a client
-      , regionDepreciated :: Bool                      -- ^ Whether this is a deprecated region
-      , regionCustom      :: Bool                      -- ^ Whether this is a custom region
+      { voiceRegionId          :: T.Text      -- ^ Unique id of the region
+      , voiceRegionName        :: T.Text      -- ^ Name of the region
+      , voiceRegionVip         :: Bool        -- ^ True if this is a VIP only server
+      , voiceRegionOptimal     :: Bool        -- ^ True for the closest server to a client
+      , voiceRegionDepreciated :: Bool        -- ^ Whether this is a deprecated region
+      , voiceRegionCustom      :: Bool        -- ^ Whether this is a custom region
       } deriving (Show, Eq, Ord)
 
 instance FromJSON VoiceRegion where
   parseJSON = withObject "VoiceRegion" $ \o ->
     VoiceRegion <$> o .: "id"
                 <*> o .: "name"
-                <*> o .: "sample_hostname"
-                <*> o .: "sample_port"
                 <*> o .: "vip"
                 <*> o .: "optimal"
                 <*> o .: "deprecated"
