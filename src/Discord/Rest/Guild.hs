@@ -133,6 +133,8 @@ data GuildRequest a where
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildEmbed' object.
   ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
+  -- | Vanity URL
+  GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
 data CreateGuildBanOpts = CreateGuildBanOpts
   { createGuildBanOptsDeleteLastNMessages :: Maybe Int
@@ -290,7 +292,7 @@ guildMajorRoute c = case c of
   (ModifyGuildRole g _ _) ->         "guild_role " <> show g
   (DeleteGuildRole g _ ) ->          "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
-  (BeginGuildPrune g _) ->       "guild_prune " <> show g
+  (BeginGuildPrune g _) ->          "guild_prune " <> show g
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
   (GetGuildInvites g) ->            "guild_invit " <> show g
   (GetGuildIntegrations g) ->       "guild_integ " <> show g
@@ -300,6 +302,7 @@ guildMajorRoute c = case c of
   (SyncGuildIntegration g _) ->      "guild_sync " <> show g
   (GetGuildEmbed g) ->              "guild_embed " <> show g
   (ModifyGuildEmbed g _) ->         "guild_embed " <> show g
+  (GetGuildVanityURL g) ->                "guild " <> show g
 
 
 -- | The base url (Req) for API requests
@@ -419,3 +422,5 @@ guildJsonRequest c = case c of
   (ModifyGuildEmbed guild patch) ->
       Patch (guilds // guild /: "embed") (R.ReqBodyJson patch) mempty
 
+  (GetGuildVanityURL guild) ->
+      Get (guilds // guild /: "vanity-url") mempty
