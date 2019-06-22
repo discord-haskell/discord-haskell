@@ -50,6 +50,8 @@ data UserRequest a where
   -- | Create a new DM channel with a user. Returns a DM 'Channel' object.
   CreateDM             :: UserId -> UserRequest Channel
 
+  GetUserConnections   :: UserRequest [ConnectionObject]
+
 -- | Formatted avatar data https://discordapp.com/developers/docs/resources/user#avatar-data
 data CurrentUserAvatar = CurrentUserAvatar String
 
@@ -70,6 +72,7 @@ userMajorRoute c = case c of
   (LeaveGuild g) ->                 "leave_guild " <> show g
   (GetUserDMs) ->                       "get_dms "
   (CreateDM _) ->                       "make_dm "
+  (GetUserConnections) ->           "connections "
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
@@ -98,3 +101,6 @@ userJsonRequest c = case c of
   (CreateDM user) ->
       let body = R.ReqBodyJson $ object ["recipient_id" .= user]
       in Post (users /: "@me" /: "channels") (pure body) mempty
+
+  (GetUserConnections) ->
+    Get (users /: "@me" /: "connections") mempty

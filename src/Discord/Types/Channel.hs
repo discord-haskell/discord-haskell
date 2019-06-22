@@ -53,6 +53,31 @@ instance FromJSON Webhook where
             <*> o .:  "token"
             <*> o .:  "channel_id"
 
+data ConnectionObject = ConnectionObject
+  { connectionObjectId :: Text
+  , connectionObjectName :: Text
+  , connectionObjectType :: Text
+  , connectionObjectRevoked :: Bool
+  , connectionObjectIntegrations :: [IntegrationId]
+  , connectionObjectVerified :: Bool
+  , connectionObjectFriendSyncOn :: Bool
+  , connectionObjectShownInPresenceUpdates :: Bool
+  , connectionObjectVisibleToOthers :: Bool
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON ConnectionObject where
+  parseJSON = withObject "ConnectionObject" $ \o -> do
+    integrations <- o .: "integrations"
+    ConnectionObject <$> o .: "id"
+               <*> o .: "name"
+               <*> o .: "type"
+               <*> o .: "revoked"
+               <*> sequence (map (.: "id") integrations)
+               <*> o .: "verified"
+               <*> o .: "friend_sync"
+               <*> o .: "show_activity"
+               <*> ( (==) (1::Int) <$> o .: "visibility")
+
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
