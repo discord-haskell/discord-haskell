@@ -28,7 +28,7 @@ data GatewayReceivable
   | Hello Int
   | HeartbeatAck
   | ParseError String
-  deriving Show
+  deriving (Show, Eq)
 
 data GatewaySendable
   = Heartbeat Integer
@@ -37,13 +37,13 @@ data GatewaySendable
   | RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
                              { requestGuildMembersGuildId :: GuildId
                              , requestGuildMembersSearchQuery :: T.Text
                              , requestGuildMembersLimit :: Integer }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            { updateStatusVoiceGuildId :: GuildId
@@ -51,7 +51,7 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            , updateStatusVoiceIsMuted :: Bool
                            , updateStatusVoiceIsDeaf :: Bool
                            }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusSince :: Maybe UTCTime
@@ -59,27 +59,27 @@ data UpdateStatusOpts = UpdateStatusOpts
                       , updateStatusNewStatus :: UpdateStatusType
                       , updateStatusAFK :: Bool
                       }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data Activity = Activity
               { activityName :: T.Text
               , activityType :: ActivityType
               , activityUrl :: Maybe T.Text
               }
-  deriving (Show)
+  deriving (Show, Eq, Ord)
 
 data ActivityType = ActivityTypeGame
                   | ActivityTypeStreaming
                   | ActivityTypeListening
                   | ActivityTypeWatching
-  deriving (Enum, Show)
+  deriving (Show, Eq, Ord, Enum)
 
 data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusDoNotDisturb
                       | UpdateStatusAwayFromKeyboard
                       | UpdateStatusInvisibleOffline
                       | UpdateStatusOffline
-  deriving (Show)
+  deriving (Show, Eq, Ord, Enum)
 
 statusString :: UpdateStatusType -> T.Text
 statusString s = case s of

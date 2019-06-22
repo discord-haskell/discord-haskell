@@ -54,14 +54,14 @@ data Event =
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
   | UnknownEvent     String Object
-  deriving Show
+  deriving (Show, Eq)
 
 data ReactionInfo = ReactionInfo
   { reactionUserId    :: UserId
   , reactionChannelId :: ChannelId
   , reactionMessageId :: MessageId
   , reactionEmoji     :: Emoji
-  } deriving Show
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON ReactionInfo where
   parseJSON = withObject "ReactionInfo" $ \o ->
@@ -76,7 +76,7 @@ data PresenceInfo = PresenceInfo
   -- , presenceGame :: Maybe Activity
   , presenceGuildId :: GuildId
   , presenceStatus  :: String
-  } deriving Show
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
@@ -90,7 +90,7 @@ data TypingInfo = TypingInfo
   { typingUserId    :: UserId
   , typingChannelId :: ChannelId
   , typingTimestamp :: UTCTime
-  } deriving Show
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON TypingInfo where
   parseJSON = withObject "TypingInfo" $ \o ->

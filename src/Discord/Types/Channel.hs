@@ -208,7 +208,7 @@ data Message = Message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
@@ -241,7 +241,7 @@ data Attachment = Attachment
   , attachmentProxy    :: String        -- ^ Proxied url of file
   , attachmentHeight   :: Maybe Integer -- ^ Height of file (if image)
   , attachmentWidth    :: Maybe Integer -- ^ Width of file (if image)
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Attachment where
   parseJSON = withObject "Attachment" $ \o ->
@@ -262,7 +262,7 @@ data Embed = Embed
   , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
   , embedColor       :: Maybe Integer    -- ^ The embed color
   , embedFields      :: [SubEmbed]       -- ^ Fields of the embed
-  } deriving (Show, Read, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance Default Embed where
   def = Embed
@@ -405,4 +405,4 @@ data SubEmbed
       String
       String
       Bool
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq, Ord)
