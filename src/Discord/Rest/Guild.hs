@@ -14,6 +14,8 @@ module Discord.Rest.Guild
   , GuildMembersTiming(..)
   , CreateGuildBanOpts(..)
   , ModifyGuildRoleOpts(..)
+  , CreateGuildIntegrationOpts(..)
+  , ModifyGuildIntegrationOpts(..)
   ) where
 
 
@@ -118,10 +120,11 @@ data GuildRequest a where
   GetGuildIntegrations     :: GuildId -> GuildRequest [Integration]
   -- | Attach an 'Integration' object from the current user to the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  -- todo CreateGuildIntegration   :: ToJSON o => GuildId -> o -> GuildRequest ()
+  CreateGuildIntegration   :: GuildId -> IntegrationId -> CreateGuildIntegrationOpts -> GuildRequest ()
   -- | Modify the behavior and settings of a 'Integration' object for the guild.
   --   Requires the 'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
-  -- todo ModifyGuildIntegration   :: ToJSON o => GuildId -> IntegrationId -> o -> GuildRequest ()
+  ModifyGuildIntegration   :: GuildId -> IntegrationId -> ModifyGuildIntegrationOpts
+                                      -> GuildRequest ()
   -- | Delete the attached 'Integration' object for the guild. Requires the
   --   'MANAGE_GUILD' permission. Fires a Guild Integrations Update 'Event'.
   DeleteGuildIntegration   :: GuildId -> IntegrationId -> GuildRequest ()
@@ -136,10 +139,30 @@ data GuildRequest a where
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
+data ModifyGuildIntegrationOpts = ModifyGuildIntegrationOpts
+  { modifyGuildIntegrationOptsExpireBehavior :: Integer
+  , modifyGuildIntegrationOptsExpireGraceSeconds :: Integer
+  , modifyGuildIntegrationOptsEmoticonsEnabled :: Bool
+  } deriving (Show, Eq, Ord)
+
+instance ToJSON ModifyGuildIntegrationOpts where
+  toJSON ModifyGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
+         [ ("expire_grace_period", toJSON <$> pure modifyGuildIntegrationOptsExpireGraceSeconds )
+         , ("expire_behavior", toJSON <$> pure modifyGuildIntegrationOptsExpireBehavior )
+         , ("enable_emoticons", toJSON <$> pure modifyGuildIntegrationOptsEmoticonsEnabled ) ]]
+
+data CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
+  { createGuildIntegrationOptsType :: T.Text
+  } deriving (Show, Eq, Ord)
+
+instance ToJSON CreateGuildIntegrationOpts where
+  toJSON CreateGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
+                       [("type", toJSON <$> pure createGuildIntegrationOptsType ) ]]
+
 data CreateGuildBanOpts = CreateGuildBanOpts
   { createGuildBanOptsDeleteLastNMessages :: Maybe Int
   , createGuildBanOptsReason              :: Maybe T.Text
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON CreateGuildBanOpts where
   toJSON CreateGuildBanOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -296,8 +319,8 @@ guildMajorRoute c = case c of
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
   (GetGuildInvites g) ->            "guild_invit " <> show g
   (GetGuildIntegrations g) ->       "guild_integ " <> show g
-  -- (CreateGuildIntegration g _) ->   "guild_integ " <> show g
-  -- (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
+  (CreateGuildIntegration g _ _) -> "guild_integ " <> show g
+  (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
   (DeleteGuildIntegration g _) ->   "guild_intgr " <> show g
   (SyncGuildIntegration g _) ->      "guild_sync " <> show g
   (GetGuildEmbed g) ->              "guild_embed " <> show g
@@ -403,12 +426,13 @@ guildJsonRequest c = case c of
   (GetGuildIntegrations guild) ->
       Get (guilds // guild /: "integrations") mempty
 
-  -- (CreateGuildIntegration guild patch) ->
-      -- Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
+  (CreateGuildIntegration guild iid opts) ->
+      let patch = object [("type" .= createGuildIntegrationOptsType opts) ,("id"   .= iid)]
+      in Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
 
-  -- (ModifyGuildIntegration guild integ patch) ->
-      -- let body = R.ReqBodyJson patch
-      -- in Patch (guilds // guild /: "integrations" // integ) body mempty
+  (ModifyGuildIntegration guild iid patch) ->
+      let body = R.ReqBodyJson patch
+      in Patch (guilds // guild /: "integrations" // iid) body mempty
 
   (DeleteGuildIntegration guild integ) ->
       Delete (guilds // guild /: "integrations" // integ) mempty
