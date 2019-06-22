@@ -165,8 +165,7 @@ instance FromJSON Role where
          <*> o .: "mentionable"
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
-data VoiceRegion =
-    VoiceRegion
+data VoiceRegion = VoiceRegion
       { voiceRegionId          :: T.Text      -- ^ Unique id of the region
       , voiceRegionName        :: T.Text      -- ^ Name of the region
       , voiceRegionVip         :: Bool        -- ^ True if this is a VIP only server
@@ -215,16 +214,15 @@ instance FromJSON InviteWithMeta where
   parseJSON ob = InviteWithMeta <$> parseJSON ob <*> parseJSON ob
 
 -- | Additional metadata about an invite.
-data InviteMeta =
-  InviteMeta {
-      inviteCreator :: User    -- ^ The user that created the invite
+data InviteMeta = InviteMeta
+    { inviteCreator :: User    -- ^ The user that created the invite
     , inviteUses    :: Integer -- ^ Number of times the invite has been used
     , inviteMax     :: Integer -- ^ Max number of times the invite can be used
     , inviteAge     :: Integer -- ^ The duration (in seconds) after which the invite expires
     , inviteTemp    :: Bool    -- ^ Whether this invite only grants temporary membership
     , inviteCreated :: UTCTime -- ^ When the invite was created
     , inviteRevoked :: Bool    -- ^ If the invite is revoked
-  }
+    } deriving (Show, Eq, Ord)
 
 instance FromJSON InviteMeta where
   parseJSON = withObject "InviteMeta" $ \o ->
@@ -237,8 +235,7 @@ instance FromJSON InviteMeta where
                <*> o .: "revoked"
 
 -- | Represents the behavior of a third party account link.
-data Integration =
-    Integration
+data Integration = Integration
       { integrationId       :: !Snowflake -- ^ Integration id
       , integrationName     :: T.Text                    -- ^ Integration name
       , integrationType     :: T.Text                    -- ^ Integration type (Twitch, Youtube, ect.)
@@ -267,26 +264,24 @@ instance FromJSON Integration where
                 <*> o .: "synced_at"
 
 -- | Represents a third party account link.
-data IntegrationAccount =
-  Account
+data IntegrationAccount = IntegrationAccount
     { accountId   :: T.Text -- ^ The id of the account.
     , accountName :: T.Text -- ^ The name of the account.
     } deriving (Show, Eq, Ord)
 
 instance FromJSON IntegrationAccount where
-  parseJSON = withObject "Account" $ \o ->
-    Account <$> o .: "id" <*> o .: "name"
+  parseJSON = withObject "IntegrationAccount" $ \o ->
+    IntegrationAccount <$> o .: "id" <*> o .: "name"
 
 -- | Represents an image to be used in third party sites to link to a discord channel
-data GuildEmbed =
-    GuildEmbed
+data GuildEmbed = GuildEmbed
       { embedEnabled :: Bool      -- ^ Whether the embed is enabled
       , embedChannel :: ChannelId -- ^ The embed channel id
-      }
+      } deriving (Show, Eq, Ord)
 
 instance FromJSON GuildEmbed where
-  parseJSON = withObject "GuildEmbed" $ \o -> GuildEmbed <$> o .: "enabled"
-                                                         <*> o .: "snowflake"
+  parseJSON = withObject "GuildEmbed" $ \o ->
+    GuildEmbed <$> o .: "enabled" <*> o .: "snowflake"
 
 instance ToJSON GuildEmbed where
   toJSON (GuildEmbed enabled snowflake) = object

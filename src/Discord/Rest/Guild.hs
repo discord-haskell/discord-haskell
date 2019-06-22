@@ -176,7 +176,7 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   , modifyGuildRoleOptsColor       :: Maybe Integer
   , modifyGuildRoleOptsSeparateSidebar :: Bool
   , modifyGuildRoleOptsMentionable :: Bool
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyGuildRoleOpts where
   toJSON ModifyGuildRoleOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -192,7 +192,7 @@ data AddGuildMemberOpts = AddGuildMemberOpts
   , addGuildMemberOptsRoles       :: Maybe [RoleId]
   , addGuildMemberOptsIsMuted     :: Maybe Bool
   , addGuildMemberOptsIsDeafened  :: Maybe Bool
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON AddGuildMemberOpts where
   toJSON AddGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -208,7 +208,7 @@ data ModifyGuildMemberOpts = ModifyGuildMemberOpts
   , modifyGuildMemberOptsIsMuted       :: Maybe Bool
   , modifyGuildMemberOptsIsDeafened    :: Maybe Bool
   , modifyGuildMemberOptsMoveToChannel :: Maybe ChannelId
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyGuildMemberOpts where
   toJSON ModifyGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -228,7 +228,7 @@ data CreateGuildChannelOpts
   , createGuildChannelOptsMaxUsers :: Maybe Integer
   , createGuildChannelOptsCategoryId :: Maybe ChannelId }
   | CreateGuildChannelOptsCategory
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
 createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <- optsJSON]
