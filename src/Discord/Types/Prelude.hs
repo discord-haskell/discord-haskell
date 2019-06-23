@@ -42,7 +42,7 @@ instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
 
 instance FromJSON Snowflake where
-  parseJSON (String snowflake) = Snowflake <$> (return . read $ T.unpack snowflake)
+  parseJSON (String snowflake) = Snowflake <$> (pure . read $ T.unpack snowflake)
   parseJSON _ = mzero
 
 type ChannelId = Snowflake

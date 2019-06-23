@@ -127,9 +127,9 @@ getPayload conn log = try $ do
   msg' <- receiveData conn
   writeChan log ("gateway - received " <> QL.unpack msg')
   case eitherDecode msg' of
-    Right msg -> return msg
+    Right msg -> pure msg
     Left  err -> do writeChan log ("gateway - received parse Error - " <> err)
-                    return (ParseError err)
+                    pure (ParseError err)
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> Chan String -> IO ()
 heartbeat send interval seqKey log = do
