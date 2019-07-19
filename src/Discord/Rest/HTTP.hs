@@ -71,7 +71,7 @@ restLoop auth urls log = loop M.empty
                                 loop ratelocker
                             PathWait i -> loop $ M.insert route (if isPrefixOf "add_react " route
                                                                  then curtime + 0.25 else i)
-                                                          ratelocker
+                                                          (removeAllExpire ratelocker curtime)
                             NoLimit -> loop ratelocker
 
 -- Note: we hardcode delay for CreateReaction ("add_react")
@@ -86,6 +86,10 @@ compareRate ratelocker route curtime =
       Just unlockTime -> if curtime < unlockTime then Locked else Available
       Nothing -> Available
 
+removeAllExpire :: M.Map String POSIXTime -> POSIXTime -> M.Map String POSIXTime
+removeAllExpire ratelocker curtime =
+  if M.size ratelocker > 100 then M.filter (> curtime) ratelocker
+                             else ratelocker
 
 data RequestResponse = ResponseTryAgain
                      | ResponseByteString QL.ByteString
