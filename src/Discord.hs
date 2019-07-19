@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Discord
   ( module Discord.Types
@@ -27,7 +28,7 @@ module Discord
 import Prelude hiding (log)
 import Control.Monad (forever)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
-import Control.Exception (finally)
+import Control.Exception (try, finally, IOException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Monoid ((<>))
@@ -130,4 +131,11 @@ stopDiscord h = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) (discor
                    ThreadLogger a -> a
 
 logger :: (String -> IO ()) -> Chan String -> IO ()
-logger handle logC = forever $ readChan logC >>= handle
+logger handle logC = forever $
+  do me <- try $ readChan logC >>= handle
+     case me of
+       Right _ -> pure ()
+       Left (_ :: IOException) ->
+         -- writeChan logC "Log handler failed"
+         pure ()
+
