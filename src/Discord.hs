@@ -20,6 +20,8 @@ module Discord
   , DiscordHandle(..)
   , runDiscord
   , restCall
+  , sendCommand
+  , readCache
   ) where
 
 import Prelude hiding (log)
@@ -53,6 +55,7 @@ data ThreadIdType = ThreadRest ThreadId
 
 data DiscordHandle = DiscordHandle
   { discordRestChan :: RestChan
+  , discordGateway :: Gateway
   , discordThreads :: [ThreadIdType]
   , discordReminder :: TheseNamesAreInternalDetails
   }
@@ -63,20 +66,17 @@ data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallException a)
 restCall h = writeRestCall (discordRestChan h)
 
-{-
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
-sendCommand :: (x, Gateway, z) -> GatewaySendable -> IO ()
-sendCommand (_,g,_) e = case e of
-                          Heartbeat _ -> pure ()
-                          Identify _ _ _ _ -> pure ()
-                          Resume _ _ _ -> pure ()
-                          _ -> writeChan (_gatewayCommands g) e
+sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
+sendCommand h e = case e of
+                    Heartbeat _ -> pure ()
+                    Identify {} -> pure ()
+                    Resume {} -> pure ()
+                    _ -> writeChan (_gatewayCommands (discordGateway h)) e
 
 -- | Access the current state of the gateway cache
-readCache :: (RestChan, Gateway, z) -> IO (Either GatewayException Cache)
-readCache (_,g,_) = readMVar (_cache g)
-
--}
+readCache :: DiscordHandle -> IO (Either GatewayException Cache)
+readCache h = readMVar (_cache (discordGateway h))
 
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
@@ -101,6 +101,7 @@ runDiscord opts = do
 
   let handle = DiscordHandle
         { discordRestChan = restHandler
+        , discordGateway = gate
         , discordThreads = [ ThreadLogger logId
                            , ThreadRest restId
                            , ThreadGateway gateId
@@ -110,7 +111,7 @@ runDiscord opts = do
 
   discordOnStart opts handle
 
-  finally (forever $ do e <- readChan (_events gate)
+  finally (forever $ do e <- readChan (_events (discordGateway handle))
                         case e of
                           Right event -> discordOnEvent opts handle event
                           Left err -> print err
