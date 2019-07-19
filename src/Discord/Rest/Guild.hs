@@ -305,7 +305,7 @@ guildMajorRoute c = case c of
   (AddGuildMemberRole g _ _) ->     "guild_membs " <> show g
   (RemoveGuildMemberRole g _ _) ->  "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
-  (GetGuildBan g _) ->                "guild_bans " <> show g
+  (GetGuildBan g _) ->               "guild_bans " <> show g
   (GetGuildBans g) ->                "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
