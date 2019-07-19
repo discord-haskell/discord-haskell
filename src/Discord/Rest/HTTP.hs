@@ -80,7 +80,7 @@ restLoop auth urls log = loop M.empty
 
 data RateLimited = Available | Locked
 
-compareRate :: (Ord k, Ord v) => M.Map k v -> k -> v -> RateLimited
+compareRate :: M.Map String POSIXTime -> String -> POSIXTime -> RateLimited
 compareRate ratelocker route curtime =
     case M.lookup route ratelocker of
       Just unlockTime -> if curtime < unlockTime then Locked else Available
