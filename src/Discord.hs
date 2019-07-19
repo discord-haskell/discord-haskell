@@ -62,23 +62,6 @@ data DiscordHandle = DiscordHandle
 
 data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 
--- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) =>
-            DiscordHandle -> r a -> IO (Either RestCallException a)
-restCall h = writeRestCall (discordRestChan h)
-
--- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
-sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
-sendCommand h e = case e of
-                    Heartbeat _ -> pure ()
-                    Identify {} -> pure ()
-                    Resume {} -> pure ()
-                    _ -> writeChan (_gatewayCommands (discordGateway h)) e
-
--- | Access the current state of the gateway cache
-readCache :: DiscordHandle -> IO (Either GatewayException Cache)
-readCache h = readMVar (_cache (discordGateway h))
-
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
   , discordOnStart :: DiscordHandle -> IO ()
@@ -119,8 +102,24 @@ runDiscord opts = do
     (stopDiscord handle)
 
 
-logger :: (String -> IO ()) -> Chan String -> IO ()
-logger handle logC = forever $ readChan logC >>= handle
+
+-- | Execute one http request and get a response
+restCall :: (FromJSON a, Request (r a)) =>
+            DiscordHandle -> r a -> IO (Either RestCallException a)
+restCall h = writeRestCall (discordRestChan h)
+
+-- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
+sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
+sendCommand h e = case e of
+                    Heartbeat _ -> pure ()
+                    Identify {} -> pure ()
+                    Resume {} -> pure ()
+                    _ -> writeChan (_gatewayCommands (discordGateway h)) e
+
+-- | Access the current state of the gateway cache
+readCache :: DiscordHandle -> IO (Either GatewayException Cache)
+readCache h = readMVar (_cache (discordGateway h))
+
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
@@ -130,3 +129,5 @@ stopDiscord h = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) (discor
                    ThreadGateway a -> a
                    ThreadLogger a -> a
 
+logger :: (String -> IO ()) -> Chan String -> IO ()
+logger handle logC = forever $ readChan logC >>= handle
