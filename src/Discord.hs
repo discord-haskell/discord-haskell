@@ -109,12 +109,11 @@ runDiscord opts = do
         , discordReminder = TheseNamesAreInternalDetails
         }
 
-  discordOnStart opts handle
-
-  finally (forever $ do e <- readChan (_events (discordGateway handle))
-                        case e of
-                          Right event -> discordOnEvent opts handle event
-                          Left err -> print err
+  finally (do discordOnStart opts handle
+              forever $ do e <- readChan (_events (discordGateway handle))
+                           case e of
+                             Right event -> discordOnEvent opts handle event
+                             Left err -> print err
           )
     (stopDiscord handle)
 
