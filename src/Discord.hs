@@ -63,7 +63,8 @@ data DiscordHandle = DiscordHandle
 data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallException a)
+restCall :: (FromJSON a, Request (r a)) =>
+            DiscordHandle -> r a -> IO (Either RestCallException a)
 restCall h = writeRestCall (discordRestChan h)
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
