@@ -1,9 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
+{-# LANGUAGE RecordWildCards #-}    -- allows pattern matching on (Channel {..}) without listing the fields
 
 import Control.Exception (finally)
-import Control.Monad (when)
+import Control.Monad (when, forM_)
 import Data.Char (toLower)
 import Data.Monoid ((<>))
+import Data.Default (def)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -14,26 +16,42 @@ pingpongExample :: IO ()
 pingpongExample = do
   tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
 
-  dis <- loginRestGateway (Auth tok)
+  -- open ghci and run  [[ def :: RunDiscordOpts ]] to see default Opts
+  runDiscord $ def { discordToken = tok
+                   , discordOnStart = startHandler
+                   , discordOnEvent = eventHandler
+                   }
+  pure ()
 
-  finally (loopingPing dis)
-          (stopDiscord dis)
+isTextChannel :: Channel -> Bool
+isTextChannel (ChannelText {..}) = True
+isTextChannel _ = False
 
-loopingPing :: (RestChan, Gateway, z) -> IO ()
-loopingPing dis = do
-  e <- nextEvent dis
-  case e of
-      Left er -> putStrLn ("Event error: " <> show er)
-      Right (MessageCreate m) -> do
-        when (isPing (messageText m) && not (fromBot m)) $ do
-          resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
-          putStrLn (show resp)
-          putStrLn ""
-        loopingPing dis
-      _ -> loopingPing dis
+-- If a handler throws an exception, discord-haskell will gracefully shutdown
+startHandler :: DiscordHandle -> IO ()
+startHandler dis = do
+  putStrLn "Starting the bot"
+
+  Right partialGuilds <- restCall dis $ GetCurrentUserGuilds
+
+  forM_ partialGuilds $ \pg -> do
+    Right guild <- restCall dis $ GetGuild (partialGuildId pg)
+    Right chans <- restCall dis $ GetGuildChannels (guildId guild)
+    case filter isTextChannel chans of
+      (c:_) -> do restCall dis $ CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
+                  pure ()
+      _ -> pure ()
 
 fromBot :: Message -> Bool
 fromBot m = userIsBot (messageAuthor m)
 
 isPing :: T.Text -> Bool
-isPing = T.isPrefixOf "ping" . T.map toLower
+isPing = ("ping" `T.isPrefixOf`) . T.map toLower
+
+eventHandler :: DiscordHandle -> Event -> IO ()
+eventHandler dis event = case event of
+      MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+        resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
+        putStrLn $ show resp <> "\n"
+      _ -> pure ()
+

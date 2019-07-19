@@ -15,24 +15,23 @@ module Discord
   , RestCallException(..)
   , GatewayException(..)
   , Request(..)
-  , ThreadIdType(..)
+
+  , RunDiscordOpts(..)
+  , DiscordHandle(..)
+  , runDiscord
   , restCall
-  , nextEvent
-  , sendCommand
-  , readCache
-  , stopDiscord
-  , loginRest
-  , loginRestGateway
-  , loginRestGatewayWithLog
   ) where
 
 import Prelude hiding (log)
 import Control.Monad (forever)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
+import Control.Exception (finally)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Monoid ((<>))
 import Data.Aeson
+import Data.Default (Default, def)
+import qualified Data.Text as T
 
 import Discord.Rest
 import Discord.Rest.Channel
@@ -46,58 +45,25 @@ import Discord.Types
 import Discord.Gateway
 import Discord.Gateway.Cache
 
+
 -- | Thread Ids marked by what type they are
 data ThreadIdType = ThreadRest ThreadId
                   | ThreadGateway ThreadId
                   | ThreadLogger ThreadId
 
--- | As opposed to a Gateway object
-data NotLoggedIntoGateway = NotLoggedIntoGateway
+data DiscordHandle = DiscordHandle
+  { discordRestChan :: RestChan
+  , discordThreads :: [ThreadIdType]
+  , discordReminder :: TheseNamesAreInternalDetails
+  }
 
--- | Start HTTP rest handler background threads
-loginRest :: Auth -> IO (RestChan, NotLoggedIntoGateway, [ThreadIdType])
-loginRest auth = do
-  log <- newChan
-  logId <- forkIO (logger log False "")
-  (restHandler, restId) <- createHandler auth log
-  pure (restHandler, NotLoggedIntoGateway, [ ThreadLogger logId
-                                           , ThreadRest restId
-                                           ])
-
--- | Start HTTP rest handler and gateway background threads
-loginRestGateway :: Auth -> IO (RestChan, Gateway, [ThreadIdType])
-loginRestGateway auth = do
-  log <- newChan
-  logId <- forkIO (logger log False "")
-  (restHandler, restId) <- createHandler auth log
-  (gate, gateId) <- startGatewayThread auth log
-  pure (restHandler, gate, [ ThreadLogger logId
-                           , ThreadRest restId
-                           , ThreadGateway gateId
-                           ])
-
--- | Start HTTP rest handler and gateway background threads
-loginRestGatewayWithLog :: Auth -> String -> IO (RestChan, Gateway, [ThreadIdType])
-loginRestGatewayWithLog auth path = do
-  log <- newChan
-  logId <- forkIO (logger log True path)
-  (restHandler, restId) <- createHandler auth log
-  (gate, gateId) <- startGatewayThread auth log
-  pure (restHandler, gate, [ ThreadLogger logId
-                           , ThreadRest restId
-                           , ThreadGateway gateId
-                           ])
+data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) =>
-                     (RestChan, y, z) -> r a -> IO (Either RestCallException a)
-restCall (r,_,_) = writeRestCall r
+restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallException a)
+restCall h = writeRestCall (discordRestChan h)
 
--- | Block until the gateway produces another event. Once an exception is returned,
---    only return that exception
-nextEvent :: (x, Gateway, z) -> IO (Either GatewayException Event)
-nextEvent (_,g,_) = readChan (_events g)
-
+{-
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: (x, Gateway, z) -> GatewaySendable -> IO ()
 sendCommand (_,g,_) e = case e of
@@ -110,18 +76,56 @@ sendCommand (_,g,_) e = case e of
 readCache :: (RestChan, Gateway, z) -> IO (Either GatewayException Cache)
 readCache (_,g,_) = readMVar (_cache g)
 
+-}
+
+data RunDiscordOpts = RunDiscordOpts
+  { discordToken :: T.Text
+  , discordOnStart :: DiscordHandle -> IO ()
+  , discordOnEvent :: DiscordHandle -> Event -> IO ()
+  , discordOnLog :: String -> IO ()
+  }
+
+instance Default RunDiscordOpts where
+  def = RunDiscordOpts { discordToken = T.pack ""
+                       , discordOnStart = \_ -> pure ()
+                       , discordOnEvent = \_ _-> pure ()
+                       , discordOnLog = \_ -> pure ()
+                       }
+
+runDiscord :: RunDiscordOpts -> IO ()
+runDiscord opts = do
+  log <- newChan
+  logId <- forkIO (logger (discordOnLog opts) log)
+  (restHandler, restId) <- createHandler (Auth (discordToken opts)) log
+  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) log
+
+  let handle = DiscordHandle
+        { discordRestChan = restHandler
+        , discordThreads = [ ThreadLogger logId
+                           , ThreadRest restId
+                           , ThreadGateway gateId
+                           ]
+        , discordReminder = TheseNamesAreInternalDetails
+        }
+
+  discordOnStart opts handle
+
+  finally (forever $ do e <- readChan (_events gate)
+                        case e of
+                          Right event -> discordOnEvent opts handle event
+                          Left err -> print err
+          )
+    (stopDiscord handle)
+
+
+logger :: (String -> IO ()) -> Chan String -> IO ()
+logger handle logC = forever $ readChan logC >>= handle
+
 -- | Stop all the background threads
-stopDiscord :: (x, y, [ThreadIdType]) -> IO ()
-stopDiscord (_,_,is) = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) is
+stopDiscord :: DiscordHandle -> IO ()
+stopDiscord h = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
                    ThreadRest a -> a
                    ThreadGateway a -> a
                    ThreadLogger a -> a
 
--- | Add anything from the Chan to the log file, forever
-logger :: Chan String -> Bool -> String -> IO ()
-logger log False _ = forever $ readChan log >>= \_ -> pure ()
-logger log True  f = forever $ do
-  x <- readChan log
-  let line = x <> "\n\n"
-  appendFile f line
