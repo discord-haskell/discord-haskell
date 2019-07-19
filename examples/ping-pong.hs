@@ -22,10 +22,6 @@ pingpongExample = do
                    }
   pure ()
 
-isTextChannel :: Channel -> Bool
-isTextChannel (ChannelText {}) = True
-isTextChannel _ = False
-
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
 startHandler :: DiscordHandle -> IO ()
 startHandler dis = do
@@ -41,12 +37,6 @@ startHandler dis = do
                   pure ()
       _ -> pure ()
 
-fromBot :: Message -> Bool
-fromBot m = userIsBot (messageAuthor m)
-
-isPing :: T.Text -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.map toLower
-
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
@@ -54,3 +44,12 @@ eventHandler dis event = case event of
         putStrLn $ show resp <> "\n"
       _ -> pure ()
 
+isTextChannel :: Channel -> Bool
+isTextChannel (ChannelText {}) = True
+isTextChannel _ = False
+
+fromBot :: Message -> Bool
+fromBot m = userIsBot (messageAuthor m)
+
+isPing :: T.Text -> Bool
+isPing = ("ping" `T.isPrefixOf`) . T.map toLower
