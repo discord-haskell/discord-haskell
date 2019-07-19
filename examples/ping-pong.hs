@@ -18,15 +18,15 @@ pingpongExample = do
   -- open ghci and run  [[ def :: RunDiscordOpts ]] to see default Opts
   runDiscord $ def { discordToken = tok
                    , discordOnStart = startHandler
+                   , discordOnEnd = putStrLn "Ended"
                    , discordOnEvent = eventHandler
+                   , discordOnLog = \s -> putStrLn s >> putStrLn ""
                    }
   pure ()
 
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
 startHandler :: DiscordHandle -> IO ()
 startHandler dis = do
-  putStrLn "Starting the bot"
-
   Right partialGuilds <- restCall dis $ GetCurrentUserGuilds
 
   forM_ partialGuilds $ \pg -> do
@@ -40,8 +40,8 @@ startHandler dis = do
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
-        resp <- restCall dis (CreateMessage (messageChannel m) "Pong!")
-        putStrLn $ show resp <> "\n"
+        _ <- restCall dis (CreateMessage (messageChannel m) "Pong!")
+        pure ()
       _ -> pure ()
 
 isTextChannel :: Channel -> Bool

@@ -66,6 +66,7 @@ data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
   , discordOnStart :: DiscordHandle -> IO ()
+  , discordOnEnd :: IO ()
   , discordOnEvent :: DiscordHandle -> Event -> IO ()
   , discordOnLog :: String -> IO ()
   }
@@ -73,6 +74,7 @@ data RunDiscordOpts = RunDiscordOpts
 instance Default RunDiscordOpts where
   def = RunDiscordOpts { discordToken = T.pack ""
                        , discordOnStart = \_ -> pure ()
+                       , discordOnEnd = pure ()
                        , discordOnEvent = \_ _-> pure ()
                        , discordOnLog = \_ -> pure ()
                        }
@@ -100,7 +102,7 @@ runDiscord opts = do
                              Right event -> discordOnEvent opts handle event
                              Left err -> print err
           )
-    (stopDiscord handle)
+    (discordOnEnd opts >> stopDiscord handle)
 
 
 
