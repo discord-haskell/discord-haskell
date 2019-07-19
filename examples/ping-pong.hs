@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
-{-# LANGUAGE RecordWildCards #-}    -- allows pattern matching on (Channel {..}) without listing the fields
 
 import Control.Exception (finally)
 import Control.Monad (when, forM_)
@@ -24,7 +23,7 @@ pingpongExample = do
   pure ()
 
 isTextChannel :: Channel -> Bool
-isTextChannel (ChannelText {..}) = True
+isTextChannel (ChannelText {}) = True
 isTextChannel _ = False
 
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
