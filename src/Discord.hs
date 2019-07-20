@@ -31,7 +31,6 @@ import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
 import Control.Exception (try, finally, IOException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import Data.Monoid ((<>))
 import Data.Aeson
 import Data.Default (Default, def)
 import qualified Data.Text as T
