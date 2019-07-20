@@ -5,7 +5,7 @@
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 
-import Control.Monad (when, void)
+import Control.Monad (when)
 import Data.Default (def)
 import Data.Text (isPrefixOf, toLower, Text)
 
@@ -18,9 +18,10 @@ pingpongExample = runDiscord $ def { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
 
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
-      MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
-        void $ restCall dis (CreateMessage (messageChannel m) "Pong!")
-      _ -> pure ()
+       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+               _ <- restCall dis (CreateMessage (messageChannel m) "Pong!")
+               pure ()
+       _ -> pure ()
 
 fromBot :: Message -> Bool
 fromBot m = userIsBot (messageAuthor m)
