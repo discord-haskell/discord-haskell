@@ -62,6 +62,7 @@ data DiscordHandle = DiscordHandle
   , discordGateway :: DiscordGateway
   , discordCache :: DiscordCache
   , discordThreads :: [DiscordThreadId]
+  , discordLog :: Chan String
   , discordLibraryError :: MVar T.Text
   }
 
@@ -94,6 +95,7 @@ runDiscord opts = do
   let handle = DiscordHandle { discordRestChan = rest
                              , discordGateway = gate
                              , discordCache = cache
+                             , discordLog = log
                              , discordLibraryError = libE
                              , discordThreads = [ DiscordThreadIdLogger logId
                                                 , DiscordThreadIdRest restId
