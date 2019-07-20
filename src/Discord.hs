@@ -75,7 +75,7 @@ instance Default RunDiscordOpts where
                        , discordOnLog = \_ -> pure ()
                        }
 
-runDiscord :: RunDiscordOpts -> IO ()
+runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
   logId <- forkIO (logger (discordOnLog opts) log)
