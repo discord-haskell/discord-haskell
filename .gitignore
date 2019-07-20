@@ -1,3 +1,6 @@
+# As a library I won't commit the lock file
+stack.yaml.lock
+
 .cabal-sandbox/*
 .stack-work
 .stack/*
