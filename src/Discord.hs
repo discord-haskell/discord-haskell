@@ -57,10 +57,7 @@ data DiscordHandle = DiscordHandle
   { discordRestChan :: RestChan
   , discordGateway :: Gateway
   , discordThreads :: [ThreadIdType]
-  , discordReminder :: TheseNamesAreInternalDetails
   }
-
-data TheseNamesAreInternalDetails = TheseNamesAreInternalDetails
 
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
@@ -92,7 +89,6 @@ runDiscord opts = do
                            , ThreadRest restId
                            , ThreadGateway gateId
                            ]
-        , discordReminder = TheseNamesAreInternalDetails
         }
 
   finally (do discordOnStart opts handle
