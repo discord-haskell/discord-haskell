@@ -13,7 +13,7 @@ module Discord
   , Cache(..)
   , DiscordGateway(..)
   , DiscordCache(..)
-  , RestChan(..)
+  , DiscordRestChan(..)
   , RestCallException(..)
   , GatewayException(..)
   , Request(..)
@@ -50,16 +50,16 @@ import Discord.Gateway.Cache
 
 
 -- | Thread Ids marked by what type they are
-data ThreadIdType = ThreadRest ThreadId
-                  | ThreadGateway ThreadId
-                  | ThreadCache ThreadId
-                  | ThreadLogger ThreadId
+data DiscordThreadId = DiscordThreadIdRest ThreadId
+                     | DiscordThreadIdCache ThreadId
+                     | DiscordThreadIdLogger ThreadId
+                     | DiscordThreadIdGateway ThreadId
 
 data DiscordHandle = DiscordHandle
-  { discordRestChan :: RestChan
+  { discordRestChan :: DiscordRestChan
   , discordGateway :: DiscordGateway
   , discordCache :: DiscordCache
-  , discordThreads :: [ThreadIdType]
+  , discordThreads :: [DiscordThreadId]
   }
 
 data RunDiscordOpts = RunDiscordOpts
@@ -83,16 +83,16 @@ runDiscord opts = do
   log <- newChan
   logId <- startLogger (discordOnLog opts) log
   (cache, cacheId) <- startCacheThread log
-  (restHandler, restId) <- createHandler (Auth (discordToken opts)) log
+  (rest, restId) <- startRestThread (Auth (discordToken opts)) log
   (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) cache log
 
-  let handle = DiscordHandle { discordRestChan = restHandler
+  let handle = DiscordHandle { discordRestChan = rest
                              , discordGateway = gate
                              , discordCache = cache
-                             , discordThreads = [ ThreadLogger logId
-                                                , ThreadRest restId
-                                                , ThreadCache cacheId
-                                                , ThreadGateway gateId
+                             , discordThreads = [ DiscordThreadIdLogger logId
+                                                , DiscordThreadIdRest restId
+                                                , DiscordThreadIdCache cacheId
+                                                , DiscordThreadIdGateway gateId
                                                 ]
                              }
 
@@ -129,10 +129,10 @@ stopDiscord :: DiscordHandle -> IO ()
 stopDiscord h = do threadDelay (10^6 `div` 10)
                    mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
-                   ThreadRest a -> a
-                   ThreadGateway a -> a
-                   ThreadCache a -> a
-                   ThreadLogger a -> a
+                   DiscordThreadIdRest a -> a
+                   DiscordThreadIdGateway a -> a
+                   DiscordThreadIdCache a -> a
+                   DiscordThreadIdLogger a -> a
 
 startLogger :: (T.Text -> IO ()) -> Chan String -> IO ThreadId
 startLogger handle logC = forkIO $ forever $
