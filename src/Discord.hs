@@ -11,12 +11,13 @@ module Discord
   , module Discord.Rest.Voice
   , module Discord.Rest.Webhook
   , Cache(..)
-  , DiscordGateway(..)
-  , DiscordCache(..)
-  , DiscordRestChan(..)
   , RestCallErrorCode(..)
   , GatewayException(..)
   , Request(..)
+
+  , DiscordGateway
+  , DiscordCache
+  , DiscordRestChan
 
   , RunDiscordOpts(..)
   , DiscordHandle(..)
@@ -110,7 +111,7 @@ runDiscord opts = do
     Left (RestCallInternalHttpException e) -> pure (T.pack ("Couldn't do restcall - " <> show e))
     Left (RestCallInternalNoParse _ _) -> pure (T.pack "Couldn't parse GetCurrentUser")
     _ -> finally (do discordOnStart opts handle
-                     let loop = do next <- race (readMVar (discordLibraryError handle)) (readChan (_events_g (discordGateway handle)))
+                     let loop = do next <- race (readMVar (discordLibraryError handle)) (readChan (fst (discordGateway handle)))
                                    case next of
                                      Left libErr -> pure libErr
                                      Right e -> case e of
@@ -144,11 +145,11 @@ sendCommand h e = case e of
                     Heartbeat _ -> pure ()
                     Identify {} -> pure ()
                     Resume {} -> pure ()
-                    _ -> writeChan (_gatewayCommands (discordGateway h)) e
+                    _ -> writeChan (snd (discordGateway h)) e
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandle -> IO (Either GatewayException Cache)
-readCache h = readMVar (_cache (discordCache h))
+readCache h = readMVar (snd (discordCache h))
 
 
 -- | Stop all the background threads

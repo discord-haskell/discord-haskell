@@ -6,7 +6,7 @@
 --   MVars for each call
 module Discord.Rest
   ( module Discord.Types
-  , DiscordRestChan(..)
+  , DiscordRestChan
   , Request(..)
   , writeRestCall
   , startRestThread
@@ -23,19 +23,18 @@ import qualified Data.ByteString.Lazy.Char8 as QL
 import Discord.Types
 import Discord.Rest.HTTP
 
-newtype DiscordRestChan = DiscordRestChan (Chan (String, JsonRequest,
-                                   MVar (Either RestCallInternalException QL.ByteString)))
+type DiscordRestChan = Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
 
 -- | Starts the http request thread. Please only call this once
 startRestThread :: Auth -> Chan String -> IO (DiscordRestChan, ThreadId)
 startRestThread auth log = do
   c <- newChan
   tid <- forkIO $ restLoop auth c log
-  pure (DiscordRestChan c, tid)
+  pure (c, tid)
 
 -- | Execute a request blocking until a response is received
 writeRestCall :: (Request (r a), FromJSON a) => DiscordRestChan -> r a -> IO (Either RestCallInternalException a)
-writeRestCall (DiscordRestChan c) req = do
+writeRestCall c req = do
   m <- newEmptyMVar
   writeChan c (majorRoute req, jsonRequest req, m)
   r <- readMVar m

@@ -3,8 +3,8 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Gateway
-  ( DiscordGateway(..)
-  , DiscordCache(..)
+  ( DiscordGateway
+  , DiscordCache
   , GatewayException(..)
   , startCacheThread
   , startGatewayThread
@@ -19,33 +19,24 @@ import Discord.Types (Auth, Event, GatewaySendable)
 import Discord.Gateway.EventLoop (connectionLoop, GatewayException(..))
 import Discord.Gateway.Cache
 
--- | Concurrency primitives that make up the cache
-data DiscordCache = DiscordCache
-  { _events_c :: Chan (Either GatewayException Event)
-  , _cache :: MVar (Either GatewayException Cache)
-  }
-
--- | Concurrency primitives that make up the gateway
-data DiscordGateway = DiscordGateway
-  { _events_g :: Chan (Either GatewayException Event)
-  , _gatewayCommands :: Chan GatewaySendable
-  }
+type DiscordCache = (Chan (Either GatewayException Event), MVar (Either GatewayException Cache))
+type DiscordGateway = (Chan (Either GatewayException Event), Chan GatewaySendable)
 
 startCacheThread :: Chan String -> IO (DiscordCache, ThreadId)
 startCacheThread log = do
   events <- newChan
   cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
   tid <- forkIO $ cacheLoop cache events log
-  pure (DiscordCache events cache, tid)
+  pure ((events, cache), tid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
 startGatewayThread :: Auth -> DiscordCache -> Chan String -> IO (DiscordGateway, ThreadId)
-startGatewayThread auth cache log = do
-  events <- dupChan (_events_c cache)
+startGatewayThread auth (_events, _) log = do
+  events <- dupChan _events
   sends <- newChan
   tid <- forkIO $ connectionLoop auth events sends log
-  pure (DiscordGateway events sends, tid)
+  pure ((events, sends), tid)
 
 
 
