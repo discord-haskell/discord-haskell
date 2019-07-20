@@ -48,7 +48,6 @@ connectionLoop auth events userSend log = loop ConnStart 0
  where
   loop :: ConnLoopState -> Int -> IO ()
   loop s retries = do
-    writeChan log ("gateway - connection loop state " <> show s)
     case s of
       (ConnClosed) -> pure ()
       (ConnStart) -> do
@@ -125,16 +124,15 @@ getPayloadTimeout conn interval log = do
 getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
 getPayload conn log = try $ do
   msg' <- receiveData conn
-  writeChan log ("gateway - received " <> QL.unpack msg')
   case eitherDecode msg' of
     Right msg -> pure msg
-    Left  err -> do writeChan log ("gateway - received parse Error - " <> err)
+    Left  err -> do writeChan log ("gateway - received parse Error - " <> err
+                                      <> " while decoding "<> QL.unpack msg')
                     pure (ParseError err)
 
-heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> Chan String -> IO ()
-heartbeat send interval seqKey log = do
+heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()
+heartbeat send interval seqKey = do
   threadDelay (1 * 10^6)
-  writeChan log "gateway - starting heartbeat"
   forever $ do
     num <- readIORef seqKey
     writeChan send (Heartbeat num)
@@ -159,7 +157,7 @@ startEventStream conndata interval seqN userSend log = do
   handle err $ do
     gateSends <- newChan
     sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends)
-    heart <- forkIO $ heartbeat gateSends interval seqKey log
+    heart <- forkIO $ heartbeat gateSends interval seqKey
 
     finally (eventStream conndata seqKey interval gateSends log)
             (killThread heart >> killThread sendsId)
