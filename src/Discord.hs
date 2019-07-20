@@ -115,7 +115,8 @@ runDiscord opts = do
                                    case next of
                                      Left libErr -> pure libErr
                                      Right e -> case e of
-                                                  Right event -> discordOnEvent opts handle event >> loop
+                                                  Right event -> do forkIO (discordOnEvent opts handle event)
+                                                                    loop
                                                   Left err -> pure (T.pack (show err))
                      loop
                  )
