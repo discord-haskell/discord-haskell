@@ -1,9 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
-import Control.Exception (finally)
 import Control.Monad (when, forM_)
 import Data.Char (toLower)
-import Data.Monoid ((<>))
 import Data.Default (def)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -33,7 +31,7 @@ startHandler dis = do
     Right guild <- restCall dis $ GetGuild (partialGuildId pg)
     Right chans <- restCall dis $ GetGuildChannels (guildId guild)
     case filter isTextChannel chans of
-      (c:_) -> do restCall dis $ CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
+      (c:_) -> do _ <- restCall dis $ CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
                   pure ()
       _ -> pure ()
 
