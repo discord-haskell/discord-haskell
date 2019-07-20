@@ -103,7 +103,7 @@ connectionLoop auth events userSend log = loop ConnStart 0
                                                "Could not ConnReconnect"))
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
-            Left _ -> if (retries < 5)
+            Left _ -> if retries < 5
                       then do t <- getRandomR (3,10)
                               threadDelay (t * 10^6)
                               loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
