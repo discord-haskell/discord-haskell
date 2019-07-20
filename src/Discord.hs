@@ -125,7 +125,8 @@ readCache h = readMVar (_cache (discordGateway h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
-stopDiscord h = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) (discordThreads h)
+stopDiscord h = do threadDelay (10^6 `div` 10)
+                   mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
                    ThreadRest a -> a
                    ThreadGateway a -> a
