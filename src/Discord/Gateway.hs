@@ -3,8 +3,10 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Gateway
-  ( Gateway(..)
+  ( DiscordGateway(..)
+  , DiscordCache(..)
   , GatewayException(..)
+  , startCacheThread
   , startGatewayThread
   , module Discord.Types
   ) where
@@ -17,25 +19,33 @@ import Discord.Types (Auth, Event, GatewaySendable)
 import Discord.Gateway.EventLoop (connectionLoop, GatewayException(..))
 import Discord.Gateway.Cache
 
--- | Concurrency primitives that make up the gateway. Build a higher
---   level interface over these
-data Gateway = Gateway
-  { _events :: Chan (Either GatewayException Event)
+-- | Concurrency primitives that make up the cache
+data DiscordCache = DiscordCache
+  { _events_c :: Chan (Either GatewayException Event)
   , _cache :: MVar (Either GatewayException Cache)
+  }
+
+-- | Concurrency primitives that make up the gateway
+data DiscordGateway = DiscordGateway
+  { _events_g :: Chan (Either GatewayException Event)
   , _gatewayCommands :: Chan GatewaySendable
   }
 
+startCacheThread :: Chan String -> IO (DiscordCache, ThreadId)
+startCacheThread log = do
+  events <- newChan
+  cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
+  tid <- cacheAddEventLoopFork cache events log
+  pure (DiscordCache events cache, tid)
+
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-startGatewayThread :: Auth -> Chan String -> IO (Gateway, ThreadId)
-startGatewayThread auth log = do
-  eventsWrite <- newChan
-  eventsCache <- dupChan eventsWrite
+startGatewayThread :: Auth -> DiscordCache -> Chan String -> IO (DiscordGateway, ThreadId)
+startGatewayThread auth cache log = do
+  events <- dupChan (_events_c cache)
   sends <- newChan
-  cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
-  tid <- forkIO $ connectionLoop auth eventsWrite sends log
-  cacheAddEventLoopFork cache eventsCache log
-  pure (Gateway eventsWrite cache sends, tid)
+  tid <- forkIO $ connectionLoop auth events sends log
+  pure (DiscordGateway events sends, tid)
 
 
 

@@ -11,7 +11,8 @@ module Discord
   , module Discord.Rest.Voice
   , module Discord.Rest.Webhook
   , Cache(..)
-  , Gateway(..)
+  , DiscordGateway(..)
+  , DiscordCache(..)
   , RestChan(..)
   , RestCallException(..)
   , GatewayException(..)
@@ -51,11 +52,13 @@ import Discord.Gateway.Cache
 -- | Thread Ids marked by what type they are
 data ThreadIdType = ThreadRest ThreadId
                   | ThreadGateway ThreadId
+                  | ThreadCache ThreadId
                   | ThreadLogger ThreadId
 
 data DiscordHandle = DiscordHandle
   { discordRestChan :: RestChan
-  , discordGateway :: Gateway
+  , discordGateway :: DiscordGateway
+  , discordCache :: DiscordCache
   , discordThreads :: [ThreadIdType]
   }
 
@@ -78,21 +81,24 @@ instance Default RunDiscordOpts where
 runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
-  logId <- forkIO (logger (discordOnLog opts) log)
+  logId <- startLogger (discordOnLog opts) log
+  (cache, cacheId) <- startCacheThread log
   (restHandler, restId) <- createHandler (Auth (discordToken opts)) log
-  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) log
+  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) cache log
 
   let handle = DiscordHandle
         { discordRestChan = restHandler
         , discordGateway = gate
+        , discordCache = cache
         , discordThreads = [ ThreadLogger logId
                            , ThreadRest restId
+                           , ThreadCache cacheId
                            , ThreadGateway gateId
                            ]
         }
 
   finally (do discordOnStart opts handle
-              forever $ do e <- readChan (_events (discordGateway handle))
+              forever $ do e <- readChan (_events_g (discordGateway handle))
                            case e of
                              Right event -> discordOnEvent opts handle event
                              Left err -> print err
@@ -116,7 +122,7 @@ sendCommand h e = case e of
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandle -> IO (Either GatewayException Cache)
-readCache h = readMVar (_cache (discordGateway h))
+readCache h = readMVar (_cache (discordCache h))
 
 
 -- | Stop all the background threads
@@ -126,10 +132,11 @@ stopDiscord h = do threadDelay (10^6 `div` 10)
   where toId t = case t of
                    ThreadRest a -> a
                    ThreadGateway a -> a
+                   ThreadCache a -> a
                    ThreadLogger a -> a
 
-logger :: (T.Text -> IO ()) -> Chan String -> IO ()
-logger handle logC = forever $
+startLogger :: (T.Text -> IO ()) -> Chan String -> IO ThreadId
+startLogger handle logC = forkIO $ forever $
   do me <- try $ (T.pack <$> readChan logC) >>= handle
      case me of
        Right _ -> pure ()
