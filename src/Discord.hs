@@ -134,9 +134,9 @@ restCall h r = do resp <- writeRestCall (discordRestChan h) r
                                                       (TE.decodeUtf8 e2)))
                     Left (RestCallInternalHttpException _) -> do threadDelay (10 * 10^6)
                                                                  restCall h r
-                    Left (RestCallInternalNoParse _ _) -> do _ <- tryPutMVar (discordLibraryError h) (T.pack "Parse error")
-                                                             threadDelay (1 * 10^6)
-                                                             restCall h r
+                    Left (RestCallInternalNoParse err dat) -> do writeChan (discordLog h) $ "Parse Exception " <> show dat <> " for " <> err
+                                                                 threadDelay (1 * 10^6)
+                                                                 restCall h r
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
