@@ -127,17 +127,20 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) =>
             DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
-restCall h r = do resp <- writeRestCall (discordRestChan h) r
-                  case resp of
-                    Right x -> pure (Right x)
-                    Left (RestCallInternalErrorCode c e1 e2) ->
-                      pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1)
-                                                      (TE.decodeUtf8 e2)))
-                    Left (RestCallInternalHttpException _) -> do threadDelay (10 * 10^6)
-                                                                 restCall h r
-                    Left (RestCallInternalNoParse err dat) -> do writeChan (discordLog h) $ "Parse Exception " <> show dat <> " for " <> err
-                                                                 threadDelay (1 * 10^6)
-                                                                 restCall h r
+restCall h r = do e <- tryReadMVar (discordLibraryError h)
+                  if e /= Nothing
+                  then pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack "")))
+                  else do resp <- writeRestCall (discordRestChan h) r
+                          case resp of
+                            Right x -> pure (Right x)
+                            Left (RestCallInternalErrorCode c e1 e2) ->
+                              pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1)
+                                                              (TE.decodeUtf8 e2)))
+                            Left (RestCallInternalHttpException _) -> do threadDelay (10 * 10^6)
+                                                                         restCall h r
+                            Left (RestCallInternalNoParse err dat) -> do writeChan (discordLog h) $ "Parse Exception " <> show dat <> " for " <> err
+                                                                         threadDelay (1 * 10^6)
+                                                                         restCall h r
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
@@ -157,7 +160,8 @@ readCache h = do merr <- readMVar (snd (discordCache h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
-stopDiscord h = do threadDelay (10^6 `div` 10)
+stopDiscord h = do _ <- tryPutMVar (discordLibraryError h)
+                   threadDelay (10^6 `div` 10)
                    mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
                    DiscordThreadIdRest a -> a
