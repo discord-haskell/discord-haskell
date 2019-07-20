@@ -48,14 +48,13 @@ restLoop auth urls log = loop M.empty
       Locked -> do writeChan urls (route, request, thread)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
-                      reqIO <- try $ restIOtoIO (tryRequest action log)
+                      reqIO <- try $ restIOtoIO (tryRequest action)
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
                           writeChan log ("rest - http exception " <> show e)
                           putMVar thread (Left (RestCallHttpException e))
                           loop ratelocker
                         Right (resp, retry) -> do
-                          writeChan log ("rest - response " <> show resp)
                           case resp of
                             -- decode "[]" == () for expected empty calls
                             ResponseByteString "" -> putMVar thread (Right "[]")
@@ -100,8 +99,8 @@ data Timeout = GlobalWait POSIXTime
              | PathWait POSIXTime
              | NoLimit
 
-tryRequest :: RestIO R.LbsResponse -> Chan String -> RestIO (RequestResponse, Timeout)
-tryRequest action log = do
+tryRequest :: RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
+tryRequest action = do
   resp <- action
   next10 <- liftIO (round . (+10) <$> getPOSIXTime)
   let body   = R.responseBody resp
@@ -111,10 +110,8 @@ tryRequest action log = do
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       resetInt = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
       reset  = fromIntegral resetInt
-  if | code == 429 -> do liftIO $ writeChan log ("rest - 429 RATE LIMITED global:"
-                                                 <> show global <> " reset:" <> show reset)
-                         pure (ResponseTryAgain, if global then GlobalWait reset
-                                                           else PathWait reset)
+  if | code == 429 -> pure (ResponseTryAgain, if global then GlobalWait reset
+                                                        else PathWait reset)
      | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
      | inRange (200,299) code -> pure ( ResponseByteString body
                                       , if remain > 0 then NoLimit else PathWait reset )
