@@ -14,13 +14,13 @@ pingpongExample = do
   tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
 
   -- open ghci and run  [[ def :: RunDiscordOpts ]] to see default Opts
-  runDiscord $ def { discordToken = tok
-                   , discordOnStart = startHandler
-                   , discordOnEnd = putStrLn "Ended"
-                   , discordOnEvent = eventHandler
-                   , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
-                   }
-  pure ()
+  t <- runDiscord $ def { discordToken = tok
+                        , discordOnStart = startHandler
+                        , discordOnEnd = putStrLn "Ended"
+                        , discordOnEvent = eventHandler
+                        , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
+                        }
+  TIO.putStrLn t
 
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
 startHandler :: DiscordHandle -> IO ()
