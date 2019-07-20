@@ -20,8 +20,6 @@ import Discord.Gateway.EventLoop (connectionLoop, GatewayException(..))
 import Discord.Gateway.Cache
 
 type DiscordCache = (Chan (Either GatewayException Event), MVar (Either GatewayException Cache))
-type DiscordGateway = (Chan (Either GatewayException Event), Chan GatewaySendable)
-
 startCacheThread :: Chan String -> IO (DiscordCache, ThreadId)
 startCacheThread log = do
   events <- newChan
@@ -35,7 +33,7 @@ startGatewayThread :: Auth -> DiscordCache -> Chan String -> IO (DiscordGateway,
 startGatewayThread auth (_events, _) log = do
   events <- dupChan _events
   sends <- newChan
-  tid <- forkIO $ connectionLoop auth events sends log
+  tid <- forkIO $ connectionLoop auth (events, sends) log
   pure ((events, sends), tid)
 
 
