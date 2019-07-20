@@ -8,6 +8,8 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
+--[[ Warning: temporaryily broken as I upgrade the interface ]]
+
 -- | Prints every event as it happens
 gatewayExample :: IO ()
 gatewayExample = do

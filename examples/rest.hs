@@ -6,6 +6,8 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
+--[[ Warning: temporaryily broken as I upgrade the interface ]]
+
 -- | Get a channel, send a message, react to a message
 restExample :: IO ()
 restExample = do

@@ -6,6 +6,8 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
+--[[ Warning: temporaryily broken as I upgrade the interface ]]
+
 -- | Print cached Gateway info
 cacheExample :: IO ()
 cacheExample = do

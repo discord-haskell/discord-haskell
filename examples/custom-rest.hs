@@ -15,6 +15,8 @@ import Discord.Types
 
 import Discord
 
+--[[ Warning: temporaryily broken as I upgrade the interface ]]
+
 -- | Create a different ModifyGuild that can only change the Name
 --     If a rest call you need is missing it is possible to add it
 customRestExample :: IO ()
