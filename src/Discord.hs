@@ -86,16 +86,15 @@ runDiscord opts = do
   (restHandler, restId) <- createHandler (Auth (discordToken opts)) log
   (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) cache log
 
-  let handle = DiscordHandle
-        { discordRestChan = restHandler
-        , discordGateway = gate
-        , discordCache = cache
-        , discordThreads = [ ThreadLogger logId
-                           , ThreadRest restId
-                           , ThreadCache cacheId
-                           , ThreadGateway gateId
-                           ]
-        }
+  let handle = DiscordHandle { discordRestChan = restHandler
+                             , discordGateway = gate
+                             , discordCache = cache
+                             , discordThreads = [ ThreadLogger logId
+                                                , ThreadRest restId
+                                                , ThreadCache cacheId
+                                                , ThreadGateway gateId
+                                                ]
+                             }
 
   finally (do discordOnStart opts handle
               forever $ do e <- readChan (_events_g (discordGateway handle))
