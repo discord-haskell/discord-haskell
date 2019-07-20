@@ -148,8 +148,11 @@ sendCommand h e = case e of
                     _ -> writeChan (snd (discordGateway h)) e
 
 -- | Access the current state of the gateway cache
-readCache :: DiscordHandle -> IO (Either GatewayException Cache)
-readCache h = readMVar (snd (discordCache h))
+readCache :: DiscordHandle -> IO Cache
+readCache h = do merr <- readMVar (snd (discordCache h))
+                 case merr of
+                   Left (c, _) -> pure c
+                   Right c -> pure c
 
 
 -- | Stop all the background threads

@@ -6,6 +6,7 @@ module Discord.Gateway.Cache where
 
 import Prelude hiding (log)
 import Data.Monoid ((<>))
+import Control.Monad (forever)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
@@ -20,35 +21,30 @@ data Cache = Cache
             , _channels :: M.Map ChannelId Channel
             } deriving (Show)
 
-emptyCache :: IO (MVar (Either GatewayException Cache))
-emptyCache = newEmptyMVar
+type DiscordCache = (Chan (Either GatewayException Event), MVar (Either (Cache, GatewayException) Cache))
 
-cacheLoop :: MVar (Either GatewayException Cache) -> Chan (Either GatewayException Event) -> Chan String -> IO ()
-cacheLoop cache eventChan log = do
+cacheLoop :: DiscordCache -> Chan String -> IO ()
+cacheLoop (eventChan, cache) log = do
       ready <- readChan eventChan
       case ready of
         Right (Ready _ user dmChannels _unavailableGuilds _) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
           putMVar cache (Right (Cache user dmChans M.empty M.empty))
           loop
-        Right r -> do
-          writeChan log ("cache - expected Ready event, but got " <> show r)
-          putMVar cache (Left (GatewayExceptionUnexpected (Dispatch r 0) "First must be read"))
-        Left e -> do
-          writeChan log "cache - gateway exception, stopping cache"
-          putMVar cache (Left e)
+        Right r ->
+          writeChan log ("cache - stopping cache - expected Ready event, but got " <> show r)
+        Left e ->
+          writeChan log ("cache - stopping cache - gateway exception " <> show e)
   where
   loop :: IO ()
-  loop = do
+  loop = forever $ do
     eventOrExcept <- readChan eventChan
     minfo <- takeMVar cache
-    case (eventOrExcept, minfo) of
-      (_, Left _) -> pure () -- never happen bc we stop loop once cache has an exception
-      (Left exception, _) -> do putMVar cache (Left exception)
-                                -- stop cache loop
-      (Right event, Right info) -> do
-        putMVar cache (Right (adjustCache info event))
-        loop
+    case minfo of
+      Left nope -> putMVar cache (Left nope)
+      Right info -> case eventOrExcept of
+                      Left e -> putMVar cache (Left (info, e))
+                      Right event -> putMVar cache (Right (adjustCache info event))
 
 adjustCache :: Cache -> Event -> Cache
 adjustCache minfo event = case event of
