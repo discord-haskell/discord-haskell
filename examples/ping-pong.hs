@@ -20,7 +20,7 @@ pingpongExample = do
                    , discordOnStart = startHandler
                    , discordOnEnd = putStrLn "Ended"
                    , discordOnEvent = eventHandler
-                   , discordOnLog = \s -> putStrLn s >> putStrLn ""
+                   , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                    }
   pure ()
 

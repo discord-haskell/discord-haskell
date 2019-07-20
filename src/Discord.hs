@@ -68,7 +68,7 @@ data RunDiscordOpts = RunDiscordOpts
   , discordOnStart :: DiscordHandle -> IO ()
   , discordOnEnd :: IO ()
   , discordOnEvent :: DiscordHandle -> Event -> IO ()
-  , discordOnLog :: String -> IO ()
+  , discordOnLog :: T.Text -> IO ()
   }
 
 instance Default RunDiscordOpts where
@@ -132,9 +132,9 @@ stopDiscord h = threadDelay (10^6 `div` 10) >> mapM_ (killThread . toId) (discor
                    ThreadGateway a -> a
                    ThreadLogger a -> a
 
-logger :: (String -> IO ()) -> Chan String -> IO ()
+logger :: (T.Text -> IO ()) -> Chan String -> IO ()
 logger handle logC = forever $
-  do me <- try $ readChan logC >>= handle
+  do me <- try $ (T.pack <$> readChan logC) >>= handle
      case me of
        Right _ -> pure ()
        Left (_ :: IOException) ->
