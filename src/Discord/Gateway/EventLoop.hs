@@ -105,10 +105,10 @@ connectionLoop auth events userSend log = loop ConnStart 0
           case next :: Either SomeException ConnLoopState of
             Left _ -> do t <- getRandomR (3,20)
                          threadDelay (t * 10^6)
-                         writeChan log ("gateway - Could not reconnect after " <> show retries
-                                               <> " retries")
+                         writeChan log ("gateway - trying to reconnect after " <> show retries
+                                               <> " failures")
                          loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
-            Right n -> loop n 0
+            Right n -> loop n 1
 
 
 getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
