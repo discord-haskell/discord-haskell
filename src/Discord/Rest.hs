@@ -10,7 +10,7 @@ module Discord.Rest
   , Request(..)
   , writeRestCall
   , startRestThread
-  , RestCallException(..)
+  , RestCallInternalException(..)
   ) where
 
 import Prelude hiding (log)
@@ -24,7 +24,7 @@ import Discord.Types
 import Discord.Rest.HTTP
 
 newtype DiscordRestChan = DiscordRestChan (Chan (String, JsonRequest,
-                                   MVar (Either RestCallException QL.ByteString)))
+                                   MVar (Either RestCallInternalException QL.ByteString)))
 
 -- | Starts the http request thread. Please only call this once
 startRestThread :: Auth -> Chan String -> IO (DiscordRestChan, ThreadId)
@@ -34,15 +34,15 @@ startRestThread auth log = do
   pure (DiscordRestChan c, tid)
 
 -- | Execute a request blocking until a response is received
-writeRestCall :: (Request (r a), FromJSON a) => DiscordRestChan -> r a -> IO (Either RestCallException a)
+writeRestCall :: (Request (r a), FromJSON a) => DiscordRestChan -> r a -> IO (Either RestCallInternalException a)
 writeRestCall (DiscordRestChan c) req = do
   m <- newEmptyMVar
   writeChan c (majorRoute req, jsonRequest req, m)
   r <- readMVar m
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
-    Right (Left er) -> Left (RestCallNoParse er (case r of Right x -> x
-                                                           Left _ -> ""))
+    Right (Left er) -> Left (RestCallInternalNoParse er (case r of Right x -> x
+                                                                   Left _ -> ""))
     Left e -> Left e
 
 

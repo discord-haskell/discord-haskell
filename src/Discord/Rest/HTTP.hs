@@ -7,7 +7,7 @@ module Discord.Rest.HTTP
   ( restLoop
   , Request(..)
   , JsonRequest(..)
-  , RestCallException(..)
+  , RestCallInternalException(..)
   ) where
 
 import Prelude hiding (log)
@@ -31,12 +31,12 @@ import qualified Data.Map.Strict as M
 import Discord.Types
 import Discord.Rest.Prelude
 
-data RestCallException = RestCallErrorCode Int Q.ByteString Q.ByteString
-                       | RestCallNoParse String QL.ByteString
-                       | RestCallHttpException R.HttpException
+data RestCallInternalException = RestCallInternalErrorCode Int Q.ByteString Q.ByteString
+                               | RestCallInternalNoParse String QL.ByteString
+                               | RestCallInternalHttpException R.HttpException
   deriving (Show)
 
-restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallException QL.ByteString))
+restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
                  -> Chan String -> IO ()
 restLoop auth urls log = loop M.empty
   where
@@ -52,7 +52,7 @@ restLoop auth urls log = loop M.empty
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
                           writeChan log ("rest - http exception " <> show e)
-                          putMVar thread (Left (RestCallHttpException e))
+                          putMVar thread (Left (RestCallInternalHttpException e))
                           loop ratelocker
                         Right (resp, retry) -> do
                           case resp of
@@ -60,7 +60,7 @@ restLoop auth urls log = loop M.empty
                             ResponseByteString "" -> putMVar thread (Right "[]")
                             ResponseByteString bs -> putMVar thread (Right bs)
                             ResponseErrorCode e s b ->
-                              putMVar thread (Left (RestCallErrorCode e s b))
+                              putMVar thread (Left (RestCallInternalErrorCode e s b))
                             ResponseTryAgain -> writeChan urls (route, request, thread)
                           case retry of
                             GlobalWait i -> do
