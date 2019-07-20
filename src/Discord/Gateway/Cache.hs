@@ -6,7 +6,6 @@ module Discord.Gateway.Cache where
 
 import Prelude hiding (log)
 import Data.Monoid ((<>))
-import Control.Concurrent (forkIO, ThreadId)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
@@ -24,21 +23,20 @@ data Cache = Cache
 emptyCache :: IO (MVar (Either GatewayException Cache))
 emptyCache = newEmptyMVar
 
-cacheAddEventLoopFork :: MVar (Either GatewayException Cache) -> Chan (Either GatewayException Event) -> Chan String -> IO ThreadId
-cacheAddEventLoopFork cache eventChan log = do
+cacheLoop :: MVar (Either GatewayException Cache) -> Chan (Either GatewayException Event) -> Chan String -> IO ()
+cacheLoop cache eventChan log = do
       ready <- readChan eventChan
       case ready of
         Right (Ready _ user dmChannels _unavailableGuilds _) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
           putMVar cache (Right (Cache user dmChans M.empty M.empty))
-          forkIO loop
+          loop
         Right r -> do
           writeChan log ("cache - expected Ready event, but got " <> show r)
-          cacheAddEventLoopFork cache eventChan log
+          putMVar cache (Left (GatewayExceptionUnexpected (Dispatch r 0) "First must be read"))
         Left e -> do
           writeChan log "cache - gateway exception, stopping cache"
           putMVar cache (Left e)
-          forkIO (pure ())
   where
   loop :: IO ()
   loop = do

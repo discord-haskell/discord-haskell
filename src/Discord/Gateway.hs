@@ -35,7 +35,7 @@ startCacheThread :: Chan String -> IO (DiscordCache, ThreadId)
 startCacheThread log = do
   events <- newChan
   cache <- emptyCache :: IO (MVar (Either GatewayException Cache))
-  tid <- cacheAddEventLoopFork cache events log
+  tid <- forkIO $ cacheLoop cache events log
   pure (DiscordCache events cache, tid)
 
 -- | Create a Chan for websockets. This creates a thread that
