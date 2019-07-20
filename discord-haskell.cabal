@@ -24,6 +24,16 @@ source-repository head
   type:                git
   location:            https://github.com/aquarial/discord-haskell.git
 
+executable ping-pong
+  main-is:             examples/ping-pong.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults
+  build-depends:       base
+                     , text
+                     , discord-haskell
+                     , data-default
+
 library
   ghc-options:         -Wall
                        -fno-warn-type-defaults
