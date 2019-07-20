@@ -42,6 +42,8 @@ library
                      , Discord.Rest.User
                      , Discord.Rest.Guild
                      , Discord.Rest.Channel
+                     , Discord.Rest.Voice
+                     , Discord.Rest.Webhook
                      , Discord.Types
                      , Discord.Types.Prelude
                      , Discord.Types.Channel
