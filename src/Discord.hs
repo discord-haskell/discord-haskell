@@ -14,7 +14,7 @@ module Discord
   , DiscordGateway(..)
   , DiscordCache(..)
   , DiscordRestChan(..)
-  , RestCallException(..)
+  , RestCallErrorCode(..)
   , GatewayException(..)
   , Request(..)
 
@@ -29,12 +29,14 @@ module Discord
 import Prelude hiding (log)
 import Control.Monad (forever)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
+import Control.Concurrent.Async (race)
 import Control.Exception (try, finally, IOException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Aeson
 import Data.Default (Default, def)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 
 import Discord.Rest
 import Discord.Rest.Channel
@@ -60,6 +62,7 @@ data DiscordHandle = DiscordHandle
   , discordGateway :: DiscordGateway
   , discordCache :: DiscordCache
   , discordThreads :: [DiscordThreadId]
+  , discordLibraryError :: MVar T.Text
   }
 
 data RunDiscordOpts = RunDiscordOpts
@@ -86,9 +89,12 @@ runDiscord opts = do
   (rest, restId) <- startRestThread (Auth (discordToken opts)) log
   (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) cache log
 
+  libE <- newEmptyMVar
+
   let handle = DiscordHandle { discordRestChan = rest
                              , discordGateway = gate
                              , discordCache = cache
+                             , discordLibraryError = libE
                              , discordThreads = [ DiscordThreadIdLogger logId
                                                 , DiscordThreadIdRest restId
                                                 , DiscordThreadIdCache cacheId
@@ -96,20 +102,39 @@ runDiscord opts = do
                                                 ]
                              }
 
-  finally (do discordOnStart opts handle
-              forever $ do e <- readChan (_events_g (discordGateway handle))
-                           case e of
-                             Right event -> discordOnEvent opts handle event
-                             Left err -> print err
-          )
-    (discordOnEnd opts >> stopDiscord handle)
+  resp <- writeRestCall (discordRestChan handle) GetCurrentUser
+  case resp of
+    Left (RestCallInternalErrorCode c _ _) -> pure (T.pack ("Couldn't execute GetCurrentUser - " <> show c))
+    Left (RestCallInternalHttpException e) -> pure (T.pack ("Couldn't do restcall - " <> show e))
+    Left (RestCallInternalNoParse _ _) -> pure (T.pack "Couldn't parse GetCurrentUser")
+    _ -> finally (do discordOnStart opts handle
+                     let loop = do next <- race (readMVar (discordLibraryError handle)) (readChan (_events_g (discordGateway handle)))
+                                   case next of
+                                     Left libErr -> pure libErr
+                                     Right e -> case e of
+                                                  Right event -> discordOnEvent opts handle event >> loop
+                                                  Left err -> pure (T.pack (show err))
+                     loop
+                 )
+                 (discordOnEnd opts >> stopDiscord handle)
 
 
+data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) =>
-            DiscordHandle -> r a -> IO (Either RestCallException a)
-restCall h = writeRestCall (discordRestChan h)
+            DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
+restCall h r = do resp <- writeRestCall (discordRestChan h) r
+                  case resp of
+                    Right x -> pure (Right x)
+                    Left (RestCallInternalErrorCode c e1 e2) ->
+                      pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1)
+                                                      (TE.decodeUtf8 e2)))
+                    Left (RestCallInternalHttpException _) -> do threadDelay (10 * 10^6)
+                                                                 restCall h r
+                    Left (RestCallInternalNoParse _ _) -> do _ <- tryPutMVar (discordLibraryError h) (T.pack "Parse error")
+                                                             threadDelay (1 * 10^6)
+                                                             restCall h r
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
