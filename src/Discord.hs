@@ -115,7 +115,7 @@ runDiscord opts = do
                                    case next of
                                      Left libErr -> pure libErr
                                      Right e -> case e of
-                                                  Right event -> do forkIO (discordOnEvent opts handle event)
+                                                  Right event -> do _ <- forkIO (discordOnEvent opts handle event)
                                                                     loop
                                                   Left err -> pure (T.pack (show err))
                      loop
@@ -161,7 +161,7 @@ readCache h = do merr <- readMVar (snd (discordCache h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
-stopDiscord h = do _ <- tryPutMVar (discordLibraryError h)
+stopDiscord h = do _ <- tryPutMVar (discordLibraryError h) (T.pack "Library has closed")
                    threadDelay (10^6 `div` 10)
                    mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
