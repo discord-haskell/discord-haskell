@@ -9,6 +9,9 @@ import qualified Data.Text.IO as TIO
 
 import Discord
 
+main :: IO ()
+main = pingpongExample
+
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
@@ -21,13 +24,13 @@ pingpongExample = do
                         , discordOnEvent = eventHandler
                         , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                         }
-  threadDelay (100000)
+  threadDelay (1 `div` 10 * 10^6)
   TIO.putStrLn t
 
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
 startHandler :: DiscordHandle -> IO ()
 startHandler dis = do
-  Right partialGuilds <- restCall dis $ GetCurrentUserGuilds
+  Right partialGuilds <- restCall dis GetCurrentUserGuilds
 
   forM_ partialGuilds $ \pg -> do
     Right guild <- restCall dis $ GetGuild (partialGuildId pg)
