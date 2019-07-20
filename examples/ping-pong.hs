@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
 import Control.Monad (when, forM_)
+import Control.Concurrent (threadDelay)
 import Data.Char (toLower)
 import Data.Default (def)
 import qualified Data.Text as T
@@ -20,6 +21,7 @@ pingpongExample = do
                         , discordOnEvent = eventHandler
                         , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                         }
+  threadDelay (100000)
   TIO.putStrLn t
 
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
@@ -38,6 +40,7 @@ startHandler dis = do
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+        threadDelay (4 * 10^6)
         _ <- restCall dis (CreateMessage (messageChannel m) "Pong!")
         pure ()
       _ -> pure ()
