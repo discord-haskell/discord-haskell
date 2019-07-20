@@ -126,22 +126,22 @@ runDiscord opts = do
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) =>
-            DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
+restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
 restCall h r = do e <- tryReadMVar (discordLibraryError h)
-                  if e /= Nothing
-                  then pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack "")))
-                  else do resp <- writeRestCall (discordRestChan h) r
-                          case resp of
-                            Right x -> pure (Right x)
-                            Left (RestCallInternalErrorCode c e1 e2) ->
-                              pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1)
-                                                              (TE.decodeUtf8 e2)))
-                            Left (RestCallInternalHttpException _) -> do threadDelay (10 * 10^6)
-                                                                         restCall h r
-                            Left (RestCallInternalNoParse err dat) -> do writeChan (discordLog h) $ "Parse Exception " <> show dat <> " for " <> err
-                                                                         threadDelay (1 * 10^6)
-                                                                         restCall h r
+                  case e of
+                    Nothing -> pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack "")))
+                    Just _ -> do
+                      resp <- writeRestCall (discordRestChan h) r
+                      case resp of
+                        Right x -> pure (Right x)
+                        Left (RestCallInternalErrorCode c e1 e2) ->
+                          pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1) (TE.decodeUtf8 e2)))
+                        Left (RestCallInternalHttpException _) ->
+                          threadDelay (10 * 10^6) >> restCall h r
+                        Left (RestCallInternalNoParse err dat) -> do
+                          let formaterr = "Parse Exception " <> err <> " for " <> show dat
+                          writeChan (discordLog h) formaterr
+                          pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack formaterr)))
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
