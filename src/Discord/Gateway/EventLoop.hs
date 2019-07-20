@@ -103,13 +103,11 @@ connectionLoop auth events userSend log = loop ConnStart 0
                                                "Could not ConnReconnect"))
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
-            Left _ -> if retries < 5
-                      then do t <- getRandomR (3,10)
-                              threadDelay (t * 10^6)
-                              loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
-                      else do writeChan events (Left (GatewayExceptionCouldNotConnect
-                                                      "Too many retries failed"))
-                              loop ConnClosed 0
+            Left _ -> do t <- getRandomR (3,20)
+                         threadDelay (t * 10^6)
+                         writeChan log ("gateway - Could not reconnect after " <> show retries
+                                               <> " retries")
+                         loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
             Right n -> loop n 0
 
 
