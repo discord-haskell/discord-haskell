@@ -124,6 +124,7 @@ runDiscord opts = do
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
+  deriving (Show, Eq, Ord)
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
