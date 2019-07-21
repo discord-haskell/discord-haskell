@@ -7,6 +7,7 @@ module Discord
   , restCall
   , sendCommand
   , readCache
+  , stopDiscord
 
   , DiscordHandle
   , Cache(..)
