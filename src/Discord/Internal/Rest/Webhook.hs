@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Webhook API interactions
-module Discord.Rest.Webhook
+module Discord.Internal.Rest.Webhook
   ( WebhookRequest(..)
   , CreateWebhookOpts(..)
   , ModifyWebhookOpts(..)
@@ -17,8 +17,8 @@ import qualified Data.Text as T
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute

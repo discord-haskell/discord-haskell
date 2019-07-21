@@ -4,7 +4,7 @@
 {-# LANGUAGE GADTs #-}
 
 -- | Utility and base types and functions for the Discord Rest API
-module Discord.Rest.Prelude where
+module Discord.Internal.Rest.Prelude where
 
 import Prelude hiding (log)
 import Data.Default (def)
@@ -14,7 +14,7 @@ import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Network.HTTP.Req as R
 
-import Discord.Types
+import Discord.Internal.Types
 
 -- | Discord requires HTTP headers for authentication.
 authHeader :: Auth -> R.Option 'R.Https

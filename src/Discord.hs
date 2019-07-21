@@ -3,29 +3,15 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Discord
-  ( module Discord.Types
-  , module Discord.Rest.Channel
-  , module Discord.Rest.Guild
-  , module Discord.Rest.User
-  , module Discord.Rest.Invite
-  , module Discord.Rest.Emoji
-  , module Discord.Rest.Voice
-  , module Discord.Rest.Webhook
-  , Cache(..)
-  , RestCallErrorCode(..)
-  , GatewayException(..)
-  , Request(..)
-
-  , DiscordHandleGateway
-  , DiscordHandleCache
-  , DiscordHandleRestChan
-
-  , RunDiscordOpts(..)
-  , DiscordHandle(..)
-  , runDiscord
+  ( runDiscord
   , restCall
   , sendCommand
   , readCache
+
+  , DiscordHandle
+  , Cache(..)
+  , RestCallErrorCode(..)
+  , RunDiscordOpts(..)
   ) where
 
 import Prelude hiding (log)
@@ -35,38 +21,16 @@ import Control.Concurrent.Async (race)
 import Control.Exception (try, finally, IOException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import Data.Aeson
+import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
-import Discord.Rest
-import Discord.Rest.Channel
-import Discord.Rest.Guild
-import Discord.Rest.User
-import Discord.Rest.Invite
-import Discord.Rest.Emoji
-import Discord.Rest.Voice
-import Discord.Rest.Webhook
-import Discord.Types
-import Discord.Gateway
-import Discord.Gateway.Cache
+import Discord.Handle
+import Discord.Internal.Rest
+import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
+import Discord.Internal.Gateway
 
-
--- | Thread Ids marked by what type they are
-data DiscordHandleThreadId = DiscordHandleThreadIdRest ThreadId
-                           | DiscordHandleThreadIdCache ThreadId
-                           | DiscordHandleThreadIdLogger ThreadId
-                           | DiscordHandleThreadIdGateway ThreadId
-
-data DiscordHandle = DiscordHandle
-  { discordRestChan :: DiscordHandleRestChan
-  , discordGateway :: DiscordHandleGateway
-  , discordCache :: DiscordHandleCache
-  , discordThreads :: [DiscordHandleThreadId]
-  , discordLog :: Chan String
-  , discordLibraryError :: MVar T.Text
-  }
 
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
@@ -94,16 +58,17 @@ runDiscord opts = do
 
   libE <- newEmptyMVar
 
-  let handle = DiscordHandle { discordRestChan = rest
-                             , discordGateway = gate
-                             , discordCache = cache
-                             , discordLog = log
-                             , discordLibraryError = libE
-                             , discordThreads = [ DiscordHandleThreadIdLogger logId
-                                                , DiscordHandleThreadIdRest restId
-                                                , DiscordHandleThreadIdCache cacheId
-                                                , DiscordHandleThreadIdGateway gateId
-                                                ]
+  let handle = DiscordHandle { discordHandleRestChan = rest
+                             , discordHandleGateway = gate
+                             , discordHandleCache = cache
+                             , discordHandleLog = log
+                             , discordHandleLibraryError = libE
+                             , discordHandleThreads =
+                                 [ DiscordHandleThreadIdLogger logId
+                                 , DiscordHandleThreadIdRest restId
+                                 , DiscordHandleThreadIdCache cacheId
+                                 , DiscordHandleThreadIdGateway gateId
+                                 ]
                              }
 
   finally (runDiscordLoop opts handle)
@@ -111,7 +76,7 @@ runDiscord opts = do
 
 runDiscordLoop :: RunDiscordOpts -> DiscordHandle -> IO T.Text
 runDiscordLoop opts handle = do
-  resp <- writeRestCall (discordRestChan handle) GetCurrentUser
+  resp <- writeRestCall (discordHandleRestChan handle) GetCurrentUser
   case resp of
     Left (RestCallInternalErrorCode c _ _) -> libError ("Couldn't execute GetCurrentUser - " <> T.pack (show c))
     Left (RestCallInternalHttpException e) -> libError ("Couldn't do restCall - " <> T.pack (show e))
@@ -119,16 +84,15 @@ runDiscordLoop opts handle = do
     _ -> discordOnStart opts handle >> loop
  where
    libError :: T.Text -> IO T.Text
-   libError msg = tryPutMVar (discordLibraryError handle) msg >> pure msg
+   libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
    loop :: IO T.Text
-   loop = do next <- race (readMVar (discordLibraryError handle))
-                          (readChan (fst (discordGateway handle)))
+   loop = do next <- race (readMVar (discordHandleLibraryError handle))
+                          (readChan (fst (discordHandleGateway handle)))
              case next of
                Left err -> libError err
                Right (Right event) -> forkIO (discordOnEvent opts handle event) >> loop
                Right (Left err) -> libError (T.pack (show err))
-
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
@@ -136,11 +100,11 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
-restCall h r = do empty <- isEmptyMVar (discordLibraryError h)
+restCall h r = do empty <- isEmptyMVar (discordHandleLibraryError h)
                   if not empty
                   then pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
                   else do
-                      resp <- writeRestCall (discordRestChan h) r
+                      resp <- writeRestCall (discordHandleRestChan h) r
                       case resp of
                         Right x -> pure (Right x)
                         Left (RestCallInternalErrorCode c e1 e2) ->
@@ -149,7 +113,7 @@ restCall h r = do empty <- isEmptyMVar (discordLibraryError h)
                           threadDelay (10 * 10^6) >> restCall h r
                         Left (RestCallInternalNoParse err dat) -> do
                           let formaterr = "Parse Exception " <> err <> " for " <> show dat
-                          writeChan (discordLog h) formaterr
+                          writeChan (discordHandleLog h) formaterr
                           pure (Left (RestCallErrorCode 400 "Library Stopped Working" (T.pack formaterr)))
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
@@ -158,11 +122,11 @@ sendCommand h e = case e of
                     Heartbeat _ -> pure ()
                     Identify {} -> pure ()
                     Resume {} -> pure ()
-                    _ -> writeChan (snd (discordGateway h)) e
+                    _ -> writeChan (snd (discordHandleGateway h)) e
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandle -> IO Cache
-readCache h = do merr <- readMVar (snd (discordCache h))
+readCache h = do merr <- readMVar (snd (discordHandleCache h))
                  case merr of
                    Left (c, _) -> pure c
                    Right c -> pure c
@@ -170,9 +134,9 @@ readCache h = do merr <- readMVar (snd (discordCache h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
-stopDiscord h = do _ <- tryPutMVar (discordLibraryError h) "Library has closed"
+stopDiscord h = do _ <- tryPutMVar (discordHandleLibraryError h) "Library has closed"
                    threadDelay (10^6 `div` 10)
-                   mapM_ (killThread . toId) (discordThreads h)
+                   mapM_ (killThread . toId) (discordHandleThreads h)
   where toId t = case t of
                    DiscordHandleThreadIdRest a -> a
                    DiscordHandleThreadIdGateway a -> a

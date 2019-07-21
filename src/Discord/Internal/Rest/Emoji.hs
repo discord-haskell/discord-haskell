@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.Emoji
+module Discord.Internal.Rest.Emoji
   ( EmojiRequest(..)
   , ModifyGuildEmojiOpts(..)
   , parseEmojiImage
@@ -21,8 +21,8 @@ import qualified Data.Text as T
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Base64 as B64
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (EmojiRequest a) where
   majorRoute = emojiMajorRoute

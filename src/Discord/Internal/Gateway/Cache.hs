@@ -1,8 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_HADDOCK prune, not-home #-}
 
 -- | Query info about connected Guilds and Channels
-module Discord.Gateway.Cache where
+module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
 import Data.Monoid ((<>))
@@ -11,8 +10,8 @@ import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
 
-import Discord.Types
-import Discord.Gateway.EventLoop
+import Discord.Internal.Types
+import Discord.Internal.Gateway.EventLoop
 
 data Cache = Cache
             { _currentUser :: User

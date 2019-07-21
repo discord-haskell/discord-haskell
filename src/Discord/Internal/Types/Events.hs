@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Data structures pertaining to gateway dispatch 'Event's
-module Discord.Types.Events where
+module Discord.Internal.Types.Events where
 
 import Prelude hiding (id)
 
@@ -13,10 +13,9 @@ import Data.Aeson
 import Data.Aeson.Types
 import qualified Data.Text as T
 
-import Discord.Types.Prelude
-import Discord.Types.Channel
-import Discord.Types.Guild (Guild, GuildUnavailable, GuildInfo,
-                            GuildMember, Role, Emoji)
+import Discord.Internal.Types.Prelude
+import Discord.Internal.Types.Channel
+import Discord.Internal.Types.Guild
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.

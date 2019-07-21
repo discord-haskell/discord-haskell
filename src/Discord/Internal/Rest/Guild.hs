@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.Guild
+module Discord.Internal.Rest.Guild
   ( GuildRequest(..)
   , CreateGuildChannelOpts(..)
   , ModifyGuildOpts(..)
@@ -25,8 +25,8 @@ import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (GuildRequest a) where
   majorRoute = guildMajorRoute

@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Voice API interactions
-module Discord.Rest.Voice
+module Discord.Internal.Rest.Voice
   ( VoiceRequest(..)
   ) where
 
@@ -13,8 +13,8 @@ module Discord.Rest.Voice
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (VoiceRequest a) where
   majorRoute = voiceMajorRoute

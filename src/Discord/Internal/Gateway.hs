@@ -1,23 +1,22 @@
-{-# OPTIONS_HADDOCK prune, not-home #-}
-
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
-module Discord.Gateway
+module Discord.Internal.Gateway
   ( DiscordHandleGateway
   , DiscordHandleCache
   , GatewayException(..)
+  , Cache(..)
   , startCacheThread
   , startGatewayThread
-  , module Discord.Types
+  , module Discord.Internal.Types
   ) where
 
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
 
-import Discord.Types (Auth, Event, GatewaySendable)
-import Discord.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
-import Discord.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
+import Discord.Internal.Types (Auth, Event, GatewaySendable)
+import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
+import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
 
 startCacheThread :: Chan String -> IO (DiscordHandleCache, ThreadId)
 startCacheThread log = do

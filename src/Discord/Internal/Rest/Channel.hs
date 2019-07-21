@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.Channel
+module Discord.Internal.Rest.Channel
   ( ChannelRequest(..)
   , ReactionTiming(..)
   , MessageTiming(..)
@@ -26,8 +26,8 @@ import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute

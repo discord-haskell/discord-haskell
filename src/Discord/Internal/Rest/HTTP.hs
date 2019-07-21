@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiWayIf #-}
 
 -- | Provide HTTP primitives
-module Discord.Rest.HTTP
+module Discord.Internal.Rest.HTTP
   ( restLoop
   , Request(..)
   , JsonRequest(..)
@@ -28,8 +28,8 @@ import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
 import qualified Data.Map.Strict as M
 
-import Discord.Types
-import Discord.Rest.Prelude
+import Discord.Internal.Types
+import Discord.Internal.Rest.Prelude
 
 data RestCallInternalException = RestCallInternalErrorCode Int Q.ByteString Q.ByteString
                                | RestCallInternalNoParse String QL.ByteString

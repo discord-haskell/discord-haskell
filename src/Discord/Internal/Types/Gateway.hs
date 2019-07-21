@@ -3,7 +3,7 @@
 
 -- | Data structures needed for interfacing with the Websocket
 --   Gateway
-module Discord.Types.Gateway where
+module Discord.Internal.Types.Gateway where
 
 import System.Info
 
@@ -16,8 +16,8 @@ import Data.Aeson.Types
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 
-import Discord.Types.Prelude
-import Discord.Types.Events
+import Discord.Internal.Types.Prelude
+import Discord.Internal.Types.Events
 
 -- | Represents data sent and received with Discord servers
 data GatewayReceivable

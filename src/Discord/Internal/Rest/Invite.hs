@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.Invite
+module Discord.Internal.Rest.Invite
   ( InviteRequest(..)
   ) where
 
@@ -15,8 +15,8 @@ import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (InviteRequest a) where
   majorRoute = inviteMajorRoute

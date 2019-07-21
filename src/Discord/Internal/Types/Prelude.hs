@@ -1,8 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Provides base types and utility functions needed for modules in Discord.Types
-module Discord.Types.Prelude where
+-- | Provides base types and utility functions needed for modules in Discord.Internal.Types
+module Discord.Internal.Types.Prelude where
 
 import Data.Bits
 import Data.Word

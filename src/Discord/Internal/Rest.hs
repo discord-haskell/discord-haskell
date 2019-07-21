@@ -1,11 +1,10 @@
 {-# LANGUAGE OverloadedStrings  #-}
-{-# OPTIONS_HADDOCK prune, not-home #-}
 
 -- | Provides a higher level interface to the rest functions.
 --   Preperly writes to the rate-limit loop. Creates separate
 --   MVars for each call
-module Discord.Rest
-  ( module Discord.Types
+module Discord.Internal.Rest
+  ( module Discord.Internal.Types
   , DiscordHandleRestChan
   , Request(..)
   , writeRestCall
@@ -20,8 +19,8 @@ import Control.Concurrent.MVar
 import Control.Concurrent (forkIO, ThreadId)
 import qualified Data.ByteString.Lazy.Char8 as QL
 
-import Discord.Types
-import Discord.Rest.HTTP
+import Discord.Internal.Types
+import Discord.Internal.Rest.HTTP
 
 type DiscordHandleRestChan = Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
 

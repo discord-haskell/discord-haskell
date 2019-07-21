@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Provides actions for Channel API interactions
-module Discord.Rest.User
+module Discord.Internal.Rest.User
   ( UserRequest(..)
   , parseCurrentUserAvatar
   , CurrentUserAvatar
@@ -22,8 +22,8 @@ import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
 import qualified Data.ByteString.Base64 as B64
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
 
 instance Request (UserRequest a) where
   majorRoute = userMajorRoute

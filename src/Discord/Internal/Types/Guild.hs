@@ -1,15 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | Types relating to Discord Guilds (servers)
-module Discord.Types.Guild where
+module Discord.Internal.Types.Guild where
 
 import Data.Time.Clock
 
 import Data.Aeson
 import qualified Data.Text as T
 
-import Discord.Types.Channel
-import Discord.Types.Prelude
+import Discord.Internal.Types.Channel
+import Discord.Internal.Types.Prelude
 
 -- | Representation of a guild member.
 data GuildMember = GuildMember

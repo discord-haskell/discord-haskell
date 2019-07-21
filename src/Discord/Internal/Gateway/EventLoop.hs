@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# OPTIONS_HADDOCK prune, not-home #-}
 
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Realistically, this is probably lower level than most
 --   people will need
-module Discord.Gateway.EventLoop where
+module Discord.Internal.Gateway.EventLoop where
 
 import Prelude hiding (log)
 
@@ -25,7 +24,7 @@ import Network.WebSockets (ConnectionException(..), Connection,
                            receiveData, sendTextData)
 import GHC.IO.Exception (IOError)
 
-import Discord.Types
+import Discord.Internal.Types
 
 data GatewayException = GatewayExceptionCouldNotConnect T.Text
                       | GatewayExceptionEventParseError String T.Text

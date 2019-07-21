@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Data structures pertaining to Discord Channels
-module Discord.Types.Channel where
+module Discord.Internal.Types.Channel where
 
 import Data.Aeson
 import Data.Aeson.Types (Parser)
@@ -13,7 +13,7 @@ import Data.Time.Clock
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
 
-import Discord.Types.Prelude
+import Discord.Internal.Types.Prelude
 
 -- | Represents information about a user.
 data User = User

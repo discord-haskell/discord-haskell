@@ -8,6 +8,8 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
 import Discord
+import Discord.Types
+import qualified Discord.Requests as R
 
 main :: IO ()
 main = pingpongExample
@@ -30,13 +32,13 @@ pingpongExample = do
 -- If a handler throws an exception, discord-haskell will gracefully shutdown
 startHandler :: DiscordHandle -> IO ()
 startHandler dis = do
-  Right partialGuilds <- restCall dis GetCurrentUserGuilds
+  Right partialGuilds <- restCall dis R.GetCurrentUserGuilds
 
   forM_ partialGuilds $ \pg -> do
-    Right guild <- restCall dis $ GetGuild (partialGuildId pg)
-    Right chans <- restCall dis $ GetGuildChannels (guildId guild)
+    Right guild <- restCall dis $ R.GetGuild (partialGuildId pg)
+    Right chans <- restCall dis $ R.GetGuildChannels (guildId guild)
     case filter isTextChannel chans of
-      (c:_) -> do _ <- restCall dis $ CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
+      (c:_) -> do _ <- restCall dis $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
                   pure ()
       _ -> pure ()
 
@@ -44,7 +46,7 @@ eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
         threadDelay (4 * 10^6)
-        _ <- restCall dis (CreateMessage (messageChannel m) "Pong!")
+        _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
         pure ()
       _ -> pure ()
 
