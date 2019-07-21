@@ -8,9 +8,10 @@
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 
-import Control.Monad (when, void)
+import Control.Monad (when)
 import Data.Text (isPrefixOf, toLower, Text)
 import Control.Concurrent (threadDelay)
+import qualified Data.Text.IO as TIO
 
 import Discord
 import Discord.Types
@@ -18,8 +19,10 @@ import qualified Discord.Requests as R
 
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
-pingpongExample = void $ runDiscord $ def { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
-                                          , discordOnEvent = eventHandler }
+pingpongExample = do userFacingError <- runDiscord $ def
+                                            { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
+                                            , discordOnEvent = eventHandler }
+                     TIO.putStrLn userFacingError
 
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
