@@ -34,7 +34,7 @@ instance Request (GuildRequest a) where
 
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data GuildRequest a where
-  -- todo CreateGuild        :: So many parameters
+  CreateGuild              :: CreateGuildOpts -> GuildRequest ()
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: GuildId -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
@@ -138,6 +138,16 @@ data GuildRequest a where
   ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
+
+data CreateGuildOpts = CreateGuildOpts
+  { createGuildOptsName :: T.Text
+  , createGuildOptsChannels :: [Channel]
+  } deriving (Show, Eq, Ord)
+
+instance ToJSON CreateGuildOpts where
+  toJSON CreateGuildOpts{..} =  object [(name, val) | (name, Just val) <-
+         [ ("name", toJSON <$> pure createGuildOptsName )
+         , ("channels", toJSON <$> pure createGuildOptsChannels ) ]]
 
 data ModifyGuildIntegrationOpts = ModifyGuildIntegrationOpts
   { modifyGuildIntegrationOptsExpireBehavior :: Integer
@@ -291,6 +301,7 @@ guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
 
 guildMajorRoute :: GuildRequest a -> String
 guildMajorRoute c = case c of
+  (CreateGuild _) ->                      "guild "
   (GetGuild g) ->                         "guild " <> show g
   (ModifyGuild g _) ->                    "guild " <> show g
   (DeleteGuild g) ->                      "guild " <> show g
@@ -338,6 +349,9 @@ guilds = baseUrl /: "guilds"
 
 guildJsonRequest :: GuildRequest r -> JsonRequest
 guildJsonRequest c = case c of
+  (CreateGuild opts) ->
+      Post (guilds) (pure (R.ReqBodyJson opts)) mempty
+
   (GetGuild guild) ->
       Get (guilds // guild) mempty
 
