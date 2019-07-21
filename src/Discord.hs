@@ -77,7 +77,7 @@ data RunDiscordOpts = RunDiscordOpts
   }
 
 instance Default RunDiscordOpts where
-  def = RunDiscordOpts { discordToken = T.pack ""
+  def = RunDiscordOpts { discordToken = ""
                        , discordOnStart = \_ -> pure ()
                        , discordOnEnd = pure ()
                        , discordOnEvent = \_ _-> pure ()
@@ -138,7 +138,7 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
 restCall h r = do e <- tryReadMVar (discordLibraryError h)
                   case e of
-                    Just _ -> pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack "")))
+                    Just _ -> pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
                     Nothing -> do
                       resp <- writeRestCall (discordRestChan h) r
                       case resp of
@@ -150,7 +150,7 @@ restCall h r = do e <- tryReadMVar (discordLibraryError h)
                         Left (RestCallInternalNoParse err dat) -> do
                           let formaterr = "Parse Exception " <> err <> " for " <> show dat
                           writeChan (discordLog h) formaterr
-                          pure (Left (RestCallErrorCode 400 (T.pack "Library Stopped Working") (T.pack formaterr)))
+                          pure (Left (RestCallErrorCode 400 "Library Stopped Working" (T.pack formaterr)))
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
@@ -170,7 +170,7 @@ readCache h = do merr <- readMVar (snd (discordCache h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandle -> IO ()
-stopDiscord h = do _ <- tryPutMVar (discordLibraryError h) (T.pack "Library has closed")
+stopDiscord h = do _ <- tryPutMVar (discordLibraryError h) "Library has closed"
                    threadDelay (10^6 `div` 10)
                    mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
