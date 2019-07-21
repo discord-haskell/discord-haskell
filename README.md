@@ -1,9 +1,6 @@
 # discord-haskell [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
 
-
-## Please test out v1.0.0 of the library interface, and let me know what you think
-
-## Information about the rewrite is in the [Wiki](https://github.com/aquarial/discord-haskell/wiki)
+## Go to the [Wiki](https://github.com/aquarial/discord-haskell/wiki) for more information
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
