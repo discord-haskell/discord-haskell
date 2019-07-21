@@ -13,6 +13,8 @@ import Data.Default (def)
 import Data.Text (isPrefixOf, toLower, Text)
 
 import Discord
+import Discord.Types
+import qualified Discord.Requests as R
 
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
@@ -22,7 +24,7 @@ pingpongExample = runDiscord $ def { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
        MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
-               _ <- restCall dis (CreateMessage (messageChannel m) "Pong!")
+               _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
                pure ()
        _ -> pure ()
 
