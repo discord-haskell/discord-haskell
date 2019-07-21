@@ -35,14 +35,14 @@ instance Request (GuildRequest a) where
 
 -- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
 data GuildRequest a where
-  CreateGuild              :: CreateGuildOpts -> GuildRequest ()
+  CreateGuild              :: CreateGuildOpts -> GuildRequest Guild
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: GuildId -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
   --   Guild Update 'Event'.
   ModifyGuild              :: GuildId -> ModifyGuildOpts -> GuildRequest Guild
   -- | Delete a guild permanently. User must be owner. Fires a Guild Delete 'Event'.
-  DeleteGuild              :: GuildId -> GuildRequest Guild
+  DeleteGuild              :: GuildId -> GuildRequest ()
   -- | Returns a list of guild 'Channel' objects
   GetGuildChannels         :: GuildId -> GuildRequest [Channel]
   -- | Create a new 'Channel' object for the guild. Requires 'MANAGE_CHANNELS'
