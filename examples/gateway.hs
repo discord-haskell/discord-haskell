@@ -1,41 +1,40 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Exception (finally)
 import Data.Monoid ((<>))
-import qualified Data.Text as T
+import Control.Monad (void, forever)
+import Control.Concurrent (forkIO, killThread)
+import Control.Concurrent.Chan
 import qualified Data.Text.IO as TIO
 
 import Discord
-
---[[ Warning: temporaryily broken as I upgrade the interface ]]
+import Discord.Types
 
 -- | Prints every event as it happens
 gatewayExample :: IO ()
 gatewayExample = do
-  tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
-  dis <- loginRestGateway (Auth tok)
+  tok <- TIO.readFile "./examples/auth-token.secret"
+  outChan <- newChan
+  threadId <- forkIO $ forever $ readChan outChan >>= putStrLn
 
-  --  data UpdateStatusOpts
-  --  = UpdateStatusOpts {updateStatusSince :: Maybe UTCTime,
-  --                      updateStatusGame :: Maybe Activity,
-  --                      updateStatusNewStatus :: UpdateStatusType,
-  --                      updateStatusAFK :: Bool}
+  void $ runDiscord $ def { discordToken = tok
+                          , discordOnStart = startHandler
+                          , discordOnEvent = eventHandler outChan
+                          , discordOnEnd = killThread threadId
+                          }
 
-  _ <- forkIO $ do
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing Nothing
-                                    UpdateStatusAwayFromKeyboard True))
-    threadDelay (3 * 10^6)
-    sendCommand dis (UpdateStatus (UpdateStatusOpts Nothing Nothing
-                                    UpdateStatusOnline False))
 
-  finally (let loop = do
-                  e <- nextEvent dis
-                  case e of
-                      Left er -> putStrLn ("Event error: " <> show er)
-                      Right x -> do
-                        putStrLn (show x <> "\n")
-                        loop
-           in loop)
-          (stopDiscord dis)
+eventHandler :: Chan String -> DiscordHandle -> Event -> IO ()
+eventHandler out _ event = writeChan out (show event <> "\n")
+
+
+startHandler :: DiscordHandle -> IO ()
+startHandler dis = do
+  let opts = RequestGuildMembersOpts
+        { requestGuildMembersOptsGuildId = 453207241294610442
+        , requestGuildMembersOptsLimit = 100
+        , requestGuildMembersOptsNamesStartingWith = ""
+        }
+
+  sendCommand dis (RequestGuildMembers opts)
+
 

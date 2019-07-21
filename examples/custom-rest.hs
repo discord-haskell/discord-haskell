@@ -10,23 +10,23 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import qualified Network.HTTP.Req as R
 
-import Discord.Rest.Prelude
-import Discord.Types
+import Discord.Internal.Rest.Prelude
 
 import Discord
-
---[[ Warning: temporaryily broken as I upgrade the interface ]]
+import Discord.Types
 
 -- | Create a different ModifyGuild that can only change the Name
 --     If a rest call you need is missing it is possible to add it
 customRestExample :: IO ()
 customRestExample = do
-  tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
-  dis <- loginRest (Auth tok)
-
-  chan <- restCall dis (CustomModifyGuild 453207241294610442
-                            (CustomModifyGuildOpts (Just "testing server")))
-  putStrLn ("Channel object: " <> show chan <> "\n")
+  tok <- TIO.readFile "./examples/auth-token.secret"
+  _ <- runDiscord $ def { discordToken = tok
+                        , discordOnStart = \dis -> do
+                            chan <- restCall dis (CustomModifyGuild 453207241294610442
+                                                   (CustomModifyGuildOpts (Just "testing server")))
+                            putStrLn ("Channel object: " <> show chan <> "\n")
+                        }
+  pure ()
 
 
 data CustomRequest a where
@@ -45,13 +45,9 @@ instance Request (CustomRequest a) where
 
 customMajorRoute :: CustomRequest a -> String
 customMajorRoute c = case c of
-  (CustomModifyGuild g _) ->                    "guild " <> show g
+  (CustomModifyGuild g _) -> "guild " <> show g
 
 customJsonRequest :: CustomRequest r -> JsonRequest
 customJsonRequest c = case c of
   (CustomModifyGuild guild patch) ->
-      Patch (baseUrl // guild) (R.ReqBodyJson patch) mempty
-
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: "v6" R./: "guilds"
+      Patch ("https://discordapp.com/api/v6/guilds" // guild) (R.ReqBodyJson patch) mempty
