@@ -4,7 +4,9 @@ packages:
 
 resolver: lts-12.10
 
-extra-deps: []
+extra-deps:
+- emoji-0.1.0.2@sha256:d995572a5c7dcd28f98eb15c6e387a7b3bda1ac2477ab0d9dba8580d5d7b161f,1273
+
 # 
 # nix:
 #   packages: [ zlib, gmp ]

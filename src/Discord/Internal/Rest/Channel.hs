@@ -18,9 +18,10 @@ module Discord.Internal.Rest.Channel
 
 
 import Data.Aeson
-import qualified Data.ByteString.Lazy as BL
+import Data.Emoji (unicodeByName)
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
+import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Client (RequestBody (RequestBodyLBS))
 import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 import Network.HTTP.Req ((/:))
@@ -204,8 +205,11 @@ channelMajorRoute c = case c of
 cleanupEmoji :: T.Text -> T.Text
 cleanupEmoji emoji =
   let noAngles = T.replace "<" "" (T.replace ">" "" emoji)
-  in case T.stripPrefix ":" noAngles of Just a -> "custom:" <> a
-                                        Nothing -> noAngles
+      byName = T.pack <$> unicodeByName (T.unpack (T.replace ":" "" emoji))
+  in case (byName, T.stripPrefix ":" noAngles) of
+    (Just e, _) -> e
+    (_, Just a) -> "custom:" <> a
+    (_, Nothing) -> noAngles
 
 maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
 maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
