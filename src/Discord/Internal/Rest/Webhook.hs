@@ -35,8 +35,8 @@ data WebhookRequest a where
                                       -> WebhookRequest Webhook
   ModifyWebhookWithToken :: WebhookId -> T.Text -> ModifyWebhookOpts
                                       -> WebhookRequest Webhook
-  DeleteWebhook :: WebhookId -> WebhookRequest Webhook
-  DeleteWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest Webhook
+  DeleteWebhook :: WebhookId -> WebhookRequest ()
+  DeleteWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest ()
 
 data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
