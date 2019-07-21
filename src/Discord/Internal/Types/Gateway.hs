@@ -40,24 +40,24 @@ data GatewaySendable
   deriving (Show, Eq, Ord)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
-                             { requestGuildMembersGuildId :: GuildId
-                             , requestGuildMembersSearchQuery :: T.Text
-                             , requestGuildMembersLimit :: Integer }
+                             { requestGuildMembersOptsGuildId :: GuildId
+                             , requestGuildMembersOptsNamesStartingWith :: T.Text
+                             , requestGuildMembersOptsLimit :: Integer }
   deriving (Show, Eq, Ord)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
-                           { updateStatusVoiceGuildId :: GuildId
-                           , updateStatusVoiceChannelId :: Maybe ChannelId
-                           , updateStatusVoiceIsMuted :: Bool
-                           , updateStatusVoiceIsDeaf :: Bool
+                           { updateStatusVoiceOptsGuildId :: GuildId
+                           , updateStatusVoiceOptsChannelId :: Maybe ChannelId
+                           , updateStatusVoiceOptsIsMuted :: Bool
+                           , updateStatusVoiceOptsIsDeaf :: Bool
                            }
   deriving (Show, Eq, Ord)
 
 data UpdateStatusOpts = UpdateStatusOpts
-                      { updateStatusSince :: Maybe UTCTime
-                      , updateStatusGame :: Maybe Activity
-                      , updateStatusNewStatus :: UpdateStatusType
-                      , updateStatusAFK :: Bool
+                      { updateStatusOptsSince :: Maybe UTCTime
+                      , updateStatusOptsGame :: Maybe Activity
+                      , updateStatusOptsNewStatus :: UpdateStatusType
+                      , updateStatusOptsAFK :: Bool
                       }
   deriving (Show, Eq, Ord)
 
