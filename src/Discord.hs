@@ -18,7 +18,7 @@ module Discord
   ) where
 
 import Prelude hiding (log)
-import Control.Monad (forever)
+import Control.Monad (forever, void)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
 import Control.Concurrent.Async (race)
 import Control.Exception (try, finally, IOException, SomeException)
@@ -41,6 +41,7 @@ data RunDiscordOpts = RunDiscordOpts
   , discordOnEnd :: IO ()
   , discordOnEvent :: DiscordHandle -> Event -> IO ()
   , discordOnLog :: T.Text -> IO ()
+  , discordForkThreadForEvents :: Bool
   }
 
 instance Default RunDiscordOpts where
@@ -49,6 +50,7 @@ instance Default RunDiscordOpts where
                        , discordOnEnd = pure ()
                        , discordOnEvent = \_ _-> pure ()
                        , discordOnLog = \_ -> pure ()
+                       , discordForkThreadForEvents = True
                        }
 
 runDiscord :: RunDiscordOpts -> IO T.Text
@@ -100,11 +102,13 @@ runDiscordLoop opts handle = do
              case next of
                Left err -> libError err
                Right (Right event) -> do
-                 _ <- forkIO $ do me <- try (discordOnEvent opts handle event)
-                                  case me of
-                                    Left (e :: SomeException) -> writeChan (discordHandleLog handle)
-                                              ("Your code threw an exception:\n\n" <> show e)
-                                    Right _ -> pure ()
+                 let action = if discordForkThreadForEvents opts then void . forkIO
+                                                                 else id
+                 action $ do me <- try (discordOnEvent opts handle event)
+                             case me of
+                               Left (e :: SomeException) -> writeChan (discordHandleLog handle)
+                                         ("Your code threw an exception:\n\n" <> show e)
+                               Right _ -> pure ()
                  loop
                Right (Left err) -> libError (T.pack (show err))
 
