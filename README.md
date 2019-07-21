@@ -8,9 +8,9 @@
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 
-import Control.Monad (when)
-import Data.Default (def)
+import Control.Monad (when, void)
 import Data.Text (isPrefixOf, toLower, Text)
+import Control.Concurrent (threadDelay)
 
 import Discord
 import Discord.Types
@@ -18,12 +18,14 @@ import qualified Discord.Requests as R
 
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
-pingpongExample = runDiscord $ def { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
-                                   , discordOnEvent = eventHandler }
+pingpongExample = void $ runDiscord $ def { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
+                                          , discordOnEvent = eventHandler }
 
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
        MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+               _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
+               threadDelay (4 * 10^6)
                _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
                pure ()
        _ -> pure ()
