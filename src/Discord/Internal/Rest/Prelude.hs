@@ -12,6 +12,8 @@ import Control.Exception (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+
 import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Types
@@ -19,7 +21,7 @@ import Discord.Internal.Types
 -- | Discord requires HTTP headers for authentication.
 authHeader :: Auth -> R.Option 'R.Https
 authHeader auth =
-          R.header "Authorization" (formatAuth auth)
+          R.header "Authorization" (TE.encodeUtf8 (authToken auth))
        <> R.header "User-Agent" agent
   where
   -- | https://discordapp.com/developers/docs/reference#user-agent

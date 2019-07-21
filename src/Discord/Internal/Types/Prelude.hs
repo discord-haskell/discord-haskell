@@ -10,8 +10,6 @@ import Data.Word
 import Data.Aeson.Types
 import Data.Time.Clock
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
-import qualified Data.ByteString.Char8 as Q
 import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
@@ -21,15 +19,11 @@ data Auth = Auth T.Text
   deriving (Show, Eq, Ord)
 
 
--- | Formats the token for use with the REST API
-formatAuth :: Auth -> Q.ByteString
-formatAuth (Auth givenTok) = let token = T.strip givenTok
-                                 bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
-                             in TE.encodeUtf8 $ bot <> token
-
 -- | Get the raw token formatted for use with the websocket gateway
 authToken :: Auth -> T.Text
-authToken (Auth token) = token
+authToken (Auth tok) = let token = T.strip tok
+                           bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
+                       in bot <> token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake Word64

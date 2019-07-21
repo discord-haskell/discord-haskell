@@ -17,7 +17,7 @@ main = pingpongExample
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
-  tok <- T.strip <$> TIO.readFile "./examples/auth-token.secret"
+  tok <- TIO.readFile "./examples/auth-token.secret"
 
   -- open ghci and run  [[ def :: RunDiscordOpts ]] to see default Opts
   t <- runDiscord $ def { discordToken = tok
