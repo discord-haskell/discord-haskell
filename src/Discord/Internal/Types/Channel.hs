@@ -153,6 +153,40 @@ instance FromJSON Channel where
                              <*> o .:? "guild_id" .!= 0
       _ -> fail ("Unknown channel type:" <> show type')
 
+instance ToJSON Channel where
+  toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("topic",   toJSON <$> pure channelTopic)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("recipients",   toJSON <$> pure channelRecipients)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelVoice{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("bitrate",   toJSON <$> pure channelBitRate)
+              , ("user_limit",  toJSON <$> pure channelUserLimit)
+              ] ]
+  toJSON ChannelGroupDM{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("recipients",   toJSON <$> pure channelRecipients)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              ] ]
+
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
 channelIsInGuild c = case c of
