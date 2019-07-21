@@ -7,7 +7,9 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 Going through some major updates to the library. Expect types to change and things to break.
 
 Compare the [old ping-pong](https://github.com/aquarial/discord-haskell/blob/20f7f8556823a754c76d01484118a5abf336530b/examples/ping-pong.hs)
-to the [new ping-pong](https://github.com/aquarial/discord-haskell/blob/041d9fe81cc866f2cb5bbaa40a5ae4cd6c4f9657/examples/ping-pong.hs)
+to the [new ping-pong](https://github.com/aquarial/discord-haskell/blob/7eaa6ca068f945603de7f43f6f270c2dbecd3c85/examples/ping-pong.hs)
+
+Added a few rest ADT types
 
 ## 0.8.4
 
