@@ -32,7 +32,6 @@ executable ping-pong
   build-depends:       base
                      , text
                      , discord-haskell
-                     , data-default
 
 library
   ghc-options:         -Wall

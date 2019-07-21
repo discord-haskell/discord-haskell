@@ -13,6 +13,7 @@ module Discord
   , RestCallErrorCode(..)
   , RunDiscordOpts(..)
   , FromJSON
+  , def
   ) where
 
 import Prelude hiding (log)

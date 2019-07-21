@@ -3,7 +3,6 @@
 import Control.Monad (when, forM_)
 import Control.Concurrent (threadDelay)
 import Data.Char (toLower)
-import Data.Default (def)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
