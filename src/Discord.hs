@@ -1,4 +1,5 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Discord
@@ -105,22 +106,29 @@ runDiscord opts = do
                                                 ]
                              }
 
+  finally (runDiscordLoop opts handle)
+          (discordOnEnd opts >> stopDiscord handle)
+
+runDiscordLoop :: RunDiscordOpts -> DiscordHandle -> IO T.Text
+runDiscordLoop opts handle = do
   resp <- writeRestCall (discordRestChan handle) GetCurrentUser
   case resp of
-    Left (RestCallInternalErrorCode c _ _) -> pure (T.pack ("Couldn't execute GetCurrentUser - " <> show c))
-    Left (RestCallInternalHttpException e) -> pure (T.pack ("Couldn't do restcall - " <> show e))
-    Left (RestCallInternalNoParse _ _) -> pure (T.pack "Couldn't parse GetCurrentUser")
-    _ -> finally (do discordOnStart opts handle
-                     let loop = do next <- race (readMVar (discordLibraryError handle)) (readChan (fst (discordGateway handle)))
-                                   case next of
-                                     Left libErr -> pure libErr
-                                     Right e -> case e of
-                                                  Right event -> do _ <- forkIO (discordOnEvent opts handle event)
-                                                                    loop
-                                                  Left err -> pure (T.pack (show err))
-                     loop
-                 )
-                 (discordOnEnd opts >> stopDiscord handle)
+    Left (RestCallInternalErrorCode c _ _) -> libError ("Couldn't execute GetCurrentUser - " <> T.pack (show c))
+    Left (RestCallInternalHttpException e) -> libError ("Couldn't do restCall - " <> T.pack (show e))
+    Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
+    _ -> discordOnStart opts handle >> loop
+ where
+   libError :: T.Text -> IO T.Text
+   libError msg = tryPutMVar (discordLibraryError handle) msg >> pure msg
+
+   loop :: IO T.Text
+   loop = do next <- race (readMVar (discordLibraryError handle))
+                          (readChan (fst (discordGateway handle)))
+             case next of
+               Left err -> libError err
+               Right (Right event) -> forkIO (discordOnEvent opts handle event) >> loop
+               Right (Left err) -> libError (T.pack (show err))
+
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
