@@ -16,9 +16,9 @@ module Discord
   , GatewayException(..)
   , Request(..)
 
-  , DiscordGateway
-  , DiscordCache
-  , DiscordRestChan
+  , DiscordHandleGateway
+  , DiscordHandleCache
+  , DiscordHandleRestChan
 
   , RunDiscordOpts(..)
   , DiscordHandle(..)
@@ -54,16 +54,16 @@ import Discord.Gateway.Cache
 
 
 -- | Thread Ids marked by what type they are
-data DiscordThreadId = DiscordThreadIdRest ThreadId
-                     | DiscordThreadIdCache ThreadId
-                     | DiscordThreadIdLogger ThreadId
-                     | DiscordThreadIdGateway ThreadId
+data DiscordHandleThreadId = DiscordHandleThreadIdRest ThreadId
+                           | DiscordHandleThreadIdCache ThreadId
+                           | DiscordHandleThreadIdLogger ThreadId
+                           | DiscordHandleThreadIdGateway ThreadId
 
 data DiscordHandle = DiscordHandle
-  { discordRestChan :: DiscordRestChan
-  , discordGateway :: DiscordGateway
-  , discordCache :: DiscordCache
-  , discordThreads :: [DiscordThreadId]
+  { discordRestChan :: DiscordHandleRestChan
+  , discordGateway :: DiscordHandleGateway
+  , discordCache :: DiscordHandleCache
+  , discordThreads :: [DiscordHandleThreadId]
   , discordLog :: Chan String
   , discordLibraryError :: MVar T.Text
   }
@@ -99,10 +99,10 @@ runDiscord opts = do
                              , discordCache = cache
                              , discordLog = log
                              , discordLibraryError = libE
-                             , discordThreads = [ DiscordThreadIdLogger logId
-                                                , DiscordThreadIdRest restId
-                                                , DiscordThreadIdCache cacheId
-                                                , DiscordThreadIdGateway gateId
+                             , discordThreads = [ DiscordHandleThreadIdLogger logId
+                                                , DiscordHandleThreadIdRest restId
+                                                , DiscordHandleThreadIdCache cacheId
+                                                , DiscordHandleThreadIdGateway gateId
                                                 ]
                              }
 
@@ -136,10 +136,10 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
-restCall h r = do e <- tryReadMVar (discordLibraryError h)
-                  case e of
-                    Just _ -> pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
-                    Nothing -> do
+restCall h r = do empty <- isEmptyMVar (discordLibraryError h)
+                  if not empty
+                  then pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
+                  else do
                       resp <- writeRestCall (discordRestChan h) r
                       case resp of
                         Right x -> pure (Right x)
@@ -174,10 +174,10 @@ stopDiscord h = do _ <- tryPutMVar (discordLibraryError h) "Library has closed"
                    threadDelay (10^6 `div` 10)
                    mapM_ (killThread . toId) (discordThreads h)
   where toId t = case t of
-                   DiscordThreadIdRest a -> a
-                   DiscordThreadIdGateway a -> a
-                   DiscordThreadIdCache a -> a
-                   DiscordThreadIdLogger a -> a
+                   DiscordHandleThreadIdRest a -> a
+                   DiscordHandleThreadIdGateway a -> a
+                   DiscordHandleThreadIdCache a -> a
+                   DiscordHandleThreadIdLogger a -> a
 
 startLogger :: (T.Text -> IO ()) -> Chan String -> IO ThreadId
 startLogger handle logC = forkIO $ forever $
