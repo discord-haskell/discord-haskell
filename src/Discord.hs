@@ -97,7 +97,13 @@ runDiscordLoop opts handle = do
                           (readChan (fst (discordHandleGateway handle)))
              case next of
                Left err -> libError err
-               Right (Right event) -> forkIO (discordOnEvent opts handle event) >> loop
+               Right (Right event) -> do
+                 _ <- forkIO $ do me <- try (discordOnEvent opts handle event)
+                                  case me of
+                                    Left (e :: SomeException) -> writeChan (discordHandleLog handle)
+                                              ("Your code threw an exception:\n\n" <> show e)
+                                    Right _ -> pure ()
+                 loop
                Right (Left err) -> libError (T.pack (show err))
 
 
