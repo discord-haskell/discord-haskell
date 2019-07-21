@@ -45,6 +45,7 @@ startHandler dis = do
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+        _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^6)
         _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
         pure ()
