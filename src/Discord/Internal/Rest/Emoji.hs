@@ -94,7 +94,7 @@ guilds = baseUrl /: "guilds"
 
 emojiJsonRequest :: EmojiRequest r -> JsonRequest
 emojiJsonRequest c = case c of
-  (ListGuildEmojis g) -> Get (guilds // g) mempty
+  (ListGuildEmojis g) -> Get (guilds // g /: "emojis") mempty
   (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty
   (CreateGuildEmoji g name (EmojiImageParsed im)) ->
                    Post (guilds // g /: "emojis")
