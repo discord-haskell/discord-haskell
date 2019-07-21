@@ -21,7 +21,7 @@ import Prelude hiding (log)
 import Control.Monad (forever)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
 import Control.Concurrent.Async (race)
-import Control.Exception (try, finally, IOException)
+import Control.Exception (try, finally, IOException, SomeException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Aeson (FromJSON)
@@ -84,7 +84,10 @@ runDiscordLoop opts handle = do
     Left (RestCallInternalErrorCode c _ _) -> libError ("Couldn't execute GetCurrentUser - " <> T.pack (show c))
     Left (RestCallInternalHttpException e) -> libError ("Couldn't do restCall - " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
-    _ -> discordOnStart opts handle >> loop
+    _ -> do me <- try (discordOnStart opts handle)
+            case me of
+              Left (e :: SomeException) -> libError ("Your code threw an exception:\n\n" <> T.pack (show e))
+              Right _ -> loop
  where
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
