@@ -81,8 +81,10 @@ runDiscordLoop :: RunDiscordOpts -> DiscordHandle -> IO T.Text
 runDiscordLoop opts handle = do
   resp <- writeRestCall (discordHandleRestChan handle) GetCurrentUser
   case resp of
-    Left (RestCallInternalErrorCode c _ _) -> libError ("Couldn't execute GetCurrentUser - " <> T.pack (show c))
-    Left (RestCallInternalHttpException e) -> libError ("Couldn't do restCall - " <> T.pack (show e))
+    Left (RestCallInternalErrorCode c e1 e2) -> libError $
+             "HTTP Error Code " <> T.pack (show c) <> " " <> TE.decodeUtf8 e1
+                                                   <> " " <> TE.decodeUtf8 e2
+    Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
     _ -> do me <- try (discordOnStart opts handle)
             case me of
