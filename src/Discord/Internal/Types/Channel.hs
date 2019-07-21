@@ -40,6 +40,18 @@ instance FromJSON User where
          <*> o .:? "verified"
          <*> o .:? "email"
 
+instance ToJSON User where
+  toJSON User{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",            toJSON <$> pure userId)
+              , ("username",      toJSON <$> pure userName)
+              , ("discriminator", toJSON <$> pure userDiscrim)
+              , ("avatar",        toJSON <$>      userAvatar)
+              , ("bot",           toJSON <$> pure userIsBot)
+              , ("webhook",       toJSON <$> pure userIsWebhook)
+              , ("mfa_enabled",   toJSON <$>      userMfa)
+              , ("verified",      toJSON <$>      userVerified)
+              , ("email",         toJSON <$>      userEmail)
+              ] ]
 
 data Webhook = Webhook
   { webhookId :: WebhookId
