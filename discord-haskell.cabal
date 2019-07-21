@@ -29,6 +29,7 @@ executable ping-pong
   default-language:    Haskell2010
   ghc-options:         -Wall
                        -fno-warn-type-defaults
+                       -threaded
   build-depends:       base
                      , text
                      , discord-haskell
