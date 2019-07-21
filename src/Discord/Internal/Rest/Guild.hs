@@ -8,6 +8,7 @@
 module Discord.Internal.Rest.Guild
   ( GuildRequest(..)
   , CreateGuildChannelOpts(..)
+  , CreateGuildOpts(..)
   , ModifyGuildOpts(..)
   , AddGuildMemberOpts(..)
   , ModifyGuildMemberOpts(..)
