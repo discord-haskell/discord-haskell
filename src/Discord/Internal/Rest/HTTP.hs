@@ -21,9 +21,10 @@ import Control.Concurrent.Chan
 import Data.Ix (inRange)
 import Data.List (isPrefixOf)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
-import qualified Data.ByteString.Char8 as Q
-import qualified Data.ByteString.Lazy.Char8 as QL
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
@@ -32,12 +33,12 @@ import qualified Data.Map.Strict as M
 import Discord.Internal.Types
 import Discord.Internal.Rest.Prelude
 
-data RestCallInternalException = RestCallInternalErrorCode Int Q.ByteString Q.ByteString
-                               | RestCallInternalNoParse String QL.ByteString
+data RestCallInternalException = RestCallInternalErrorCode Int B.ByteString B.ByteString
+                               | RestCallInternalNoParse String BL.ByteString
                                | RestCallInternalHttpException R.HttpException
   deriving (Show)
 
-restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
+restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
                  -> Chan T.Text -> IO ()
 restLoop auth urls log = loop M.empty
   where
@@ -92,8 +93,8 @@ removeAllExpire ratelocker curtime =
                              else ratelocker
 
 data RequestResponse = ResponseTryAgain
-                     | ResponseByteString QL.ByteString
-                     | ResponseErrorCode Int Q.ByteString Q.ByteString
+                     | ResponseByteString BL.ByteString
+                     | ResponseErrorCode Int B.ByteString B.ByteString
     deriving (Show)
 
 data Timeout = GlobalWait POSIXTime
@@ -116,12 +117,12 @@ tryRequest action = do
      | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
      | inRange (200,299) code -> pure ( ResponseByteString body
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | inRange (400,499) code -> pure (ResponseErrorCode code status (QL.toStrict body)
+     | inRange (400,499) code -> pure (ResponseErrorCode code status (BL.toStrict body)
                                       , if remain > 0 then NoLimit else PathWait reset )
-     | otherwise -> pure (ResponseErrorCode code status (QL.toStrict body), NoLimit)
+     | otherwise -> pure (ResponseErrorCode code status (BL.toStrict body), NoLimit)
 
-readMaybeBS :: Read a => Q.ByteString -> Maybe a
-readMaybeBS = readMaybe . Q.unpack
+readMaybeBS :: Read a => B.ByteString -> Maybe a
+readMaybeBS = readMaybe . T.unpack . TE.decodeUtf8
 
 compileRequest :: Auth -> JsonRequest -> RestIO R.LbsResponse
 compileRequest auth request = action

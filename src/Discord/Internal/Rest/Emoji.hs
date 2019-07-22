@@ -18,7 +18,8 @@ import Codec.Picture
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
-import qualified Data.ByteString.Char8 as Q
+import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 
 import Discord.Internal.Rest.Prelude
@@ -52,25 +53,25 @@ instance ToJSON ModifyGuildEmojiOpts where
     object [ "name" .= name, "roles" .= roles ]
 
 
-data EmojiImageParsed = EmojiImageParsed String
+data EmojiImageParsed = EmojiImageParsed T.Text
 
-parseEmojiImage :: Q.ByteString -> Either String EmojiImageParsed
+parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
 parseEmojiImage bs =
-  if Q.length bs > 256000
+  if B.length bs > 256000
   then Left "Cannot create emoji - File is larger than 256kb"
   else case (decodeGifImages bs, decodeImage bs) of
-         (Left e1, Left e2) -> Left ("Could not parse image or gif: " <> e1
-                                                           <> " and " <> e2)
+         (Left e1, Left e2) -> Left ("Could not parse image or gif: " <> T.pack e1
+                                                           <> " and " <> T.pack e2)
          (Right ims, _) -> if all is128 ims
                            then Right (EmojiImageParsed ("data:text/plain;"
                                                       <> "base64,"
-                                                      <> Q.unpack (B64.encode bs)))
-                           else Left ("The frames are not all 128x128")
+                                                      <> TE.decodeUtf8 (B64.encode bs)))
+                           else Left "The frames are not all 128x128"
          (_, Right im) -> if is128 im
                           then Right (EmojiImageParsed ("data:text/plain;"
                                                      <> "base64,"
-                                                     <> Q.unpack (B64.encode bs)))
-                          else Left ("Image is not 128x128")
+                                                     <> TE.decodeUtf8 (B64.encode bs)))
+                          else Left "Image is not 128x128"
   where
     is128 im = let i = convertRGB8 im
                in imageWidth i == 128 && imageHeight i == 128

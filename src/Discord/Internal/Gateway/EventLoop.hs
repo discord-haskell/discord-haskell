@@ -17,7 +17,8 @@ import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
 import qualified Data.Text as T
-import qualified Data.ByteString.Lazy.Char8 as QL
+import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString.Lazy as BL
 
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection,
@@ -125,7 +126,7 @@ getPayload conn log = try $ do
   case eitherDecode msg' of
     Right msg -> pure msg
     Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
-                                      <> " while decoding "<> T.pack (QL.unpack msg'))
+                                      <> " while decoding " <> TE.decodeUtf8 (BL.toStrict msg'))
                     pure (ParseError (T.pack err))
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()

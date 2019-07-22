@@ -18,8 +18,9 @@ import Data.Monoid (mempty, (<>))
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
-import qualified Data.ByteString.Char8 as Q
-import qualified Data.ByteString.Lazy.Char8 as QL
+import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Base64 as B64
 
 import Discord.Internal.Rest.Prelude
@@ -53,14 +54,14 @@ data UserRequest a where
   GetUserConnections   :: UserRequest [ConnectionObject]
 
 -- | Formatted avatar data https://discordapp.com/developers/docs/resources/user#avatar-data
-data CurrentUserAvatar = CurrentUserAvatar String
+data CurrentUserAvatar = CurrentUserAvatar T.Text
 
-parseCurrentUserAvatar :: Q.ByteString -> Either String CurrentUserAvatar
+parseCurrentUserAvatar :: B.ByteString -> Either T.Text CurrentUserAvatar
 parseCurrentUserAvatar bs =
   case decodeImage bs of
-    Left e -> Left e
+    Left e -> Left (T.pack e)
     Right im -> Right $ CurrentUserAvatar $ "data:image/png;base64,"
-                <> Q.unpack (B64.encode (QL.toStrict (encodePng (convertRGBA8 im))))
+                <> TE.decodeUtf8 (B64.encode (BL.toStrict (encodePng (convertRGBA8 im))))
 
 
 userMajorRoute :: UserRequest a -> String

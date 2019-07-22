@@ -21,8 +21,8 @@ import Data.Aeson
 import Data.Emoji (unicodeByName)
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
-import qualified Data.ByteString.Lazy as BL
-import Network.HTTP.Client (RequestBody (RequestBodyLBS))
+import qualified Data.ByteString as B
+import Network.HTTP.Client (RequestBody (RequestBodyBS))
 import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
@@ -51,7 +51,7 @@ data ChannelRequest a where
   -- | Sends a message with an Embed to a channel.
   CreateMessageEmbed      :: ChannelId -> T.Text -> Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
-  CreateMessageUploadFile :: ChannelId -> T.Text -> BL.ByteString -> ChannelRequest Message
+  CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
   CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
@@ -252,7 +252,7 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageUploadFile chan fileName file) ->
-      let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyLBS file
+      let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyBS file
           body = R.reqBodyMultipart [part]
       in Post (channels // chan /: "messages") body mempty
 
