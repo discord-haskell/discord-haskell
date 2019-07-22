@@ -13,12 +13,13 @@ module Discord.Internal.Gateway
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
+import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, Event, GatewaySendable)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
 
-startCacheThread :: Chan String -> IO (DiscordHandleCache, ThreadId)
+startCacheThread :: Chan T.Text -> IO (DiscordHandleCache, ThreadId)
 startCacheThread log = do
   events <- newChan :: IO (Chan (Either GatewayException Event))
   cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
@@ -27,7 +28,7 @@ startCacheThread log = do
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-startGatewayThread :: Auth -> DiscordHandleCache -> Chan String -> IO (DiscordHandleGateway, ThreadId)
+startGatewayThread :: Auth -> DiscordHandleCache -> Chan T.Text -> IO (DiscordHandleGateway, ThreadId)
 startGatewayThread auth (_events, _) log = do
   events <- dupChan _events
   sends <- newChan

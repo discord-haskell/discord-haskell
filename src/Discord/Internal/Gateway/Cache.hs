@@ -9,6 +9,7 @@ import Control.Monad (forever)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import qualified Data.Map.Strict as M
+import qualified Data.Text as T
 
 import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
@@ -22,7 +23,7 @@ data Cache = Cache
 
 type DiscordHandleCache = (Chan (Either GatewayException Event), MVar (Either (Cache, GatewayException) Cache))
 
-cacheLoop :: DiscordHandleCache -> Chan String -> IO ()
+cacheLoop :: DiscordHandleCache -> Chan T.Text -> IO ()
 cacheLoop (eventChan, cache) log = do
       ready <- readChan eventChan
       case ready of
@@ -31,9 +32,9 @@ cacheLoop (eventChan, cache) log = do
           putMVar cache (Right (Cache user dmChans M.empty M.empty))
           loop
         Right r ->
-          writeChan log ("cache - stopping cache - expected Ready event, but got " <> show r)
+          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
         Left e ->
-          writeChan log ("cache - stopping cache - gateway exception " <> show e)
+          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
   loop :: IO ()
   loop = forever $ do

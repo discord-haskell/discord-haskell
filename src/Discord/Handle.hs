@@ -20,6 +20,6 @@ data DiscordHandle = DiscordHandle
   , discordHandleGateway :: DiscordHandleGateway
   , discordHandleCache :: DiscordHandleCache
   , discordHandleThreads :: [DiscordHandleThreadId]
-  , discordHandleLog :: Chan String
+  , discordHandleLog :: Chan T.Text
   , discordHandleLibraryError :: MVar T.Text
   }

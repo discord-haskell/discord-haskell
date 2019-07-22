@@ -107,7 +107,7 @@ runDiscordLoop opts handle = do
                  action $ do me <- try (discordOnEvent opts handle event)
                              case me of
                                Left (e :: SomeException) -> writeChan (discordHandleLog handle)
-                                         ("Your code threw an exception:\n\n" <> show e)
+                                         ("Your code threw an exception:\n\n" <> T.pack (show e))
                                Right _ -> pure ()
                  loop
                Right (Left err) -> libError (T.pack (show err))
@@ -130,9 +130,9 @@ restCall h r = do empty <- isEmptyMVar (discordHandleLibraryError h)
                         Left (RestCallInternalHttpException _) ->
                           threadDelay (10 * 10^6) >> restCall h r
                         Left (RestCallInternalNoParse err dat) -> do
-                          let formaterr = "Parse Exception " <> err <> " for " <> show dat
+                          let formaterr = T.pack ("Parse Exception " <> err <> " for " <> show dat)
                           writeChan (discordHandleLog h) formaterr
-                          pure (Left (RestCallErrorCode 400 "Library Stopped Working" (T.pack formaterr)))
+                          pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
 sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
@@ -161,9 +161,9 @@ stopDiscord h = do _ <- tryPutMVar (discordHandleLibraryError h) "Library has cl
                    DiscordHandleThreadIdCache a -> a
                    DiscordHandleThreadIdLogger a -> a
 
-startLogger :: (T.Text -> IO ()) -> Chan String -> IO ThreadId
+startLogger :: (T.Text -> IO ()) -> Chan T.Text -> IO ThreadId
 startLogger handle logC = forkIO $ forever $
-  do me <- try $ (T.pack <$> readChan logC) >>= handle
+  do me <- try $ readChan logC >>= handle
      case me of
        Right _ -> pure ()
        Left (_ :: IOException) ->

@@ -23,6 +23,7 @@ import Data.List (isPrefixOf)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString.Char8 as Q
 import qualified Data.ByteString.Lazy.Char8 as QL
+import qualified Data.Text as T
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
@@ -37,7 +38,7 @@ data RestCallInternalException = RestCallInternalErrorCode Int Q.ByteString Q.By
   deriving (Show)
 
 restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
-                 -> Chan String -> IO ()
+                 -> Chan T.Text -> IO ()
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
@@ -51,7 +52,7 @@ restLoop auth urls log = loop M.empty
                       reqIO <- try $ restIOtoIO (tryRequest action)
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
-                          writeChan log ("rest - http exception " <> show e)
+                          writeChan log ("rest - http exception " <> T.pack (show e))
                           putMVar thread (Left (RestCallInternalHttpException e))
                           loop ratelocker
                         Right (resp, retry) -> do
@@ -65,7 +66,7 @@ restLoop auth urls log = loop M.empty
                           case retry of
                             GlobalWait i -> do
                                 writeChan log ("rest - GLOBAL WAIT LIMIT: "
-                                                    <> show ((i - curtime) * 1000))
+                                                    <> T.pack (show ((i - curtime) * 1000)))
                                 threadDelay $ round ((i - curtime + 0.1) * 1000)
                                 loop ratelocker
                             PathWait i -> loop $ M.insert route (if isPrefixOf "add_react " route

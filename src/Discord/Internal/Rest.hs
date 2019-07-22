@@ -18,6 +18,8 @@ import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Control.Concurrent (forkIO, ThreadId)
 import qualified Data.ByteString.Lazy.Char8 as QL
+import qualified Data.Text as T
+
 
 import Discord.Internal.Types
 import Discord.Internal.Rest.HTTP
@@ -25,7 +27,7 @@ import Discord.Internal.Rest.HTTP
 type DiscordHandleRestChan = Chan (String, JsonRequest, MVar (Either RestCallInternalException QL.ByteString))
 
 -- | Starts the http request thread. Please only call this once
-startRestThread :: Auth -> Chan String -> IO (DiscordHandleRestChan, ThreadId)
+startRestThread :: Auth -> Chan T.Text -> IO (DiscordHandleRestChan, ThreadId)
 startRestThread auth log = do
   c <- newChan
   tid <- forkIO $ restLoop auth c log

@@ -43,7 +43,7 @@ connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
 type DiscordHandleGateway = (Chan (Either GatewayException Event), Chan GatewaySendable)
 
-connectionLoop :: Auth -> DiscordHandleGateway -> Chan String -> IO ()
+connectionLoop :: Auth -> DiscordHandleGateway -> Chan T.Text -> IO ()
 connectionLoop auth (events, userSend) log = loop ConnStart 0
  where
   loop :: ConnLoopState -> Int -> IO ()
@@ -68,7 +68,7 @@ connectionLoop auth (events, userSend) log = loop ConnStart 0
                   Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
                                                          "Response to Identify"))
                                 pure ConnClosed
-              Right m -> do writeChan log ("gateway - first message must be hello: " <> show msg)
+              Right m -> do writeChan log ("gateway - first message must be hello: " <> T.pack (show msg))
                             writeChan events (Left (GatewayExceptionUnexpected m
                                                       "Response to connecting must be hello"))
                             pure ConnClosed
@@ -105,13 +105,13 @@ connectionLoop auth (events, userSend) log = loop ConnStart 0
           case next :: Either SomeException ConnLoopState of
             Left _ -> do t <- getRandomR (3,20)
                          threadDelay (t * 10^6)
-                         writeChan log ("gateway - trying to reconnect after " <> show retries
+                         writeChan log ("gateway - trying to reconnect after " <> T.pack (show retries)
                                                <> " failures")
                          loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
             Right n -> loop n 1
 
 
-getPayloadTimeout :: Connection -> Int -> Chan String -> IO (Either ConnectionException GatewayReceivable)
+getPayloadTimeout :: Connection -> Int -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
 getPayloadTimeout conn interval log = do
   res <- race (threadDelay ((interval * 1000 * 3) `div` 2))
               (getPayload conn log)
@@ -119,13 +119,13 @@ getPayloadTimeout conn interval log = do
     Left () -> pure (Right Reconnect)
     Right other -> pure other
 
-getPayload :: Connection -> Chan String -> IO (Either ConnectionException GatewayReceivable)
+getPayload :: Connection -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
 getPayload conn log = try $ do
   msg' <- receiveData conn
   case eitherDecode msg' of
     Right msg -> pure msg
-    Left  err -> do writeChan log ("gateway - received parse Error - " <> err
-                                      <> " while decoding "<> QL.unpack msg')
+    Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
+                                      <> " while decoding "<> T.pack (QL.unpack msg'))
                     pure (ParseError err)
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()
@@ -146,11 +146,11 @@ data ConnectionData = ConnData { connection :: Connection
                                , connChan :: Chan (Either GatewayException Event)
                                }
 
-startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> Chan String -> IO ConnLoopState
+startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> Chan T.Text -> IO ConnLoopState
 startEventStream conndata interval seqN userSend log = do
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
-      err e = do writeChan log ("gateway - eventStream error: " <> show e)
+      err e = do writeChan log ("gateway - eventStream error: " <> T.pack (show e))
                  ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
@@ -162,7 +162,7 @@ startEventStream conndata interval seqN userSend log = do
 
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable
-                              -> Chan String -> IO ConnLoopState
+                              -> Chan T.Text -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loop
   where
   loop :: IO ConnLoopState
