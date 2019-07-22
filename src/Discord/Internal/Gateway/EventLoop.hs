@@ -11,8 +11,8 @@ import Control.Monad (forever)
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
-import Control.Exception.Safe (try, finally, handle, SomeException)
 import Control.Concurrent (threadDelay, killThread, forkIO)
+import Control.Exception.Safe (bracket, try, finally, handle, SomeException)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
@@ -23,7 +23,6 @@ import qualified Data.ByteString.Lazy as BL
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection,
                            receiveData, sendTextData)
-import GHC.IO.Exception (IOError)
 
 import Discord.Internal.Types
 
@@ -76,9 +75,9 @@ connectionLoop auth (events, userSend) log = loop ConnStart 0
               Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
                                                      "Response to connecting"))
                             pure ConnClosed
-          case next :: Either IOError ConnLoopState of
+          case next :: Either SomeException ConnLoopState of
             Left _ -> do writeChan events (Left (GatewayExceptionCouldNotConnect
-                                                  "IOError in gateway Connection"))
+                                                  "SomeException in gateway Connection"))
                          loop ConnClosed 0
             Right n -> loop n 0
 
