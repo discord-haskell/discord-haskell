@@ -6,9 +6,11 @@
 
 -- | Provides actions for Webhook API interactions
 module Discord.Internal.Rest.Webhook
-  ( WebhookRequest(..)
-  , CreateWebhookOpts(..)
+  ( CreateWebhookOpts(..)
+  , ExecuteWebhookWithTokenOpts(..)
   , ModifyWebhookOpts(..)
+  , WebhookContent(..)
+  , WebhookRequest(..)
   ) where
 
 import Data.Aeson
