@@ -21,7 +21,7 @@ import Prelude hiding (log)
 import Control.Monad (forever, void)
 import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
 import Control.Concurrent.Async (race)
-import Control.Exception (try, finally, IOException, SomeException)
+import Control.Exception.Safe (try, finally, IOException, SomeException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
 import Data.Aeson (FromJSON)

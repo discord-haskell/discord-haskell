@@ -12,7 +12,7 @@ import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
 import Control.Concurrent (threadDelay, killThread, forkIO)
-import Control.Exception.Safe (bracket, try, finally, handle, SomeException)
+import Control.Exception.Safe (try, finally, handle, SomeException)
 import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
