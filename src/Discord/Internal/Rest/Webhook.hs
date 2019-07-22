@@ -42,7 +42,8 @@ data WebhookRequest a where
                                       -> WebhookRequest Webhook
   DeleteWebhook :: WebhookId -> WebhookRequest ()
   DeleteWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest ()
-  ExecuteWebhook :: WebhookId -> ExecuteWebhookOpts -> WebhookRequest ()
+  ExecuteWebhookWithToken :: WebhookId -> T.Text -> ExecuteWebhookWithTokenOpts
+                                       -> WebhookRequest ()
 
 data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
@@ -66,14 +67,16 @@ instance ToJSON CreateWebhookOpts where
                          [("name",   toJSON <$> Just createWebhookOptsName),
                           ("avatar",  toJSON <$> createWebhookOptsAvatar) ] ]
 
-data ExecuteWebhookOpts = ExecuteWebhookOpts
-  { executeWebhookOptsToken         :: T.Text
-  , executeWebhookOptsUsername      :: Maybe T.Text
-  , executeWebhookOptsContent       :: WebhookContent
+data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
+  { executeWebhookWithTokenOptsUsername      :: Maybe T.Text
+  , executeWebhookWithTokenOptsContent       :: WebhookContent
   }
+  deriving (Show, Eq, Ord)
+
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text BL.ByteString
                     | WebhookContentEmbeds [Embed]
+  deriving (Show, Eq, Ord)
 
 webhookContentJson :: WebhookContent -> [(T.Text, Value)]
 webhookContentJson c = case c of
@@ -81,10 +84,10 @@ webhookContentJson c = case c of
                       WebhookContentFile _ _  -> []
                       WebhookContentEmbeds e -> [("embeds", toJSON e)]
 
-instance ToJSON ExecuteWebhookOpts where
-  toJSON ExecuteWebhookOpts{..} = object $ [(name, val) | (name, Just val) <-
-                         [("username",   toJSON <$> executeWebhookOptsUsername)] ]
-                      <> webhookContentJson executeWebhookOptsContent
+instance ToJSON ExecuteWebhookWithTokenOpts where
+  toJSON ExecuteWebhookWithTokenOpts{..} = object $ [(name, val) | (name, Just val) <-
+                         [("username",   toJSON <$> executeWebhookWithTokenOptsUsername)] ]
+                      <> webhookContentJson executeWebhookWithTokenOptsContent
 
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
@@ -97,7 +100,7 @@ webhookMajorRoute ch = case ch of
   (ModifyWebhookWithToken w _ _) -> "modifyhook " <> show w
   (DeleteWebhook w) ->              "deletehook " <> show w
   (DeleteWebhookWithToken w _) ->   "deletehook " <> show w
-  (ExecuteWebhook w _) ->          "executehook " <> show w
+  (ExecuteWebhookWithToken w _ _) -> "executehk " <> show w
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
@@ -134,12 +137,12 @@ webhookJsonRequest ch = case ch of
   (DeleteWebhookWithToken w t) ->
     Delete (baseUrl /: "webhooks" // w /: t)  mempty
 
-  (ExecuteWebhook w o) ->
-    case executeWebhookOptsContent o of
+  (ExecuteWebhookWithToken w tok o) ->
+    case executeWebhookWithTokenOptsContent o of
       WebhookContentFile name text  ->
         let part = partFileRequestBody "file" (T.unpack name) (RequestBodyLBS text)
             body = R.reqBodyMultipart [part]
-        in Post (baseUrl /: "webhooks" // w /: executeWebhookOptsToken o) body mempty
+        in Post (baseUrl /: "webhooks" // w /: tok) body mempty
       _ ->
         let body = pure (R.ReqBodyJson o)
-        in Post (baseUrl /: "webhooks" // w /: executeWebhookOptsToken o) body mempty
+        in Post (baseUrl /: "webhooks" // w /: tok) body mempty
