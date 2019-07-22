@@ -41,6 +41,7 @@ restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalExce
 restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
+    threadDelay (40 * 1000)
     (route, request, thread) <- readChan urls
     curtime <- getPOSIXTime
     case compareRate ratelocker route curtime of
