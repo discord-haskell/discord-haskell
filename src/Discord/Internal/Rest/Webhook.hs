@@ -118,26 +118,26 @@ webhookJsonRequest ch = case ch of
     Get (baseUrl /: "webhooks" // w)  mempty
 
   (GetWebhookWithToken w t) ->
-    Get (baseUrl /: "webhooks" // w // t)  mempty
+    Get (baseUrl /: "webhooks" // w /: t)  mempty
 
   (ModifyWebhook w patch) ->
     Patch (baseUrl /: "webhooks" // w) (R.ReqBodyJson patch)  mempty
 
   (ModifyWebhookWithToken w t p) ->
-    Patch (baseUrl /: "webhooks" // w // t) (R.ReqBodyJson p)  mempty
+    Patch (baseUrl /: "webhooks" // w /: t) (R.ReqBodyJson p)  mempty
 
   (DeleteWebhook w) ->
     Delete (baseUrl /: "webhooks" // w)  mempty
 
   (DeleteWebhookWithToken w t) ->
-    Delete (baseUrl /: "webhooks" // w // t)  mempty
+    Delete (baseUrl /: "webhooks" // w /: t)  mempty
 
   (ExecuteWebhook w o) ->
     case executeWebhookOptsContent o of
       WebhookContentFile name text  ->
         let part = partFileRequestBody "file" (T.unpack name) (RequestBodyLBS text)
             body = R.reqBodyMultipart [part]
-        in Post (baseUrl /: "webhooks" // w // executeWebhookOptsToken o) body mempty
+        in Post (baseUrl /: "webhooks" // w /: executeWebhookOptsToken o) body mempty
       _ ->
         let body = pure (R.ReqBodyJson o)
-        in Post (baseUrl /: "webhooks" // w // executeWebhookOptsToken o) body mempty
+        in Post (baseUrl /: "webhooks" // w /: executeWebhookOptsToken o) body mempty
