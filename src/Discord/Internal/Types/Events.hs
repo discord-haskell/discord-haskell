@@ -20,7 +20,7 @@ import Discord.Internal.Types.Guild
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Int User [Channel] [GuildUnavailable] String
+    Ready                   Int User [Channel] [GuildUnavailable] T.Text
   | Resumed                 [T.Text]
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
@@ -35,7 +35,7 @@ data Event =
   | GuildIntegrationsUpdate GuildId
   | GuildMemberAdd          GuildId GuildMember
   | GuildMemberRemove       GuildId User
-  | GuildMemberUpdate       GuildId [RoleId] User (Maybe String)
+  | GuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
   | GuildMemberChunk        GuildId [GuildMember]
   | GuildRoleCreate         GuildId Role
   | GuildRoleUpdate         GuildId Role
@@ -52,7 +52,7 @@ data Event =
   | UserUpdate              User
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
-  | UnknownEvent     String Object
+  | UnknownEvent     T.Text Object
   deriving (Show, Eq)
 
 data ReactionInfo = ReactionInfo
@@ -74,7 +74,7 @@ data PresenceInfo = PresenceInfo
   , presenceRoles   :: [RoleId]
   -- , presenceGame :: Maybe Activity
   , presenceGuildId :: GuildId
-  , presenceStatus  :: String
+  , presenceStatus  :: T.Text
   } deriving (Show, Eq, Ord)
 
 instance FromJSON PresenceInfo where
@@ -152,4 +152,4 @@ eventParse t o = case t of
     "USER_UPDATE"               -> UserUpdate                <$> reparse o
  -- "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
  -- "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
-    _other_event                -> UnknownEvent (T.unpack t) <$> reparse o
+    _other_event                -> UnknownEvent t            <$> reparse o

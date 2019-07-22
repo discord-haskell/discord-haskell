@@ -128,9 +128,9 @@ instance ToJSON ChannelInviteOpts where
                           ("unique",    toJSON <$> channelInviteOptsDontReuseSimilarInvite) ] ]
 
 data ModifyChannelOpts = ModifyChannelOpts
-  { modifyChannelName                 :: Maybe String
+  { modifyChannelName                 :: Maybe T.Text
   , modifyChannelPosition             :: Maybe Integer
-  , modifyChannelTopic                :: Maybe String
+  , modifyChannelTopic                :: Maybe T.Text
   , modifyChannelNSFW                 :: Maybe Bool
   , modifyChannelBitrate              :: Maybe Integer
   , modifyChannelUserRateLimit        :: Maybe Integer

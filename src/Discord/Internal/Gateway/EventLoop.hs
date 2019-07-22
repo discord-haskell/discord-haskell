@@ -27,14 +27,14 @@ import GHC.IO.Exception (IOError)
 import Discord.Internal.Types
 
 data GatewayException = GatewayExceptionCouldNotConnect T.Text
-                      | GatewayExceptionEventParseError String T.Text
+                      | GatewayExceptionEventParseError T.Text T.Text
                       | GatewayExceptionUnexpected GatewayReceivable T.Text
                       | GatewayExceptionConnection ConnectionException T.Text
   deriving (Show)
 
 data ConnLoopState = ConnStart
                    | ConnClosed
-                   | ConnReconnect Auth String Integer
+                   | ConnReconnect Auth T.Text Integer
   deriving Show
 
 -- | Securely run a connection IO action. Send a close on exception
@@ -126,7 +126,7 @@ getPayload conn log = try $ do
     Right msg -> pure msg
     Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
                                       <> " while decoding "<> T.pack (QL.unpack msg'))
-                    pure (ParseError err)
+                    pure (ParseError (T.pack err))
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()
 heartbeat send interval seqKey = do
@@ -141,7 +141,7 @@ setSequence key i = writeIORef key i
 
 -- | What we need to start an event stream
 data ConnectionData = ConnData { connection :: Connection
-                               , connSessionID :: String
+                               , connSessionID :: T.Text
                                , connAuth :: Auth
                                , connChan :: Chan (Either GatewayException Event)
                                }

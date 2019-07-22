@@ -27,13 +27,13 @@ data GatewayReceivable
   | InvalidSession Bool
   | Hello Int
   | HeartbeatAck
-  | ParseError String
+  | ParseError T.Text
   deriving (Show, Eq)
 
 data GatewaySendable
   = Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
-  | Resume T.Text String Integer
+  | Resume T.Text T.Text Integer
   | RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
@@ -127,10 +127,10 @@ instance ToJSON GatewaySendable where
         "token" .= authToken token
       , "properties" .= object [
           "$os"                .= os
-        , "$browser"           .= ("discord-haskell" :: String)
-        , "$device"            .= ("discord-haskell" :: String)
-        , "$referrer"          .= (""                :: String)
-        , "$referring_domain"  .= (""                :: String)
+        , "$browser"           .= ("discord-haskell" :: T.Text)
+        , "$device"            .= ("discord-haskell" :: T.Text)
+        , "$referrer"          .= (""                :: T.Text)
+        , "$referring_domain"  .= (""                :: T.Text)
         ]
       , "compress" .= compress
       , "large_threshold" .= large

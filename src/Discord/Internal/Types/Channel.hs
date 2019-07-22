@@ -12,20 +12,21 @@ import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.HashMap.Strict as HM
 import qualified Data.Vector as V
+import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
 
 -- | Represents information about a user.
 data User = User
   { userId       :: UserId       -- ^ The user's id.
-  , userName     :: String       -- ^ The user's username (not unique)
-  , userDiscrim  :: String       -- ^ The user's 4-digit discord-tag.
-  , userAvatar   :: Maybe String -- ^ The user's avatar hash.
+  , userName     :: T.Text       -- ^ The user's username (not unique)
+  , userDiscrim  :: T.Text       -- ^ The user's 4-digit discord-tag.
+  , userAvatar   :: Maybe T.Text -- ^ The user's avatar hash.
   , userIsBot    :: Bool         -- ^ User is an OAuth2 application.
   , userIsWebhook:: Bool         -- ^ User is a webhook
   , userMfa      :: Maybe Bool   -- ^ User has two factor authentication enabled on the account.
   , userVerified :: Maybe Bool   -- ^ Whether the email has been verified.
-  , userEmail    :: Maybe String -- ^ The user's email.
+  , userEmail    :: Maybe T.Text -- ^ The user's email.
   } deriving (Show, Eq, Ord)
 
 instance FromJSON User where
@@ -98,10 +99,10 @@ data Channel
       { channelId          :: ChannelId   -- ^ The id of the channel (Will be equal to
                                           --   the guild if it's the "general" channel).
       , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelName        :: String      -- ^ The name of the guild (2 - 1000 characters).
+      , channelName        :: T.Text      -- ^ The name of the guild (2 - 1000 characters).
       , channelPosition    :: Integer     -- ^ The storing position of the channel.
       , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
-      , channelTopic       :: String      -- ^ The topic of the channel. (0 - 1024 chars).
+      , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       }
@@ -109,7 +110,7 @@ data Channel
   | ChannelVoice
       { channelId          :: ChannelId
       , channelGuild       :: GuildId
-      , channelName        :: String
+      , channelName        :: T.Text
       , channelPosition    :: Integer
       , channelPermissions :: [Overwrite]
       , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
@@ -210,7 +211,7 @@ channelIsInGuild c = case c of
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
   { overwriteId    :: OverwriteId -- ^ 'Role' or 'User' id
-  , overwriteType  :: String    -- ^ Either "role" or "member
+  , overwriteType  :: T.Text    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
   } deriving (Show, Eq, Ord)
@@ -281,10 +282,10 @@ instance FromJSON Message where
 -- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: Snowflake     -- ^ Attachment id
-  , attachmentFilename :: String        -- ^ Name of attached file
+  , attachmentFilename :: T.Text        -- ^ Name of attached file
   , attachmentSize     :: Integer       -- ^ Size of file (in bytes)
-  , attachmentUrl      :: String        -- ^ Source of file
-  , attachmentProxy    :: String        -- ^ Proxied url of file
+  , attachmentUrl      :: T.Text        -- ^ Source of file
+  , attachmentProxy    :: T.Text        -- ^ Proxied url of file
   , attachmentHeight   :: Maybe Integer -- ^ Height of file (if image)
   , attachmentWidth    :: Maybe Integer -- ^ Width of file (if image)
   } deriving (Show, Eq, Ord)
@@ -301,10 +302,10 @@ instance FromJSON Attachment where
 
 -- | An embed attached to a message.
 data Embed = Embed
-  { embedTitle       :: Maybe String     -- ^ Title of the embed
-  , embedType        :: Maybe String     -- ^ Type of embed (Always "rich" for webhooks)
-  , embedDescription :: Maybe String     -- ^ Description of embed
-  , embedUrl         :: Maybe String     -- ^ URL of embed
+  { embedTitle       :: Maybe T.Text     -- ^ Title of the embed
+  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
+  , embedDescription :: Maybe T.Text     -- ^ Description of embed
+  , embedUrl         :: Maybe T.Text     -- ^ URL of embed
   , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
   , embedColor       :: Maybe Integer    -- ^ The embed color
   , embedFields      :: [SubEmbed]       -- ^ Fields of the embed
@@ -422,33 +423,33 @@ instance ToJSON Embed where
 -- | Represents a part of an embed.
 data SubEmbed
   = Thumbnail
-      String
-      String
+      T.Text
+      T.Text
       Integer
       Integer
   | Video
-      String
+      T.Text
       Integer
       Integer
   | Image
-      String
-      String
+      T.Text
+      T.Text
       Integer
       Integer
   | Provider
-      String
-      String
+      T.Text
+      T.Text
   | Author
-      String
-      String
-      String
-      String
+      T.Text
+      T.Text
+      T.Text
+      T.Text
   | Footer
-      String
-      String
-      String
+      T.Text
+      T.Text
+      T.Text
   | Field
-      String
-      String
+      T.Text
+      T.Text
       Bool
   deriving (Show, Eq, Ord)
