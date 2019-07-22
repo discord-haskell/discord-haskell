@@ -16,6 +16,9 @@ import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
+import qualified Data.ByteString.Lazy as BL
+import Network.HTTP.Client (RequestBody (RequestBodyLBS))
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
@@ -37,6 +40,7 @@ data WebhookRequest a where
                                       -> WebhookRequest Webhook
   DeleteWebhook :: WebhookId -> WebhookRequest ()
   DeleteWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest ()
+  ExecuteWebhook :: WebhookId -> ExecuteWebhookOpts -> WebhookRequest ()
 
 data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
@@ -60,6 +64,26 @@ instance ToJSON CreateWebhookOpts where
                          [("name",   toJSON <$> Just createWebhookOptsName),
                           ("avatar",  toJSON <$> createWebhookOptsAvatar) ] ]
 
+data ExecuteWebhookOpts = ExecuteWebhookOpts
+  { executeWebhookOptsToken         :: T.Text
+  , executeWebhookOptsUsername      :: Maybe T.Text
+  , executeWebhookOptsContent       :: WebhookContent
+  }
+data WebhookContent = WebhookContentText T.Text
+                    | WebhookContentFile T.Text BL.ByteString
+                    | WebhookContentEmbeds [Embed]
+
+webhookContentJson :: WebhookContent -> [(T.Text, Value)]
+webhookContentJson c = case c of
+                      WebhookContentText t -> [("content", toJSON t)]
+                      WebhookContentFile _ _  -> []
+                      WebhookContentEmbeds e -> [("embeds", toJSON e)]
+
+instance ToJSON ExecuteWebhookOpts where
+  toJSON ExecuteWebhookOpts{..} = object $ [(name, val) | (name, Just val) <-
+                         [("username",   toJSON <$> executeWebhookOptsUsername)] ]
+                      <> webhookContentJson executeWebhookOptsContent
+
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
   (CreateWebhook c _) ->            "aaaaaahook " <> show c
@@ -71,6 +95,7 @@ webhookMajorRoute ch = case ch of
   (ModifyWebhookWithToken w _ _) -> "modifyhook " <> show w
   (DeleteWebhook w) ->              "deletehook " <> show w
   (DeleteWebhookWithToken w _) ->   "deletehook " <> show w
+  (ExecuteWebhook w _) ->          "executehook " <> show w
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
@@ -86,7 +111,7 @@ webhookJsonRequest ch = case ch of
   (GetChannelWebhooks c) ->
     Get (baseUrl /: "channels" // c /: "webhooks")  mempty
 
-  (GetGuildWebhooks g) -> 
+  (GetGuildWebhooks g) ->
     Get (baseUrl /: "guilds" // g /: "webhooks")  mempty
 
   (GetWebhook w) ->
@@ -106,3 +131,13 @@ webhookJsonRequest ch = case ch of
 
   (DeleteWebhookWithToken w t) ->
     Delete (baseUrl /: "webhooks" // w // t)  mempty
+
+  (ExecuteWebhook w o) ->
+    case executeWebhookOptsContent o of
+      WebhookContentFile name text  ->
+        let part = partFileRequestBody "file" (T.unpack name) (RequestBodyLBS text)
+            body = R.reqBodyMultipart [part]
+        in Post (baseUrl /: "webhooks" // w // executeWebhookOptsToken o) body mempty
+      _ ->
+        let body = pure (R.ReqBodyJson o)
+        in Post (baseUrl /: "webhooks" // w // executeWebhookOptsToken o) body mempty
