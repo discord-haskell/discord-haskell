@@ -47,8 +47,6 @@ extra-deps:
 - discord-haskell-1.0.0
 ```
 
-```cabal
-
 In `project.cabal`
 
 ```cabal
