@@ -52,6 +52,10 @@ extra-deps:
 In `project.cabal`
 
 ```cabal
+executable haskell-bot
+  main-is:             src/Main.hs
+  default-language:    Haskell2010
+  ghc-options:         -threaded
   build-depends:       base
                      , text
                      , discord-haskell
