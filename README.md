@@ -83,7 +83,10 @@ See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/mas
 
 ### Debugging
 
-If something goes wrong with the library please open an issue. It is helpful,
+Always print the userFacingError Text returned from `runDiscord`. I use this to record
+errors that cannot be recovered from.
+
+If something else goes wrong with the library please open an issue. It is helpful,
 but not always necessary, to attach a log of what's going on when the library
 crashes.
 
