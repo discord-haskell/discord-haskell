@@ -10,6 +10,7 @@ import Discord
 import Discord.Types
 import qualified Discord.Requests as R
 
+-- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
 main = pingpongExample
 
@@ -18,7 +19,7 @@ pingpongExample :: IO ()
 pingpongExample = do
   tok <- TIO.readFile "./examples/auth-token.secret"
 
-  -- open ghci and run  [[ def :: RunDiscordOpts ]] to see default Opts
+  -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
   t <- runDiscord $ def { discordToken = tok
                         , discordOnStart = startHandler
                         , discordOnEnd = putStrLn "Ended"
@@ -28,7 +29,8 @@ pingpongExample = do
   threadDelay (1 `div` 10 * 10^6)
   TIO.putStrLn t
 
--- If a handler throws an exception, discord-haskell will gracefully shutdown
+-- If the start handler throws an exception, discord-haskell will gracefully shutdown
+--     Use place to execute commands you know you want to complete
 startHandler :: DiscordHandle -> IO ()
 startHandler dis = do
   Right partialGuilds <- restCall dis R.GetCurrentUserGuilds
@@ -41,9 +43,10 @@ startHandler dis = do
                   pure ()
       _ -> pure ()
 
+-- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
-      MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
+      MessageCreate m -> when (not (fromBot m) && isPing m) $ do
         _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^6)
         _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
@@ -57,5 +60,5 @@ isTextChannel _ = False
 fromBot :: Message -> Bool
 fromBot m = userIsBot (messageAuthor m)
 
-isPing :: T.Text -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.map toLower
+isPing :: Message -> Bool
+isPing = ("ping" `T.isPrefixOf`) . T.map toLower . messageText
