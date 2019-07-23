@@ -1,7 +1,5 @@
 # discord-haskell [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
 
-## Go to the [Wiki](https://github.com/aquarial/discord-haskell/wiki) for more information
-
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 
@@ -36,3 +34,80 @@ fromBot m = userIsBot (messageAuthor m)
 isPing :: Text -> Bool
 isPing = ("ping" `isPrefixOf`) . toLower
 ```
+
+
+### Installing
+
+discord-haskell is on hosted on hackage at https://hackage.haskell.org/package/discord-haskell, 
+
+In `stack.yaml`
+
+```yaml
+extra-deps:
+- discord-haskell-1.0.0
+```
+
+```cabal
+
+In `project.cabal`
+
+```cabal
+  build-depends:       base
+                     , text
+                     , discord-haskell
+```
+
+For a more complete example with various options go to 
+[Installing the Library](https://github.com/aquarial/discord-haskell/wiki/Installing-the-Library) wiki page
+
+Also take a look at 
+[Creating your first Bot](https://github.com/aquarial/discord-haskell/wiki/Creating-your-first-Bot)
+for some help setting up your bot token
+
+
+### Emoji
+
+For single character Emoji you can use the unicode name ("eyes", "fire", etc).
+
+For multi-character Emoji you must use the discord format. Type `\:emoji:` into
+a discord chat and paste that into the Text
+
+For example `:thumbsup::skin-tone-3:` is `"👍\127997"`. 
+A custom emoji will look like `<name:id_number>` or `name:id_number`.
+
+See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/master/examples/ping-pong.hs)
+ for a `CreateReaction` request in use.
+ 
+
+### Debugging
+
+If something goes wrong with the library please open an issue. It is helpful,
+but not always necessary, to attach a log of what's going on when the library
+crashes.
+
+Assign a handler to the `discordOnLog :: Text -> IO ()` to print info as it happens.
+Remember to remove sensitive information before posting.
+
+### Getting Help
+
+#### Official discord docs
+
+For a list of rest requests, gateway events, and gateway sendables go to the 
+[official discord documentation](https://discordapp.com/developers/docs/intro)
+
+The rest requests line up very closely. The documentation lists 
+[Get Channel](https://discordapp.com/developers/docs/resources/channel#get-channel)
+and discord-haskell has `GetChannel :: ChannelId -> ChannelRequest Channel`. Same for gateway `Event`s.
+
+#### Examples
+
+The [examples](https://github.com/aquarial/discord-haskell/tree/master/examples) were crafted
+to display a variety of use cases. Read them with care.
+
+#### Open an Issue
+
+For deeper questions about how the library functions, feel free to open an issue.
+
+#### Discord server
+
+Coming sometime!
