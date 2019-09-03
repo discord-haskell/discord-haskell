@@ -7,7 +7,6 @@
 module Discord.Internal.Rest.Prelude where
 
 import Prelude hiding (log)
-import Data.Default (def)
 import Control.Exception.Safe (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Data.Monoid ((<>))
@@ -54,4 +53,4 @@ instance R.MonadHttp RestIO where
   -- | Throw actual exceptions
   handleHttpException = liftIO . throwIO
   -- | Don't throw exceptions on http error codes like 404
-  getHttpConfig = pure $ def { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
+  getHttpConfig = pure $ R.defaultHttpConfig { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
