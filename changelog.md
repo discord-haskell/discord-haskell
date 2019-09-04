@@ -4,6 +4,12 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+## 1.1.0
+
+Upgrade req to 2.x major version.
+
+## 1.0.0
+
 Going through some major updates to the library. Expect types to change and things to break.
 
 Compare the [old ping-pong](https://github.com/aquarial/discord-haskell/blob/20f7f8556823a754c76d01484118a5abf336530b/examples/ping-pong.hs)
