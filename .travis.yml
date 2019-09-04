@@ -38,6 +38,14 @@ matrix:
       apt:
         packages:
         - libgmp-dev
+
+  - ghc: 8.6.5
+    env: GHCVER='8.6.5' STACK_YAML="$TRAVIS_BUILD_DIR/stack.yaml"
+    os: linux
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
   
 
 install:
