@@ -4,6 +4,10 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+## 1.1.1
+
+Fix ModifyGuildRolePositions results in 400 Bad Request issue
+
 ## 1.1.0
 
 Upgrade req to 2.x major version.
