@@ -418,7 +418,7 @@ guildJsonRequest c = case c of
 
   (ModifyGuildRolePositions guild patch) ->
       let body = map (\(role, pos) -> object ["id".=role, "position".=pos]) patch
-      in Post (guilds // guild /: "roles") (pure (R.ReqBodyJson body)) mempty
+      in Patch (guilds // guild /: "roles") (R.ReqBodyJson body) mempty
 
   (ModifyGuildRole guild role patch) ->
        Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
