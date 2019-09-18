@@ -4,6 +4,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+[michalrus](https://github.com/aquarial/discord-haskell/issues/25) Fix `DeleteGuildRole` parse exception
+
 ## 1.1.1
 
 Fix ModifyGuildRolePositions results in 400 Bad Request issue

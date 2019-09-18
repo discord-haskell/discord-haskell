@@ -101,7 +101,7 @@ data GuildRequest a where
   ModifyGuildRole          :: GuildId -> RoleId -> ModifyGuildRoleOpts -> GuildRequest Role
   -- | Delete a guild role. Requires the 'MANAGE_ROLES' permission. Fires a Guild Role
   --   Delete 'Event'.
-  DeleteGuildRole          :: GuildId -> RoleId -> GuildRequest Role
+  DeleteGuildRole          :: GuildId -> RoleId -> GuildRequest ()
   -- | Returns an object with one 'pruned' key indicating the number of members
   --   that would be removed in a prune operation. Requires the 'KICK_MEMBERS'
   --   permission.
