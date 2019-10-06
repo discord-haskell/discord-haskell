@@ -50,7 +50,7 @@ restLoop auth urls log = loop M.empty
       Locked -> do writeChan urls (route, request, thread)
                    loop ratelocker
       Available -> do let action = compileRequest auth request
-                      reqIO <- try $ restIOtoIO (tryRequest action)
+                      reqIO <- try $ restIOtoIO (tryRequest log action)
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
                           writeChan log ("rest - http exception " <> T.pack (show e))
@@ -95,8 +95,8 @@ data Timeout = GlobalWait POSIXTime
              | PathWait POSIXTime
              | NoLimit
 
-tryRequest :: RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
-tryRequest action = do
+tryRequest :: Chan T.Text -> RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
+tryRequest log action = do
   resp <- action
   now <- liftIO getPOSIXTime
   let body   = R.responseBody resp
