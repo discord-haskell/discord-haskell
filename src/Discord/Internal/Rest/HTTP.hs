@@ -101,7 +101,7 @@ tryRequest _log action = do
   let body   = R.responseBody resp
       code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
-      global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
+      global = (Just "true" ==) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
       reset = withDelta . fromMaybe 10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
 
