@@ -70,14 +70,8 @@ restLoop auth urls log = loop M.empty
                                                     <> T.pack (show ((i - curtime) * 1000)))
                                 threadDelay $ round ((i - curtime + 0.1) * 1000)
                                 loop ratelocker
-                            PathWait i -> loop $ M.insert route (if isPrefixOf "add_react " route
-                                                                 then curtime + 0.25 else i)
-                                                          (removeAllExpire ratelocker curtime)
+                            PathWait i -> loop $ M.insert route i (removeAllExpire ratelocker curtime)
                             NoLimit -> loop ratelocker
-
--- Note: we hardcode delay for CreateReaction ("add_react")
--- why the headers are wrong: https://github.com/discordapp/discord-api-docs/issues/182
--- why I chose to hardcode it: https://github.com/aquarial/discord-haskell/issues/16
 
 data RateLimited = Available | Locked
 
@@ -127,7 +121,8 @@ readMaybeBS = readMaybe . T.unpack . TE.decodeUtf8
 compileRequest :: Auth -> JsonRequest -> RestIO R.LbsResponse
 compileRequest auth request = action
   where
-  authopt = authHeader auth
+  authopt = authHeader auth <> R.header "X-RateLimit-Precision" "millisecond"
+
   action = case request of
     (Delete url      opts) -> R.req R.DELETE url R.NoReqBody R.lbsResponse (authopt <> opts)
     (Get    url      opts) -> R.req R.GET    url R.NoReqBody R.lbsResponse (authopt <> opts)
