@@ -19,13 +19,11 @@ import Control.Exception.Safe (try)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Ix (inRange)
-import Data.List (isPrefixOf)
 import Data.Time.Clock.POSIX (POSIXTime, getPOSIXTime)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
 import qualified Network.HTTP.Req as R
 import qualified Data.Map.Strict as M
@@ -102,18 +100,24 @@ tryRequest log action = do
   let body   = R.responseBody resp
       code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
-      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
-      global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      resetDelta = fromMaybe (3::Double) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
-      reset  = now + fromRational (toRational resetDelta)
-  if | code == 429 -> pure (ResponseTryAgain, if global then GlobalWait reset
-                                                        else PathWait reset)
-     | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
-     | inRange (200,299) code -> pure ( ResponseByteString body
-                                      , if remain > 0 then NoLimit else PathWait reset )
-     | inRange (400,499) code -> pure (ResponseErrorCode code status (BL.toStrict body)
-                                      , if remain > 0 then NoLimit else PathWait reset )
-     | otherwise -> pure (ResponseErrorCode code status (BL.toStrict body), NoLimit)
+      remainM = readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      globalM = readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
+      withDelta dt = now + fromRational (toRational dt)
+      resetDeltaM = withDelta <$> (readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After")
+  case (remainM, globalM, resetDeltaM) of
+    (Just remain, Just global, Just reset) ->
+        if | code == 429 -> pure (ResponseTryAgain, if global then GlobalWait reset
+                                                              else PathWait reset)
+           | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
+           | inRange (200,299) code -> pure ( ResponseByteString body
+                                            , if remain > 0 then NoLimit else PathWait reset )
+           | inRange (400,499) code -> pure (ResponseErrorCode code status (BL.toStrict body)
+                                            , if remain > 0 then NoLimit else PathWait reset )
+           | otherwise -> pure (ResponseErrorCode code status (BL.toStrict body), NoLimit)
+    other -> do
+      liftIO $ writeChan log $ "rest - could not parse response headers: "
+                                   <> T.pack (show other)
+      pure (ResponseErrorCode code status (BL.toStrict body), NoLimit)
 
 readMaybeBS :: Read a => B.ByteString -> Maybe a
 readMaybeBS = readMaybe . T.unpack . TE.decodeUtf8
