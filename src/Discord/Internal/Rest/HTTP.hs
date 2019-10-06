@@ -103,8 +103,10 @@ tryRequest _log action = do
       status = R.responseStatusMessage resp
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      reset = withDelta . fromMaybe 10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
+
+      withDelta :: Double -> POSIXTime
       withDelta dt = now + fromRational (toRational dt)
-      reset = withDelta . fromMaybe (10::Double) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
 
   if | code == 429 -> pure (ResponseTryAgain, if global then GlobalWait reset
                                                         else PathWait reset)
