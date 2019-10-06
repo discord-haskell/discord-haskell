@@ -102,7 +102,7 @@ tryRequest _log action = do
       code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
       global = (Just "true" ==) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
+      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Remaining"
       reset = withDelta . fromMaybe 10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
 
       withDelta :: Double -> POSIXTime
