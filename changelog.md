@@ -4,6 +4,10 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+## 1.1.3
+
+Minor improvements to rate-limiting like using newer `X-RateLimit-Reset-After` header
+
 ## 1.1.2
 
 [michalrus](https://github.com/aquarial/discord-haskell/issues/25) Fix `DeleteGuildRole` parse exception

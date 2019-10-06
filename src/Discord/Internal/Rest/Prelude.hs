@@ -25,7 +25,7 @@ authHeader auth =
   where
   -- | https://discordapp.com/developers/docs/reference#user-agent
   -- Second place where the library version is noted
-  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 1.1.2)"
+  agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 1.1.3)"
 
 -- Append to an URL
 infixl 5 //
