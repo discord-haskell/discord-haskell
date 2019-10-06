@@ -104,14 +104,14 @@ data Timeout = GlobalWait POSIXTime
 tryRequest :: RestIO R.LbsResponse -> RestIO (RequestResponse, Timeout)
 tryRequest action = do
   resp <- action
-  next10 <- liftIO (round . (+10) <$> getPOSIXTime)
+  now <- liftIO getPOSIXTime
   let body   = R.responseBody resp
       code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
       remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-Ratelimit-Remaining"
       global = fromMaybe False $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      resetInt = fromMaybe next10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset"
-      reset  = fromIntegral resetInt
+      resetDelta = fromMaybe (3::Double) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
+      reset  = now + fromRational (toRational resetDelta)
   if | code == 429 -> pure (ResponseTryAgain, if global then GlobalWait reset
                                                         else PathWait reset)
      | code `elem` [500,502] -> pure (ResponseTryAgain, NoLimit)
