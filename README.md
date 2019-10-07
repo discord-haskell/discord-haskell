@@ -44,7 +44,7 @@ In `stack.yaml`
 
 ```yaml
 extra-deps:
-- discord-haskell-1.0.0
+- discord-haskell-1.1.3
 - emoji-0.1.0.2
 ```
 
