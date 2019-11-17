@@ -170,7 +170,7 @@ data VoiceRegion = VoiceRegion
       , voiceRegionName        :: T.Text      -- ^ Name of the region
       , voiceRegionVip         :: Bool        -- ^ True if this is a VIP only server
       , voiceRegionOptimal     :: Bool        -- ^ True for the closest server to a client
-      , voiceRegionDepreciated :: Bool        -- ^ Whether this is a deprecated region
+      , voiceRegionDeprecated  :: Bool        -- ^ Whether this is a deprecated region
       , voiceRegionCustom      :: Bool        -- ^ Whether this is a custom region
       } deriving (Show, Eq, Ord)
 
