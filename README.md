@@ -81,6 +81,12 @@ A custom emoji will look like `<name:id_number>` or `name:id_number`.
 See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/master/examples/ping-pong.hs)
  for a `CreateReaction` request in use.
  
+### Limitations
+
+The following features are not implemented:
+
+- Voice & Audio
+- Authenticating with a user token
 
 ### Debugging
 
