@@ -4,6 +4,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+[MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
+
 ## 1.1.3
 
 Minor improvements to rate-limiting like using newer `X-RateLimit-Reset-After` header
