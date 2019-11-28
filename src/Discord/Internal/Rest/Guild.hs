@@ -182,11 +182,11 @@ instance ToJSON CreateGuildBanOpts where
                         ("reason", toJSON <$> createGuildBanOptsReason )]]
 
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
-  { modifyGuildRoleOptsName        :: Maybe T.Text
-  , modifyGuildRoleOptsPermissions :: Maybe Integer
-  , modifyGuildRoleOptsColor       :: Maybe Integer
-  , modifyGuildRoleOptsSeparateSidebar :: Bool
-  , modifyGuildRoleOptsMentionable :: Bool
+  { modifyGuildRoleOptsName            :: Maybe T.Text
+  , modifyGuildRoleOptsPermissions     :: Maybe Integer
+  , modifyGuildRoleOptsColor           :: Maybe Integer
+  , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
+  , modifyGuildRoleOptsMentionable     :: Maybe Bool
   } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyGuildRoleOpts where
@@ -194,8 +194,8 @@ instance ToJSON ModifyGuildRoleOpts where
                        [("name",        toJSON <$> modifyGuildRoleOptsName ),
                         ("permissions", toJSON <$> modifyGuildRoleOptsPermissions ),
                         ("color",       toJSON <$> modifyGuildRoleOptsColor ),
-                        ("hoist",       toJSON <$> Just modifyGuildRoleOptsSeparateSidebar ),
-                        ("mentionable", toJSON <$> Just modifyGuildRoleOptsMentionable )]]
+                        ("hoist",       toJSON <$> modifyGuildRoleOptsSeparateSidebar ),
+                        ("mentionable", toJSON <$> modifyGuildRoleOptsMentionable )]]
 
 data AddGuildMemberOpts = AddGuildMemberOpts
   { addGuildMemberOptsAccessToken :: T.Text
@@ -421,7 +421,7 @@ guildJsonRequest c = case c of
       in Patch (guilds // guild /: "roles") (R.ReqBodyJson body) mempty
 
   (ModifyGuildRole guild role patch) ->
-       Post (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds // guild /: "roles" // role) (R.ReqBodyJson patch) mempty
 
   (DeleteGuildRole guild role) ->
       Delete (guilds // guild /: "roles" // role) mempty
@@ -463,3 +463,4 @@ guildJsonRequest c = case c of
 
   (GetGuildVanityURL guild) ->
       Get (guilds // guild /: "vanity-url") mempty
+
