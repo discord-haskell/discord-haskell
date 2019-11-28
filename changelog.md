@@ -6,6 +6,10 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
 
+[MDeltaX](https://github.com/aquarial/discord-haskell/pull/29) More consistency: RoleID --> RoleId
+
+[MDeltaX](https://github.com/aquarial/discord-haskell/pull/29) Fix ModifyGuildRole: Post --> Patch && optional args
+
 ## 1.1.3
 
 Minor improvements to rate-limiting like using newer `X-RateLimit-Reset-After` header
