@@ -143,7 +143,7 @@ instance FromJSON Emoji where
 --   (guild) and channel context.
 data Role =
     Role {
-        roleID      :: RoleId -- ^ The role id
+        roleId      :: RoleId -- ^ The role id
       , roleName    :: T.Text                    -- ^ The role name
       , roleColor   :: Integer                   -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
