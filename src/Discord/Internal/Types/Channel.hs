@@ -4,6 +4,7 @@
 -- | Data structures pertaining to Discord Channels
 module Discord.Internal.Types.Channel where
 
+import Control.Applicative (empty)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Default (Default, def)
@@ -251,7 +252,7 @@ data Message = Message
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
   , messageEmbeds       :: [Embed]         -- ^ Any embedded content
-  , messageNonce        :: Maybe Snowflake -- ^ Used for validating if a message
+  , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
@@ -453,3 +454,11 @@ data SubEmbed
       T.Text
       Bool
   deriving (Show, Eq, Ord)
+
+newtype Nonce = Nonce T.Text
+  deriving (Show, Eq, Ord)
+
+instance FromJSON Nonce where
+  parseJSON (String nonce) = pure $ Nonce nonce
+  parseJSON (Number nonce) = pure . Nonce . T.pack . show $ nonce
+  parseJSON _ = empty
