@@ -4,6 +4,9 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+
+## 1.2.0
+
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/29) More consistency: RoleID --> RoleId
