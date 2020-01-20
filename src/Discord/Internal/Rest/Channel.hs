@@ -23,7 +23,7 @@ import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partLBS)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
@@ -52,6 +52,8 @@ data ChannelRequest a where
   CreateMessageEmbed      :: ChannelId -> T.Text -> Embed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
+  -- | Sends a message with an Embed to a channel. Additionally accepts a file to upload which can be used in embed via "attachment://filename" url
+  CreateMessageEmbedWFile :: ChannelId -> T.Text -> Embed -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
   CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
@@ -183,6 +185,7 @@ channelMajorRoute c = case c of
   (CreateMessage chan _) ->                 "msg " <> show chan
   (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
+  (CreateMessageEmbedWFile chan _ _ _ _) -> "msg " <> show chan
   (CreateReaction (chan, _) _) ->     "add_react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
   (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
@@ -254,6 +257,13 @@ channelJsonRequest c = case c of
   (CreateMessageUploadFile chan fileName file) ->
       let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyBS file
           body = R.reqBodyMultipart [part]
+      in Post (channels // chan /: "messages") body mempty
+
+  (CreateMessageEmbedWFile chan msg embed fileName file) ->
+      let content = ["content" .= msg] <> maybeEmbed (Just embed)
+          partJson = partLBS "payload_json" $ encode $ toJSON $ object content 
+          partFile = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyBS file
+          body = R.reqBodyMultipart [partJson, partFile]
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
