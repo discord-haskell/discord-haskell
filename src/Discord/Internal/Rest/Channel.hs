@@ -61,7 +61,7 @@ data ChannelRequest a where
   -- | Deletes all reactions of a single emoji on a message
   DeleteSingleReaction    :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
-  GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
+  GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest [User]
   -- | Delete all reactions on a message
   DeleteAllReactions      :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
@@ -96,11 +96,13 @@ data ChannelRequest a where
 -- | Data constructor for GetReaction requests
 data ReactionTiming = BeforeReaction MessageId
                     | AfterReaction MessageId
+                    | LatestReaction
 
 reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
   (BeforeReaction snow) -> "before" R.=: show snow
   (AfterReaction snow) -> "after"  R.=: show snow
+  (LatestReaction) -> mempty
 
 -- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
 data MessageTiming = AroundMessage MessageId

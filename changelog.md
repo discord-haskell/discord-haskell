@@ -6,6 +6,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 [PixeLinc](https://github.com/aquarial/discord-haskell/pull/33) Add `DeleteSingleReaction` rest-request, Add GuildId to `ReactinInfo`, Add `MESSAGE_REACTION_REMOVE_EMOJI` gateway event
 
+`GetReactions` actually returns the User objects request
+
 ## 1.2.0
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
