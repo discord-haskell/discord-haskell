@@ -274,7 +274,7 @@ channelJsonRequest c = case c of
 
   (DeleteSingleReaction (chan, msgid) emoji) ->
     let e = cleanupEmoji emoji
-     in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e) mempty
+    in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e) mempty
 
   (GetReactions (chan, msgid) emoji (n, timing)) ->
       let e = cleanupEmoji emoji
