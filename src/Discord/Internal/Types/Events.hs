@@ -47,7 +47,7 @@ data Event =
   | MessageReactionAdd      ReactionInfo
   | MessageReactionRemove   ReactionInfo
   | MessageReactionRemoveAll ChannelId MessageId
-  | MessageReactionRemoveEmoji ReactionInfo
+  | MessageReactionRemoveEmoji ReactionRemoveInfo
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
   | UserUpdate              User
@@ -57,7 +57,7 @@ data Event =
   deriving (Show, Eq)
 
 data ReactionInfo = ReactionInfo
-  { reactionUserId    :: Maybe UserId
+  { reactionUserId    :: UserId
   , reactionGuildId   :: Maybe GuildId
   , reactionChannelId :: ChannelId
   , reactionMessageId :: MessageId
@@ -66,11 +66,25 @@ data ReactionInfo = ReactionInfo
 
 instance FromJSON ReactionInfo where
   parseJSON = withObject "ReactionInfo" $ \o ->
-    ReactionInfo <$> o .:? "user_id"
+    ReactionInfo <$> o .:  "user_id"
                  <*> o .:? "guild_id"
-                 <*> o .: "channel_id"
-                 <*> o .: "message_id"
-                 <*> o .: "emoji"
+                 <*> o .:  "channel_id"
+                 <*> o .:  "message_id"
+                 <*> o .:  "emoji"
+
+data ReactionRemoveInfo  = ReactionRemoveInfo
+  { reactionRemoveChannelId :: ChannelId
+  , reactionRemoveGuildId   :: GuildId
+  , reactionRemoveMessageId :: MessageId
+  , reactionRemoveEmoji     :: Emoji
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON ReactionRemoveInfo where
+  parseJSON = withObject "ReactionRemoveInfo" $ \o ->
+    ReactionRemoveInfo <$> o .:  "guild_id"
+                       <*> o .:  "channel_id"
+                       <*> o .:  "message_id"
+                       <*> o .:  "emoji"
 
 data PresenceInfo = PresenceInfo
   { presenceUserId  :: UserId
