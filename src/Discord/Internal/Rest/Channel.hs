@@ -58,6 +58,8 @@ data ChannelRequest a where
   DeleteOwnReaction       :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction someone else added
   DeleteUserReaction      :: (ChannelId, MessageId) -> UserId -> T.Text -> ChannelRequest ()
+  -- | Deletes all reactions of a single emoji on a message
+  DeleteSingleReaction    :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
   GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest ()
   -- | Delete all reactions on a message
@@ -186,6 +188,7 @@ channelMajorRoute c = case c of
   (CreateReaction (chan, _) _) ->     "add_react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
   (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
+  (DeleteSingleReaction (chan, _) _) ->   "react " <> show chan
   (GetReactions (chan, _) _ _) ->         "react " <> show chan
   (DeleteAllReactions (chan, _)) ->       "react " <> show chan
   (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
@@ -268,6 +271,10 @@ channelJsonRequest c = case c of
   (DeleteUserReaction (chan, msgid) uID emoji) ->
       let e = cleanupEmoji emoji
       in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e // uID ) mempty
+
+  (DeleteSingleReaction (chan, msgid) emoji) ->
+    let e = cleanupEmoji emoji
+     in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e) mempty
 
   (GetReactions (chan, msgid) emoji (n, timing)) ->
       let e = cleanupEmoji emoji
