@@ -4,6 +4,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+[PixeLinc](https://github.com/aquarial/discord-haskell/pull/33) Add `DeleteSingleReaction` rest-request, Add GuildId to `ReactinInfo`, Add `MESSAGE_REACTION_REMOVE_EMOJI` gateway event
 
 ## 1.2.0
 
