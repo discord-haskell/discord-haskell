@@ -47,6 +47,7 @@ data Event =
   | MessageReactionAdd      ReactionInfo
   | MessageReactionRemove   ReactionInfo
   | MessageReactionRemoveAll ChannelId MessageId
+  | MessageReactionRemoveEmoji ReactionRemoveInfo
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
   | UserUpdate              User
@@ -57,6 +58,7 @@ data Event =
 
 data ReactionInfo = ReactionInfo
   { reactionUserId    :: UserId
+  , reactionGuildId   :: Maybe GuildId
   , reactionChannelId :: ChannelId
   , reactionMessageId :: MessageId
   , reactionEmoji     :: Emoji
@@ -64,10 +66,25 @@ data ReactionInfo = ReactionInfo
 
 instance FromJSON ReactionInfo where
   parseJSON = withObject "ReactionInfo" $ \o ->
-    ReactionInfo <$> o .: "user_id"
-                 <*> o .: "channel_id"
-                 <*> o .: "message_id"
-                 <*> o .: "emoji"
+    ReactionInfo <$> o .:  "user_id"
+                 <*> o .:? "guild_id"
+                 <*> o .:  "channel_id"
+                 <*> o .:  "message_id"
+                 <*> o .:  "emoji"
+
+data ReactionRemoveInfo  = ReactionRemoveInfo
+  { reactionRemoveChannelId :: ChannelId
+  , reactionRemoveGuildId   :: GuildId
+  , reactionRemoveMessageId :: MessageId
+  , reactionRemoveEmoji     :: Emoji
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON ReactionRemoveInfo where
+  parseJSON = withObject "ReactionRemoveInfo" $ \o ->
+    ReactionRemoveInfo <$> o .:  "guild_id"
+                       <*> o .:  "channel_id"
+                       <*> o .:  "message_id"
+                       <*> o .:  "emoji"
 
 data PresenceInfo = PresenceInfo
   { presenceUserId  :: UserId
@@ -147,6 +164,7 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE"   -> MessageReactionRemove <$> reparse o
     "MESSAGE_REACTION_REMOVE_ALL" -> MessageReactionRemoveAll <$> o .: "channel_id"
                                                               <*> o .: "message_id"
+    "MESSAGE_REACTION_REMOVE_EMOJI" -> MessageReactionRemoveEmoji <$> reparse o
     "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
     "TYPING_START"              -> TypingStart               <$> reparse o
     "USER_UPDATE"               -> UserUpdate                <$> reparse o
