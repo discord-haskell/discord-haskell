@@ -107,7 +107,7 @@ runDiscordLoop opts handle = do
                  action $ do me <- try (discordOnEvent opts handle event)
                              case me of
                                Left (e :: SomeException) -> writeChan (discordHandleLog handle)
-                                         ("Your code threw an exception:\n\n" <> T.pack (show e))
+                                         ("discord-haskell stopped on an exception:\n\n" <> T.pack (show e))
                                Right _ -> pure ()
                  loop
                Right (Left err) -> libError (T.pack (show err))
