@@ -7,6 +7,7 @@ module Discord.Internal.Types
   , module Discord.Internal.Types.Gateway
   , module Discord.Internal.Types.Guild
   , module Data.Aeson
+  , module Data.Time.Clock
   ) where
 
 import Discord.Internal.Types.Channel
@@ -16,3 +17,4 @@ import Discord.Internal.Types.Guild
 import Discord.Internal.Types.Prelude
 
 import Data.Aeson (Object)
+import Data.Time.Clock (UTCTime(..))

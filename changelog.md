@@ -10,6 +10,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 Rename `Ban` to `GuildBan`
 
+Re-export UTCTime from `time` package
+
 ## 1.2.0
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
