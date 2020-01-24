@@ -90,7 +90,7 @@ runDiscordLoop opts handle = do
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
     _ -> do me <- try (discordOnStart opts handle)
             case me of
-              Left (e :: SomeException) -> libError ("Your code threw an exception:\n\n" <> T.pack (show e))
+              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
               Right _ -> loop
  where
    libError :: T.Text -> IO T.Text
