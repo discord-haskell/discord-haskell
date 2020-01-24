@@ -304,12 +304,12 @@ instance FromJSON Attachment where
 -- | An embed attached to a message.
 data Embed = Embed
   { embedTitle       :: Maybe T.Text     -- ^ Title of the embed
-  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
   , embedDescription :: Maybe T.Text     -- ^ Description of embed
   , embedUrl         :: Maybe T.Text     -- ^ URL of embed
   , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
   , embedColor       :: Maybe Integer    -- ^ The embed color
-  , embedFields      :: [SubEmbed]       -- ^ Fields of the embed
+  , embedFields      :: [EmbedPart]       -- ^ Fields of the embed
+  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
   } deriving (Show, Eq, Ord)
 
 instance Default Embed where
@@ -377,10 +377,10 @@ instance ToJSON Embed where
       (|>) (Object o) hm = Object $ HM.union o hm
       (|>) _          _  = error "Type mismatch"
 
-      makeSubEmbeds :: [SubEmbed] -> HM.HashMap Text Value
+      makeSubEmbeds :: [EmbedPart] -> HM.HashMap Text Value
       makeSubEmbeds = foldr embed HM.empty
 
-      embed :: SubEmbed -> HM.HashMap Text Value -> HM.HashMap Text Value
+      embed :: EmbedPart -> HM.HashMap Text Value -> HM.HashMap Text Value
       embed (Thumbnail url _ height width) =
         HM.alter (\_ -> Just $ object
           [ "url"    .= url
@@ -422,7 +422,7 @@ instance ToJSON Embed where
       embed _ = id
 
 -- | Represents a part of an embed.
-data SubEmbed
+data EmbedPart
   = Thumbnail
       T.Text
       T.Text
