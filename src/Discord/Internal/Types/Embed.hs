@@ -6,34 +6,37 @@ module Discord.Internal.Types.Embed where
 
 import Data.Aeson
 import Data.Time.Clock
---import Data.Default (Default, def)
-import Data.Text (Text)
+import Data.Default (Default, def)
 import qualified Data.Text as T
+import qualified Data.ByteString as B
 
--- data EmbedSend = EmbedSend
---   { embedSendAuthor      :: Maybe EmbedSendAuthor
---   , embedSendTitle       :: Maybe Text
---   , embedSendUrl         :: Maybe Text
---   , embedSendDescription :: Maybe Text
---   , embedSendFields      :: [EmbedField]
---   , embedSendImage       :: Maybe EmbedSendImage
---   , embedSendFooter      :: Maybe Text
---   , embedSendColor       :: Maybe Text
---   , embedSendTimestamp   :: Maybe Text
---   } deriving (Show, Eq, Ord)
---
--- data CreateEmbedImage = CreateEmbedImageUrl T.Text
---                  {-   | CreateEmbedImageUpload B.Bytestring   -}
---   deriving (Show, Eq, Ord)
---
--- instance ToJSON EmbedSend where
---   toJSON EmbedSend{..} = object
---     [ "title" .= embedSendTitle
---     , "description" .= embedSendDescription
---     ]
+data CreateEmbed = CreateEmbed
+  { createEmbedAuthorName  :: T.Text
+  , createEmbedAuthorUrl   :: T.Text
+  , createEmbedAuthorIcon  :: Maybe CreateEmbedImage
+  , createEmbedTitle       :: T.Text
+  , createEmbedUrl         :: T.Text
+  , createEmbedDescription :: T.Text
+  , createEmbedFields      :: [EmbedField]
+  , createEmbedImage       :: Maybe CreateEmbedImage
+  , createEmbedFooterText  :: T.Text
+  , createEmbedFooterIcon  :: Maybe CreateEmbedImage
+  , createEmbedColor       :: Maybe T.Text
+  , createEmbedTimestamp   :: Maybe T.Text
+  } deriving (Show, Eq, Ord)
 
---instance Default EmbedSend where
---  def = EmbedSend Nothing Nothing
+data CreateEmbedImage = CreateEmbedImageUrl T.Text
+                      | CreateEmbedImageUpload B.ByteString
+  deriving (Show, Eq, Ord)
+
+instance ToJSON CreateEmbed where
+  toJSON CreateEmbed{..} = object
+    [ "title" .= createEmbedTitle
+    , "description" .= createEmbedDescription
+    ]
+
+instance Default CreateEmbed where
+ def = CreateEmbed "" "" Nothing "" "" "" [] Nothing "" Nothing Nothing Nothing
 
 -- | An embed attached to a message.
 data Embed = Embed
