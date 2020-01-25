@@ -75,14 +75,14 @@ data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
 
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text BL.ByteString
-                    | WebhookContentEmbeds [Embed]
+                    | WebhookContentEmbeds [CreateEmbed]
   deriving (Show, Eq, Ord)
 
 webhookContentJson :: WebhookContent -> [(T.Text, Value)]
 webhookContentJson c = case c of
                       WebhookContentText t -> [("content", toJSON t)]
                       WebhookContentFile _ _  -> []
-                      WebhookContentEmbeds e -> [("embeds", toJSON e)]
+                      WebhookContentEmbeds e -> [("embeds", toJSON (createEmbed e))]
 
 instance ToJSON ExecuteWebhookWithTokenOpts where
   toJSON ExecuteWebhookWithTokenOpts{..} = object $ [(name, val) | (name, Just val) <-

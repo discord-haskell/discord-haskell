@@ -10,6 +10,44 @@ import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 
+createEmbed :: CreateEmbed -> Embed
+createEmbed CreateEmbed{..} =
+  let
+    emptyMaybe :: T.Text -> Maybe T.Text
+    emptyMaybe t = if T.null t then Nothing else Just t
+
+    embedImageToUrl :: CreateEmbedImage -> T.Text
+    embedImageToUrl cei = case cei of
+                            CreateEmbedImageUrl t -> t
+
+    embedAuthor = EmbedAuthor (emptyMaybe createEmbedAuthorName)
+                              (emptyMaybe createEmbedAuthorUrl)
+                              (embedImageToUrl <$> createEmbedAuthorIcon)
+                              Nothing
+    embedImage = EmbedImage   (embedImageToUrl <$> createEmbedImage)
+                              Nothing
+                              Nothing
+                              Nothing
+    embedFooter = EmbedFooter createEmbedFooterText
+                              (embedImageToUrl <$> createEmbedFooterIcon)
+                              Nothing
+
+  in Embed { embedAuthor      = Just embedAuthor
+           , embedTitle       = emptyMaybe createEmbedTitle
+           , embedUrl         = emptyMaybe createEmbedUrl
+           , embedDescription = emptyMaybe createEmbedDescription
+           , embedFields      = createEmbedFields
+           , embedImage       = Just embedImage
+           , embedFooter      = Just embedFooter
+           , embedColor       = Nothing
+           , embedTimestamp   = Nothing
+
+           -- can't set these
+           , embedType        = Nothing
+           , embedVideo       = Nothing
+           , embedProvider    = Nothing
+           }
+
 data CreateEmbed = CreateEmbed
   { createEmbedAuthorName  :: T.Text
   , createEmbedAuthorUrl   :: T.Text
@@ -21,19 +59,13 @@ data CreateEmbed = CreateEmbed
   , createEmbedImage       :: Maybe CreateEmbedImage
   , createEmbedFooterText  :: T.Text
   , createEmbedFooterIcon  :: Maybe CreateEmbedImage
-  , createEmbedColor       :: Maybe T.Text
-  , createEmbedTimestamp   :: Maybe T.Text
+--, createEmbedColor       :: Maybe T.Text
+--, createEmbedTimestamp   :: Maybe UTCTime
   } deriving (Show, Eq, Ord)
 
 data CreateEmbedImage = CreateEmbedImageUrl T.Text
-                      | CreateEmbedImageUpload B.ByteString
+                   {-    | CreateEmbedImageUpload B.ByteString -}
   deriving (Show, Eq, Ord)
-
-instance ToJSON CreateEmbed where
-  toJSON CreateEmbed{..} = object
-    [ "title" .= createEmbedTitle
-    , "description" .= createEmbedDescription
-    ]
 
 instance Default CreateEmbed where
  def = CreateEmbed "" "" Nothing "" "" "" [] Nothing "" Nothing Nothing Nothing
@@ -54,6 +86,10 @@ data Embed = Embed
   , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
   , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
   } deriving (Show, Eq, Ord)
+
+-- TODO
+instance ToJSON Embed where
+  toJSON Embed{..} = object []
 
 instance FromJSON Embed where
   parseJSON = withObject "embed" $ \o ->

@@ -49,7 +49,7 @@ data ChannelRequest a where
   -- | Sends a message to a channel.
   CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
   -- | Sends a message with an Embed to a channel.
-  CreateMessageEmbed      :: ChannelId -> T.Text -> Embed -> ChannelRequest Message
+  CreateMessageEmbed      :: ChannelId -> T.Text -> CreateEmbed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
@@ -65,7 +65,7 @@ data ChannelRequest a where
   -- | Delete all reactions on a message
   DeleteAllReactions      :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
-  EditMessage             :: (ChannelId, MessageId) -> T.Text -> Maybe Embed
+  EditMessage             :: (ChannelId, MessageId) -> T.Text -> Maybe CreateEmbed
                                                     -> ChannelRequest Message
   -- | Deletes a message.
   DeleteMessage           :: (ChannelId, MessageId) -> ChannelRequest ()
@@ -216,8 +216,8 @@ cleanupEmoji emoji =
     (_, Just a) -> "custom:" <> a
     (_, Nothing) -> noAngles
 
-maybeEmbed :: Maybe Embed -> [(T.Text, Value)]
-maybeEmbed = maybe [] $ \embed -> ["embed" .= embed]
+maybeEmbed :: Maybe CreateEmbed -> [(T.Text, Value)]
+maybeEmbed = maybe [] $ \embed -> ["embed" .= createEmbed embed]
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
