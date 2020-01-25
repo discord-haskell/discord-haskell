@@ -8,8 +8,9 @@ import Data.Time.Clock
 import Data.Aeson
 import qualified Data.Text as T
 
-import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Prelude
+import Discord.Internal.Types.Channel (Channel)
+import Discord.Internal.Types.User (User)
 
 -- | Representation of a guild member.
 data GuildMember = GuildMember

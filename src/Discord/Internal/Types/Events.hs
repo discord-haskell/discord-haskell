@@ -16,6 +16,7 @@ import qualified Data.Text as T
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild
+import Discord.Internal.Types.User (User)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
