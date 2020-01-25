@@ -8,6 +8,8 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 `GetReactions` actually returns the User objects request
 
+Rename `Ban` to `GuildBan`
+
 ## 1.2.0
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
