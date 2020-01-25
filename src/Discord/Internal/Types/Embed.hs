@@ -8,7 +8,7 @@ import Data.Aeson
 import Data.Time.Clock
 import Data.Default (Default, def)
 import qualified Data.Text as T
-import qualified Data.ByteString as B
+-- import qualified Data.ByteString as B
 
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
@@ -68,7 +68,7 @@ data CreateEmbedImage = CreateEmbedImageUrl T.Text
   deriving (Show, Eq, Ord)
 
 instance Default CreateEmbed where
- def = CreateEmbed "" "" Nothing "" "" "" [] Nothing "" Nothing Nothing Nothing
+ def = CreateEmbed "" "" Nothing "" "" "" [] Nothing "" Nothing -- Nothing Nothing
 
 -- | An embed attached to a message.
 data Embed = Embed
@@ -89,22 +89,35 @@ data Embed = Embed
 
 -- TODO
 instance ToJSON Embed where
-  toJSON Embed{..} = object []
+  toJSON Embed{..} = object
+   [ "author"      .= embedAuthor
+   , "title"       .= embedTitle
+   , "url"         .= embedUrl
+   , "description" .= embedDescription
+   , "fields"      .= embedFields
+   , "image"       .= embedImage
+   , "footer"      .= embedFooter
+   , "color"       .= embedColor
+   , "timestamp"   .= embedTimestamp
+   , "type"        .= embedType
+   , "video"       .= embedVideo
+   , "provider"    .= embedProvider
+    ]
 
 instance FromJSON Embed where
   parseJSON = withObject "embed" $ \o ->
     Embed <$> o .:? "author"
-                 <*> o .:? "title"
-                 <*> o .:? "url"
-                 <*> o .:? "description"
-                 <*> o .:? "fields" .!= []
-                 <*> o .:? "image"
-                 <*> o .:? "footer"
-                 <*> o .:? "color"
-                 <*> o .:? "timestamp"
-                 <*> o .:? "type"
-                 <*> o .:? "video"
-                 <*> o .:? "provider"
+          <*> o .:? "title"
+          <*> o .:? "url"
+          <*> o .:? "description"
+          <*> o .:? "fields" .!= []
+          <*> o .:? "image"
+          <*> o .:? "footer"
+          <*> o .:? "color"
+          <*> o .:? "timestamp"
+          <*> o .:? "type"
+          <*> o .:? "video"
+          <*> o .:? "provider"
 
 
 data EmbedThumbnail = EmbedThumbnail
@@ -113,6 +126,14 @@ data EmbedThumbnail = EmbedThumbnail
   , embedThumbnailHeight :: Maybe Integer
   , embedThumbnailWidth :: Maybe Integer
   } deriving (Show, Eq, Ord)
+
+instance ToJSON EmbedThumbnail where
+  toJSON (EmbedThumbnail a b c d) = object
+    [ "url" .= a
+    , "proxy_url" .= b
+    , "height" .= c
+    , "width" .= d
+    ]
 
 instance FromJSON EmbedThumbnail where
   parseJSON = withObject "thumbnail" $ \o ->
@@ -127,6 +148,13 @@ data EmbedVideo = EmbedVideo
   , embedVideoWidth :: Maybe Integer
   } deriving (Show, Eq, Ord)
 
+instance ToJSON EmbedVideo where
+  toJSON (EmbedVideo a b c) = object
+    [ "url" .= a
+    , "height" .= b
+    , "width" .= c
+    ]
+
 instance FromJSON EmbedVideo where
   parseJSON = withObject "video" $ \o ->
     EmbedVideo <$> o .:? "url"
@@ -140,6 +168,14 @@ data EmbedImage = EmbedImage
   , embedImageWidth :: Maybe Integer
   } deriving (Show, Eq, Ord)
 
+instance ToJSON EmbedImage where
+  toJSON (EmbedImage a b c d) = object
+    [ "url" .= a
+    , "proxy_url" .= b
+    , "height" .= c
+    , "width" .= d
+    ]
+
 instance FromJSON EmbedImage where
   parseJSON = withObject "image" $ \o ->
     EmbedImage <$> o .:? "url"
@@ -152,6 +188,12 @@ data EmbedProvider = EmbedProvider
   , embedProviderUrl :: Maybe T.Text
   } deriving (Show, Eq, Ord)
 
+instance ToJSON EmbedProvider where
+  toJSON (EmbedProvider a b) = object
+    [ "name" .= a
+    , "url" .= b
+    ]
+
 instance FromJSON EmbedProvider where
   parseJSON = withObject "provider" $ \o ->
     EmbedProvider <$> o .:? "name"
@@ -163,6 +205,14 @@ data EmbedAuthor = EmbedAuthor
   , embedAuthorIconUrl :: Maybe T.Text
   , embedAuthorProxyIconUrl :: Maybe T.Text
   } deriving (Show, Eq, Ord)
+
+instance ToJSON EmbedAuthor where
+  toJSON (EmbedAuthor a b c d) = object
+    [ "name" .= a
+    , "url" .= b
+    , "icon_url" .= c
+    , "proxy_icon_url" .= d
+    ]
 
 instance FromJSON EmbedAuthor where
   parseJSON = withObject "author" $ \o ->
@@ -177,6 +227,13 @@ data EmbedFooter = EmbedFooter
   , embedFooterProxyIconUrl :: Maybe T.Text
   } deriving (Show, Eq, Ord)
 
+instance ToJSON EmbedFooter where
+  toJSON (EmbedFooter a b c) = object
+    [ "text" .= a
+    , "icon_url" .= b
+    , "proxy_icon_url" .= c
+    ]
+
 instance FromJSON EmbedFooter where
   parseJSON = withObject "footer" $ \o ->
     EmbedFooter <$> o .:  "text"
@@ -188,6 +245,13 @@ data EmbedField = EmbedField
   , embedFieldValue :: T.Text
   , embedFieldInline :: Maybe Bool
   } deriving (Show, Eq, Ord)
+
+instance ToJSON EmbedField where
+  toJSON (EmbedField a b c) = object
+    [ "name" .= a
+    , "value" .= b
+    , "inline" .= c
+    ]
 
 instance FromJSON EmbedField where
   parseJSON = withObject "field" $ \o ->
