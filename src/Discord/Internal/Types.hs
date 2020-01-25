@@ -7,6 +7,7 @@ module Discord.Internal.Types
   , module Discord.Internal.Types.Gateway
   , module Discord.Internal.Types.Guild
   , module Discord.Internal.Types.User
+  , module Discord.Internal.Types.Embed
   , module Data.Aeson
   , module Data.Time.Clock
   ) where
@@ -16,6 +17,7 @@ import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User
+import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Prelude
 
 import Data.Aeson (Object)
