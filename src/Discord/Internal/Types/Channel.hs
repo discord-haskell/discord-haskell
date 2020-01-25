@@ -308,7 +308,7 @@ data Embed = Embed
   , embedTitle       :: Maybe T.Text     -- ^ Title of the embed
   , embedUrl         :: Maybe T.Text     -- ^ URL of embed
   , embedDescription :: Maybe T.Text     -- ^ Description of embed
-  , embedFields      :: [EmbedPart]      -- ^ Fields of the embed
+  , embedFields      :: [EmbedField]     -- ^ Fields of the embed
   , embedImage       :: Maybe EmbedImage
   , embedFooter      :: Maybe EmbedFooter
 
