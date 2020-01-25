@@ -15,6 +15,8 @@ Rename `Ban` to `GuildBan`
 
 Re-export UTCTime from `time` package
 
+Rename `SubEmbed` to `EmbedPart`
+
 ## 1.2.0
 
 [MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
