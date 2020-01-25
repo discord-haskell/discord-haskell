@@ -11,8 +11,6 @@ import Data.Default (Default, def)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Time.Clock
-import qualified Data.HashMap.Strict as HM
-import qualified Data.Vector as V
 import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
@@ -251,7 +249,7 @@ data Message = Message
   , messageMentionRoles :: [RoleId]        -- ^ 'Role's specifically mentioned in
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
-  , messageEmbeds       :: [OldEmbed]      -- ^ Any embedded content
+  , messageEmbeds       :: [EmbedReceive]      -- ^ Any embedded content
   , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
@@ -302,181 +300,51 @@ instance FromJSON Attachment where
                <*> o .:? "width"
 
 
--- | An embed attached to a message.
-data Embed = Embed
-  { embedAuthor      :: Maybe EmbedAuthor
-  , embedTitle       :: Maybe T.Text     -- ^ Title of the embed
-  , embedUrl         :: Maybe T.Text     -- ^ URL of embed
-  , embedDescription :: Maybe T.Text     -- ^ Description of embed
-  , embedFields      :: [EmbedField]     -- ^ Fields of the embed
-  , embedImage       :: Maybe EmbedImage
-  , embedFooter      :: Maybe EmbedFooter
-
-  , embedColor       :: Maybe Integer    -- ^ The embed color
-  , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
-  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
-  , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
-  , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
+data EmbedSend = EmbedSend
+  { embedSendTitle       :: Maybe Text
+  , embedSendDescription :: Maybe Text
   } deriving (Show, Eq, Ord)
 
-instance FromJSON Embed where
+instance ToJSON EmbedSend where
+  toJSON EmbedSend{..} = object
+    [ "title" .= embedSendTitle
+    , "description" .= embedSendDescription
+    ]
+
+instance Default EmbedSend where
+  def = EmbedSend Nothing Nothing
+
+-- | An embed attached to a message.
+data EmbedReceive = EmbedReceive
+  { embedReceiveAuthor      :: Maybe EmbedAuthor
+  , embedReceiveTitle       :: Maybe T.Text     -- ^ Title of the embed
+  , embedReceiveUrl         :: Maybe T.Text     -- ^ URL of embed
+  , embedReceiveDescription :: Maybe T.Text     -- ^ Description of embed
+  , embedReceiveFields      :: [EmbedField]     -- ^ Fields of the embed
+  , embedReceiveImage       :: Maybe EmbedImage
+  , embedReceiveFooter      :: Maybe EmbedFooter
+
+  , embedReceiveColor       :: Maybe Integer    -- ^ The embed color
+  , embedReceiveTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
+  , embedReceiveType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
+  , embedReceiveVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
+  , embedReceiveProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON EmbedReceive where
   parseJSON = withObject "embed" $ \o ->
-    Embed <$> o .:? "author"
-          <*> o .:? "title"
-          <*> o .:? "url"
-          <*> o .:? "description"
-          <*> o .:  "fields"
-          <*> o .:? "image"
-          <*> o .:? "footer"
-          <*> o .:? "color"
-          <*> o .:? "timestamp"
-          <*> o .:? "type"
-          <*> o .:? "video"
-          <*> o .:? "provider"
-
-
--- | An embed attached to a message.
-data OldEmbed = OldEmbed
-  { oldembedTitle       :: Maybe T.Text     -- ^ Title of the embed
-  , oldembedDescription :: Maybe T.Text     -- ^ Description of embed
-  , oldembedUrl         :: Maybe T.Text     -- ^ URL of embed
-  , oldembedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
-  , oldembedColor       :: Maybe Integer    -- ^ The embed color
-  , oldembedFields      :: [EmbedPart]      -- ^ Fields of the embed
-  , oldembedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
-  } deriving (Show, Eq, Ord)
-
-instance FromJSON OldEmbed where
-  parseJSON = withObject "Embed" $ \o ->
-    OldEmbed <$> o .:? "title"
-          <*> o .:? "description"
-          <*> o .:? "url"
-          <*> o .:? "timestamp"
-          <*> o .:? "color"
-          <*> sequence (HM.foldrWithKey to_embed [] o)
-          <*> o .:? "type"
-    where
-      to_embed k (Object v) a = case k of
-        "footer" -> (Footer <$> v .: "text"
-                            <*> v .:? "icon_url" .!= ""
-                            <*> v .:? "proxy_icon_url" .!= "") : a
-        "image" -> (Image <$> v .: "url"
-                          <*> v .: "proxy_url"
-                          <*> v .: "height"
-                          <*> v .: "width") : a
-        "thumbnail" -> (Thumbnail <$> v .: "url"
-                                  <*> v .: "proxy_url"
-                                  <*> v .: "height"
-                                  <*> v .: "width") : a
-        "video" -> (Video <$> v .: "url"
-                          <*> v .: "height"
-                          <*> v .: "width") : a
-        "provider" -> (Provider <$> v .: "name"
-                                <*> v .:? "url" .!= "") : a
-        "author" -> (Author <$> v .:  "name"
-                            <*> v .:?  "url" .!= ""
-                            <*> v .:? "icon_url" .!= ""
-                            <*> v .:? "proxy_icon_url" .!= "") : a
-        _ -> a
-      to_embed k (Array v) a = case k of
-        "fields" -> [Field <$> i .: "name"
-                           <*> i .: "value"
-                           <*> i .: "inline"
-                           | Object i <- V.toList v] ++ a
-        _ -> a
-      to_embed _ _ a = a
-
-instance ToJSON OldEmbed where
-  toJSON (OldEmbed {..}) = object
-    [ "title"       .= oldembedTitle
-    , "type"        .= oldembedType
-    , "description" .= oldembedDescription
-    , "url"         .= oldembedUrl
-    , "timestamp"   .= oldembedTimestamp
-    , "color"       .= oldembedColor
-    ] |> makeSubEmbeds oldembedFields
-    where
-      (|>) :: Value -> HM.HashMap Text Value -> Value
-      (|>) (Object o) hm = Object $ HM.union o hm
-      (|>) _          _  = error "Type mismatch"
-
-      makeSubEmbeds :: [EmbedPart] -> HM.HashMap Text Value
-      makeSubEmbeds = foldr embed HM.empty
-
-      embed :: EmbedPart -> HM.HashMap Text Value -> HM.HashMap Text Value
-      embed (Thumbnail url _ height width) =
-        HM.alter (\_ -> Just $ object
-          [ "url"    .= url
-          , "height" .= height
-          , "width"  .= width
-          ]) "thumbnail"
-      embed (Image url _ height width) =
-        HM.alter (\_ -> Just $ object
-          [ "url"    .= url
-          , "height" .= height
-          , "width"  .= width
-          ]) "image"
-      embed (Author name url icon _) =
-        HM.alter (\_ -> Just $ object
-          [ "name"     .= name
-          , "url"      .= url
-          , "icon_url" .= icon
-          ]) "author"
-      embed (Footer text icon _) =
-        HM.alter (\_ -> Just $ object
-          [ "text"     .= text
-          , "icon_url" .= icon
-          ]) "footer"
-      embed (Field name value inline) =
-        HM.alter (\val -> case val of
-          Just (Array a) -> Just . Array $ V.cons (object
-            [ "name"   .= name
-            , "value"  .= value
-            , "inline" .= inline
-            ]) a
-          _ -> Just $ toJSON [
-            object
-              [ "name"   .= name
-              , "value"  .= value
-              , "inline" .= inline
-              ]
-            ]
-        ) "fields"
-      embed _ = id
-
--- | Represents a part of an embed.
-data EmbedPart
-  = Thumbnail
-      T.Text
-      T.Text
-      Integer
-      Integer
-  | Video
-      T.Text
-      Integer
-      Integer
-  | Image
-      T.Text
-      T.Text
-      Integer
-      Integer
-  | Provider
-      T.Text
-      T.Text
-  | Author
-      T.Text
-      T.Text
-      T.Text
-      T.Text
-  | Footer
-      T.Text
-      T.Text
-      T.Text
-  | Field
-      T.Text
-      T.Text
-      Bool
-  deriving (Show, Eq, Ord)
+    EmbedReceive <$> o .:? "author"
+                 <*> o .:? "title"
+                 <*> o .:? "url"
+                 <*> o .:? "description"
+                 <*> o .:  "fields"
+                 <*> o .:? "image"
+                 <*> o .:? "footer"
+                 <*> o .:? "color"
+                 <*> o .:? "timestamp"
+                 <*> o .:? "type"
+                 <*> o .:? "video"
+                 <*> o .:? "provider"
 
 
 data EmbedThumbnail = EmbedThumbnail
