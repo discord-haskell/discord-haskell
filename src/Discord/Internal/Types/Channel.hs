@@ -337,7 +337,7 @@ instance FromJSON EmbedReceive where
                  <*> o .:? "title"
                  <*> o .:? "url"
                  <*> o .:? "description"
-                 <*> o .:  "fields"
+                 <*> o .:? "fields" .!= []
                  <*> o .:? "image"
                  <*> o .:? "footer"
                  <*> o .:? "color"
