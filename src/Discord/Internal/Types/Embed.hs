@@ -6,45 +6,55 @@ module Discord.Internal.Types.Embed where
 
 import Data.Aeson
 import Data.Time.Clock
-import Data.Default (Default, def)
+--import Data.Default (Default, def)
 import Data.Text (Text)
 import qualified Data.Text as T
 
+-- data EmbedSend = EmbedSend
+--   { embedSendAuthor      :: Maybe EmbedSendAuthor
+--   , embedSendTitle       :: Maybe Text
+--   , embedSendUrl         :: Maybe Text
+--   , embedSendDescription :: Maybe Text
+--   , embedSendFields      :: [EmbedField]
+--   , embedSendImage       :: Maybe EmbedSendImage
+--   , embedSendFooter      :: Maybe Text
+--   , embedSendColor       :: Maybe Text
+--   , embedSendTimestamp   :: Maybe Text
+--   } deriving (Show, Eq, Ord)
+--
+-- data CreateEmbedImage = CreateEmbedImageUrl T.Text
+--                  {-   | CreateEmbedImageUpload B.Bytestring   -}
+--   deriving (Show, Eq, Ord)
+--
+-- instance ToJSON EmbedSend where
+--   toJSON EmbedSend{..} = object
+--     [ "title" .= embedSendTitle
+--     , "description" .= embedSendDescription
+--     ]
 
-data EmbedSend = EmbedSend
-  { embedSendTitle       :: Maybe Text
-  , embedSendDescription :: Maybe Text
-  } deriving (Show, Eq, Ord)
-
-instance ToJSON EmbedSend where
-  toJSON EmbedSend{..} = object
-    [ "title" .= embedSendTitle
-    , "description" .= embedSendDescription
-    ]
-
-instance Default EmbedSend where
-  def = EmbedSend Nothing Nothing
+--instance Default EmbedSend where
+--  def = EmbedSend Nothing Nothing
 
 -- | An embed attached to a message.
-data EmbedReceive = EmbedReceive
-  { embedReceiveAuthor      :: Maybe EmbedAuthor
-  , embedReceiveTitle       :: Maybe T.Text     -- ^ Title of the embed
-  , embedReceiveUrl         :: Maybe T.Text     -- ^ URL of embed
-  , embedReceiveDescription :: Maybe T.Text     -- ^ Description of embed
-  , embedReceiveFields      :: [EmbedField]     -- ^ Fields of the embed
-  , embedReceiveImage       :: Maybe EmbedImage
-  , embedReceiveFooter      :: Maybe EmbedFooter
+data Embed = Embed
+  { embedAuthor      :: Maybe EmbedAuthor
+  , embedTitle       :: Maybe T.Text     -- ^ Title of the embed
+  , embedUrl         :: Maybe T.Text     -- ^ URL of embed
+  , embedDescription :: Maybe T.Text     -- ^ Description of embed
+  , embedFields      :: [EmbedField]     -- ^ Fields of the embed
+  , embedImage       :: Maybe EmbedImage
+  , embedFooter      :: Maybe EmbedFooter
 
-  , embedReceiveColor       :: Maybe Integer    -- ^ The embed color
-  , embedReceiveTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
-  , embedReceiveType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
-  , embedReceiveVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
-  , embedReceiveProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
+  , embedColor       :: Maybe Integer    -- ^ The embed color
+  , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
+  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
+  , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
+  , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
   } deriving (Show, Eq, Ord)
 
-instance FromJSON EmbedReceive where
+instance FromJSON Embed where
   parseJSON = withObject "embed" $ \o ->
-    EmbedReceive <$> o .:? "author"
+    Embed <$> o .:? "author"
                  <*> o .:? "title"
                  <*> o .:? "url"
                  <*> o .:? "description"

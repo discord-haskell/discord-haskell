@@ -174,7 +174,7 @@ data Message = Message
   , messageMentionRoles :: [RoleId]        -- ^ 'Role's specifically mentioned in
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
-  , messageEmbeds       :: [EmbedReceive]      -- ^ Any embedded content
+  , messageEmbeds       :: [Embed]         -- ^ Any embedded content
   , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned

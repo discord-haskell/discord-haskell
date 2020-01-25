@@ -75,7 +75,7 @@ data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
 
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text BL.ByteString
-                    | WebhookContentEmbeds [EmbedSend]
+                    | WebhookContentEmbeds [Embed]
   deriving (Show, Eq, Ord)
 
 webhookContentJson :: WebhookContent -> [(T.Text, Value)]
