@@ -251,7 +251,7 @@ data Message = Message
   , messageMentionRoles :: [RoleId]        -- ^ 'Role's specifically mentioned in
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
-  , messageEmbeds       :: [Embed]         -- ^ Any embedded content
+  , messageEmbeds       :: [OldEmbed]      -- ^ Any embedded content
   , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
@@ -301,31 +301,21 @@ instance FromJSON Attachment where
                <*> o .:? "height"
                <*> o .:? "width"
 
+
 -- | An embed attached to a message.
-data Embed = Embed
-  { embedTitle       :: Maybe T.Text     -- ^ Title of the embed
-  , embedDescription :: Maybe T.Text     -- ^ Description of embed
-  , embedUrl         :: Maybe T.Text     -- ^ URL of embed
-  , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
-  , embedColor       :: Maybe Integer    -- ^ The embed color
-  , embedFields      :: [EmbedPart]       -- ^ Fields of the embed
-  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
+data OldEmbed = OldEmbed
+  { oldembedTitle       :: Maybe T.Text     -- ^ Title of the embed
+  , oldembedDescription :: Maybe T.Text     -- ^ Description of embed
+  , oldembedUrl         :: Maybe T.Text     -- ^ URL of embed
+  , oldembedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
+  , oldembedColor       :: Maybe Integer    -- ^ The embed color
+  , oldembedFields      :: [EmbedPart]      -- ^ Fields of the embed
+  , oldembedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for webhooks)
   } deriving (Show, Eq, Ord)
 
-instance Default Embed where
-  def = Embed
-    { embedTitle       = Nothing
-    , embedDescription = Nothing
-    , embedUrl         = Nothing
-    , embedTimestamp   = Nothing
-    , embedColor       = Nothing
-    , embedFields      = []
-    , embedType        = Nothing
-    }
-
-instance FromJSON Embed where
+instance FromJSON OldEmbed where
   parseJSON = withObject "Embed" $ \o ->
-    Embed <$> o .:? "title"
+    OldEmbed <$> o .:? "title"
           <*> o .:? "description"
           <*> o .:? "url"
           <*> o .:? "timestamp"
@@ -363,15 +353,15 @@ instance FromJSON Embed where
         _ -> a
       to_embed _ _ a = a
 
-instance ToJSON Embed where
-  toJSON (Embed {..}) = object
-    [ "title"       .= embedTitle
-    , "type"        .= embedType
-    , "description" .= embedDescription
-    , "url"         .= embedUrl
-    , "timestamp"   .= embedTimestamp
-    , "color"       .= embedColor
-    ] |> makeSubEmbeds embedFields
+instance ToJSON OldEmbed where
+  toJSON (OldEmbed {..}) = object
+    [ "title"       .= oldembedTitle
+    , "type"        .= oldembedType
+    , "description" .= oldembedDescription
+    , "url"         .= oldembedUrl
+    , "timestamp"   .= oldembedTimestamp
+    , "color"       .= oldembedColor
+    ] |> makeSubEmbeds oldembedFields
     where
       (|>) :: Value -> HM.HashMap Text Value -> Value
       (|>) (Object o) hm = Object $ HM.union o hm
