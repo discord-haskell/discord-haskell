@@ -319,6 +319,22 @@ data Embed = Embed
   , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
   } deriving (Show, Eq, Ord)
 
+instance FromJSON Embed where
+  parseJSON = withObject "embed" $ \o ->
+    Embed <$> o .:? "author"
+          <*> o .:? "title"
+          <*> o .:? "url"
+          <*> o .:? "description"
+          <*> o .:  "fields"
+          <*> o .:? "image"
+          <*> o .:? "footer"
+          <*> o .:? "color"
+          <*> o .:? "timestamp"
+          <*> o .:? "type"
+          <*> o .:? "video"
+          <*> o .:? "provider"
+
+
 -- | An embed attached to a message.
 data OldEmbed = OldEmbed
   { oldembedTitle       :: Maybe T.Text     -- ^ Title of the embed
