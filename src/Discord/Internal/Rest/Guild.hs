@@ -76,10 +76,10 @@ data GuildRequest a where
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
   -- | Returns a list of 'Ban' objects for users that are banned from this guild. Requires the
   --   'BAN_MEMBERS' permission
-  GetGuildBans             :: GuildId -> GuildRequest [Ban]
+  GetGuildBans             :: GuildId -> GuildRequest [GuildBan]
   -- | Returns a 'Ban' object for the user banned from this guild. Requires the
   --   'BAN_MEMBERS' permission
-  GetGuildBan              :: GuildId -> UserId -> GuildRequest Ban
+  GetGuildBan              :: GuildId -> UserId -> GuildRequest GuildBan
   -- | Create a guild ban, and optionally Delete previous messages sent by the banned
   --   user. Requires the 'BAN_MEMBERS' permission. Fires a Guild Ban Add 'Event'.
   CreateGuildBan           :: GuildId -> UserId -> CreateGuildBanOpts -> GuildRequest ()
