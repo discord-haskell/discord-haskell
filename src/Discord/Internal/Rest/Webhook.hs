@@ -16,11 +16,11 @@ module Discord.Internal.Rest.Webhook
 import Data.Aeson
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
-import Network.HTTP.Req ((/:))
+import qualified Data.ByteString as B
+import           Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
-import qualified Data.ByteString.Lazy as BL
-import Network.HTTP.Client (RequestBody (RequestBodyLBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partLBS)
+import Network.HTTP.Client (RequestBody (RequestBodyBS))
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
@@ -74,7 +74,7 @@ data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
   deriving (Show, Eq, Ord)
 
 data WebhookContent = WebhookContentText T.Text
-                    | WebhookContentFile T.Text BL.ByteString
+                    | WebhookContentFile T.Text B.ByteString
                     | WebhookContentEmbeds [CreateEmbed]
   deriving (Show, Eq, Ord)
 
@@ -140,14 +140,14 @@ webhookJsonRequest ch = case ch of
   (ExecuteWebhookWithToken w tok o) ->
     case executeWebhookWithTokenOptsContent o of
       WebhookContentFile name text  ->
-        let part = partFileRequestBody "file" (T.unpack name) (RequestBodyLBS text)
+        let part = partFileRequestBody "file" (T.unpack name) (RequestBodyBS text)
             body = R.reqBodyMultipart [part]
         in Post (baseUrl /: "webhooks" // w /: tok) body mempty
       WebhookContentText _ ->
         let body = pure (R.ReqBodyJson o)
         in Post (baseUrl /: "webhooks" // w /: tok) body mempty
       WebhookContentEmbeds embeds ->
-        let mkPart (name,content) = partFileRequestBody "file" (T.unpack name) (RequestBodyLBS (BL.fromStrict content))
+        let mkPart (name,content) = partFileRequestBody "file" (T.unpack name) (RequestBodyBS content)
             uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
                                           [ createEmbedAuthorIcon
                                           , createEmbedThumbnail
