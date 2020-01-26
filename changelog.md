@@ -4,6 +4,9 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+Rename `SubEmbed` to `EmbedPart`
+
+Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
 
 ## 1.3.0
 
@@ -14,8 +17,6 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 Rename `Ban` to `GuildBan`
 
 Re-export UTCTime from `time` package
-
-Rename `SubEmbed` to `EmbedPart`
 
 ## 1.2.0
 
