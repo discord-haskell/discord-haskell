@@ -25,9 +25,9 @@ createEmbed CreateEmbed{..} =
                               (embedImageToUrl <$> createEmbedAuthorIcon)
                               Nothing
     embedImage = EmbedImage   (embedImageToUrl <$> createEmbedImage)
-                              Nothing
-                              Nothing
-                              Nothing
+                              Nothing Nothing Nothing
+    embedThumbnail = EmbedThumbnail (embedImageToUrl <$> createEmbedThumbnail)
+                              Nothing Nothing Nothing
     embedFooter = EmbedFooter createEmbedFooterText
                               (embedImageToUrl <$> createEmbedFooterIcon)
                               Nothing
@@ -35,6 +35,7 @@ createEmbed CreateEmbed{..} =
   in Embed { embedAuthor      = Just embedAuthor
            , embedTitle       = emptyMaybe createEmbedTitle
            , embedUrl         = emptyMaybe createEmbedUrl
+           , embedThumbnail   = Just embedThumbnail
            , embedDescription = emptyMaybe createEmbedDescription
            , embedFields      = createEmbedFields
            , embedImage       = Just embedImage
@@ -54,6 +55,7 @@ data CreateEmbed = CreateEmbed
   , createEmbedAuthorIcon  :: Maybe CreateEmbedImage
   , createEmbedTitle       :: T.Text
   , createEmbedUrl         :: T.Text
+  , createEmbedThumbnail   :: Maybe CreateEmbedImage
   , createEmbedDescription :: T.Text
   , createEmbedFields      :: [EmbedField]
   , createEmbedImage       :: Maybe CreateEmbedImage
@@ -68,13 +70,14 @@ data CreateEmbedImage = CreateEmbedImageUrl T.Text
   deriving (Show, Eq, Ord)
 
 instance Default CreateEmbed where
- def = CreateEmbed "" "" Nothing "" "" "" [] Nothing "" Nothing -- Nothing Nothing
+ def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing -- Nothing Nothing
 
 -- | An embed attached to a message.
 data Embed = Embed
   { embedAuthor      :: Maybe EmbedAuthor
   , embedTitle       :: Maybe T.Text     -- ^ Title of the embed
   , embedUrl         :: Maybe T.Text     -- ^ URL of embed
+  , embedThumbnail   :: Maybe EmbedThumbnail -- ^ Thumbnail in top-right
   , embedDescription :: Maybe T.Text     -- ^ Description of embed
   , embedFields      :: [EmbedField]     -- ^ Fields of the embed
   , embedImage       :: Maybe EmbedImage
@@ -94,6 +97,7 @@ instance ToJSON Embed where
    , "title"       .= embedTitle
    , "url"         .= embedUrl
    , "description" .= embedDescription
+   , "thumbnail"   .= embedThumbnail
    , "fields"      .= embedFields
    , "image"       .= embedImage
    , "footer"      .= embedFooter
@@ -109,6 +113,7 @@ instance FromJSON Embed where
     Embed <$> o .:? "author"
           <*> o .:? "title"
           <*> o .:? "url"
+          <*> o .:? "thumbnail"
           <*> o .:? "description"
           <*> o .:? "fields" .!= []
           <*> o .:? "image"
