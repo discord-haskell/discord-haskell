@@ -37,8 +37,8 @@ infixl 5 //
 data JsonRequest where
   Delete ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
   Get    ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
-  Patch  :: R.HttpBody a => R.Url 'R.Https -> a -> R.Option 'R.Https -> JsonRequest
   Put    :: R.HttpBody a => R.Url 'R.Https -> a -> R.Option 'R.Https -> JsonRequest
+  Patch  :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
 
 class Request a where
