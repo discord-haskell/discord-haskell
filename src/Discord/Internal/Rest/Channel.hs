@@ -22,8 +22,9 @@ import Data.Emoji (unicodeByName)
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partBS, PartM)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
@@ -216,8 +217,15 @@ cleanupEmoji emoji =
     (_, Just a) -> "custom:" <> a
     (_, Nothing) -> noAngles
 
-maybeEmbed :: Maybe CreateEmbed -> [(T.Text, Value)]
-maybeEmbed = maybe [] $ \embed -> ["embed" .= createEmbed embed]
+maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
+maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
+      let mkPart (name,content) = partFileRequestBody "file" (T.unpack name) (RequestBodyBS content)
+          uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
+                                        [ createEmbedAuthorIcon
+                                        , createEmbedThumbnail
+                                        , createEmbedImage
+                                        , createEmbedFooterIcon]]
+      in maybe [] (map mkPart . uploads)
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
@@ -252,8 +260,8 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageEmbed chan msg embed) ->
-      let content = ["content" .= msg] <> maybeEmbed (Just embed)
-          body = pure $ R.ReqBodyJson $ object content
+      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= msg]
+          body = R.reqBodyMultipart (partJson : maybeEmbed (Just embed))
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageUploadFile chan fileName file) ->
@@ -288,8 +296,8 @@ channelJsonRequest c = case c of
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
 
   (EditMessage (chan, msg) new embed) ->
-      let content = ["content" .= new] <> maybeEmbed embed
-          body = R.ReqBodyJson $ object content
+      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= new]
+          body = R.reqBodyMultipart (partJson : maybeEmbed embed)
       in Patch (channels // chan /: "messages" // msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
