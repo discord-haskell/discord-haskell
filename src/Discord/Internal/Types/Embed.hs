@@ -19,7 +19,7 @@ createEmbed CreateEmbed{..} =
     embedImageToUrl :: CreateEmbedImage -> T.Text
     embedImageToUrl cei = case cei of
                             CreateEmbedImageUrl t -> t
-                            CreateEmbedImageUpload t _ -> t
+                            CreateEmbedImageUpload t _ -> "attachment://" <> t
 
     embedAuthor = EmbedAuthor (emptyMaybe createEmbedAuthorName)
                               (emptyMaybe createEmbedAuthorUrl)
