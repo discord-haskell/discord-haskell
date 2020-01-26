@@ -8,7 +8,7 @@ import Data.Aeson
 import Data.Time.Clock
 import Data.Default (Default, def)
 import qualified Data.Text as T
--- import qualified Data.ByteString as B
+import qualified Data.ByteString as B
 
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
@@ -19,6 +19,7 @@ createEmbed CreateEmbed{..} =
     embedImageToUrl :: CreateEmbedImage -> T.Text
     embedImageToUrl cei = case cei of
                             CreateEmbedImageUrl t -> t
+                            CreateEmbedImageUpload t _ -> t
 
     embedAuthor = EmbedAuthor (emptyMaybe createEmbedAuthorName)
                               (emptyMaybe createEmbedAuthorUrl)
@@ -66,7 +67,7 @@ data CreateEmbed = CreateEmbed
   } deriving (Show, Eq, Ord)
 
 data CreateEmbedImage = CreateEmbedImageUrl T.Text
-                   {-    | CreateEmbedImageUpload B.ByteString -}
+                      | CreateEmbedImageUpload T.Text B.ByteString
   deriving (Show, Eq, Ord)
 
 instance Default CreateEmbed where
