@@ -82,6 +82,26 @@ A custom emoji will look like `<name:id_number>` or `name:id_number`.
 See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/master/examples/ping-pong.hs)
  for a `CreateReaction` request in use.
  
+## Embeds
+
+![picture of embed](./examples/embed-photo.jpg]
+
+The `Embed` record (and sub-records) store embed data received from Discord.
+
+The `CreateEmbed` record stores data when we want to create an embed.
+
+`CreateEmbed` has a `Default` instance, so you only need to specify the fields you use:
+
+```haskell
+_ <- restCall dis (R.CreateMessageEmbed <channel_id> "Pong!" $
+        def { createEmbedTitle = "Pong Embed"
+            , createEmbedImage = Just $ CreateEmbedImageUpload <bytestring>
+            , createEmbedThumbnail = Just $ CreateEmbedImageUrl "https://avatars2.githubusercontent.com/u/37496339"
+            })
+```
+
+Uploading a file each time is slow, prefer uploading images to a hosting site like imgur.com, and then referencing them.
+ 
 ### Limitations
 
 The following features are not implemented:
