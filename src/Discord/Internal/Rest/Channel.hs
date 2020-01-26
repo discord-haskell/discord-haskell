@@ -220,11 +220,11 @@ cleanupEmoji emoji =
 maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
 maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
       let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
-          uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
-                                        [ createEmbedAuthorIcon
-                                        , createEmbedThumbnail
-                                        , createEmbedImage
-                                        , createEmbedFooterIcon]]
+          uploads CreateEmbed{..} = [(n,c) | (n, Just (CreateEmbedImageUpload c)) <-
+                                          [ ("author.png", createEmbedAuthorIcon)
+                                          , ("thumbnail.png", createEmbedThumbnail)
+                                          , ("image.png", createEmbedImage)
+                                          , ("footer.png", createEmbedFooterIcon) ]]
       in maybe [] (map mkPart . uploads)
 
 -- | The base url (Req) for API requests

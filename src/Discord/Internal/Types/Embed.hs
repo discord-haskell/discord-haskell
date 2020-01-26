@@ -16,21 +16,21 @@ createEmbed CreateEmbed{..} =
     emptyMaybe :: T.Text -> Maybe T.Text
     emptyMaybe t = if T.null t then Nothing else Just t
 
-    embedImageToUrl :: CreateEmbedImage -> T.Text
-    embedImageToUrl cei = case cei of
+    embedImageToUrl :: T.Text -> CreateEmbedImage -> T.Text
+    embedImageToUrl place cei = case cei of
                             CreateEmbedImageUrl t -> t
-                            CreateEmbedImageUpload t _ -> "attachment://" <> t
+                            CreateEmbedImageUpload _ -> "attachment://" <> place <> ".png"
 
     embedAuthor = EmbedAuthor (emptyMaybe createEmbedAuthorName)
                               (emptyMaybe createEmbedAuthorUrl)
-                              (embedImageToUrl <$> createEmbedAuthorIcon)
+                              (embedImageToUrl "author" <$> createEmbedAuthorIcon)
                               Nothing
-    embedImage = EmbedImage   (embedImageToUrl <$> createEmbedImage)
+    embedImage = EmbedImage   (embedImageToUrl "image" <$> createEmbedImage)
                               Nothing Nothing Nothing
-    embedThumbnail = EmbedThumbnail (embedImageToUrl <$> createEmbedThumbnail)
+    embedThumbnail = EmbedThumbnail (embedImageToUrl "thumbnail" <$> createEmbedThumbnail)
                               Nothing Nothing Nothing
     embedFooter = EmbedFooter createEmbedFooterText
-                              (embedImageToUrl <$> createEmbedFooterIcon)
+                              (embedImageToUrl "footer" <$> createEmbedFooterIcon)
                               Nothing
 
   in Embed { embedAuthor      = Just embedAuthor
@@ -67,7 +67,7 @@ data CreateEmbed = CreateEmbed
   } deriving (Show, Eq, Ord)
 
 data CreateEmbedImage = CreateEmbedImageUrl T.Text
-                      | CreateEmbedImageUpload T.Text B.ByteString
+                      | CreateEmbedImageUpload B.ByteString
   deriving (Show, Eq, Ord)
 
 instance Default CreateEmbed where

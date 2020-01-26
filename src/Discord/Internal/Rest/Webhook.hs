@@ -149,11 +149,11 @@ webhookJsonRequest ch = case ch of
         in Post (baseUrl /: "webhooks" // w /: tok) body mempty
       WebhookContentEmbeds embeds ->
         let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
-            uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
-                                          [ createEmbedAuthorIcon
-                                          , createEmbedThumbnail
-                                          , createEmbedImage
-                                          , createEmbedFooterIcon]]
+            uploads CreateEmbed{..} = [(n,c) | (n, Just (CreateEmbedImageUpload c)) <-
+                                          [ ("author.png", createEmbedAuthorIcon)
+                                          , ("thumbnail.png", createEmbedThumbnail)
+                                          , ("image.png", createEmbedImage)
+                                          , ("footer.png", createEmbedFooterIcon) ]]
             parts =  map mkPart (concatMap uploads embeds)
             partsJson = [partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["embed" .= createEmbed e] | e <- embeds]
             body = R.reqBodyMultipart (partsJson ++ parts)
