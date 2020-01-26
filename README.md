@@ -96,7 +96,8 @@ The `CreateEmbed` record stores data when we want to create an embed.
 _ <- restCall dis (R.CreateMessageEmbed <channel_id> "Pong!" $
         def { createEmbedTitle = "Pong Embed"
             , createEmbedImage = Just $ CreateEmbedImageUpload <bytestring>
-            , createEmbedThumbnail = Just $ CreateEmbedImageUrl "https://avatars2.githubusercontent.com/u/37496339"
+            , createEmbedThumbnail = Just $ CreateEmbedImageUrl
+                    "https://avatars2.githubusercontent.com/u/37496339"
             })
 ```
 
