@@ -8,6 +8,8 @@ Rename `SubEmbed` to `EmbedPart`
 
 New and improved Embed API: Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
 
+`CreateEmbedImageUpload` inspired by [Flutterlice](https://github.com/aquarial/discord-haskell/pull/32)
+
 ## 1.3.0
 
 [PixeLinc](https://github.com/aquarial/discord-haskell/pull/33) Add `DeleteSingleReaction` rest-request, Add GuildId to `ReactinInfo`, Add `MESSAGE_REACTION_REMOVE_EMOJI` gateway event
