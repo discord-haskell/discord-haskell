@@ -17,10 +17,11 @@ import Data.Aeson
 import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 import           Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody)
+import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
@@ -147,12 +148,13 @@ webhookJsonRequest ch = case ch of
         let body = pure (R.ReqBodyJson o)
         in Post (baseUrl /: "webhooks" // w /: tok) body mempty
       WebhookContentEmbeds embeds ->
-        let mkPart (name,content) = partFileRequestBody "file" (T.unpack name) (RequestBodyBS content)
+        let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
             uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
                                           [ createEmbedAuthorIcon
                                           , createEmbedThumbnail
                                           , createEmbedImage
                                           , createEmbedFooterIcon]]
             parts =  map mkPart (concatMap uploads embeds)
-            body = R.reqBodyMultipart parts
+            partsJson = [partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["embed" .= createEmbed e] | e <- embeds]
+            body = R.reqBodyMultipart (partsJson ++ parts)
         in Post (baseUrl /: "webhooks" // w /: tok) body mempty
