@@ -84,7 +84,7 @@ See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/mas
  
 ## Embeds
 
-![picture of embed](./examples/embed-photo.jpg)
+Embeds are special messages with boarders and images. [Example embed created by discord-haskell](./examples/embed-photo.jpg)
 
 The `Embed` record (and sub-records) store embed data received from Discord.
 
