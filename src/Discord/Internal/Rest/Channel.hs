@@ -219,7 +219,7 @@ cleanupEmoji emoji =
 
 maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
 maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
-      let mkPart (name,content) = partFileRequestBody "file" (T.unpack name) (RequestBodyBS content)
+      let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
           uploads CreateEmbed{..} = [(n,c) | Just (CreateEmbedImageUpload n c) <-
                                         [ createEmbedAuthorIcon
                                         , createEmbedThumbnail
@@ -260,7 +260,7 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageEmbed chan msg embed) ->
-      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= msg]
+      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= msg, "embed" .= createEmbed embed]
           body = R.reqBodyMultipart (partJson : maybeEmbed (Just embed))
       in Post (channels // chan /: "messages") body mempty
 
