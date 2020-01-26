@@ -242,7 +242,7 @@ instance ToJSON EmbedFooter where
 instance FromJSON EmbedFooter where
   parseJSON = withObject "footer" $ \o ->
     EmbedFooter <$> o .:  "text"
-                <*> o .:  "icon_url"
+                <*> o .:? "icon_url"
                 <*> o .:? "proxy_icon_url"
 
 data EmbedField = EmbedField
