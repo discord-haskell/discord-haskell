@@ -6,7 +6,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 Rename `SubEmbed` to `EmbedPart`
 
-Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
+New and improved Embed API: Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
 
 ## 1.3.0
 
