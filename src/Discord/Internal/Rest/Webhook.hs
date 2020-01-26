@@ -126,10 +126,10 @@ webhookJsonRequest ch = case ch of
     Get (baseUrl /: "webhooks" // w /: t)  mempty
 
   (ModifyWebhook w patch) ->
-    Patch (baseUrl /: "webhooks" // w) (R.ReqBodyJson patch)  mempty
+    Patch (baseUrl /: "webhooks" // w) (pure (R.ReqBodyJson patch))  mempty
 
   (ModifyWebhookWithToken w t p) ->
-    Patch (baseUrl /: "webhooks" // w /: t) (R.ReqBodyJson p)  mempty
+    Patch (baseUrl /: "webhooks" // w /: t) (pure (R.ReqBodyJson p))  mempty
 
   (DeleteWebhook w) ->
     Delete (baseUrl /: "webhooks" // w)  mempty

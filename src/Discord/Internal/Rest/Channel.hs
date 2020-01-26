@@ -241,7 +241,7 @@ channelJsonRequest c = case c of
       Get (channels // chan) mempty
 
   (ModifyChannel chan patch) ->
-      Patch (channels // chan) (R.ReqBodyJson patch) mempty
+      Patch (channels // chan) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannel chan) ->
       Delete (channels // chan) mempty

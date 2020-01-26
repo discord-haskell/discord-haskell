@@ -128,7 +128,8 @@ compileRequest auth request = action
   action = case request of
     (Delete url      opts) -> R.req R.DELETE url R.NoReqBody R.lbsResponse (authopt <> opts)
     (Get    url      opts) -> R.req R.GET    url R.NoReqBody R.lbsResponse (authopt <> opts)
-    (Patch  url body opts) -> R.req R.PATCH  url body        R.lbsResponse (authopt <> opts)
     (Put    url body opts) -> R.req R.PUT    url body        R.lbsResponse (authopt <> opts)
+    (Patch  url body opts) -> do b <- body
+                                 R.req R.PATCH  url b        R.lbsResponse (authopt <> opts)
     (Post   url body opts) -> do b <- body
                                  R.req R.POST   url b        R.lbsResponse (authopt <> opts)

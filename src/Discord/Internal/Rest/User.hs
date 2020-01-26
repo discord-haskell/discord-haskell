@@ -90,8 +90,8 @@ userJsonRequest c = case c of
   (GetUser user) -> Get (users // user ) mempty
 
   (ModifyCurrentUser name (CurrentUserAvatar im)) ->
-      Patch (users /: "@me")  (R.ReqBodyJson (object [ "username" .= name
-                                                     , "avatar" .= im ])) mempty
+      Patch (users /: "@me")  (pure (R.ReqBodyJson (object [ "username" .= name
+                                                           , "avatar" .= im ]))) mempty
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 

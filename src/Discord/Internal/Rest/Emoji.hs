@@ -105,6 +105,6 @@ emojiJsonRequest c = case c of
                                                      ])))
                         mempty
   (ModifyGuildEmoji g e o) -> Patch (guilds // g /: "emojis" // e)
-                                    (R.ReqBodyJson o)
+                                    (pure (R.ReqBodyJson o))
                                     mempty
   (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty

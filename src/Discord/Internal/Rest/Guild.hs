@@ -357,7 +357,7 @@ guildJsonRequest c = case c of
       Get (guilds // guild) mempty
 
   (ModifyGuild guild patch) ->
-      Patch (guilds // guild) (R.ReqBodyJson patch) mempty
+      Patch (guilds // guild) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuild guild) ->
       Delete (guilds // guild) mempty
@@ -372,7 +372,7 @@ guildJsonRequest c = case c of
   (ModifyGuildChannelPositions guild newlocs) ->
       let patch = map (\(a, b) -> object [("id", toJSON a)
                                          ,("position", toJSON b)]) newlocs
-      in Patch (guilds // guild /: "channels") (R.ReqBodyJson patch) mempty
+      in Patch (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildMember guild member) ->
       Get (guilds // guild /: "members" // member) mempty
@@ -384,11 +384,11 @@ guildJsonRequest c = case c of
       Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
 
   (ModifyGuildMember guild member patch) ->
-      Patch (guilds // guild /: "members" // member) (R.ReqBodyJson patch) mempty
+      Patch (guilds // guild /: "members" // member) (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyCurrentUserNick guild name) ->
       let patch = object ["nick" .= name]
-      in Patch (guilds // guild /: "members/@me/nick") (R.ReqBodyJson patch) mempty
+      in Patch (guilds // guild /: "members/@me/nick") (pure (R.ReqBodyJson patch)) mempty
 
   (AddGuildMemberRole guild user role) ->
       let body = R.ReqBodyJson (object [])
@@ -418,10 +418,10 @@ guildJsonRequest c = case c of
 
   (ModifyGuildRolePositions guild patch) ->
       let body = map (\(role, pos) -> object ["id".=role, "position".=pos]) patch
-      in Patch (guilds // guild /: "roles") (R.ReqBodyJson body) mempty
+      in Patch (guilds // guild /: "roles") (pure (R.ReqBodyJson body)) mempty
 
   (ModifyGuildRole guild role patch) ->
-      Patch (guilds // guild /: "roles" // role) (R.ReqBodyJson patch) mempty
+      Patch (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuildRole guild role) ->
       Delete (guilds // guild /: "roles" // role) mempty
@@ -446,7 +446,7 @@ guildJsonRequest c = case c of
       in Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyGuildIntegration guild iid patch) ->
-      let body = R.ReqBodyJson patch
+      let body = pure (R.ReqBodyJson patch)
       in Patch (guilds // guild /: "integrations" // iid) body mempty
 
   (DeleteGuildIntegration guild integ) ->
@@ -459,7 +459,7 @@ guildJsonRequest c = case c of
       Get (guilds // guild /: "integrations") mempty
 
   (ModifyGuildEmbed guild patch) ->
-      Patch (guilds // guild /: "embed") (R.ReqBodyJson patch) mempty
+      Patch (guilds // guild /: "embed") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildVanityURL guild) ->
       Get (guilds // guild /: "vanity-url") mempty
