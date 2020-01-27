@@ -1,4 +1,7 @@
-# discord-haskell [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
+# discord-haskell
+[![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)
+[![hackage version](http://img.shields.io/hackage/v/lens.svg)](https://hackage.haskell.org/package/discord-haskell)
+
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
