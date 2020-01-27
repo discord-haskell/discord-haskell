@@ -47,7 +47,7 @@ In `stack.yaml`
 ```yaml
 extra-deps:
 - emoji-0.1.0.2
-- discord-haskell-<LATEST_VERSION_ON_HACKAGE>
+- discord-haskell-VERSION
 ```
 
 In `project.cabal`
