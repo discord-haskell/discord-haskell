@@ -1,5 +1,6 @@
 # discord-haskell           [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)
 
+Build that discord bot in Haskell! This is an example bot that replies "pong" to messages that start with "ping".
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
@@ -46,8 +47,7 @@ In `stack.yaml`
 ```yaml
 extra-deps:
 - emoji-0.1.0.2
-- discord-haskell-1.2.0
-    # check hackage for the most recent version
+- discord-haskell-<LATEST_VERSION_ON_HACKAGE>
 ```
 
 In `project.cabal`
