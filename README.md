@@ -82,7 +82,7 @@ A custom emoji will look like `<name:id_number>` or `name:id_number`.
 See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/master/examples/ping-pong.hs)
  for a `CreateReaction` request in use.
  
-## Embeds
+### Embeds
 
 Embeds are special messages with boarders and images. [Example embed created by discord-haskell](./examples/embed-photo.jpg)
 
