@@ -4,11 +4,14 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+
+## 1.4.0
+
 Rename `SubEmbed` to `EmbedPart`
 
 New and improved Embed API: Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
 
-`CreateEmbedImageUpload` inspired by [Flutterlice](https://github.com/aquarial/discord-haskell/pull/32)
+`CreateEmbedImageUpload` implementation inspired by [Flutterlice](https://github.com/aquarial/discord-haskell/pull/32)
 
 ## 1.3.0
 
