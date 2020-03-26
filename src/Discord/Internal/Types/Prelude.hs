@@ -14,8 +14,8 @@ import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
 
-import Data.Functor.Compose
-import Data.Bifunctor
+import Data.Functor.Compose (Compose(Compose, getCompose))
+import Data.Bifunctor (first)
 
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
