@@ -5,6 +5,10 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 ## master
 
 
+## 1.5.0
+
+[rexim](https://github.com/aquarial/discord-haskell/pull/35) Add `Read` instance for `Snowflake`
+
 ## 1.4.0
 
 Rename `SubEmbed` to `EmbedPart`
