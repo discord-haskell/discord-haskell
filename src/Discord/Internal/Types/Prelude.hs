@@ -14,6 +14,9 @@ import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
 
+import Data.Functor.Compose
+import Data.Bifunctor
+
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
   deriving (Show, Eq, Ord)
@@ -32,11 +35,15 @@ newtype Snowflake = Snowflake Word64
 instance Show Snowflake where
   show (Snowflake a) = show a
 
+instance Read Snowflake where
+  readsPrec p =
+    getCompose $ first (Snowflake . fromInteger) <$> Compose (readsPrec p)
+
 instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
 
 instance FromJSON Snowflake where
-  parseJSON (String snowflake) = Snowflake <$> (pure . read $ T.unpack snowflake)
+  parseJSON (String snowflake) = pure . read $ T.unpack snowflake
   parseJSON _ = mzero
 
 type ChannelId = Snowflake
@@ -57,4 +64,3 @@ snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
 -- | Default timestamp
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
-
