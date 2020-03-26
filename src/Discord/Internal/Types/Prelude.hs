@@ -36,8 +36,7 @@ instance Show Snowflake where
   show (Snowflake a) = show a
 
 instance Read Snowflake where
-  readsPrec p =
-    getCompose $ first (Snowflake . fromInteger) <$> Compose (readsPrec p)
+  readsPrec p = getCompose $ first Snowflake <$> Compose (readsPrec p)
 
 instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
