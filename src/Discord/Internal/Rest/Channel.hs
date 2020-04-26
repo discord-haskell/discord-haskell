@@ -296,8 +296,10 @@ channelJsonRequest c = case c of
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
 
   (EditMessage (chan, msg) new embed) ->
-      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= new]
-          body = R.reqBodyMultipart (partJson : maybeEmbed embed)
+      let partJson = toJSON $ object $ ["content" .= new] ++ case embed of
+                                                               Just e -> ["embed" .= createEmbed e]
+                                                               Nothing -> []
+          body = pure (R.ReqBodyJson partJson)
       in Patch (channels // chan /: "messages" // msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
