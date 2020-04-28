@@ -4,6 +4,7 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
+## 1.5.2
 
 ## 1.5.1
 
