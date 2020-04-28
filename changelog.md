@@ -5,6 +5,10 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 ## master
 
 
+## 1.5.1
+
+Fix `EditMessage` rest request, send JSON
+
 ## 1.5.0
 
 [rexim](https://github.com/aquarial/discord-haskell/pull/35) Add `Read` instance for `Snowflake`
