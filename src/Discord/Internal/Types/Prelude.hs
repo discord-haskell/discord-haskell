@@ -1,5 +1,4 @@
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, OverloadedStrings #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude where
@@ -13,6 +12,7 @@ import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Data.Monoid ((<>))
 import Control.Monad (mzero)
+import Data.Serialize
 
 import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
@@ -44,6 +44,10 @@ instance ToJSON Snowflake where
 instance FromJSON Snowflake where
   parseJSON (String snowflake) = pure . read $ T.unpack snowflake
   parseJSON _ = mzero
+
+instance Serialize Snowflake where
+  put = put . show
+  get = read <$> get
 
 type ChannelId = Snowflake
 type GuildId = Snowflake
