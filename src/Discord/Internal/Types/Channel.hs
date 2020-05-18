@@ -30,6 +30,22 @@ data Channel
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       }
+  | ChannelNews
+      { channelId          :: ChannelId
+      , channelGuild       :: GuildId
+      , channelName        :: T.Text
+      , channelPosition    :: Integer
+      , channelPermissions :: [Overwrite]
+      , channelTopic       :: T.Text
+      , channelLastMessage :: Maybe MessageId
+      }
+  | ChannelStorePage
+      { channelId          :: ChannelId
+      , channelGuild       :: GuildId
+      , channelName        :: T.Text
+      , channelPosition    :: Integer
+      , channelPermissions :: [Overwrite]
+      }
   -- | A voice channel in a guild.
   | ChannelVoice
       { channelId          :: ChannelId
@@ -88,6 +104,20 @@ instance FromJSON Channel where
       4 ->
         ChannelGuildCategory <$> o .: "id"
                              <*> o .:? "guild_id" .!= 0
+      5 ->
+        ChannelNews <$> o .:  "id"
+                    <*> o .:? "guild_id" .!= 0
+                    <*> o .:  "name"
+                    <*> o .:  "position"
+                    <*> o .:  "permission_overwrites"
+                    <*> o .:? "topic" .!= ""
+                    <*> o .:? "last_message_id"
+      6 ->
+        ChannelStorePage <$> o .:  "id"
+                         <*> o .:? "guild_id" .!= 0
+                         <*> o .:  "name"
+                         <*> o .:  "position"
+                         <*> o .:  "permission_overwrites"
       _ -> fail ("Unknown channel type:" <> show type')
 
 instance ToJSON Channel where
@@ -99,6 +129,22 @@ instance ToJSON Channel where
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("topic",   toJSON <$> pure channelTopic)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               ] ]
   toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
@@ -130,6 +176,8 @@ channelIsInGuild c = case c of
         ChannelGuildCategory{..} -> True
         ChannelText{..} -> True
         ChannelVoice{..}  -> True
+        ChannelNews{..}  -> True
+        ChannelStorePage{..}  -> True
         _ -> False
 
 -- | Permission overwrites for a channel.
