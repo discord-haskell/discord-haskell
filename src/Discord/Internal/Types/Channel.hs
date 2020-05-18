@@ -26,6 +26,8 @@ data Channel
       , channelName        :: T.Text      -- ^ The name of the guild (2 - 1000 characters).
       , channelPosition    :: Integer     -- ^ The storing position of the channel.
       , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
+      , channelUserRateLimit :: Integer   -- ^ Seconds before a user can speak again
+      , channelNSFW        :: Bool        -- ^ Is not-safe-for-work
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
@@ -36,6 +38,7 @@ data Channel
       , channelName        :: T.Text
       , channelPosition    :: Integer
       , channelPermissions :: [Overwrite]
+      , channelNSFW        :: Bool
       , channelTopic       :: T.Text
       , channelLastMessage :: Maybe MessageId
       }
@@ -44,6 +47,7 @@ data Channel
       , channelGuild       :: GuildId
       , channelName        :: T.Text
       , channelPosition    :: Integer
+      , channelNSFW        :: Bool
       , channelPermissions :: [Overwrite]
       }
   -- | A voice channel in a guild.
@@ -53,6 +57,7 @@ data Channel
       , channelName        :: T.Text
       , channelPosition    :: Integer
       , channelPermissions :: [Overwrite]
+      , channelNSFW        :: Bool
       , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
       , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
       }
@@ -83,6 +88,8 @@ instance FromJSON Channel where
                      <*> o .:  "name"
                      <*> o .:  "position"
                      <*> o .:  "permission_overwrites"
+                     <*> o .:  "rate_limit_per_user"
+                     <*> o .:? "nsfw" .!= False
                      <*> o .:? "topic" .!= ""
                      <*> o .:? "last_message_id"
       1 ->
@@ -95,6 +102,7 @@ instance FromJSON Channel where
                      <*> o .:  "name"
                      <*> o .:  "position"
                      <*> o .:  "permission_overwrites"
+                     <*> o .:? "nsfw" .!= False
                      <*> o .:  "bitrate"
                      <*> o .:  "user_limit"
       3 ->
@@ -110,6 +118,7 @@ instance FromJSON Channel where
                     <*> o .:  "name"
                     <*> o .:  "position"
                     <*> o .:  "permission_overwrites"
+                    <*> o .:? "nsfw" .!= False
                     <*> o .:? "topic" .!= ""
                     <*> o .:? "last_message_id"
       6 ->
@@ -117,6 +126,7 @@ instance FromJSON Channel where
                          <*> o .:? "guild_id" .!= 0
                          <*> o .:  "name"
                          <*> o .:  "position"
+                         <*> o .:? "nsfw" .!= False
                          <*> o .:  "permission_overwrites"
       _ -> fail ("Unknown channel type:" <> show type')
 
@@ -126,6 +136,8 @@ instance ToJSON Channel where
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
+              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
+              , ("nsfw", toJSON <$> pure channelNSFW)
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
@@ -136,6 +148,7 @@ instance ToJSON Channel where
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("nsfw", toJSON <$> pure channelNSFW)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               ] ]
@@ -143,6 +156,7 @@ instance ToJSON Channel where
               [ ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
+              , ("nsfw", toJSON <$> pure channelNSFW)
               , ("position",   toJSON <$> pure channelPosition)
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               ] ]
@@ -156,6 +170,7 @@ instance ToJSON Channel where
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
+              , ("nsfw", toJSON <$> pure channelNSFW)
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               , ("bitrate",   toJSON <$> pure channelBitRate)
               , ("user_limit",  toJSON <$> pure channelUserLimit)
