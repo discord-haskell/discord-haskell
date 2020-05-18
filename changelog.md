@@ -4,7 +4,12 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
-## 1.5.2
+## 1.6.0
+
+
+Add News Channel and StorePage Channel. Fix crash `Unknown channel type:5`
+
+Add NSFW and UserRateLimit
 
 ## 1.5.1
 
