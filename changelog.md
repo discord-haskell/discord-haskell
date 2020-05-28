@@ -4,12 +4,13 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 ## master
 
-## 1.6.0
+[rexim](https://github.com/aquarial/discord-haskell/pull/41) Add `Emoji.user` field. Who uploaded the emoji
 
+## 1.6.0
 
 Add News Channel and StorePage Channel. Fix crash `Unknown channel type:5`
 
-Add NSFW and UserRateLimit
+Add NSFW and UserRateLimit to `Channel` type
 
 ## 1.5.1
 
