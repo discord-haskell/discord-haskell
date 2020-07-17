@@ -128,10 +128,10 @@ Remember to remove sensitive information before posting.
 #### Official discord docs
 
 For a list of rest requests, gateway events, and gateway sendables go to the 
-[official discord documentation](https://discordapp.com/developers/docs/intro)
+[official discord documentation](https://discord.com/developers/docs/intro)
 
 The rest requests line up very closely. The documentation lists 
-[Get Channel](https://discordapp.com/developers/docs/resources/channel#get-channel)
+[Get Channel](https://discord.com/developers/docs/resources/channel#get-channel)
 and discord-haskell has `GetChannel :: ChannelId -> ChannelRequest Channel`. Same for gateway `Event`s.
 
 #### Examples

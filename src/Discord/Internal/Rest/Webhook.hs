@@ -30,7 +30,7 @@ instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute
   jsonRequest = webhookJsonRequest
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data WebhookRequest a where
   CreateWebhook :: ChannelId -> CreateWebhookOpts -> WebhookRequest Webhook
   GetChannelWebhooks :: ChannelId -> WebhookRequest [Webhook]
@@ -105,7 +105,7 @@ webhookMajorRoute ch = case ch of
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 webhookJsonRequest :: WebhookRequest r -> JsonRequest

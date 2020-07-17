@@ -19,7 +19,7 @@ import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User)
 
 
--- | Represents possible events sent by discord. Detailed information can be found at https://discordapp.com/developers/docs/topics/gateway.
+-- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
 data Event =
     Ready                   Int User [Channel] [GuildUnavailable] T.Text
   | Resumed                 [T.Text]

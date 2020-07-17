@@ -20,7 +20,7 @@ instance Request (VoiceRequest a) where
   majorRoute = voiceMajorRoute
   jsonRequest = voiceJsonRequest
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data VoiceRequest a where
   ListVoiceRegions :: VoiceRequest [VoiceRegion]
 
@@ -30,7 +30,7 @@ voiceMajorRoute c = case c of
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 voices :: R.Url 'R.Https

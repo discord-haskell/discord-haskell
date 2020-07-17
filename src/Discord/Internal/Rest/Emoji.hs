@@ -30,7 +30,7 @@ instance Request (EmojiRequest a) where
   jsonRequest = emojiJsonRequest
 
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data EmojiRequest a where
   -- | List of emoji objects for the given guild. Requires MANAGE_EMOJIS permission.
   ListGuildEmojis :: GuildId -> EmojiRequest [Emoji]
@@ -87,7 +87,7 @@ emojiMajorRoute c = case c of
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 guilds :: R.Url 'R.Https

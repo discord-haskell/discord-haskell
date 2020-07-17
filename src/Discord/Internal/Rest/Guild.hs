@@ -33,7 +33,7 @@ instance Request (GuildRequest a) where
   majorRoute = guildMajorRoute
   jsonRequest = guildJsonRequest
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data GuildRequest a where
   CreateGuild              :: CreateGuildOpts -> GuildRequest Guild
   -- | Returns the new 'Guild' object for the given id
@@ -266,7 +266,7 @@ createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <
                           ,("permission_overwrites", toJSON <$> Just perms)]
 
 
--- | https://discordapp.com/developers/docs/resources/guild#modify-guild
+-- | https://discord.com/developers/docs/resources/guild#modify-guild
 data ModifyGuildOpts = ModifyGuildOpts
   { modifyGuildOptsName         :: Maybe T.Text
   , modifyGuildOptsAFKChannelId :: Maybe ChannelId
@@ -342,7 +342,7 @@ guildMajorRoute c = case c of
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 guilds :: R.Url 'R.Https

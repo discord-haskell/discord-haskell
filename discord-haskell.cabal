@@ -3,7 +3,7 @@ name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
 version:             1.6.0
 description:         Functions and data types to write discord bots.
-                     Official discord docs <https://discordapp.com/developers/docs/reference>.
+                     Official discord docs <https://discord.com/developers/docs/reference>.
                      .
                      See the project readme for quickstart notes
                      <https://github.com/aquarial/discord-haskell#discord-haskell->

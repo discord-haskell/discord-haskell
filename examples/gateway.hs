@@ -28,7 +28,7 @@ gatewayExample = do
                           }
 
 -- Events are enumerated in the discord docs
--- https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-events
+-- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-events
 eventHandler :: Chan String -> DiscordHandle -> Event -> IO ()
 eventHandler out _dis event = writeChan out (show event <> "\n")
 
@@ -42,7 +42,7 @@ startHandler dis = do
         }
 
   -- gateway commands are enumerated in the discord docs
-  -- https://discordapp.com/developers/docs/topics/gateway#commands-and-events-gateway-commands
+  -- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-commands
   sendCommand dis (RequestGuildMembers opts)
 
 

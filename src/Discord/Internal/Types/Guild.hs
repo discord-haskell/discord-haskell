@@ -32,7 +32,7 @@ instance FromJSON GuildMember where
                 <*> o .:  "mute"
 
 
--- https://discordapp.com/developers/docs/resources/guild#guild-object
+-- https://discord.com/developers/docs/resources/guild#guild-object
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"

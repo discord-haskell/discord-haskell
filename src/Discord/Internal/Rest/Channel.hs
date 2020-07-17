@@ -35,7 +35,7 @@ instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
   jsonRequest = channelJsonRequest
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data ChannelRequest a where
   -- | Gets a channel by its id.
   GetChannel              :: ChannelId -> ChannelRequest Channel
@@ -105,7 +105,7 @@ reactionTimingToQuery t = case t of
   (AfterReaction snow) -> "after"  R.=: show snow
   (LatestReaction) -> mempty
 
--- | Data constructor for GetChannelMessages requests. See <https://discordapp.com/developers/docs/resources/channel#get-channel-messages>
+-- | Data constructor for GetChannelMessages requests. See <https://discord.com/developers/docs/resources/channel#get-channel-messages>
 data MessageTiming = AroundMessage MessageId
                    | BeforeMessage MessageId
                    | AfterMessage MessageId
@@ -171,7 +171,7 @@ instance ToJSON ChannelPermissionsOpts where
                                                  , ("deny", toJSON d)
                                                  , ("type", toJSON t)]
 
--- | https://discordapp.com/developers/docs/resources/channel#group-dm-add-recipient
+-- | https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
 data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
   { groupDMAddRecipientUserToAdd :: UserId
   , groupDMAddRecipientUserToAddNickName :: T.Text
@@ -229,7 +229,7 @@ maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 channels :: R.Url 'R.Https

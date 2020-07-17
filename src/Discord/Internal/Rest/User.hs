@@ -31,7 +31,7 @@ instance Request (UserRequest a) where
   jsonRequest = userJsonRequest
 
 
--- | Data constructor for requests. See <https://discordapp.com/developers/docs/resources/ API>
+-- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data UserRequest a where
   -- | Returns the 'User' object of the requester's account. For OAuth2, this requires
   --   the identify scope, which will return the object without an email, and optionally
@@ -53,7 +53,7 @@ data UserRequest a where
 
   GetUserConnections   :: UserRequest [ConnectionObject]
 
--- | Formatted avatar data https://discordapp.com/developers/docs/resources/user#avatar-data
+-- | Formatted avatar data https://discord.com/developers/docs/resources/user#avatar-data
 data CurrentUserAvatar = CurrentUserAvatar T.Text
 
 parseCurrentUserAvatar :: B.ByteString -> Either T.Text CurrentUserAvatar
@@ -77,7 +77,7 @@ userMajorRoute c = case c of
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discordapp.com" R./: "api" R./: apiVersion
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
   where apiVersion = "v6"
 
 users :: R.Url 'R.Https

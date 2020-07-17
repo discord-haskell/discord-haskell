@@ -23,7 +23,7 @@ authHeader auth =
           R.header "Authorization" (TE.encodeUtf8 (authToken auth))
        <> R.header "User-Agent" agent
   where
-  -- | https://discordapp.com/developers/docs/reference#user-agent
+  -- | https://discord.com/developers/docs/reference#user-agent
   -- Second place where the library version is noted
   agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 1.6.0)"
 

@@ -2,7 +2,9 @@
 
 View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
 
-## master
+## 1.6.1
+
+Changed discordapp.com to discord.com in accordance with official discord policy 
 
 [rexim](https://github.com/aquarial/discord-haskell/pull/41) Add `Emoji.user` field. Who uploaded the emoji
 
