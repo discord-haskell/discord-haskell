@@ -75,6 +75,7 @@ data Channel
       }
   | ChannelGuildCategory
       { channelId          :: ChannelId
+      , channelName        :: T.Text
       , channelGuild       :: GuildId
       } deriving (Show, Eq, Ord)
 
@@ -111,6 +112,7 @@ instance FromJSON Channel where
                        <*> o .:? "last_message_id"
       4 ->
         ChannelGuildCategory <$> o .: "id"
+                             <*> o .:  "name"
                              <*> o .:? "guild_id" .!= 0
       5 ->
         ChannelNews <$> o .:  "id"
