@@ -31,6 +31,7 @@ data Channel
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
+      , parentId           :: ParentId    -- ^ The id of the parent channel (category)
       }
   | ChannelNews
       { channelId          :: ChannelId
@@ -93,6 +94,7 @@ instance FromJSON Channel where
                      <*> o .:? "nsfw" .!= False
                      <*> o .:? "topic" .!= ""
                      <*> o .:? "last_message_id"
+                     <*> o .:  "parent_id"
       1 ->
         ChannelDirectMessage <$> o .:  "id"
                              <*> o .:  "recipients"
@@ -143,6 +145,7 @@ instance ToJSON Channel where
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
+              , ("parent_id",  toJSON <$> pure parentId)
               ] ]
   toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
@@ -184,6 +187,7 @@ instance ToJSON Channel where
               ] ]
   toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
+              , ("name", toJSON <$> pure channelName)
               , ("guild_id", toJSON <$> pure channelGuild)
               ] ]
 
