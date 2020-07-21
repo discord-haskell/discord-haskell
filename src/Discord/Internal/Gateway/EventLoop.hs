@@ -89,7 +89,7 @@ connectionLoop auth (events, userSend) log = loop ConnStart 0
                       startEventStream (ConnData conn seshID auth events) interval seqID userSend log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
-                      threadDelay (t * 10^6)
+                      threadDelay (t * (10^(6 :: Int)))
                       pure $ if retry
                              then ConnReconnect (Auth tok) seshID seqID
                              else ConnStart
@@ -129,7 +129,7 @@ getPayload conn log = try $ do
 
 heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()
 heartbeat send interval seqKey = do
-  threadDelay (1 * 10^6)
+  threadDelay (1 * 10^(6 :: Int))
   forever $ do
     num <- readIORef seqKey
     writeChan send (Heartbeat num)
@@ -207,7 +207,7 @@ data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset o
 sendableLoop :: Connection -> Sendables -> IO ()
 sendableLoop conn sends = forever $ do
   -- send a ~120 events a min by delaying
-  threadDelay (round (10^6 * (62 / 120)))
+  threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
   let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
       e = either id id
   payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))

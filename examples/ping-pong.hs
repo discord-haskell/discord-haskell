@@ -26,7 +26,7 @@ pingpongExample = do
                         , discordOnEvent = eventHandler
                         , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                         }
-  threadDelay (1 `div` 10 * 10^6)
+  threadDelay (1 `div` 10 * 10^(6 :: Int))
   TIO.putStrLn t
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
@@ -48,7 +48,7 @@ eventHandler :: DiscordHandle -> Event -> IO ()
 eventHandler dis event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
         _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
-        threadDelay (4 * 10^6)
+        threadDelay (4 * 10^(6 :: Int))
         _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
         pure ()
       _ -> pure ()
