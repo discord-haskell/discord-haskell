@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
 import Control.Monad (when, forM_)
-import Control.Concurrent (threadDelay)
 import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+
+import UnliftIO.Concurrent
 
 import Discord
 import Discord.Types
@@ -31,25 +32,25 @@ pingpongExample = do
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
 --     Use place to execute commands you know you want to complete
-startHandler :: DiscordHandle -> IO ()
-startHandler dis = do
-  Right partialGuilds <- restCall dis R.GetCurrentUserGuilds
+startHandler :: DiscordHandler ()
+startHandler = do
+  Right partialGuilds <- restCall R.GetCurrentUserGuilds
 
   forM_ partialGuilds $ \pg -> do
-    Right guild <- restCall dis $ R.GetGuild (partialGuildId pg)
-    Right chans <- restCall dis $ R.GetGuildChannels (guildId guild)
+    Right guild <- restCall $ R.GetGuild (partialGuildId pg)
+    Right chans <- restCall $ R.GetGuildChannels (guildId guild)
     case filter isTextChannel chans of
-      (c:_) -> do _ <- restCall dis $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
+      (c:_) -> do _ <- restCall $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
                   pure ()
       _ -> pure ()
 
 -- If an event handler throws an exception, discord-haskell will continue to run
-eventHandler :: DiscordHandle -> Event -> IO ()
-eventHandler dis event = case event of
+eventHandler :: Event -> DiscordHandler ()
+eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-        _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
+        _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^6)
-        _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
+        _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
         pure ()
       _ -> pure ()
 
