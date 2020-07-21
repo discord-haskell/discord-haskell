@@ -8,7 +8,6 @@ module Discord.Internal.Types.Gateway where
 import System.Info
 
 import qualified Data.Text as T
-import Data.Monoid ((<>))
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson
@@ -141,7 +140,7 @@ instance ToJSON GatewaySendable where
       "op" .= (3 :: Int)
     , "d"  .= object [
         "since" .= case since of Nothing -> Nothing
-                                 Just s -> Just ((10^6) * (utcTimeToPOSIXSeconds s))
+                                 Just s -> Just $ 1000 * utcTimeToPOSIXSeconds s -- takes UTCTime and returns unix time (in milliseconds)
       , "afk" .= afk
       , "status" .= statusString status
       , "game" .= case game of Nothing -> Nothing

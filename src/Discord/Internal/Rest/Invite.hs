@@ -10,7 +10,6 @@ module Discord.Internal.Rest.Invite
   ( InviteRequest(..)
   ) where
 
-import Data.Monoid (mempty)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T

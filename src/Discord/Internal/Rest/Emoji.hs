@@ -13,7 +13,6 @@ module Discord.Internal.Rest.Emoji
   ) where
 
 import Data.Aeson
-import Data.Monoid (mempty, (<>))
 import Codec.Picture
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R

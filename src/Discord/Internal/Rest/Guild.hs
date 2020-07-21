@@ -21,7 +21,6 @@ module Discord.Internal.Rest.Guild
 
 
 import Data.Aeson
-import Data.Monoid (mempty, (<>))
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T

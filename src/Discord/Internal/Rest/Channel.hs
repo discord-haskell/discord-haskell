@@ -19,7 +19,6 @@ module Discord.Internal.Rest.Channel
 
 import Data.Aeson
 import Data.Emoji (unicodeByName)
-import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL

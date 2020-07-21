@@ -13,7 +13,6 @@ import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Control.Exception.Safe (try, finally, handle, SomeException)
-import Data.Monoid ((<>))
 import Data.IORef
 import Data.Aeson (eitherDecode, encode)
 import qualified Data.Text as T
@@ -104,7 +103,7 @@ connectionLoop auth (events, userSend) log = loop ConnStart 0
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
             Left _ -> do t <- getRandomR (3,20)
-                         threadDelay (t * 10^6)
+                         threadDelay (t * (10^(6 :: Int)))
                          writeChan log ("gateway - trying to reconnect after " <> T.pack (show retries)
                                                <> " failures")
                          loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)

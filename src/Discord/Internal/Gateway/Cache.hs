@@ -4,7 +4,6 @@
 module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
-import Data.Monoid ((<>))
 import Control.Monad (forever)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan

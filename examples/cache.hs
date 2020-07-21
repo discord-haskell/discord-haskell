@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Data.Monoid ((<>))
 import qualified Data.Text.IO as TIO
 
 import Discord

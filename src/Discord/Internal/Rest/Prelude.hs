@@ -9,7 +9,6 @@ module Discord.Internal.Rest.Prelude where
 import Prelude hiding (log)
 import Control.Exception.Safe (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
-import Data.Monoid ((<>))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 

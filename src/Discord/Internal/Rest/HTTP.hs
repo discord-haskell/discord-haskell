@@ -11,7 +11,6 @@ module Discord.Internal.Rest.HTTP
   ) where
 
 import Prelude hiding (log)
-import Data.Semigroup ((<>))
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
