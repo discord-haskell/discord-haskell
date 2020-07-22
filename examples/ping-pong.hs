@@ -2,7 +2,6 @@
 
 import Control.Monad (when, forM_)
 import Control.Concurrent (threadDelay)
-import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -61,4 +60,4 @@ fromBot :: Message -> Bool
 fromBot m = userIsBot (messageAuthor m)
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.map toLower . messageText
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText

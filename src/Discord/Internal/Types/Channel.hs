@@ -30,6 +30,7 @@ data Channel
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
+      , parentId           :: ParentId    -- ^ The id of the parent channel (category)
       }
   | ChannelNews
       { channelId          :: ChannelId
@@ -74,6 +75,7 @@ data Channel
       }
   | ChannelGuildCategory
       { channelId          :: ChannelId
+      , channelName        :: T.Text
       , channelGuild       :: GuildId
       } deriving (Show, Eq, Ord)
 
@@ -91,6 +93,7 @@ instance FromJSON Channel where
                      <*> o .:? "nsfw" .!= False
                      <*> o .:? "topic" .!= ""
                      <*> o .:? "last_message_id"
+                     <*> o .:  "parent_id"
       1 ->
         ChannelDirectMessage <$> o .:  "id"
                              <*> o .:  "recipients"
@@ -110,6 +113,7 @@ instance FromJSON Channel where
                        <*> o .:? "last_message_id"
       4 ->
         ChannelGuildCategory <$> o .: "id"
+                             <*> o .:  "name"
                              <*> o .:? "guild_id" .!= 0
       5 ->
         ChannelNews <$> o .:  "id"
@@ -140,6 +144,7 @@ instance ToJSON Channel where
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
+              , ("parent_id",  toJSON <$> pure parentId)
               ] ]
   toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
@@ -181,6 +186,7 @@ instance ToJSON Channel where
               ] ]
   toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
+              , ("name", toJSON <$> pure channelName)
               , ("guild_id", toJSON <$> pure channelGuild)
               ] ]
 
