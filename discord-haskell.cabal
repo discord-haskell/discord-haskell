@@ -32,6 +32,7 @@ executable ping-pong
                        -threaded
   build-depends:       base
                      , text
+                     , unliftio
                      , discord-haskell
 
 library
