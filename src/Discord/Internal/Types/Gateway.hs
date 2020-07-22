@@ -14,6 +14,7 @@ import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Maybe (fromMaybe)
+import Data.Functor
 import Text.Read (readMaybe)
 
 import Discord.Internal.Types.Prelude
@@ -140,16 +141,14 @@ instance ToJSON GatewaySendable where
   toJSON (UpdateStatus (UpdateStatusOpts since game status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
-        "since" .= case since of Nothing -> Nothing
-                                 Just s -> Just ((10^6) * (utcTimeToPOSIXSeconds s))
+        "since" .= (since <&> \s -> 1000 * utcTimeToPOSIXSeconds s) -- takes UTCTime and returns unix time (in milliseconds)
       , "afk" .= afk
       , "status" .= statusString status
-      , "game" .= case game of Nothing -> Nothing
-                               Just a -> Just $ object [
-                                           "name" .= activityName a
-                                         , "type" .= (fromEnum $ activityType a :: Int)
-                                         , "url" .= activityUrl a
-                                         ]
+      , "game" .= (game <&> \a -> object [
+                                "name" .= activityName a
+                              , "type" .= (fromEnum $ activityType a :: Int)
+                              , "url" .= activityUrl a
+                              ])
       ]
     ]
   toJSON (UpdateStatusVoice (UpdateStatusVoiceOpts guild channel mute deaf)) =

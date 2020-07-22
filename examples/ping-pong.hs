@@ -62,4 +62,4 @@ fromBot :: Message -> Bool
 fromBot m = userIsBot (messageAuthor m)
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.map toLower . messageText
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText

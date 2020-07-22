@@ -54,6 +54,7 @@ type OverwriteId = Snowflake
 type RoleId = Snowflake
 type IntegrationId = Snowflake
 type WebhookId = Snowflake
+type ParentId = Snowflake
 
 -- | Gets a creation date from a snowflake.
 snowflakeCreationDate :: Snowflake -> UTCTime
