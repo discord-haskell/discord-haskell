@@ -7,8 +7,9 @@ Build that discord bot in Haskell! This is an example bot that replies "pong" to
 
 import Control.Monad (when)
 import Data.Text (isPrefixOf, toLower, Text)
-import Control.Concurrent (threadDelay)
 import qualified Data.Text.IO as TIO
+
+import UnliftIO
 
 import Discord
 import Discord.Types
@@ -21,12 +22,12 @@ pingpongExample = do userFacingError <- runDiscord $ def
                                             , discordOnEvent = eventHandler }
                      TIO.putStrLn userFacingError
 
-eventHandler :: DiscordHandle -> Event -> IO ()
-eventHandler dis event = case event of
+eventHandler :: Event -> DiscordHandler ()
+eventHandler event = case event of
        MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
-               _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
+               _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
                threadDelay (4 * 10^6)
-               _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
+               _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
                pure ()
        _ -> pure ()
 
@@ -94,7 +95,7 @@ The `CreateEmbed` record stores data when we want to create an embed.
 `CreateEmbed` has a `Default` instance, so you only need to specify the fields you use:
 
 ```haskell
-_ <- restCall dis (R.CreateMessageEmbed <channel_id> "Pong!" $
+_ <- restCall (R.CreateMessageEmbed <channel_id> "Pong!" $
         def { createEmbedTitle = "Pong Embed"
             , createEmbedImage = Just $ CreateEmbedImageUpload <bytestring>
             , createEmbedThumbnail = Just $ CreateEmbedImageUrl
