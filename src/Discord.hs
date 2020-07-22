@@ -9,6 +9,8 @@ module Discord
   , readCache
   , stopDiscord
 
+  , DiscordHandler
+
   , DiscordHandle
   , Cache(..)
   , RestCallErrorCode(..)
@@ -18,48 +20,51 @@ module Discord
   ) where
 
 import Prelude hiding (log)
+import Control.Monad.Reader
 import Control.Monad (forever, void)
-import Control.Concurrent (forkIO, threadDelay, ThreadId, killThread)
-import Control.Concurrent.Async (race)
-import Control.Exception.Safe (try, finally, IOException, SomeException)
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+
+import UnliftIO
+import UnliftIO.Concurrent
 
 import Discord.Handle
 import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
 import Discord.Internal.Gateway
 
+type DiscordHandler = ReaderT DiscordHandle IO
+
+type RunsDiscordBot = ReaderT RunDiscordOpts IO
 
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
-  , discordOnStart :: DiscordHandle -> IO ()
+  , discordOnStart :: DiscordHandler ()
   , discordOnEnd :: IO ()
-  , discordOnEvent :: DiscordHandle -> Event -> IO ()
+  , discordOnEvent :: Event -> DiscordHandler ()
   , discordOnLog :: T.Text -> IO ()
   , discordForkThreadForEvents :: Bool
   }
 
 instance Default RunDiscordOpts where
   def = RunDiscordOpts { discordToken = ""
-                       , discordOnStart = \_ -> pure ()
+                       , discordOnStart = pure ()
                        , discordOnEnd = pure ()
-                       , discordOnEvent = \_ _-> pure ()
+                       , discordOnEvent = \_ -> pure ()
                        , discordOnLog = \_ -> pure ()
                        , discordForkThreadForEvents = True
                        }
 
 runDiscord :: RunDiscordOpts -> IO T.Text
-runDiscord opts = do
+runDiscord = runReaderT $ do
+  opts <- ask
   log <- newChan
-  logId <- startLogger (discordOnLog opts) log
-  (cache, cacheId) <- startCacheThread log
-  (rest, restId) <- startRestThread (Auth (discordToken opts)) log
-  (gate, gateId) <- startGatewayThread (Auth (discordToken opts)) cache log
+  logId <- liftIO $ startLogger (discordOnLog opts) log
+  (cache, cacheId) <- liftIO $ startCacheThread log
+  (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
+  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) cache log
 
   libE <- newEmptyMVar
 
@@ -76,35 +81,37 @@ runDiscord opts = do
                                  ]
                              }
 
-  finally (runDiscordLoop opts handle)
-          (discordOnEnd opts >> stopDiscord handle)
+  finally (runDiscordLoop handle)
+          (liftIO $ discordOnEnd opts >> stopDiscord handle)
 
-runDiscordLoop :: RunDiscordOpts -> DiscordHandle -> IO T.Text
-runDiscordLoop opts handle = do
-  resp <- writeRestCall (discordHandleRestChan handle) GetCurrentUser
+runDiscordLoop :: DiscordHandle -> RunsDiscordBot T.Text
+runDiscordLoop handle = do
+  opts <- ask
+  resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
   case resp of
     Left (RestCallInternalErrorCode c e1 e2) -> libError $
              "HTTP Error Code " <> T.pack (show c) <> " " <> TE.decodeUtf8 e1
                                                    <> " " <> TE.decodeUtf8 e2
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
-    _ -> do me <- try (discordOnStart opts handle)
+    _ -> do me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
             case me of
               Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
               Right _ -> loop
  where
-   libError :: T.Text -> IO T.Text
+   libError :: T.Text -> RunsDiscordBot T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
-   loop :: IO T.Text
-   loop = do next <- race (readMVar (discordHandleLibraryError handle))
+   loop :: RunsDiscordBot T.Text
+   loop = do opts <- ask
+             next <- race (readMVar (discordHandleLibraryError handle))
                           (readChan (fst (discordHandleGateway handle)))
              case next of
                Left err -> libError err
                Right (Right event) -> do
                  let action = if discordForkThreadForEvents opts then void . forkIO
                                                                  else id
-                 action $ do me <- try (discordOnEvent opts handle event)
+                 action $ do me <- liftIO . runReaderT (try $ discordOnEvent opts event) $ handle
                              case me of
                                Left (e :: SomeException) -> writeChan (discordHandleLog handle)
                                          ("discord-haskell stopped on an exception:\n\n" <> T.pack (show e))
@@ -117,41 +124,46 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
   deriving (Show, Eq, Ord)
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => DiscordHandle -> r a -> IO (Either RestCallErrorCode a)
-restCall h r = do empty <- isEmptyMVar (discordHandleLibraryError h)
-                  if not empty
-                  then pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
-                  else do
-                      resp <- writeRestCall (discordHandleRestChan h) r
-                      case resp of
-                        Right x -> pure (Right x)
-                        Left (RestCallInternalErrorCode c e1 e2) ->
-                          pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1) (TE.decodeUtf8 e2)))
-                        Left (RestCallInternalHttpException _) ->
-                          threadDelay (10 * 10^(6 :: Int)) >> restCall h r
-                        Left (RestCallInternalNoParse err dat) -> do
-                          let formaterr = T.pack ("Parse Exception " <> err <> " for " <> show dat)
-                          writeChan (discordHandleLog h) formaterr
-                          pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
+restCall :: (FromJSON a, Request (r a)) => r a -> DiscordHandler (Either RestCallErrorCode a)
+restCall r = do h <- ask
+                empty <- isEmptyMVar (discordHandleLibraryError h)
+                if not empty
+                then pure (Left (RestCallErrorCode 400 "Library Stopped Working" ""))
+                else do
+                    resp <- liftIO $ writeRestCall (discordHandleRestChan h) r
+                    case resp of
+                      Right x -> pure (Right x)
+                      Left (RestCallInternalErrorCode c e1 e2) ->
+                        pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1) (TE.decodeUtf8 e2)))
+                      Left (RestCallInternalHttpException _) ->
+                        threadDelay (10 * 10^(6 :: Int)) >> restCall r
+                      Left (RestCallInternalNoParse err dat) -> do
+                        let formaterr = T.pack ("Parse Exception " <> err <> " for " <> show dat)
+                        writeChan (discordHandleLog h) formaterr
+                        pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
 
 -- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
-sendCommand :: DiscordHandle -> GatewaySendable -> IO ()
-sendCommand h e = case e of
-                    Heartbeat _ -> pure ()
-                    Identify {} -> pure ()
-                    Resume {} -> pure ()
-                    _ -> writeChan (snd (discordHandleGateway h)) e
+sendCommand :: GatewaySendable -> DiscordHandler ()
+sendCommand e = do
+  h <- ask
+  case e of
+    Heartbeat _ -> pure ()
+    Identify {} -> pure ()
+    Resume {} -> pure ()
+    _ -> writeChan (snd (discordHandleGateway h)) e
 
 -- | Access the current state of the gateway cache
-readCache :: DiscordHandle -> IO Cache
-readCache h = do merr <- readMVar (snd (discordHandleCache h))
-                 case merr of
-                   Left (c, _) -> pure c
-                   Right c -> pure c
+readCache :: DiscordHandler Cache
+readCache = do
+  h <- ask
+  merr <- readMVar (snd (discordHandleCache h))
+  case merr of
+    Left (c, _) -> pure c
+    Right c -> pure c
 
 
 -- | Stop all the background threads
-stopDiscord :: DiscordHandle -> IO ()
+stopDiscord :: MonadIO m => DiscordHandle -> m ()
 stopDiscord h = do _ <- tryPutMVar (discordHandleLibraryError h) "Library has closed"
                    threadDelay (10^(6 :: Int) `div` 10)
                    mapM_ (killThread . toId) (discordHandleThreads h)

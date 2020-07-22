@@ -86,4 +86,5 @@ library
                      , vector
                      , websockets
                      , wuss
-
+                     , mtl
+                     , unliftio
