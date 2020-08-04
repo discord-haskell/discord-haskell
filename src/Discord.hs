@@ -21,7 +21,6 @@ module Discord
 
 import Prelude hiding (log)
 import Control.Monad.Reader
-import Control.Monad (forever, void)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import qualified Data.Text as T
@@ -36,8 +35,6 @@ import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
 import Discord.Internal.Gateway
 
 type DiscordHandler = ReaderT DiscordHandle IO
-
-type RunsDiscordBot = ReaderT RunDiscordOpts IO
 
 data RunDiscordOpts = RunDiscordOpts
   { discordToken :: T.Text
@@ -58,8 +55,7 @@ instance Default RunDiscordOpts where
                        }
 
 runDiscord :: RunDiscordOpts -> IO T.Text
-runDiscord = runReaderT $ do
-  opts <- ask
+runDiscord opts = do
   log <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
   (cache, cacheId) <- liftIO $ startCacheThread log
@@ -81,12 +77,11 @@ runDiscord = runReaderT $ do
                                  ]
                              }
 
-  finally (runDiscordLoop handle)
-          (liftIO $ discordOnEnd opts >> stopDiscord handle)
+  finally (runDiscordLoop handle opts)
+          (discordOnEnd opts >> runReaderT stopDiscord handle)
 
-runDiscordLoop :: DiscordHandle -> RunsDiscordBot T.Text
-runDiscordLoop handle = do
-  opts <- ask
+runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
+runDiscordLoop handle opts = do
   resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
   case resp of
     Left (RestCallInternalErrorCode c e1 e2) -> libError $
@@ -99,12 +94,11 @@ runDiscordLoop handle = do
               Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
               Right _ -> loop
  where
-   libError :: T.Text -> RunsDiscordBot T.Text
+   libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
-   loop :: RunsDiscordBot T.Text
-   loop = do opts <- ask
-             next <- race (readMVar (discordHandleLibraryError handle))
+   loop :: IO T.Text
+   loop = do next <- race (readMVar (discordHandleLibraryError handle))
                           (readChan (fst (discordHandleGateway handle)))
              case next of
                Left err -> libError err
@@ -163,10 +157,11 @@ readCache = do
 
 
 -- | Stop all the background threads
-stopDiscord :: MonadIO m => DiscordHandle -> m ()
-stopDiscord h = do _ <- tryPutMVar (discordHandleLibraryError h) "Library has closed"
-                   threadDelay (10^(6 :: Int) `div` 10)
-                   mapM_ (killThread . toId) (discordHandleThreads h)
+stopDiscord :: DiscordHandler ()
+stopDiscord = do h <- ask
+                 _ <- tryPutMVar (discordHandleLibraryError h) "Library has closed"
+                 threadDelay (10^(6 :: Int) `div` 10)
+                 mapM_ (killThread . toId) (discordHandleThreads h)
   where toId t = case t of
                    DiscordHandleThreadIdRest a -> a
                    DiscordHandleThreadIdGateway a -> a
