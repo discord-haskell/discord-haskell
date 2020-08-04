@@ -8,7 +8,6 @@ module Discord.Internal.Types.Gateway where
 import System.Info
 
 import qualified Data.Text as T
-import Data.Monoid ((<>))
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson

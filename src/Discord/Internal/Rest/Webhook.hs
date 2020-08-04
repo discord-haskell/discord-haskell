@@ -14,7 +14,6 @@ module Discord.Internal.Rest.Webhook
   ) where
 
 import Data.Aeson
-import Data.Monoid (mempty, (<>))
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL

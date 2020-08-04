@@ -11,7 +11,6 @@ import Data.Aeson.Types
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
-import Data.Monoid ((<>))
 import Control.Monad (mzero)
 
 import Data.Functor.Compose (Compose(Compose, getCompose))

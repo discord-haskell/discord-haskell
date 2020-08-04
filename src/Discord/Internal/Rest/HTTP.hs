@@ -11,7 +11,6 @@ module Discord.Internal.Rest.HTTP
   ) where
 
 import Prelude hiding (log)
-import Data.Semigroup ((<>))
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Concurrent (threadDelay)
@@ -101,8 +100,8 @@ tryRequest _log action = do
   let body   = R.responseBody resp
       code   = R.responseStatusCode resp
       status = R.responseStatusMessage resp
-      global = (Just "true" ==) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
-      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Remaining"
+      global = (Just ("true" :: String) ==) $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Global"
+      remain = fromMaybe 1 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Remaining" :: Integer
       reset = withDelta . fromMaybe 10 $ readMaybeBS =<< R.responseHeader resp "X-RateLimit-Reset-After"
 
       withDelta :: Double -> POSIXTime

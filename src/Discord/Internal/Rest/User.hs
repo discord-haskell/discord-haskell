@@ -14,7 +14,6 @@ module Discord.Internal.Rest.User
 
 import Data.Aeson
 import Codec.Picture
-import Data.Monoid (mempty, (<>))
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T

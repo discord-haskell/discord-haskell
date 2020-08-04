@@ -136,7 +136,7 @@ restCall r = do h <- ask
                       Left (RestCallInternalErrorCode c e1 e2) ->
                         pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1) (TE.decodeUtf8 e2)))
                       Left (RestCallInternalHttpException _) ->
-                        threadDelay (10 * 10^6) >> restCall r
+                        threadDelay (10 * 10^(6 :: Int)) >> restCall r
                       Left (RestCallInternalNoParse err dat) -> do
                         let formaterr = T.pack ("Parse Exception " <> err <> " for " <> show dat)
                         writeChan (discordHandleLog h) formaterr
@@ -165,7 +165,7 @@ readCache = do
 -- | Stop all the background threads
 stopDiscord :: MonadIO m => DiscordHandle -> m ()
 stopDiscord h = do _ <- tryPutMVar (discordHandleLibraryError h) "Library has closed"
-                   threadDelay (10^6 `div` 10)
+                   threadDelay (10^(6 :: Int) `div` 10)
                    mapM_ (killThread . toId) (discordHandleThreads h)
   where toId t = case t of
                    DiscordHandleThreadIdRest a -> a

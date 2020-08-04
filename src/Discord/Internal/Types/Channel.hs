@@ -7,7 +7,6 @@ module Discord.Internal.Types.Channel where
 import Control.Applicative (empty)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
