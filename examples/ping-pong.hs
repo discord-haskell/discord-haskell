@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
 import Control.Monad (when, forM_)
-import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
+import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 
 import Discord
@@ -23,7 +23,7 @@ pingpongExample = do
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
   t <- runDiscord $ def { discordToken = tok
                         , discordOnStart = startHandler
-                        , discordOnEnd = putStrLn "Ended"
+                        , discordOnEnd = liftIO $ putStrLn "Ended"
                         , discordOnEvent = eventHandler
                         , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                         }
@@ -48,9 +48,9 @@ startHandler = do
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-        _ <- restCall dis (R.CreateReaction (messageChannel m, messageId m) "eyes")
+        _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^(6 :: Int))
-        _ <- restCall dis (R.CreateMessage (messageChannel m) "Pong!")
+        _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
         pure ()
       _ -> pure ()
 
