@@ -26,7 +26,7 @@ import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
-import UnliftIO
+import UnliftIO (race, try, finally, SomeException, IOException)
 import UnliftIO.Concurrent
 
 import Discord.Handle
