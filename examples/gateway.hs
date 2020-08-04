@@ -2,6 +2,7 @@
 
 import Control.Monad (void, forever)
 import Control.Concurrent (forkIO, killThread)
+import UnliftIO (liftIO)
 import Control.Concurrent.Chan
 import qualified Data.Text.IO as TIO
 
@@ -28,12 +29,12 @@ gatewayExample = do
 
 -- Events are enumerated in the discord docs
 -- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-events
-eventHandler :: Chan String -> DiscordHandle -> Event -> IO ()
-eventHandler out _dis event = writeChan out (show event <> "\n")
+eventHandler :: Chan String -> Event -> DiscordHandler ()
+eventHandler out event = liftIO $ writeChan out (show event <> "\n")
 
 
-startHandler :: DiscordHandle -> IO ()
-startHandler dis = do
+startHandler :: DiscordHandler ()
+startHandler = do
   let opts = RequestGuildMembersOpts
         { requestGuildMembersOptsGuildId = 453207241294610442
         , requestGuildMembersOptsLimit = 100
@@ -42,6 +43,6 @@ startHandler dis = do
 
   -- gateway commands are enumerated in the discord docs
   -- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-commands
-  sendCommand dis (RequestGuildMembers opts)
+  sendCommand (RequestGuildMembers opts)
 
 
