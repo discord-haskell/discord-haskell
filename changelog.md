@@ -2,6 +2,14 @@
 
 View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
 
+## 1.7.0
+
+[elikoga](https://github.com/aquarial/discord-haskell/pull/51) Changed to use `ReaderT` interface
+
+[elikoga](https://github.com/aquarial/discord-haskell/pull/50) Fixed compiler warnings
+
+Changed api url to new `discord.com`
+
 ## 1.6.1
 
 Changed discordapp.com to discord.com in accordance with official discord policy 
