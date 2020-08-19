@@ -30,7 +30,7 @@ data Channel
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
-      , parentId           :: ParentId    -- ^ The id of the parent channel (category)
+      , parentId           :: Maybe ParentId    -- ^ The id of the parent channel (category)
       }
   | ChannelNews
       { channelId          :: ChannelId
@@ -60,6 +60,7 @@ data Channel
       , channelNSFW        :: Bool
       , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
       , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
+      , parentId           :: Maybe ParentId
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
@@ -93,7 +94,7 @@ instance FromJSON Channel where
                      <*> o .:? "nsfw" .!= False
                      <*> o .:? "topic" .!= ""
                      <*> o .:? "last_message_id"
-                     <*> o .:  "parent_id"
+                     <*> o .:? "parent_id"
       1 ->
         ChannelDirectMessage <$> o .:  "id"
                              <*> o .:  "recipients"
@@ -107,6 +108,7 @@ instance FromJSON Channel where
                      <*> o .:? "nsfw" .!= False
                      <*> o .:  "bitrate"
                      <*> o .:  "user_limit"
+                     <*> o .:? "parent_id"
       3 ->
         ChannelGroupDM <$> o .:  "id"
                        <*> o .:  "recipients"
