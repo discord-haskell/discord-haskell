@@ -2,6 +2,12 @@
 
 View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
 
+Discord API changes, so use the most recent version at all times
+
+## 1.8.0
+
+Fixed [null parent_id on channel](https://github.com/aquarial/discord-haskell/issues/55)
+
 ## 1.7.0
 
 [elikoga](https://github.com/aquarial/discord-haskell/pull/51) Changed to use `ReaderT` interface
