@@ -20,7 +20,7 @@ module Discord
   ) where
 
 import Prelude hiding (log)
-import Control.Monad.Reader
+import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import qualified Data.Text as T
