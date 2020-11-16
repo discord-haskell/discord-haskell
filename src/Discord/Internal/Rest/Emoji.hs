@@ -84,11 +84,6 @@ emojiMajorRoute c = case c of
   (ModifyGuildEmoji g _ _) -> "emoji " <> show g
   (DeleteGuildEmoji g _)   -> "emoji " <> show g
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 guilds :: R.Url 'R.Https
 guilds = baseUrl /: "guilds"
 

@@ -226,11 +226,6 @@ maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
                                           , ("footer.png", createEmbedFooterIcon) ]]
       in maybe [] (map mkPart . uploads)
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 channels :: R.Url 'R.Https
 channels = baseUrl /: "channels"
 

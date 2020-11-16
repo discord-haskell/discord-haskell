@@ -74,11 +74,6 @@ userMajorRoute c = case c of
   (CreateDM _) ->                       "make_dm "
   (GetUserConnections) ->           "connections "
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 users :: R.Url 'R.Https
 users = baseUrl /: "users"
 

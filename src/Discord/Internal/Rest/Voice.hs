@@ -28,11 +28,6 @@ voiceMajorRoute :: VoiceRequest a -> String
 voiceMajorRoute c = case c of
   (ListVoiceRegions) -> "whatever "
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 voices :: R.Url 'R.Https
 voices = baseUrl /: "voice"
 

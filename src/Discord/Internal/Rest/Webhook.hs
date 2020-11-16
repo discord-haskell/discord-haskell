@@ -102,11 +102,6 @@ webhookMajorRoute ch = case ch of
   (DeleteWebhookWithToken w _) ->   "deletehook " <> show w
   (ExecuteWebhookWithToken w _ _) -> "executehk " <> show w
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->

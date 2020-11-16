@@ -34,11 +34,6 @@ inviteMajorRoute c = case c of
   (GetInvite _) ->     "invite "
   (DeleteInvite _) ->  "invite "
 
--- | The base url (Req) for API requests
-baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
-
 invite :: R.Url 'R.Https
 invite = baseUrl /: "invites"
 
