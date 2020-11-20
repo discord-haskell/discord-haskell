@@ -4,6 +4,11 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 Discord API changes, so use the most recent version at all times
 
+
+## 1.8.1
+
+Added `MessageReaction` to Message https://github.com/aquarial/discord-haskell/issues/56
+
 ## 1.8.0
 
 Fixed [null parent_id on channel](https://github.com/aquarial/discord-haskell/issues/55)
