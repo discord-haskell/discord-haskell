@@ -1,6 +1,9 @@
 # discord-haskell           [![Build Status](https://travis-ci.org/aquarial/discord-haskell.png?branch=master)](https://travis-ci.org/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)
 
-Build that discord bot in Haskell! This is an example bot that replies "pong" to messages that start with "ping".
+Build that discord bot in Haskell! Also checkout the [calamity](https://github.com/nitros12/calamity) 
+haskell discord library for a more advanced interface than `discord-haskell`.
+
+This is an example bot that replies "pong" to messages that start with "ping".
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
