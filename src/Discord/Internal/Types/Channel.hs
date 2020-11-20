@@ -270,7 +270,7 @@ instance FromJSON Message where
             <*> o .:? "mention_roles" .!= []
             <*> o .:? "attachments" .!= []
             <*> o .:  "embeds"
-            <*> o .:? "messageReactions" .!= []
+            <*> o .:? "reactions" .!= []
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
             <*> o .:? "guild_id" .!= Nothing
