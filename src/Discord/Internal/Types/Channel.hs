@@ -245,6 +245,7 @@ data Message = Message
                                            --   the message
   , messageAttachments  :: [Attachment]    -- ^ Any attached files
   , messageEmbeds       :: [Embed]         -- ^ Any embedded content
+  , messageReactions    :: [MessageReaction] -- ^ Any reactions to message
   , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
@@ -269,10 +270,42 @@ instance FromJSON Message where
             <*> o .:? "mention_roles" .!= []
             <*> o .:? "attachments" .!= []
             <*> o .:  "embeds"
+            <*> o .:? "messageReactions" .!= []
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
             <*> o .:? "guild_id" .!= Nothing
 
+
+data MessageReaction = MessageReaction
+  { messageReactionCount :: Int
+  , messageReactionMeIncluded :: Bool
+  , messageReactionEmoji :: Emoji
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON MessageReaction where
+  parseJSON = withObject "MessageReaction" $ \o ->
+    MessageReaction <$> o .: "count"
+                    <*> o .: "me"
+                    <*> o .: "emoji"
+
+-- | Represents an emoticon (emoji)
+data Emoji = Emoji
+  { emojiId      :: Maybe EmojiId  -- ^ The emoji id
+  , emojiName    :: T.Text         -- ^ The emoji name
+  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
+  , emojiUser    :: Maybe User     -- ^ User that created this emoji
+  , emojiManaged :: Maybe Bool     -- ^ Whether this emoji is managed
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON Emoji where
+  parseJSON = withObject "Emoji" $ \o ->
+    Emoji <$> o .:  "id"
+          <*> o .:  "name"
+          <*> o .:? "roles"
+          <*> o .:? "user"
+          <*> o .:? "managed"
+
+  
 -- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: Snowflake     -- ^ Attachment id
