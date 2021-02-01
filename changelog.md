@@ -4,6 +4,9 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 Discord API changes, so use the most recent version at all times
 
+## 1.8.2
+
+Added 'Competing' activity
 
 ## 1.8.1
 
