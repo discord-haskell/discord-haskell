@@ -36,6 +36,17 @@ startHandler :: DiscordHandler ()
 startHandler = do
   Right partialGuilds <- restCall R.GetCurrentUserGuilds
 
+  let activity = Activity { activityName = "ping-pong"
+                          , activityType = ActivityTypeGame
+                          , activityUrl = Nothing
+                          }
+  let opts = UpdateStatusOpts { updateStatusOptsSince = Nothing
+                              , updateStatusOptsGame = Just activity
+                              , updateStatusOptsNewStatus = UpdateStatusOnline
+                              , updateStatusOptsAFK = False
+                              }
+  sendCommand (UpdateStatus opts)
+
   forM_ partialGuilds $ \pg -> do
     Right guild <- restCall $ R.GetGuild (partialGuildId pg)
     Right chans <- restCall $ R.GetGuildChannels (guildId guild)

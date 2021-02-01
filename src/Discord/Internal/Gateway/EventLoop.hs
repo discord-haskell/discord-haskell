@@ -209,7 +209,7 @@ data Sendables = Sendables {
 
 sendableLoop :: Connection -> Sendables -> IO ()
 sendableLoop conn sends = do activity <- readIORef (lastActivity sends)
-                             case activity of Just a -> writeChan (userSends sends) (UpdateStatus a) >> putStrLn "check my status!"
+                             case activity of Just a -> sendTextData conn (encode (UpdateStatus a))
                                               Nothing -> pure ()
                              loop
   where
@@ -220,3 +220,7 @@ sendableLoop conn sends = do activity <- readIORef (lastActivity sends)
           e = either id id
       payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
       sendTextData conn (encode payload)
+
+      case payload of
+        UpdateStatus a -> writeIORef (lastActivity sends) (Just a)
+        _ -> pure ()
