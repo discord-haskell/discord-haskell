@@ -199,10 +199,10 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                                  pure ConnClosed
 
 data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset on reconnect
-                             userSends :: Chan GatewaySendable -- ^ Things the user wants to send
-                            -- | Things the library needs to send. Resets to empty on reconnect
-                           , gatewaySends :: Chan GatewaySendable
-                           }
+                             userSends :: Chan GatewaySendable
+                             -- | Things the library needs to send. Resets to empty on reconnect
+                             , gatewaySends :: Chan GatewaySendable
+                             }
 
 sendableLoop :: Connection -> Sendables -> IO ()
 sendableLoop conn sends = forever $ do
