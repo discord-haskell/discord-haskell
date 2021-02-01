@@ -40,10 +40,10 @@ data ConnLoopState = ConnStart
 connect :: (Connection -> IO a) -> IO a
 connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
-type DiscordHandleGateway = (Chan (Either GatewayException Event), Chan GatewaySendable)
+type DiscordHandleGateway = (Chan (Either GatewayException Event), Chan GatewaySendable, IORef (Maybe UpdateStatusOpts))
 
 connectionLoop :: Auth -> DiscordHandleGateway -> Chan T.Text -> IO ()
-connectionLoop auth (events, userSend) log = loop ConnStart 0
+connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
  where
   loop :: ConnLoopState -> Int -> IO ()
   loop s retries =

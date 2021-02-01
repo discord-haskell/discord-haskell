@@ -13,6 +13,7 @@ module Discord.Internal.Gateway
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
+import Data.IORef (newIORef)
 import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, Event, GatewaySendable)
@@ -32,8 +33,9 @@ startGatewayThread :: Auth -> DiscordHandleCache -> Chan T.Text -> IO (DiscordHa
 startGatewayThread auth (_events, _) log = do
   events <- dupChan _events
   sends <- newChan
-  tid <- forkIO $ connectionLoop auth (events, sends) log
-  pure ((events, sends), tid)
+  status <- newIORef Nothing
+  tid <- forkIO $ connectionLoop auth (events, sends, status) log
+  pure ((events, sends, status), tid)
 
 
 

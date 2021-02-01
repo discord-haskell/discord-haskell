@@ -97,9 +97,12 @@ runDiscordLoop handle opts = do
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
+   gateChan :: DiscordHandleGateway -> Chan (Either GatewayException Event)
+   gateChan (a, _, _) = a -- only used right below in loop
+
    loop :: IO T.Text
    loop = do next <- race (readMVar (discordHandleLibraryError handle))
-                          (readChan (fst (discordHandleGateway handle)))
+                          (readChan (gateChan (discordHandleGateway handle)))
              case next of
                Left err -> libError err
                Right (Right event) -> do
@@ -144,7 +147,8 @@ sendCommand e = do
     Heartbeat _ -> pure ()
     Identify {} -> pure ()
     Resume {} -> pure ()
-    _ -> writeChan (snd (discordHandleGateway h)) e
+    _ -> let sendChan (_, b, _) = b
+         in writeChan (sendChan (discordHandleGateway h)) e
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandler Cache
