@@ -60,7 +60,7 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events (Right r)
-                    startEventStream (ConnData conn seshID auth events) interval 0 userSend log
+                    startEventStream (ConnData conn seshID auth events) interval 0 userSend lastStatus log
                   Right m -> do writeChan events (Left (GatewayExceptionUnexpected m
                                                          "Response to Identify must be Ready"))
                                 pure ConnClosed
@@ -86,7 +86,7 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
-                      startEventStream (ConnData conn seshID auth events) interval seqID userSend log
+                      startEventStream (ConnData conn seshID auth events) interval seqID userSend lastStatus log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
                       threadDelay (t * (10^(6 :: Int)))
@@ -145,15 +145,15 @@ data ConnectionData = ConnData { connection :: Connection
                                , connChan :: Chan (Either GatewayException Event)
                                }
 
-startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> Chan T.Text -> IO ConnLoopState
-startEventStream conndata interval seqN userSend log = do
+startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> IORef (Maybe UpdateStatusOpts) -> Chan T.Text -> IO ConnLoopState
+startEventStream conndata interval seqN userSend status log = do
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("gateway - eventStream error: " <> T.pack (show e))
                  ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
-    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends)
+    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends status)
     heart <- forkIO $ heartbeat gateSends interval seqKey
 
     finally (eventStream conndata seqKey interval gateSends log)
@@ -198,17 +198,25 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
                                                              "Normal event loop"))
                                  pure ConnClosed
 
-data Sendables = Sendables { -- | Things the user wants to send. Doesn't reset on reconnect
-                             userSends :: Chan GatewaySendable
-                             -- | Things the library needs to send. Resets to empty on reconnect
-                             , gatewaySends :: Chan GatewaySendable
-                             }
+data Sendables = Sendables {
+  -- | Things the user wants to send. Doesn't reset on reconnect
+    userSends :: Chan GatewaySendable
+  -- | Things the library needs to send. Resets to empty on reconnect
+  , gatewaySends :: Chan GatewaySendable
+  -- | Last thing the user set as status. Send it again on start
+  , lastActivity :: IORef (Maybe UpdateStatusOpts)
+  }
 
 sendableLoop :: Connection -> Sendables -> IO ()
-sendableLoop conn sends = forever $ do
-  -- send a ~120 events a min by delaying
-  threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
-  let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
-      e = either id id
-  payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
-  sendTextData conn (encode payload)
+sendableLoop conn sends = do activity <- readIORef (lastActivity sends)
+                             case activity of Just a -> writeChan (userSends sends) (UpdateStatus a) >> putStrLn "check my status!"
+                                              Nothing -> pure ()
+                             loop
+  where
+  loop = forever $ do
+      -- send a ~120 events a min by delaying
+      threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
+      let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
+          e = either id id
+      payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
+      sendTextData conn (encode payload)
