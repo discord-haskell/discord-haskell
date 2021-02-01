@@ -6,8 +6,9 @@ Discord API changes, so use the most recent version at all times
 
 ## 1.8.2
 
-Added 'Competing' activity
+Added 'Competing' activity https://github.com/aquarial/discord-haskell/issues/61
 
+Resend the last Activity settings on Resume fixing https://github.com/aquarial/discord-haskell/issues/60
 ## 1.8.1
 
 Added `MessageReaction` to Message https://github.com/aquarial/discord-haskell/issues/56
