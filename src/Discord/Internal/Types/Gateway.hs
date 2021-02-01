@@ -71,8 +71,14 @@ data Activity = Activity
 data ActivityType = ActivityTypeGame
                   | ActivityTypeStreaming
                   | ActivityTypeListening
-                  | ActivityTypeWatching
-  deriving (Show, Eq, Ord, Enum)
+                  | ActivityTypeCompeting
+  deriving (Show, Eq, Ord)
+
+activityTypeId :: ActivityType -> Int
+activityTypeId a = case a of ActivityTypeGame -> 0
+                             ActivityTypeStreaming -> 1
+                             ActivityTypeListening -> 2
+                             ActivityTypeCompeting -> 5
 
 data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusDoNotDisturb
@@ -145,7 +151,7 @@ instance ToJSON GatewaySendable where
       , "status" .= statusString status
       , "game" .= (game <&> \a -> object [
                                 "name" .= activityName a
-                              , "type" .= (fromEnum $ activityType a :: Int)
+                              , "type" .= activityTypeId (activityType a)
                               , "url" .= activityUrl a
                               ])
       ]
