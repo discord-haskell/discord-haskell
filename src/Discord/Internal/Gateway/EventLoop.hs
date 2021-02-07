@@ -147,22 +147,24 @@ data ConnectionData = ConnData { connection :: Connection
 
 startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> IORef (Maybe UpdateStatusOpts) -> Chan T.Text -> IO ConnLoopState
 startEventStream conndata interval seqN userSend status log = do
+  writeChan log "startEventStream"
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("gateway - eventStream error: " <> T.pack (show e))
                  ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
-    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends status)
+    sendingUsers <- newIORef False
+    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends sendingUsers status log)
     heart <- forkIO $ heartbeat gateSends interval seqKey
 
-    finally (eventStream conndata seqKey interval gateSends log)
+    finally (eventStream conndata seqKey interval gateSends sendingUsers log)
             (killThread heart >> killThread sendsId)
 
 
-eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable
+eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable -> IORef Bool
                               -> Chan T.Text -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loop
+eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends log = loop
   where
   loop :: IO ConnLoopState
   loop = do
@@ -182,6 +184,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do setSequence seqKey sq
                                       writeChan eventChan (Right event)
+                                      writeIORef userSends True
                                       loop
       Right (HeartbeatRequest sq) -> do setSequence seqKey sq
                                         writeChan send (Heartbeat sq)
@@ -200,27 +203,44 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send log = loo
 
 data Sendables = Sendables {
   -- | Things the user wants to send. Doesn't reset on reconnect
-    userSends :: Chan GatewaySendable
+    sendchan :: Chan GatewaySendable
   -- | Things the library needs to send. Resets to empty on reconnect
   , gatewaySends :: Chan GatewaySendable
-  -- | Last thing the user set as status. Send it again on start
-  , lastActivity :: IORef (Maybe UpdateStatusOpts)
+  -- | If we're really authenticated yet
+  , startSendingUser :: IORef Bool
+  -- | the last sent status
+  , sendslastStatus :: IORef (Maybe UpdateStatusOpts)
+  -- | Log
+  , sendlog :: Chan T.Text
   }
 
+-- simple idea: send payloads from user/sys to connection
+-- has to be complicated though
 sendableLoop :: Connection -> Sendables -> IO ()
-sendableLoop conn sends = do activity <- readIORef (lastActivity sends)
-                             case activity of Just a -> sendTextData conn (encode (UpdateStatus a))
-                                              Nothing -> pure ()
-                             loop
+sendableLoop conn sends = sendSysLoop
   where
-  loop = forever $ do
+  sendSysLoop = do
+      threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
+      payload <- readChan (gatewaySends sends)
+      sendTextData conn (encode payload)
+      usersending <- readIORef (startSendingUser sends)
+      if not usersending
+      then sendSysLoop
+      else do act <- readIORef (sendslastStatus sends)
+              case act of Nothing -> pure ()
+                          Just opts -> sendTextData conn (encode (UpdateStatus opts))
+              sendUserLoop
+
+  sendUserLoop = do
       -- send a ~120 events a min by delaying
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
       let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
           e = either id id
-      payload <- e <$> race (readChan (userSends sends)) (readChan (gatewaySends sends))
+      payload <- e <$> race (readChan (sendchan sends)) (readChan (gatewaySends sends))
       sendTextData conn (encode payload)
+      -- writeChan (sendlog sends) ("extrainfo - sending " <> T.pack (show payload))
 
-      case payload of
-        UpdateStatus a -> writeIORef (lastActivity sends) (Just a)
-        _ -> pure ()
+      case payload of UpdateStatus opts -> writeIORef (sendslastStatus sends) (Just opts)
+                      _ -> pure ()
+
+      sendUserLoop
