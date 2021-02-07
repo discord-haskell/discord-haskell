@@ -4,6 +4,12 @@ View on github for newest version: https://github.com/aquarial/discord-haskell/b
 
 Discord API changes, so use the most recent version at all times
 
+## master
+
+## 1.8.3
+
+Bot no longer disconnects randomly (hopefully)  https://github.com/aquarial/discord-haskell/issues/62
+
 ## 1.8.2
 
 Added 'Competing' activity https://github.com/aquarial/discord-haskell/issues/61
