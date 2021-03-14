@@ -250,8 +250,8 @@ data Message = Message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
-  , messageReference    :: Maybe MessageReference
-  , referencedMessage   :: Maybe Message
+  , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message 
+  , referencedMessage   :: Maybe Message   -- ^ The full original message
   } deriving (Show, Eq, Ord)
 
 instance FromJSON Message where
@@ -347,7 +347,7 @@ data MessageReference = MessageReference
   { referenceMessageId       :: Maybe MessageId  -- ^ 	id of the originating message
   , referenceChannelId       :: Maybe ChannelId  -- ^ 	id of the originating message's channel
   , referenceGuildId         :: Maybe GuildId    -- ^ id of the originating message's guild
-  , failIfNotExists :: Bool             -- ^ Whether to not send if reference not exist
+  , failIfNotExists :: Bool                      -- ^ Whether to not send if reference not exist
   } deriving (Show, Eq, Ord)
 
 instance FromJSON MessageReference where
