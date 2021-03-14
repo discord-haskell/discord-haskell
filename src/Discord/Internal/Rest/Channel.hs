@@ -48,6 +48,8 @@ data ChannelRequest a where
   GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
   CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
+  -- | Sends a message in reply to a message.
+  CreateMessageReply      :: (ChannelId, MessageId) -> T.Text -> ChannelRequest Message
   -- | Sends a message with an Embed to a channel.
   CreateMessageEmbed      :: ChannelId -> T.Text -> CreateEmbed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
@@ -185,6 +187,7 @@ channelMajorRoute c = case c of
   (GetChannelMessages chan _) ->            "msg " <> show chan
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _) ->                 "msg " <> show chan
+  (CreateMessageReply (chan, _) _) ->       "msg " <> show chan
   (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
   (CreateReaction (chan, _) _) ->     "add_react " <> show chan
@@ -250,6 +253,16 @@ channelJsonRequest c = case c of
 
   (CreateMessage chan msg) ->
       let content = ["content" .= msg]
+          body = pure $ R.ReqBodyJson $ object content
+      in Post (channels // chan /: "messages") body mempty
+
+  (CreateMessageReply (chan, msgid) msg) ->
+      let message_reference = toJSON $ MessageReference { referenceMessageId = Just msgid
+                                                        , referenceChannelId = Just chan
+                                                        , referenceGuildId = Nothing
+                                                        , failIfNotExists = False
+                                                        }
+          content = ["content" .= msg, "message_reference" .= message_reference]
           body = pure $ R.ReqBodyJson $ object content
       in Post (channels // chan /: "messages") body mempty
 
