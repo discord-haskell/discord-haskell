@@ -61,7 +61,7 @@ eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
         _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^(6 :: Int))
-        _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
+        _ <- restCall (R.CreateMessageReply (messageChannel m, messageId m) "Pong!")
         pure ()
       _ -> pure ()
 
