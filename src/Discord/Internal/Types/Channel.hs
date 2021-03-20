@@ -7,6 +7,7 @@ module Discord.Internal.Types.Channel where
 import Control.Applicative (empty)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
+import Data.Default (Default, def)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
@@ -344,10 +345,10 @@ instance FromJSON Nonce where
 
 -- | Represents a Message Reference
 data MessageReference = MessageReference
-  { referenceMessageId       :: Maybe MessageId  -- ^ 	id of the originating message
-  , referenceChannelId       :: Maybe ChannelId  -- ^ 	id of the originating message's channel
-  , referenceGuildId         :: Maybe GuildId    -- ^ id of the originating message's guild
-  , failIfNotExists :: Bool                      -- ^ Whether to not send if reference not exist
+  { referenceMessageId      :: Maybe MessageId  -- ^ id of the originating message
+  , referenceChannelId      :: Maybe ChannelId  -- ^ id of the originating message's channel
+  , referenceGuildId        :: Maybe GuildId    -- ^ id of the originating message's guild
+  , failIfNotExists         :: Bool             -- ^ Whether to not send if reference not exist
   } deriving (Show, Eq, Ord)
 
 instance FromJSON MessageReference where
@@ -364,3 +365,10 @@ instance ToJSON MessageReference where
               , ("guild_id",  toJSON <$> pure referenceGuildId)
               , ("fail_if_not_exists",   toJSON <$> pure failIfNotExists)
               ] ]
+
+instance Default MessageReference where
+  def = MessageReference { referenceMessageId = Nothing
+                         , referenceChannelId = Nothing
+                         , referenceGuildId   = Nothing
+                         , failIfNotExists    = False
+                         }

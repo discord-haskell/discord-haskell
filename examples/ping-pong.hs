@@ -51,8 +51,7 @@ startHandler = do
     Right guild <- restCall $ R.GetGuild (partialGuildId pg)
     Right chans <- restCall $ R.GetGuildChannels (guildId guild)
     case filter isTextChannel chans of
-      (c:_) -> do _ <- restCall $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
-                  pure ()
+      (c:_) -> pure ()
       _ -> pure ()
 
 -- If an event handler throws an exception, discord-haskell will continue to run
@@ -61,7 +60,16 @@ eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
         _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^(6 :: Int))
-        _ <- restCall (R.CreateMessageReply (messageChannel m, messageId m) "Pong!")
+        
+        let opts = def { R.messageDetailedContent = "Pong! @everyone"
+                       , R.messageDetailedTTS = True
+                       , R.messageDetailedAllowedMentions = Just $ def { R.mentionEveryone = False
+                                                                       , R.mentionRepliedUser = False}
+                       , R.messageDetailedReference = Just $ def { referenceMessageId = Just $ messageId m}
+                       }
+        _ <- restCall (R.CreateMessageDetailed (messageChannel m) opts)
+
+        
         pure ()
       _ -> pure ()
 
