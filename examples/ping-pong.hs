@@ -51,7 +51,8 @@ startHandler = do
     Right guild <- restCall $ R.GetGuild (partialGuildId pg)
     Right chans <- restCall $ R.GetGuildChannels (guildId guild)
     case filter isTextChannel chans of
-      (c:_) -> pure ()
+      (c:_) -> do _ <- restCall $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
+                  pure ()
       _ -> pure ()
 
 -- If an event handler throws an exception, discord-haskell will continue to run
