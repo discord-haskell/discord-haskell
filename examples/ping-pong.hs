@@ -62,7 +62,9 @@ eventHandler event = case event of
         _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^(6 :: Int))
         
-        let opts = def { R.messageDetailedContent = "Pong! @everyone"
+        _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
+
+        let opts = def { R.messageDetailedContent = "Here's a more complex message, @everyone!"
                        , R.messageDetailedTTS = True
                        , R.messageDetailedAllowedMentions = Just $ def { R.mentionEveryone = False
                                                                        , R.mentionRepliedUser = False}
