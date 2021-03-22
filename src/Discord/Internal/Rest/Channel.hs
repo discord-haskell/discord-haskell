@@ -8,7 +8,6 @@
 module Discord.Internal.Rest.Channel
   ( ChannelRequest(..)
   , MessageDetailedOpts(..)
-  , FileUpload(..)
   , AllowedMentions(..)
   , ReactionTiming(..)
   , MessageTiming(..)
@@ -104,7 +103,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   { messageDetailedContent                  :: T.Text
   , messageDetailedTTS                      :: Bool
   , messageDetailedEmbed                    :: Maybe CreateEmbed
-  , messageDetailedFile                     :: Maybe FileUpload
+  , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
   }
@@ -117,11 +116,6 @@ instance Default MessageDetailedOpts where
                             , messageDetailedAllowedMentions = Nothing
                             , messageDetailedReference       = Nothing
                             }
-
-data FileUpload = FileUpload
-  { fileUploadName  :: T.Text
-  , fileUploadBytes :: B.ByteString
-  }
 
 data AllowedMentions = AllowedMentions
   { mentionEveryone    :: Bool
@@ -326,12 +320,11 @@ channelJsonRequest c = case c of
       let fileUpload = messageDetailedFile msgOpts
           filePart = case fileUpload of 
             Nothing -> []
-            Just f  -> [partFileRequestBody "file" (T.unpack $ fileUploadName f)
-              $ RequestBodyBS $ fileUploadBytes f]
+            Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
+              $ RequestBodyBS $ snd f]
 
           payloadData = object $ concat [ [ "content" .= messageDetailedContent msgOpts
-                                          , "tts"     .= messageDetailedTTS msgOpts
-                                          ]
+                                          , "tts"     .= messageDetailedTTS msgOpts ]
                                         , [name .= value | (name, Just value) <-
                                                [("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
                                                ,("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
