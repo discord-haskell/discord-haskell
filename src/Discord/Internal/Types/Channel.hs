@@ -251,7 +251,7 @@ data Message = Message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
-  , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message 
+  , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
   , referencedMessage   :: Maybe Message   -- ^ The full original message
   } deriving (Show, Eq, Ord)
 
@@ -310,7 +310,7 @@ instance FromJSON Emoji where
           <*> o .:? "user"
           <*> o .:? "managed"
 
-  
+
 -- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: Snowflake     -- ^ Attachment id

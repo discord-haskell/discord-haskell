@@ -98,7 +98,7 @@ data ChannelRequest a where
   GroupDMRemoveRecipient  :: ChannelId -> UserId -> ChannelRequest ()
 
 
--- | Constructor for detailed configuration of the message to be sent.
+-- | Data constructor for CreateMessageDetailed requests.
 data MessageDetailedOpts = MessageDetailedOpts
   { messageDetailedContent                  :: T.Text
   , messageDetailedTTS                      :: Bool
@@ -117,6 +117,7 @@ instance Default MessageDetailedOpts where
                             , messageDetailedReference       = Nothing
                             }
 
+-- | Data constructor for a part of MessageDetailedOpts.
 data AllowedMentions = AllowedMentions
   { mentionEveryone    :: Bool
   , mentionUsers       :: Bool
@@ -138,9 +139,9 @@ instance Default AllowedMentions where
 instance ToJSON AllowedMentions where
   toJSON AllowedMentions{..} = object [
                                  ("parse" .= [name :: T.Text | (name, True) <-
-                                     [("everyone", mentionEveryone),
-                                      ("users",    mentionUsers),
-                                      ("roles",    mentionRoles) ] ]),
+                                     [ ("everyone", mentionEveryone),
+                                       ("users",    mentionUsers),
+                                       ("roles",    mentionRoles) ] ]),
                                  ("roles"        .= mentionRoleIds),
                                  ("users"        .= mentionUserIds),
                                  ("replied_user" .= mentionRepliedUser) ]
@@ -318,18 +319,18 @@ channelJsonRequest c = case c of
 
   (CreateMessageDetailed chan msgOpts) ->
       let fileUpload = messageDetailedFile msgOpts
-          filePart = case fileUpload of 
+          filePart = case fileUpload of
             Nothing -> []
             Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
               $ RequestBodyBS $ snd f]
 
-          payloadData = object $ concat [ [ "content" .= messageDetailedContent msgOpts
-                                          , "tts"     .= messageDetailedTTS msgOpts ]
-                                        , [name .= value | (name, Just value) <-
-                                               [("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
-                                               ,("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
-                                               ,("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                               ] ] ]
+          payloadData = object $ [ "content" .= messageDetailedContent msgOpts
+                                 , "tts"     .= messageDetailedTTS msgOpts ] ++
+                                 [ name .= value | (name, Just value) <-
+                                    [ ("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
+                                    , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
+                                    , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
+                                    ] ]
           payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
 
           body = R.reqBodyMultipart (payloadPart : filePart)
