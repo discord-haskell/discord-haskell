@@ -61,18 +61,23 @@ eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
         _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
         threadDelay (4 * 10^(6 :: Int))
-        
+
+        -- A very simple message.
         _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
 
+        -- A more complex message. Text-to-speech, does not mention everyone nor
+        -- the user, and uses Discord native replies.
         let opts = def { R.messageDetailedContent = "Here's a more complex message, @everyone!"
                        , R.messageDetailedTTS = True
-                       , R.messageDetailedAllowedMentions = Just $ def { R.mentionEveryone = False
-                                                                       , R.mentionRepliedUser = False}
-                       , R.messageDetailedReference = Just $ def { referenceMessageId = Just $ messageId m}
+                       , R.messageDetailedAllowedMentions = Just
+                          $ def { R.mentionEveryone = False
+                                , R.mentionRepliedUser = False
+                                }
+                       , R.messageDetailedReference = Just
+                          $ def { referenceMessageId = Just $ messageId m }
                        }
         _ <- restCall (R.CreateMessageDetailed (messageChannel m) opts)
 
-        
         pure ()
       _ -> pure ()
 
