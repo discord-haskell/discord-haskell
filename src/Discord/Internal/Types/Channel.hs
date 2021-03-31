@@ -7,6 +7,7 @@ module Discord.Internal.Types.Channel where
 import Control.Applicative (empty)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
+import Data.Default (Default, def)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
@@ -250,6 +251,8 @@ data Message = Message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
+  , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
+  , referencedMessage   :: Maybe Message   -- ^ The full original message
   } deriving (Show, Eq, Ord)
 
 instance FromJSON Message where
@@ -274,6 +277,8 @@ instance FromJSON Message where
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
             <*> o .:? "guild_id" .!= Nothing
+            <*> o .:? "message_reference" .!= Nothing
+            <*> o .:? "referenced_message" .!= Nothing
 
 
 data MessageReaction = MessageReaction
@@ -305,7 +310,7 @@ instance FromJSON Emoji where
           <*> o .:? "user"
           <*> o .:? "managed"
 
-  
+
 -- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: Snowflake     -- ^ Attachment id
@@ -336,3 +341,34 @@ instance FromJSON Nonce where
   parseJSON (String nonce) = pure $ Nonce nonce
   parseJSON (Number nonce) = pure . Nonce . T.pack . show $ nonce
   parseJSON _ = empty
+
+
+-- | Represents a Message Reference
+data MessageReference = MessageReference
+  { referenceMessageId      :: Maybe MessageId  -- ^ id of the originating message
+  , referenceChannelId      :: Maybe ChannelId  -- ^ id of the originating message's channel
+  , referenceGuildId        :: Maybe GuildId    -- ^ id of the originating message's guild
+  , failIfNotExists         :: Bool             -- ^ Whether to not send if reference not exist
+  } deriving (Show, Eq, Ord)
+
+instance FromJSON MessageReference where
+  parseJSON = withObject "MessageReference" $ \o ->
+    MessageReference <$> o .:? "message_id"
+                     <*> o .:? "channel_id"
+                     <*> o .:? "guild_id"
+                     <*> o .:? "fail_if_not_exists" .!= True
+
+instance ToJSON MessageReference where
+  toJSON MessageReference{..} = object [(name,value) | (name, Just value) <-
+              [ ("message_id",     toJSON <$> pure referenceMessageId)
+              , ("channel_id", toJSON <$> pure referenceChannelId)
+              , ("guild_id",  toJSON <$> pure referenceGuildId)
+              , ("fail_if_not_exists",   toJSON <$> pure failIfNotExists)
+              ] ]
+
+instance Default MessageReference where
+  def = MessageReference { referenceMessageId = Nothing
+                         , referenceChannelId = Nothing
+                         , referenceGuildId   = Nothing
+                         , failIfNotExists    = False
+                         }

@@ -7,6 +7,8 @@
 -- | Provides actions for Channel API interactions
 module Discord.Internal.Rest.Channel
   ( ChannelRequest(..)
+  , MessageDetailedOpts(..)
+  , AllowedMentions(..)
   , ReactionTiming(..)
   , MessageTiming(..)
   , ChannelInviteOpts(..)
@@ -18,6 +20,7 @@ module Discord.Internal.Rest.Channel
 
 
 import Data.Aeson
+import Data.Default (Default, def)
 import Data.Emoji (unicodeByName)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
@@ -52,6 +55,8 @@ data ChannelRequest a where
   CreateMessageEmbed      :: ChannelId -> T.Text -> CreateEmbed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
+  -- | Sends a message with granular controls.
+  CreateMessageDetailed   :: ChannelId -> MessageDetailedOpts -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
   CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
@@ -92,6 +97,54 @@ data ChannelRequest a where
   -- | Removes a recipient from a Group DM
   GroupDMRemoveRecipient  :: ChannelId -> UserId -> ChannelRequest ()
 
+
+-- | Data constructor for CreateMessageDetailed requests.
+data MessageDetailedOpts = MessageDetailedOpts
+  { messageDetailedContent                  :: T.Text
+  , messageDetailedTTS                      :: Bool
+  , messageDetailedEmbed                    :: Maybe CreateEmbed
+  , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
+  , messageDetailedAllowedMentions          :: Maybe AllowedMentions
+  , messageDetailedReference                :: Maybe MessageReference
+  }
+
+instance Default MessageDetailedOpts where
+  def = MessageDetailedOpts { messageDetailedContent         = ""
+                            , messageDetailedTTS             = False
+                            , messageDetailedEmbed           = Nothing
+                            , messageDetailedFile            = Nothing
+                            , messageDetailedAllowedMentions = Nothing
+                            , messageDetailedReference       = Nothing
+                            }
+
+-- | Data constructor for a part of MessageDetailedOpts.
+data AllowedMentions = AllowedMentions
+  { mentionEveryone    :: Bool
+  , mentionUsers       :: Bool
+  , mentionRoles       :: Bool
+  , mentionUserIds     :: [UserId]
+  , mentionRoleIds     :: [RoleId]
+  , mentionRepliedUser :: Bool
+  }
+
+instance Default AllowedMentions where
+  def = AllowedMentions { mentionEveryone    = False
+                        , mentionUsers       = True
+                        , mentionRoles       = True
+                        , mentionUserIds     = []
+                        , mentionRoleIds     = []
+                        , mentionRepliedUser = True
+                        }
+
+instance ToJSON AllowedMentions where
+  toJSON AllowedMentions{..} = object [
+                                 ("parse" .= [name :: T.Text | (name, True) <-
+                                     [ ("everyone", mentionEveryone),
+                                       ("users",    mentionUsers),
+                                       ("roles",    mentionRoles) ] ]),
+                                 ("roles"        .= mentionRoleIds),
+                                 ("users"        .= mentionUserIds),
+                                 ("replied_user" .= mentionRepliedUser) ]
 
 -- | Data constructor for GetReaction requests
 data ReactionTiming = BeforeReaction MessageId
@@ -187,6 +240,7 @@ channelMajorRoute c = case c of
   (CreateMessage chan _) ->                 "msg " <> show chan
   (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
+  (CreateMessageDetailed chan _) ->         "msg " <> show chan
   (CreateReaction (chan, _) _) ->     "add_react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
   (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
@@ -261,6 +315,25 @@ channelJsonRequest c = case c of
   (CreateMessageUploadFile chan fileName file) ->
       let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyBS file
           body = R.reqBodyMultipart [part]
+      in Post (channels // chan /: "messages") body mempty
+
+  (CreateMessageDetailed chan msgOpts) ->
+      let fileUpload = messageDetailedFile msgOpts
+          filePart = case fileUpload of
+            Nothing -> []
+            Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
+              $ RequestBodyBS $ snd f]
+
+          payloadData = object $ [ "content" .= messageDetailedContent msgOpts
+                                 , "tts"     .= messageDetailedTTS msgOpts ] ++
+                                 [ name .= value | (name, Just value) <-
+                                    [ ("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
+                                    , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
+                                    , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
+                                    ] ]
+          payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
+
+          body = R.reqBodyMultipart (payloadPart : filePart)
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
