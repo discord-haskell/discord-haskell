@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.8.4
+
+[yutotakano](https://github.com/aquarial/discord-haskell/pull/64) Add discord replies type, and message constructor
+
 ## 1.8.3
 
 Bot no longer disconnects randomly (hopefully)  https://github.com/aquarial/discord-haskell/issues/62
