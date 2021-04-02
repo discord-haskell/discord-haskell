@@ -67,13 +67,15 @@ eventHandler event = case event of
 
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
-        let opts = def { messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!"
-                       , messageDetailedTTS = True
-                       , messageDetailedAllowedMentions = Just $
-                          def { mentionEveryone = False
-                              , mentionRepliedUser = False
+        -- Use ":info" in ghci to explore the type
+        let opts :: R.MessageDetailedOpts
+            opts = def { R.messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!"
+                       , R.messageDetailedTTS = True
+                       , R.messageDetailedAllowedMentions = Just $
+                          def { R.mentionEveryone = False
+                              , R.mentionRepliedUser = False
                               }
-                       , messageDetailedReference = Just $
+                       , R.messageDetailedReference = Just $
                           def { referenceMessageId = Just $ messageId m }
                        }
         _ <- restCall (R.CreateMessageDetailed (messageChannel m) opts)
