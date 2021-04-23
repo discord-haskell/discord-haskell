@@ -12,7 +12,7 @@ import Control.Monad (when)
 import Data.Text (isPrefixOf, toLower, Text)
 import qualified Data.Text.IO as TIO
 
-import UnliftIO
+import UnliftIO.Concurrent
 
 import Discord
 import Discord.Types
