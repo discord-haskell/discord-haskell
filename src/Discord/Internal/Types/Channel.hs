@@ -77,8 +77,10 @@ data Channel
       }
   | ChannelGuildCategory
       { channelId          :: ChannelId
-      , channelName        :: T.Text
       , channelGuild       :: GuildId
+      , channelName        :: T.Text
+      , channelPosition    :: Integer
+      , channelPermissions :: [Overwrite]
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Channel where
@@ -116,8 +118,10 @@ instance FromJSON Channel where
                        <*> o .:? "last_message_id"
       4 ->
         ChannelGuildCategory <$> o .: "id"
-                             <*> o .:  "name"
                              <*> o .:? "guild_id" .!= 0
+                             <*> o .:  "name"
+                             <*> o .:  "position"
+                             <*> o .:  "permission_overwrites"
       5 ->
         ChannelNews <$> o .:  "id"
                     <*> o .:? "guild_id" .!= 0
