@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.8.6
+
 Add [missing fields](https://github.com/aquarial/discord-haskell/issues/67) to ChannelGuildCategory
 
 ## 1.8.5
