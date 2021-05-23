@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.8.7
+
+Add [Stage channel](https://github.com/aquarial/discord-haskell/issues/68) and a catch-all Unknown channel so we stop crashing on new releases (?)
+
 ## 1.8.6
 
 Add [missing fields](https://github.com/aquarial/discord-haskell/issues/67) to ChannelGuildCategory
