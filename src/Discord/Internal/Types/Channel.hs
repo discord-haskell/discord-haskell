@@ -50,6 +50,7 @@ data Channel
       , channelPosition    :: Integer
       , channelNSFW        :: Bool
       , channelPermissions :: [Overwrite]
+      , parentId           :: Maybe ParentId
       }
   -- | A voice channel in a guild.
   | ChannelVoice
@@ -148,6 +149,7 @@ instance FromJSON Channel where
                          <*> o .:  "position"
                          <*> o .:? "nsfw" .!= False
                          <*> o .:  "permission_overwrites"
+                         <*> o .:? "parent_id"
       13 ->
         ChannelStage <$> o .:  "id"
                      <*> o .:? "guild_id" .!= 0
