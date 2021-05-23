@@ -81,6 +81,16 @@ data Channel
       , channelName        :: T.Text
       , channelPosition    :: Integer
       , channelPermissions :: [Overwrite]
+      }
+  | ChannelStage
+      { channelId          :: ChannelId
+      , channelGuild       :: GuildId
+      , channelStageId     :: StageId
+      , channelStageTopic  :: Text
+      }
+  | ChannelUnknownType
+      { channelId          :: ChannelId
+      , channelJSON        :: Text
       } deriving (Show, Eq, Ord)
 
 instance FromJSON Channel where
@@ -138,7 +148,13 @@ instance FromJSON Channel where
                          <*> o .:  "position"
                          <*> o .:? "nsfw" .!= False
                          <*> o .:  "permission_overwrites"
-      _ -> fail ("Unknown channel type:" <> show type')
+      13 ->
+        ChannelStage <$> o .:  "id"
+                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "id"
+                     <*> o .:  "topic"
+      _ -> ChannelUnknownType <$> o .:  "id"
+                              <*> pure (T.pack (show o))
 
 instance ToJSON Channel where
   toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
@@ -195,6 +211,16 @@ instance ToJSON Channel where
               [ ("id",     toJSON <$> pure channelId)
               , ("name", toJSON <$> pure channelName)
               , ("guild_id", toJSON <$> pure channelGuild)
+              ] ]
+  toJSON ChannelStage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("channel_id", toJSON <$> pure channelStageId)
+              , ("topic", toJSON <$> pure channelStageTopic)
+              ] ]
+  toJSON ChannelUnknownType{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("json", toJSON <$> pure channelJSON)
               ] ]
 
 -- | If the channel is part of a guild (has a guild id field)

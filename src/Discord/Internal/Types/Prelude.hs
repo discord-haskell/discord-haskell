@@ -45,6 +45,7 @@ instance FromJSON Snowflake where
   parseJSON _ = mzero
 
 type ChannelId = Snowflake
+type StageId = Snowflake
 type GuildId = Snowflake
 type MessageId = Snowflake
 type EmojiId = Snowflake
