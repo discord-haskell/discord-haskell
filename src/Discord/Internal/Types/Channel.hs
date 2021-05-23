@@ -154,7 +154,7 @@ instance FromJSON Channel where
         ChannelStage <$> o .:  "id"
                      <*> o .:? "guild_id" .!= 0
                      <*> o .:  "id"
-                     <*> o .:  "topic"
+                     <*> o .:? "topic" .!= ""
       _ -> ChannelUnknownType <$> o .:  "id"
                               <*> pure (T.pack (show o))
 
