@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.8.8
+
+Remove git artifacts from [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/issues/69)
+
 ## 1.8.7
 
 Add [Stage channel](https://github.com/aquarial/discord-haskell/issues/68) and a catch-all Unknown channel so we stop crashing on new releases (?)
