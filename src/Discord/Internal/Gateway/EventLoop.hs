@@ -98,8 +98,7 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                                                "Response to Resume must be Hello/Invalid Session"))
                       pure ConnClosed
                   Left e -> do
-                      writeChan events (Left (GatewayExceptionConnection e
-                                               "Could not ConnReconnect"))
+                      writeChan events (Left (GatewayExceptionConnection e "Could not ConnReconnect"))
                       pure ConnClosed
           case next :: Either SomeException ConnLoopState of
             Left _ -> do t <- getRandomR (3,20)
