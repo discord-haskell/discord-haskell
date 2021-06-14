@@ -135,9 +135,6 @@ heartbeat send interval seqKey = do
     writeChan send (Heartbeat num)
     threadDelay (interval * 1000)
 
-setSequence :: IORef Integer -> Integer -> IO ()
-setSequence key i = writeIORef key i
-
 -- | What we need to start an event stream
 data ConnectionData = ConnData { connection :: Connection
                                , connSessionID :: T.Text
@@ -182,11 +179,11 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends
                                               "Normal event loop close request"))
                   pure ConnClosed
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
-      Right (Dispatch event sq) -> do setSequence seqKey sq
+      Right (Dispatch event sq) -> do writeIORef seqKey sq
                                       writeChan eventChan (Right event)
                                       writeIORef userSends True
                                       loop
-      Right (HeartbeatRequest sq) -> do setSequence seqKey sq
+      Right (HeartbeatRequest sq) -> do writeIORef seqKey sq
                                         writeChan send (Heartbeat sq)
                                         loop
       Right (Reconnect)      -> ConnReconnect auth seshID <$> readIORef seqKey
