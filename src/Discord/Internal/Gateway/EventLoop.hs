@@ -64,6 +64,9 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                   Right m -> do writeChan events (Left (GatewayExceptionUnexpected m
                                                          "Response to Identify must be Ready"))
                                 pure ConnClosed
+                  Left (CloseRequest code _str) -> do writeChan log ("gateway - close " <> T.pack (show code))
+                                                      threadDelay (3 * (10^(6 :: Int)))
+                                                      pure ConnStart
                   Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
                                                          "Response to Identify"))
                                 pure ConnClosed
@@ -71,6 +74,9 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                             writeChan events (Left (GatewayExceptionUnexpected m
                                                       "Response to connecting must be hello"))
                             pure ConnClosed
+              Left (CloseRequest code _str) -> do writeChan log ("gateway - close " <> T.pack (show code))
+                                                  threadDelay (3 * (10^(6 :: Int)))
+                                                  pure ConnStart
               Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
                                                      "Response to connecting"))
                             pure ConnClosed
@@ -97,6 +103,10 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                       writeChan events (Left (GatewayExceptionUnexpected payload
                                                "Response to Resume must be Hello/Invalid Session"))
                       pure ConnClosed
+                  Left (CloseRequest code _str) -> do
+                      writeChan log ("gateway - retrying from " <> T.pack (show code))
+                      threadDelay (3 * (10^(6 :: Int)))
+                      pure (ConnReconnect (Auth tok) seshID seqID)
                   Left e -> do
                       writeChan events (Left (GatewayExceptionConnection e "Could not ConnReconnect"))
                       pure ConnClosed
