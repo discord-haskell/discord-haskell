@@ -168,6 +168,8 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends
     case eitherPayload :: Either ConnectionException GatewayReceivable of
       Left (CloseRequest code str) -> case code of
           -- see Discord and MDN documentation on gateway close event codes
+          -- https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
+          -- https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
           1000 -> ConnReconnect auth seshID <$> readIORef seqKey
           1001 -> ConnReconnect auth seshID <$> readIORef seqKey
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
