@@ -8,7 +8,7 @@ This is an example bot that replies "pong" to messages that start with "ping".
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 
-import Control.Monad (when)
+import Control.Monad (when, void)
 import Data.Text (isPrefixOf, toLower, Text)
 import qualified Data.Text.IO as TIO
 
@@ -27,18 +27,17 @@ pingpongExample = do userFacingError <- runDiscord $ def
 
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
-       MessageCreate m -> when (not (fromBot m) && isPing (messageText m)) $ do
-               _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
-               threadDelay (4 * 10^6)
-               _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
-               pure ()
-       _ -> pure ()
+       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
+               void $ restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
+               threadDelay (2 * 10^6)
+               void $ restCall (R.CreateMessage (messageChannel m) "Pong!")
+       _ -> return ()
 
 fromBot :: Message -> Bool
-fromBot m = userIsBot (messageAuthor m)
+fromBot = userIsBot . messageAuthor
 
-isPing :: Text -> Bool
-isPing = ("ping" `isPrefixOf`) . toLower
+isPing :: Message -> Bool
+isPing = ("ping" `isPrefixOf`) . toLower . messageText
 ```
 
 

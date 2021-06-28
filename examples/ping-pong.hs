@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
-import Control.Monad (when, forM_)
+import Control.Monad (when, forM_, void)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -27,7 +27,6 @@ pingpongExample = do
                         , discordOnEvent = eventHandler
                         , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                         }
-  threadDelay (1 `div` 10 * 10^(6 :: Int))
   TIO.putStrLn t
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
@@ -50,20 +49,20 @@ startHandler = do
   forM_ partialGuilds $ \pg -> do
     Right guild <- restCall $ R.GetGuild (partialGuildId pg)
     Right chans <- restCall $ R.GetGuildChannels (guildId guild)
-    case filter isTextChannel chans of
-      (c:_) -> do _ <- restCall $ R.CreateMessage (channelId c) "Hello! I will reply to pings with pongs"
-                  pure ()
-      _ -> pure ()
+    forM_ (take 1 (filter isTextChannel chans))
+      (\channel -> restCall $ R.CreateMessage (channelId channel)
+                                      "Hello! I will reply to pings with pongs")
+
 
 -- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-        _ <- restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
-        threadDelay (4 * 10^(6 :: Int))
+        void $ restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
+        threadDelay (2 * 10^(6 :: Int))
 
         -- A very simple message.
-        _ <- restCall (R.CreateMessage (messageChannel m) "Pong!")
+        void $ restCall (R.CreateMessage (messageChannel m) "Pong!")
 
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
@@ -78,17 +77,15 @@ eventHandler event = case event of
                        , R.messageDetailedReference = Just $
                           def { referenceMessageId = Just $ messageId m }
                        }
-        _ <- restCall (R.CreateMessageDetailed (messageChannel m) opts)
-
-        pure ()
-      _ -> pure ()
+        void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
+      _ -> return ()
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True
 isTextChannel _ = False
 
 fromBot :: Message -> Bool
-fromBot m = userIsBot (messageAuthor m)
+fromBot = userIsBot . messageAuthor
 
 isPing :: Message -> Bool
 isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText

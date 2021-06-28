@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+Simplify [some examples](https://github.com/aquarial/discord-haskell/issues/71)
+
 ## 1.8.8
 
 Remove git artifacts from [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/issues/69)
