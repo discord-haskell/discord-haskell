@@ -12,6 +12,14 @@ cache:
 matrix:
   include:
 
+  - ghc: 8.8.4
+    env: GHCVER='8.8.4' STACK_YAML="$TRAVIS_BUILD_DIR/stack.yaml"
+    os: linux
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+
   - ghc: 8.4.3
     env: GHCVER='8.4.3' CABALVER='head'
     os: linux
@@ -23,14 +31,6 @@ matrix:
         - ghc-8.4.3
         - cabal-install-head
   
-  - ghc: 8.0.1
-    env: GHCVER='8.0.1' STACK_YAML="$TRAVIS_BUILD_DIR/stack.yaml"
-    os: linux
-    addons:
-      apt:
-        packages:
-        - libgmp-dev
-
   - ghc: 8.4.3
     env: GHCVER='8.4.3' STACK_YAML="$TRAVIS_BUILD_DIR/stack.yaml"
     os: linux
