@@ -49,7 +49,7 @@ data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
   , modifyWebhookOptsAvatar        :: Maybe T.Text
   , modifyWebhookOptsChannelId     :: Maybe ChannelId
-  }
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyWebhookOpts where
   toJSON ModifyWebhookOpts{..} = object [(name, val) | (name, Just val) <-
@@ -60,7 +60,7 @@ instance ToJSON ModifyWebhookOpts where
 data CreateWebhookOpts = CreateWebhookOpts
   { createWebhookOptsName          :: T.Text
   , createWebhookOptsAvatar        :: Maybe T.Text
-  }
+  } deriving (Show, Eq, Ord)
 
 instance ToJSON CreateWebhookOpts where
   toJSON CreateWebhookOpts{..} = object [(name, val) | (name, Just val) <-
@@ -70,8 +70,7 @@ instance ToJSON CreateWebhookOpts where
 data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
   { executeWebhookWithTokenOptsUsername      :: Maybe T.Text
   , executeWebhookWithTokenOptsContent       :: WebhookContent
-  }
-  deriving (Show, Eq, Ord)
+  } deriving (Show, Eq, Ord)
 
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text B.ByteString

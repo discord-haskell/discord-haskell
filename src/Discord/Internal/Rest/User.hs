@@ -54,6 +54,7 @@ data UserRequest a where
 
 -- | Formatted avatar data https://discord.com/developers/docs/resources/user#avatar-data
 data CurrentUserAvatar = CurrentUserAvatar T.Text
+  deriving (Show, Eq, Ord)
 
 parseCurrentUserAvatar :: B.ByteString -> Either T.Text CurrentUserAvatar
 parseCurrentUserAvatar bs =

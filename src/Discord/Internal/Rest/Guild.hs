@@ -287,7 +287,7 @@ instance ToJSON ModifyGuildOpts where
 data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
                           , guildMembersTimingAfter :: Maybe UserId
-                          }
+                          } deriving (Show, Eq, Ord)
 
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
