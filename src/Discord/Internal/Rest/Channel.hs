@@ -140,8 +140,10 @@ instance ToJSON AllowedMentions where
   toJSON AllowedMentions{..} = object [
                                  ("parse" .= [name :: T.Text | (name, True) <-
                                      [ ("everyone", mentionEveryone),
-                                       ("users",    mentionUsers),
-                                       ("roles",    mentionRoles) ] ]),
+                                       ("users",    mentionUsers && mentionUserIds == []),
+                                       ("roles",    mentionRoles && mentionRoleIds == []) ] ]),
+                                 -- https://discord.com/developers/docs/resources/channel#allowed-mentions-object
+                                 --  parse.users and users list cannot both be active, prioritize id list
                                  ("roles"        .= mentionRoleIds),
                                  ("users"        .= mentionUserIds),
                                  ("replied_user" .= mentionRepliedUser) ]
