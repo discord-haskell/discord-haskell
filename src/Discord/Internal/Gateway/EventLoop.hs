@@ -40,7 +40,9 @@ data ConnLoopState = ConnStart
 connect :: (Connection -> IO a) -> IO a
 connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
-type DiscordHandleGateway = (Chan (Either GatewayException Event), Chan GatewaySendable, IORef (Maybe UpdateStatusOpts))
+type DiscordHandleGateway = (Chan (Either GatewayException Event),
+                             Chan GatewaySendable,
+                             IORef (Maybe UpdateStatusOpts))
 
 connectionLoop :: Auth -> DiscordHandleGateway -> Chan T.Text -> IO ()
 connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
@@ -136,7 +138,7 @@ getPayload conn log = try $ do
                                       <> " while decoding " <> TE.decodeUtf8 (BL.toStrict msg'))
                     pure (ParseError (T.pack err))
 
-heartbeat :: Chan GatewaySendable -> Int -> IORef Integer -> IO ()
+heartbeat :: Chan GatewaySendableInternal -> Int -> IORef Integer -> IO ()
 heartbeat send interval seqKey = do
   threadDelay (1 * 10^(6 :: Int))
   forever $ do
@@ -168,8 +170,8 @@ startEventStream conndata interval seqN userSend status log = do
             (killThread heart >> killThread sendsId)
 
 
-eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendable -> IORef Bool
-                              -> Chan T.Text -> IO ConnLoopState
+eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendableInternal
+                              -> IORef Bool -> Chan T.Text -> IO ConnLoopState
 eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends log = loop
   where
   loop :: IO ConnLoopState
@@ -213,7 +215,7 @@ data Sendables = Sendables {
   -- | Things the user wants to send. Doesn't reset on reconnect
     sendchan :: Chan GatewaySendable
   -- | Things the library needs to send. Resets to empty on reconnect
-  , gatewaySends :: Chan GatewaySendable
+  , gatewaySends :: Chan GatewaySendableInternal
   -- | If we're really authenticated yet
   , startSendingUser :: IORef Bool
   -- | the last sent status
@@ -242,13 +244,13 @@ sendableLoop conn sends = sendSysLoop
   sendUserLoop = do
       -- send a ~120 events a min by delaying
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
-      let e :: Either GatewaySendable GatewaySendable -> GatewaySendable
-          e = either id id
-      payload <- e <$> race (readChan (sendchan sends)) (readChan (gatewaySends sends))
-      sendTextData conn (encode payload)
+   -- payload :: Either GatewaySendableInternal GatewaySendable
+      payload <- race (readChan (sendchan sends)) (readChan (gatewaySends sends))
+      sendTextData conn (either encode encode payload)
+
+      case payload of
+          Left (UpdateStatus opts) -> writeIORef (sendslastStatus sends) (Just opts)
+          _ -> pure ()
+
       -- writeChan (sendlog sends) ("extrainfo - sending " <> T.pack (show payload))
-
-      case payload of UpdateStatus opts -> writeIORef (sendslastStatus sends) (Just opts)
-                      _ -> pure ()
-
       sendUserLoop

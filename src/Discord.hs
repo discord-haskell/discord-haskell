@@ -139,16 +139,12 @@ restCall r = do h <- ask
                         writeChan (discordHandleLog h) formaterr
                         pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
 
--- | Send a GatewaySendable, but not Heartbeat, Identify, or Resume
+-- | Send a user GatewaySendable
 sendCommand :: GatewaySendable -> DiscordHandler ()
 sendCommand e = do
   h <- ask
-  case e of
-    Heartbeat _ -> pure ()
-    Identify {} -> pure ()
-    Resume {} -> pure ()
-    _ -> let sendChan (_, b, _) = b
-         in writeChan (sendChan (discordHandleGateway h)) e
+  let sendables (_, b, _) = b
+  writeChan (sendables (discordHandleGateway h)) e
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandler Cache

@@ -30,11 +30,14 @@ data GatewayReceivable
   | ParseError T.Text
   deriving (Show, Eq)
 
-data GatewaySendable
+data GatewaySendableInternal
   = Heartbeat Integer
   | Identify Auth Bool Integer (Int, Int)
   | Resume T.Text T.Text Integer
-  | RequestGuildMembers RequestGuildMembersOpts
+  deriving (Show, Eq, Ord)
+
+data GatewaySendable
+  = RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
   deriving (Show, Eq, Ord)
@@ -125,7 +128,7 @@ instance FromJSON GatewayReceivable where
 --
 --       _  -> fail ("Unknown Sendable payload ID:" <> show op)
 
-instance ToJSON GatewaySendable where
+instance ToJSON GatewaySendableInternal where
   toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
   toJSON (Identify token compress large shard) = object [
       "op" .= (2 :: Int)
@@ -143,6 +146,16 @@ instance ToJSON GatewaySendable where
       , "shard" .= shard
       ]
     ]
+  toJSON (Resume token session seqId) = object [
+      "op" .= (6 :: Int)
+    , "d"  .= object [
+        "token"      .= token
+      , "session_id" .= session
+      , "seq"        .= seqId
+      ]
+    ]
+
+instance ToJSON GatewaySendable where
   toJSON (UpdateStatus (UpdateStatusOpts since game status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
@@ -164,14 +177,6 @@ instance ToJSON GatewaySendable where
       , "channel_id" .= channel
       , "self_mute"  .= mute
       , "self_deaf"  .= deaf
-      ]
-    ]
-  toJSON (Resume token session seqId) = object [
-      "op" .= (6 :: Int)
-    , "d"  .= object [
-        "token"      .= token
-      , "session_id" .= session
-      , "seq"        .= seqId
       ]
     ]
   toJSON (RequestGuildMembers (RequestGuildMembersOpts guild query limit)) =

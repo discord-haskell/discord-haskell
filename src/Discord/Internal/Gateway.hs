@@ -16,7 +16,7 @@ import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
 
-import Discord.Internal.Types (Auth, Event, GatewaySendable)
+import Discord.Internal.Types (Auth, Event)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
 
