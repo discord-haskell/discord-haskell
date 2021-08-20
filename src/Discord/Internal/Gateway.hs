@@ -16,7 +16,7 @@ import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
 
-import Discord.Internal.Types (Auth, Event)
+import Discord.Internal.Types (Auth, Event, GatewayIntent)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
 
@@ -29,12 +29,12 @@ startCacheThread log = do
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-startGatewayThread :: Auth -> DiscordHandleCache -> Chan T.Text -> IO (DiscordHandleGateway, ThreadId)
-startGatewayThread auth (_events, _) log = do
+startGatewayThread :: Auth -> GatewayIntent -> DiscordHandleCache -> Chan T.Text -> IO (DiscordHandleGateway, ThreadId)
+startGatewayThread auth intent (_events, _) log = do
   events <- dupChan _events
   sends <- newChan
   status <- newIORef Nothing
-  tid <- forkIO $ connectionLoop auth (events, sends, status) log
+  tid <- forkIO $ connectionLoop auth intent (events, sends, status) log
   pure ((events, sends, status), tid)
 
 

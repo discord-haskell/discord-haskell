@@ -43,6 +43,7 @@ data RunDiscordOpts = RunDiscordOpts
   , discordOnEvent :: Event -> DiscordHandler ()
   , discordOnLog :: T.Text -> IO ()
   , discordForkThreadForEvents :: Bool
+  , discordGatewayIntent :: GatewayIntent
   }
 
 instance Default RunDiscordOpts where
@@ -52,6 +53,7 @@ instance Default RunDiscordOpts where
                        , discordOnEvent = \_ -> pure ()
                        , discordOnLog = \_ -> pure ()
                        , discordForkThreadForEvents = True
+                       , discordGatewayIntent = def
                        }
 
 runDiscord :: RunDiscordOpts -> IO T.Text
@@ -60,7 +62,7 @@ runDiscord opts = do
   logId <- liftIO $ startLogger (discordOnLog opts) log
   (cache, cacheId) <- liftIO $ startCacheThread log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
-  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) cache log
+  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
   libE <- newEmptyMVar
 

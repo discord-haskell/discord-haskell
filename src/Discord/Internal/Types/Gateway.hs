@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Data structures needed for interfacing with the Websocket
 --   Gateway
@@ -12,6 +13,7 @@ import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Data.Aeson
 import Data.Aeson.Types
+import Data.Default (Default, def)
 import Data.Maybe (fromMaybe)
 import Data.Functor
 import Text.Read (readMaybe)
@@ -19,7 +21,7 @@ import Text.Read (readMaybe)
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Events
 
--- | Represents data sent and received with Discord servers
+-- | Sent by gateway
 data GatewayReceivable
   = Dispatch Event Integer
   | HeartbeatRequest Integer
@@ -30,12 +32,73 @@ data GatewayReceivable
   | ParseError T.Text
   deriving (Show, Eq)
 
+-- | Sent to gateway by our library
 data GatewaySendableInternal
   = Heartbeat Integer
-  | Identify Auth Bool Integer (Int, Int)
+  | Identify Auth GatewayIntent (Int, Int)
   | Resume T.Text T.Text Integer
   deriving (Show, Eq, Ord)
 
+
+-- | https://discord.com/developers/docs/topics/gateway#list-of-intents
+data GatewayIntent = GatewayIntent
+  { gatewayIntentGuilds :: Bool
+  , gatewayIntentMembers :: Bool
+  , gatewayIntentBans :: Bool
+  , gatewayIntentEmojis :: Bool
+  , gatewayIntentIntegrations :: Bool
+  , gatewayIntentWebhooks :: Bool
+  , gatewayIntentInvites :: Bool
+  , gatewayIntentVoiceStates :: Bool
+  , gatewayIntentPrecenses :: Bool
+  , gatewayIntentMessageChanges :: Bool
+  , gatewayIntentMessageReactions :: Bool
+  , gatewayIntentMessageTyping :: Bool
+  , gatewayIntentDirectMessageChanges :: Bool
+  , gatewayIntentDirectMessageReactions :: Bool
+  , gatewayIntentDirectMessageTyping :: Bool
+  } deriving (Show, Eq, Ord)
+
+instance Default GatewayIntent where
+  def = GatewayIntent { gatewayIntentGuilds                 = True
+                      , gatewayIntentMembers                = False -- false
+                      , gatewayIntentBans                   = True
+                      , gatewayIntentEmojis                 = True
+                      , gatewayIntentIntegrations           = True
+                      , gatewayIntentWebhooks               = True
+                      , gatewayIntentInvites                = True
+                      , gatewayIntentVoiceStates            = True
+                      , gatewayIntentPrecenses              = False  -- false
+                      , gatewayIntentMessageChanges         = True
+                      , gatewayIntentMessageReactions       = True
+                      , gatewayIntentMessageTyping          = True
+                      , gatewayIntentDirectMessageChanges   = True
+                      , gatewayIntentDirectMessageReactions = True
+                      , gatewayIntentDirectMessageTyping    = True
+                      }
+
+compileGatewayIntent :: GatewayIntent -> Int
+compileGatewayIntent GatewayIntent{..} =
+ sum $ [ if on then flag else 0
+       | (flag, on) <- [ (2 ^  0, gatewayIntentGuilds)
+                       , (2 ^  1, gatewayIntentMembers)
+                       , (2 ^  2, gatewayIntentBans)
+                       , (2 ^  3, gatewayIntentEmojis)
+                       , (2 ^  4, gatewayIntentIntegrations)
+                       , (2 ^  5, gatewayIntentWebhooks)
+                       , (2 ^  6, gatewayIntentInvites)
+                       , (2 ^  7, gatewayIntentVoiceStates)
+                       , (2 ^  8, gatewayIntentPrecenses)
+                       , (2 ^  9, gatewayIntentMessageChanges)
+                       , (2 ^ 10, gatewayIntentMessageReactions)
+                       , (2 ^ 11, gatewayIntentMessageTyping)
+                       , (2 ^ 12, gatewayIntentDirectMessageChanges)
+                       , (2 ^ 13, gatewayIntentDirectMessageReactions)
+                       , (2 ^ 14, gatewayIntentDirectMessageTyping)
+                       ]
+       ]
+
+-- | Sent to gateway by a user
 data GatewaySendable
   = RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
@@ -130,10 +193,11 @@ instance FromJSON GatewayReceivable where
 
 instance ToJSON GatewaySendableInternal where
   toJSON (Heartbeat i) = object [ "op" .= (1 :: Int), "d" .= if i <= 0 then "null" else show i ]
-  toJSON (Identify token compress large shard) = object [
+  toJSON (Identify token intent shard) = object [
       "op" .= (2 :: Int)
     , "d"  .= object [
         "token" .= authToken token
+      , "intents" .= compileGatewayIntent intent
       , "properties" .= object [
           "$os"                .= os
         , "$browser"           .= ("discord-haskell" :: T.Text)
@@ -141,8 +205,8 @@ instance ToJSON GatewaySendableInternal where
         , "$referrer"          .= (""                :: T.Text)
         , "$referring_domain"  .= (""                :: T.Text)
         ]
-      , "compress" .= compress
-      , "large_threshold" .= large
+      , "compress" .= False
+      , "large_threshold" .= (50 :: Int) -- stop sending offline members over 50
       , "shard" .= shard
       ]
     ]

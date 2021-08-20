@@ -44,8 +44,8 @@ type DiscordHandleGateway = (Chan (Either GatewayException Event),
                              Chan GatewaySendable,
                              IORef (Maybe UpdateStatusOpts))
 
-connectionLoop :: Auth -> DiscordHandleGateway -> Chan T.Text -> IO ()
-connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
+connectionLoop :: Auth -> GatewayIntent -> DiscordHandleGateway -> Chan T.Text -> IO ()
+connectionLoop auth intent (events, userSend, lastStatus) log = loop ConnStart 0
  where
   loop :: ConnLoopState -> Int -> IO ()
   loop s retries =
@@ -57,7 +57,7 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
             msg <- getPayload conn log
             case msg of
               Right (Hello interval) -> do
-                sendTextData conn (encode (Identify auth False 50 (0, 1)))
+                sendTextData conn (encode (Identify auth intent (0, 1)))
                 msg2 <- getPayload conn log
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
@@ -66,9 +66,16 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                   Right m -> do writeChan events (Left (GatewayExceptionUnexpected m
                                                          "Response to Identify must be Ready"))
                                 pure ConnClosed
-                  Left (CloseRequest code _str) -> do writeChan log ("gateway - close " <> T.pack (show code))
-                                                      threadDelay (3 * (10^(6 :: Int)))
-                                                      pure ConnStart
+                  Left (CloseRequest code _str) -> if code == 4014 then do
+                                                     writeChan events (Left (GatewayExceptionUnexpected (Hello 0) $
+                                                              "Tried to declare an unauthorized GatewayIntent. " <>
+                                                              "Use the discord app manager to authorize by following: " <>
+                                                              "https://github.com/aquarial/discord-haskell/issues/76"))
+                                                     pure ConnClosed
+                                                   else do
+                                                     writeChan log ("gateway - identify close " <> T.pack (show code))
+                                                     threadDelay (3 * (10^(6 :: Int)))
+                                                     pure ConnStart
                   Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
                                                          "Response to Identify"))
                                 pure ConnClosed
@@ -76,7 +83,7 @@ connectionLoop auth (events, userSend, lastStatus) log = loop ConnStart 0
                             writeChan events (Left (GatewayExceptionUnexpected m
                                                       "Response to connecting must be hello"))
                             pure ConnClosed
-              Left (CloseRequest code _str) -> do writeChan log ("gateway - close " <> T.pack (show code))
+              Left (CloseRequest code _str) -> do writeChan log ("gateway - start close " <> T.pack (show code))
                                                   threadDelay (3 * (10^(6 :: Int)))
                                                   pure ConnStart
               Left ce -> do writeChan events (Left (GatewayExceptionConnection ce
@@ -172,7 +179,7 @@ startEventStream conndata interval seqN userSend status log = do
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendableInternal
                               -> IORef Bool -> Chan T.Text -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends log = loop
+eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUsers log = loop
   where
   loop :: IO ConnLoopState
   loop = do
@@ -194,7 +201,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send userSends
       Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do writeIORef seqKey sq
                                       writeChan eventChan (Right event)
-                                      writeIORef userSends True
+                                      writeIORef sendingUsers True
                                       loop
       Right (HeartbeatRequest sq) -> do writeIORef seqKey sq
                                         writeChan send (Heartbeat sq)
