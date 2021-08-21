@@ -161,7 +161,7 @@ data ConnectionData = ConnData { connection :: Connection
                                }
 
 startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> IORef (Maybe UpdateStatusOpts) -> Chan T.Text -> IO ConnLoopState
-startEventStream conndata interval seqN userSend status log = do
+startEventStream conndata interval seqN userSend lastStatus log = do
   writeChan log "startEventStream"
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
@@ -170,7 +170,7 @@ startEventStream conndata interval seqN userSend status log = do
   handle err $ do
     gateSends <- newChan
     sendingUsers <- newIORef False
-    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends sendingUsers status log)
+    sendsId <- forkIO $ sendableLoop (connection conndata) (Sendables userSend gateSends sendingUsers lastStatus log)
     heart <- forkIO $ heartbeat gateSends interval seqKey
 
     finally (eventStream conndata seqKey interval gateSends sendingUsers log)
