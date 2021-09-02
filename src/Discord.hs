@@ -101,7 +101,7 @@ runDiscordLoop handle opts = do
 
    loop :: IO T.Text
    loop = do next <- race (readMVar (discordHandleLibraryError handle))
-                          (readChan (gatewayEvents (discordHandleGateway handle)))
+                          (readChan (gatewayHandleEvents (discordHandleGateway handle)))
              case next of
                Left err -> libError err
                Right (Right event) -> do
@@ -142,7 +142,7 @@ restCall r = do h <- ask
 sendCommand :: GatewaySendable -> DiscordHandler ()
 sendCommand e = do
   h <- ask
-  writeChan (gatewayUserSendables (discordHandleGateway h)) e
+  writeChan (gatewayHandleUserSendables (discordHandleGateway h)) e
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandler Cache
