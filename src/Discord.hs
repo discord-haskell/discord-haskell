@@ -72,10 +72,10 @@ runDiscord opts = do
                              , discordHandleLog = log
                              , discordHandleLibraryError = libE
                              , discordHandleThreads =
-                                 [ DiscordHandleThreadIdLogger logId
-                                 , DiscordHandleThreadIdRest restId
-                                 , DiscordHandleThreadIdCache cacheId
-                                 , DiscordHandleThreadIdGateway gateId
+                                 [ HandleThreadIdLogger logId
+                                 , HandleThreadIdRest restId
+                                 , HandleThreadIdCache cacheId
+                                 , HandleThreadIdGateway gateId
                                  ]
                              }
 
@@ -161,10 +161,10 @@ stopDiscord = do h <- ask
                  threadDelay (10^(6 :: Int) `div` 10)
                  mapM_ (killThread . toId) (discordHandleThreads h)
   where toId t = case t of
-                   DiscordHandleThreadIdRest a -> a
-                   DiscordHandleThreadIdGateway a -> a
-                   DiscordHandleThreadIdCache a -> a
-                   DiscordHandleThreadIdLogger a -> a
+                   HandleThreadIdRest a -> a
+                   HandleThreadIdGateway a -> a
+                   HandleThreadIdCache a -> a
+                   HandleThreadIdLogger a -> a
 
 startLogger :: (T.Text -> IO ()) -> Chan T.Text -> IO ThreadId
 startLogger handle logC = forkIO $ forever $

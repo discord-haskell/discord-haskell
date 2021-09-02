@@ -20,12 +20,12 @@ data Cache = Cache
      , cacheChannels :: M.Map ChannelId Channel
      } deriving (Show)
 
-data DiscordHandleCache = DiscordHandleCache
+data CacheHandle = CacheHandle
   { cacheHandleEvents :: Chan (Either GatewayException Event)
   , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
   }
 
-cacheLoop :: DiscordHandleCache -> Chan T.Text -> IO ()
+cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of

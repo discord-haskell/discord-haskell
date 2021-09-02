@@ -1,8 +1,8 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Internal.Gateway
-  ( DiscordHandleGateway(..)
-  , DiscordHandleCache(..)
+  ( GatewayHandle(..)
+  , CacheHandle(..)
   , GatewayException(..)
   , Cache(..)
   , startCacheThread
@@ -17,25 +17,25 @@ import Data.IORef (newIORef)
 import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, Event, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway(..), GatewayException(..))
-import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache(..))
+import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
+import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
-startCacheThread :: Chan T.Text -> IO (DiscordHandleCache, ThreadId)
+startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
 startCacheThread log = do
   events <- newChan :: IO (Chan (Either GatewayException Event))
   cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
-  let cacheHandle = DiscordHandleCache events cache
+  let cacheHandle = CacheHandle events cache
   tid <- forkIO $ cacheLoop cacheHandle log
   pure (cacheHandle, tid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received Events to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> DiscordHandleCache -> Chan T.Text -> IO (DiscordHandleGateway, ThreadId)
+startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, ThreadId)
 startGatewayThread auth intent cacheHandle log = do
   events <- dupChan (cacheHandleEvents cacheHandle)
   sends <- newChan
   status <- newIORef Nothing
-  let gatewayHandle = DiscordHandleGateway events sends status
+  let gatewayHandle = GatewayHandle events sends status
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)
 

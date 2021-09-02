@@ -41,13 +41,13 @@ connect :: (Connection -> IO a) -> IO a
 connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
 
 
-data DiscordHandleGateway = DiscordHandleGateway
+data GatewayHandle = GatewayHandle
   { gatewayHandleEvents         :: Chan (Either GatewayException Event)
   , gatewayHandleUserSendables  :: Chan GatewaySendable
   , gatewayHandleLastStatus     :: IORef (Maybe UpdateStatusOpts)
   }
 
-connectionLoop :: Auth -> GatewayIntent -> DiscordHandleGateway -> Chan T.Text -> IO ()
+connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = loop ConnStart 0
  where
   events     = gatewayHandleEvents gatewayHandle
