@@ -148,7 +148,7 @@ sendCommand e = do
 readCache :: DiscordHandler Cache
 readCache = do
   h <- ask
-  merr <- readMVar (snd (discordHandleCache h))
+  merr <- readMVar (cacheHandleCache (discordHandleCache h))
   case merr of
     Left (c, _) -> pure c
     Right c -> pure c

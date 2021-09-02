@@ -20,10 +20,13 @@ data Cache = Cache
      , cacheChannels :: M.Map ChannelId Channel
      } deriving (Show)
 
-type DiscordHandleCache = (Chan (Either GatewayException Event), MVar (Either (Cache, GatewayException) Cache))
+data DiscordHandleCache = DiscordHandleCache
+  { cacheHandleEvents :: Chan (Either GatewayException Event)
+  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  }
 
 cacheLoop :: DiscordHandleCache -> Chan T.Text -> IO ()
-cacheLoop (eventChan, cache) log = do
+cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
         Right (Ready _ user dmChannels _unavailableGuilds _) -> do
@@ -35,6 +38,9 @@ cacheLoop (eventChan, cache) log = do
         Left e ->
           writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
+  cache     = cacheHandleCache cacheHandle
+  eventChan = cacheHandleEvents cacheHandle
+
   loop :: IO ()
   loop = forever $ do
     eventOrExcept <- readChan eventChan
