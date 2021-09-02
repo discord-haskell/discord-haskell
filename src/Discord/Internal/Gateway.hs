@@ -1,7 +1,7 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Internal.Gateway
-  ( DiscordHandleGateway
+  ( DiscordHandleGateway(..)
   , DiscordHandleCache
   , GatewayException(..)
   , Cache(..)
@@ -17,7 +17,7 @@ import Data.IORef (newIORef)
 import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, Event, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway, GatewayException(..))
+import Discord.Internal.Gateway.EventLoop (connectionLoop, DiscordHandleGateway(..), GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), DiscordHandleCache)
 
 startCacheThread :: Chan T.Text -> IO (DiscordHandleCache, ThreadId)
@@ -34,8 +34,9 @@ startGatewayThread auth intent (_events, _) log = do
   events <- dupChan _events
   sends <- newChan
   status <- newIORef Nothing
-  tid <- forkIO $ connectionLoop auth intent (events, sends, status) log
-  pure ((events, sends, status), tid)
+  let gatewayHandle = DiscordHandleGateway events sends status
+  tid <- forkIO $ connectionLoop auth intent gatewayHandle log
+  pure (gatewayHandle, tid)
 
 
 
