@@ -161,11 +161,12 @@ heartbeat send interval seqKey = do
     threadDelay (interval * 1000)
 
 -- | What we need to start an event stream
-data ConnectionData = ConnData { connection :: Connection
-                               , connSessionID :: T.Text
-                               , connAuth :: Auth
-                               , connChan :: Chan (Either GatewayException Event)
-                               }
+data ConnectionData = ConnData
+  { connection :: Connection
+  , connSessionID :: T.Text
+  , connAuth :: Auth
+  , connChan :: Chan (Either GatewayException Event)
+  }
 
 startEventStream :: ConnectionData -> Int -> Integer -> Chan GatewaySendable -> IORef (Maybe UpdateStatusOpts) -> Chan T.Text -> IO ConnLoopState
 startEventStream conndata interval seqN userSend lastStatus log = do
