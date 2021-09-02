@@ -14,11 +14,11 @@ import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
 
 data Cache = Cache
-            { _currentUser :: User
-            , _dmChannels :: M.Map ChannelId Channel
-            , _guilds :: M.Map GuildId (Guild, GuildInfo)
-            , _channels :: M.Map ChannelId Channel
-            } deriving (Show)
+     { cacheCurrentUser :: User
+     , cacheDMChannels :: M.Map ChannelId Channel
+     , cacheGuilds :: M.Map GuildId (Guild, GuildInfo)
+     , cacheChannels :: M.Map ChannelId Channel
+     } deriving (Show)
 
 type DiscordHandleCache = (Chan (Either GatewayException Event), MVar (Either (Cache, GatewayException) Cache))
 
@@ -52,19 +52,19 @@ adjustCache minfo event = case event of
   --ChannelDelete Channel
   GuildCreate guild info ->
     let newChans = map (setChanGuildID (guildId guild)) $ guildChannels info
-        g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (_guilds minfo)
+        g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (cacheGuilds minfo)
         c = M.unionWith (\a _ -> a)
                         (M.fromList [ (channelId ch, ch) | ch <- newChans ])
-                        (_channels minfo)
-    in minfo { _guilds = g, _channels = c }
+                        (cacheChannels minfo)
+    in minfo { cacheGuilds = g, cacheChannels = c }
   --GuildUpdate guild -> do
-  --  let g = M.insert (guildId guild) guild (_guilds minfo)
-  --      m2 = minfo { _guilds = g }
+  --  let g = M.insert (guildId guild) guild (cacheGuilds minfo)
+  --      m2 = minfo { cacheGuilds = g }
   --  putMVar cache m2
   --GuildDelete guild -> do
-  --  let g = M.delete (guildId guild) (_guilds minfo)
-  --      c = M.filterWithKey (\(keyGuildId,_) _ -> keyGuildId /= guildId guild) (_channels minfo)
-  --      m2 = minfo { _guilds = g, _channels = c }
+  --  let g = M.delete (guildId guild) (cacheGuilds minfo)
+  --      c = M.filterWithKey (\(keyGuildId,_) _ -> keyGuildId /= guildId guild) (cacheChannels minfo)
+  --      m2 = minfo { cacheGuilds = g, cacheChannels = c }
   --  putMVar cache m2
   _ -> minfo
 
