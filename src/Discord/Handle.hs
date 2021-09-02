@@ -6,7 +6,7 @@ module Discord.Handle
 import Control.Concurrent (ThreadId, Chan, MVar)
 import qualified Data.Text as T
 
-import Discord.Internal.Rest (DiscordHandleRestChan)
+import Discord.Internal.Rest (DiscordHandleRestChan(..))
 import Discord.Internal.Gateway (DiscordHandleGateway(..), DiscordHandleCache(..))
 
 -- | Thread Ids marked by what type they are
