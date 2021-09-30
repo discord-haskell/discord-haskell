@@ -264,10 +264,5 @@ sendableLoop conn sends = sendSysLoop
    -- payload :: Either GatewaySendableInternal GatewaySendable
       payload <- race (readChan (sendchan sends)) (readChan (gatewaySends sends))
       sendTextData conn (either encode encode payload)
-
-      case payload of
-          Left (UpdateStatus opts) -> writeIORef (sendslastStatus sends) (Just opts)
-          _ -> pure ()
-
       -- writeChan (sendlog sends) ("extrainfo - sending " <> T.pack (show payload))
       sendUserLoop

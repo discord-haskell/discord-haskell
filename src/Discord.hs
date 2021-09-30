@@ -23,6 +23,7 @@ import Prelude hiding (log)
 import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
+import Data.IORef (writeIORef)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
@@ -143,6 +144,9 @@ sendCommand :: GatewaySendable -> DiscordHandler ()
 sendCommand e = do
   h <- ask
   writeChan (gatewayHandleUserSendables (discordHandleGateway h)) e
+  case e of
+    UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
+    _ -> pure ()
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandler Cache
