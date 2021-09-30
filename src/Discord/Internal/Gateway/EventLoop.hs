@@ -134,24 +134,6 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                          loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
             Right n -> loop n 1
 
-
-getPayloadTimeout :: Connection -> Int -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
-getPayloadTimeout conn interval log = do
-  res <- race (threadDelay ((interval * 1000 * 3) `div` 2))
-              (getPayload conn log)
-  case res of
-    Left () -> pure (Right Reconnect)
-    Right other -> pure other
-
-getPayload :: Connection -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
-getPayload conn log = try $ do
-  msg' <- receiveData conn
-  case eitherDecode msg' of
-    Right msg -> pure msg
-    Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
-                                      <> " while decoding " <> TE.decodeUtf8 (BL.toStrict msg'))
-                    pure (ParseError (T.pack err))
-
 heartbeat :: Chan GatewaySendableInternal -> Int -> IORef Integer -> IO ()
 heartbeat send interval seqKey = do
   threadDelay (1 * 10^(6 :: Int))
@@ -225,6 +207,26 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
       Right (ParseError e) -> do writeChan eventChan (Left (GatewayExceptionEventParseError e
                                                              "Normal event loop"))
                                  pure ConnClosed
+
+
+
+getPayloadTimeout :: Connection -> Int -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
+getPayloadTimeout conn interval log = do
+  res <- race (threadDelay ((interval * 1000 * 3) `div` 2))
+              (getPayload conn log)
+  case res of
+    Left () -> pure (Right Reconnect)
+    Right other -> pure other
+
+getPayload :: Connection -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
+getPayload conn log = try $ do
+  msg' <- receiveData conn
+  case eitherDecode msg' of
+    Right msg -> pure msg
+    Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
+                                      <> " while decoding " <> TE.decodeUtf8 (BL.toStrict msg'))
+                    pure (ParseError (T.pack err))
+
 
 data Sendables = Sendables {
   -- | Things the user wants to send. Doesn't reset on reconnect
