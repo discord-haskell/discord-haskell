@@ -47,6 +47,28 @@ data GatewayHandle = GatewayHandle
   , gatewayHandleLastStatus     :: IORef (Maybe UpdateStatusOpts)
   }
 
+
+{-
+Auth needed each connection
+GatewayIntent needed each connection
+GatewayHandle (events,status,usersends) needed to start each connection
+
+heartbeatInterval :: Int received on Hello
+sequenceId :: Int id of last event received
+sessionId :: Text
+
+endstream
+startstream
+  - kill old stuff [heartbeat + sendables]
+  -
+
+
+-}
+
+
+betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
+betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
+
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = loop ConnStart 0
  where
@@ -184,7 +206,11 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
-          4014 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4014 -> do writeChan events (Left (GatewayExceptionUnexpected (Hello 0) $
+                           "Tried to declare an unauthorized GatewayIntent. " <>
+                           "Use the discord app manager to authorize by following: " <>
+                           "https://github.com/aquarial/discord-haskell/issues/76"))
+                     pure ConnClosed
           _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
                                               "Normal event loop close request"))
                   pure ConnClosed
