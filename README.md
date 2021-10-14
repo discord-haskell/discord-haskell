@@ -1,4 +1,4 @@
-# discord-haskell           [![Build Status](https://app.travis-ci.com/aquarial/discord-haskell.svg?branch=master)](https://travis-ci.com/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)
+# discord-haskell           [![Build Status](https://app.travis-ci.com/aquarial/discord-haskell.svg?branch=master)](https://app.travis-ci.com/github/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)
 
 Build that discord bot in Haskell! Also checkout the [calamity](https://github.com/nitros12/calamity) 
 haskell discord library for a more advanced interface than `discord-haskell`.
