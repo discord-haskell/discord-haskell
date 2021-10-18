@@ -28,7 +28,7 @@ executable ping-pong
   main-is:             examples/ping-pong.hs
   default-language:    Haskell2010
   ghc-options:         -Wall
-                       -fno-warn-type-defaults
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
                        -threaded
   build-depends:       base
                      , text
@@ -37,7 +37,7 @@ executable ping-pong
 
 library
   ghc-options:         -Wall
-                       -fno-warn-type-defaults
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
   hs-source-dirs:      src
   default-language:    Haskell2010
   -- extensions:
