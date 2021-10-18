@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE InstanceSigs #-}
@@ -13,7 +14,7 @@ module Discord.Internal.Rest.Webhook
   , WebhookRequest(..)
   ) where
 
-import Data.Aeson
+import           Data.Aeson
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
@@ -24,6 +25,17 @@ import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+
+-- aeson introduced type name for json key (text)
+-- https://github.com/haskell/aeson/issues/881
+# if MIN_VERSION_aeson(2, 0, 0)
+import qualified Data.Aeson.Key as Key
+toKey :: T.Text -> Key.Key
+toKey = Key.fromText
+# else
+toKey :: T.Text -> T.Text
+toKey = id
+# endif
 
 instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute
@@ -52,7 +64,7 @@ data ModifyWebhookOpts = ModifyWebhookOpts
   } deriving (Show, Eq, Ord)
 
 instance ToJSON ModifyWebhookOpts where
-  toJSON ModifyWebhookOpts{..} = object [(name, val) | (name, Just val) <-
+  toJSON ModifyWebhookOpts{..} = object [(toKey name, val) | (name, Just val) <-
                          [("channel_id",   toJSON <$> modifyWebhookOptsChannelId),
                           ("name",   toJSON <$> modifyWebhookOptsName),
                           ("avatar",  toJSON <$> modifyWebhookOptsAvatar) ] ]
@@ -77,16 +89,17 @@ data WebhookContent = WebhookContentText T.Text
                     | WebhookContentEmbeds [CreateEmbed]
   deriving (Show, Eq, Ord)
 
-webhookContentJson :: WebhookContent -> [(T.Text, Value)]
+webhookContentJson :: WebhookContent -> [(T.Text, Maybe Value)]
 webhookContentJson c = case c of
-                      WebhookContentText t -> [("content", toJSON t)]
+                      WebhookContentText t -> [("content", Just (toJSON t))]
                       WebhookContentFile _ _  -> []
-                      WebhookContentEmbeds e -> [("embeds", toJSON (createEmbed <$> e))]
+                      WebhookContentEmbeds e -> [("embeds", Just (toJSON (createEmbed <$> e)))]
 
 instance ToJSON ExecuteWebhookWithTokenOpts where
-  toJSON ExecuteWebhookWithTokenOpts{..} = object $ [(name, val) | (name, Just val) <-
-                         [("username",   toJSON <$> executeWebhookWithTokenOptsUsername)] ]
-                      <> webhookContentJson executeWebhookWithTokenOptsContent
+  toJSON ExecuteWebhookWithTokenOpts{..} = object $ [(toKey name, val) | (name, Just val) <-
+                         [("username",   toJSON <$> executeWebhookWithTokenOptsUsername)]
+                           <> webhookContentJson executeWebhookWithTokenOptsContent
+                         ]
 
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
