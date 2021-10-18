@@ -6,6 +6,11 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+
+## 1.8.9
+
+Handle both aeson 1.0 and 2.0 [(breaking changes broke builds)](https://github.com/aquarial/discord-haskell/issues/77)
+
 Simplify [some examples](https://github.com/aquarial/discord-haskell/issues/71)
 
 ## 1.8.8
