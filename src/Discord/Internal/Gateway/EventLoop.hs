@@ -206,7 +206,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
           4000 -> ConnReconnect auth seshID <$> readIORef seqKey
           4006 -> pure ConnStart
           4007 -> ConnReconnect auth seshID <$> readIORef seqKey
-          4014 -> do writeChan events (Left (GatewayExceptionUnexpected (Hello 0) $
+          4014 -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello 0) $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
                            "https://github.com/aquarial/discord-haskell/issues/76"))
