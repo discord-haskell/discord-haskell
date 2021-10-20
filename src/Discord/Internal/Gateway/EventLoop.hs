@@ -286,10 +286,10 @@ sendableLoop conn sends = sendSysLoop
               sendUserLoop
 
   sendUserLoop = do
-      -- send a ~120 events a min by delaying
+   -- send a ~120 events a min by delaying
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
    -- payload :: Either GatewaySendableInternal GatewaySendable
       payload <- race (readChan (sendchan sends)) (readChan (gatewaySends sends))
       sendTextData conn (either encode encode payload)
-      -- writeChan (sendlog sends) ("extrainfo - sending " <> T.pack (show payload))
+   -- writeChan (sendlog sends) ("extrainfo - sending " <> TE.decodeUtf8 (BL.toStrict (either encode encode payload)))
       sendUserLoop
