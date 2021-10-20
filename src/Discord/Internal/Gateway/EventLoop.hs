@@ -49,10 +49,12 @@ data GatewayHandle = GatewayHandle
 
 
 {-
-Auth needed each connection
+Auth only needed to connect
 GatewayIntent needed each connection
 GatewayHandle (events,status,usersends) needed to start each connection
+log :: Chan (T.Text)
 
+channelSends :: Chan (GatewaySendableInternal)
 heartbeatInterval :: Int received on Hello
 sequenceId :: Int id of last event received
 sessionId :: Text
