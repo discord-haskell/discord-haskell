@@ -66,8 +66,8 @@ startstream
 -}
 
 
-betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
-betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
+--betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
+--betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
 
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = loop ConnStart 0
