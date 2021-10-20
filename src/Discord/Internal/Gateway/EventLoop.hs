@@ -49,15 +49,15 @@ data GatewayHandle = GatewayHandle
 
 
 {-
-Auth only needed to connect
-GatewayIntent needed each connection
-GatewayHandle (events,status,usersends) needed to start each connection
-log :: Chan (T.Text)
+Auth                                                         needed to connect
+GatewayIntent                                                needed to connect
+GatewayHandle (events,status,usersends)                      needed all over
+log :: Chan (T.Text)                                         needed all over
 
 channelSends :: Chan (GatewaySendableInternal)
-heartbeatInterval :: Int received on Hello
-sequenceId :: Int id of last event received
-sessionId :: Text
+mvar heartbeatInterval :: Int                     set by Hello,  need heartbeat
+sequenceId :: Int id of last event received       set by Resume, need reconnect and heartbeat
+sessionId :: Text                                 set by Ready,  need reconnect
 
 endstream
 startstream
@@ -68,8 +68,13 @@ startstream
 -}
 
 
---betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
---betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
+{-
+betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
+betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
+  where
+  loop = try $ connect $ \conn -> do
+         loop
+-}
 
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = loop ConnStart 0
