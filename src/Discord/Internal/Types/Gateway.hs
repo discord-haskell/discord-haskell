@@ -36,7 +36,7 @@ data GatewayReceivable
 data GatewaySendableInternal
   = Heartbeat Integer
   | Identify Auth GatewayIntent (Int, Int)
-  | Resume T.Text T.Text Integer
+  | Resume Auth T.Text Integer
   deriving (Show, Eq, Ord)
 
 
@@ -213,7 +213,7 @@ instance ToJSON GatewaySendableInternal where
   toJSON (Resume token session seqId) = object [
       "op" .= (6 :: Int)
     , "d"  .= object [
-        "token"      .= token
+        "token"      .= authToken token
       , "session_id" .= session
       , "seq"        .= seqId
       ]

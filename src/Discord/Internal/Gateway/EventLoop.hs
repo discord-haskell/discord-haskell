@@ -33,7 +33,7 @@ data GatewayException = GatewayExceptionCouldNotConnect T.Text
 
 data ConnLoopState = ConnStart
                    | ConnClosed
-                   | ConnReconnect Auth T.Text Integer
+                   | ConnReconnect T.Text Integer
   deriving Show
 
 -- | Securely run a connection IO action. Send a close on exception
@@ -93,7 +93,7 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                 case msg2 of
                   Right (Dispatch r@(Ready _ _ _ _ seshID) _) -> do
                     writeChan events (Right r)
-                    startEventStream (ConnData conn seshID auth events) interval 0 userSend lastStatus log
+                    startEventStream (ConnData conn seshID events) interval 0 userSend lastStatus log
                   Right m -> do writeChan events (Left (GatewayExceptionUnexpected m
                                                          "Response to Identify must be Ready"))
                                 pure ConnClosed
@@ -126,18 +126,18 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                          loop ConnClosed 0
             Right n -> loop n 0
 
-      (ConnReconnect (Auth tok) seshID seqID) -> do
+      (ConnReconnect seshID seqID) -> do
           next <- try $ connect $ \conn -> do
-              sendTextData conn (encode (Resume tok seshID seqID))
+              sendTextData conn (encode (Resume auth seshID seqID))
               eitherPayload <- getPayload conn log
               case eitherPayload of
                   Right (Hello interval) ->
-                      startEventStream (ConnData conn seshID auth events) interval seqID userSend lastStatus log
+                      startEventStream (ConnData conn seshID events) interval seqID userSend lastStatus log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
                       threadDelay (t * (10^(6 :: Int)))
                       pure $ if retry
-                             then ConnReconnect (Auth tok) seshID seqID
+                             then ConnReconnect seshID seqID
                              else ConnStart
                   Right payload -> do
                       writeChan events (Left (GatewayExceptionUnexpected payload
@@ -146,7 +146,7 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                   Left (CloseRequest code _str) -> do
                       writeChan log ("gateway - retrying from " <> T.pack (show code))
                       threadDelay (3 * (10^(6 :: Int)))
-                      pure (ConnReconnect (Auth tok) seshID seqID)
+                      pure (ConnReconnect seshID seqID)
                   Left e -> do
                       writeChan events (Left (GatewayExceptionConnection e "Could not ConnReconnect"))
                       pure ConnClosed
@@ -155,7 +155,7 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                          threadDelay (t * (10^(6 :: Int)))
                          writeChan log ("gateway - trying to reconnect after " <> T.pack (show retries)
                                                <> " failures")
-                         loop (ConnReconnect (Auth tok) seshID seqID) (retries + 1)
+                         loop (ConnReconnect seshID seqID) (retries + 1)
             Right n -> loop n 1
 
 heartbeat :: Chan GatewaySendableInternal -> Int -> IORef Integer -> IO ()
@@ -170,7 +170,6 @@ heartbeat send interval seqKey = do
 data ConnectionData = ConnData
   { connection :: Connection
   , connSessionID :: T.Text
-  , connAuth :: Auth
   , connChan :: Chan (Either GatewayException Event)
   }
 
@@ -180,7 +179,7 @@ startEventStream conndata interval seqN userSend lastStatus log = do
   seqKey <- newIORef seqN
   let err :: SomeException -> IO ConnLoopState
       err e = do writeChan log ("gateway - eventStream error: " <> T.pack (show e))
-                 ConnReconnect (connAuth conndata) (connSessionID conndata) <$> readIORef seqKey
+                 ConnReconnect (connSessionID conndata) <$> readIORef seqKey
   handle err $ do
     gateSends <- newChan
     sendingUsers <- newIORef False
@@ -193,7 +192,7 @@ startEventStream conndata interval seqN userSend lastStatus log = do
 
 eventStream :: ConnectionData -> IORef Integer -> Int -> Chan GatewaySendableInternal
                               -> IORef Bool -> Chan T.Text -> IO ConnLoopState
-eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUsers log = loop
+eventStream (ConnData conn seshID eventChan) seqKey interval send sendingUsers log = loop
   where
   loop :: IO ConnLoopState
   loop = do
@@ -203,11 +202,11 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
           -- see Discord and MDN documentation on gateway close event codes
           -- https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
           -- https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
-          1000 -> ConnReconnect auth seshID <$> readIORef seqKey
-          1001 -> ConnReconnect auth seshID <$> readIORef seqKey
-          4000 -> ConnReconnect auth seshID <$> readIORef seqKey
+          1000 -> ConnReconnect seshID <$> readIORef seqKey
+          1001 -> ConnReconnect seshID <$> readIORef seqKey
+          4000 -> ConnReconnect seshID <$> readIORef seqKey
           4006 -> pure ConnStart
-          4007 -> ConnReconnect auth seshID <$> readIORef seqKey
+          4007 -> ConnReconnect seshID <$> readIORef seqKey
           4014 -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello 0) $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
@@ -216,7 +215,7 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
           _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
                                               "Normal event loop close request"))
                   pure ConnClosed
-      Left _ -> ConnReconnect auth seshID <$> readIORef seqKey
+      Left _ -> ConnReconnect seshID <$> readIORef seqKey
       Right (Dispatch event sq) -> do writeIORef seqKey sq
                                       writeChan eventChan (Right event)
                                       writeIORef sendingUsers True
@@ -224,9 +223,9 @@ eventStream (ConnData conn seshID auth eventChan) seqKey interval send sendingUs
       Right (HeartbeatRequest sq) -> do writeIORef seqKey sq
                                         writeChan send (Heartbeat sq)
                                         loop
-      Right (Reconnect)      -> ConnReconnect auth seshID <$> readIORef seqKey
+      Right (Reconnect)      -> ConnReconnect seshID <$> readIORef seqKey
       Right (InvalidSession retry) -> if retry
-                                      then ConnReconnect auth seshID <$> readIORef seqKey
+                                      then ConnReconnect seshID <$> readIORef seqKey
                                       else pure ConnStart
       Right (HeartbeatAck)   -> loop
       Right (Hello e) -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello e)
