@@ -183,7 +183,7 @@ instance ToJSON CreateGuildBanOpts where
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   { modifyGuildRoleOptsName            :: Maybe T.Text
   , modifyGuildRoleOptsPermissions     :: Maybe Integer
-  , modifyGuildRoleOptsColor           :: Maybe Integer
+  , modifyGuildRoleOptsColor           :: Maybe ColorInteger
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
   } deriving (Show, Eq, Ord)

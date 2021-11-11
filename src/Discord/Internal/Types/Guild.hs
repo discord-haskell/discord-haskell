@@ -132,7 +132,7 @@ data Role =
     Role {
         roleId      :: RoleId -- ^ The role id
       , roleName    :: T.Text                    -- ^ The role name
-      , roleColor   :: Integer                   -- ^ Integer representation of color code
+      , roleColor   :: ColorInteger              -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
       , rolePos     :: Integer                   -- ^ Position of this role
       , rolePerms   :: Integer                   -- ^ Permission bit set

@@ -64,3 +64,5 @@ snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
 -- | Default timestamp
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
+
+type ColorInteger = Integer

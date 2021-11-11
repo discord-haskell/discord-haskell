@@ -10,6 +10,8 @@ import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 
+import Discord.Internal.Types.Prelude
+
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
   let
@@ -41,7 +43,7 @@ createEmbed CreateEmbed{..} =
            , embedFields      = createEmbedFields
            , embedImage       = Just embedImage
            , embedFooter      = Just embedFooter
-           , embedColor       = Nothing
+           , embedColor       = createEmbedColor
            , embedTimestamp   = Nothing
 
            -- can't set these
@@ -62,7 +64,7 @@ data CreateEmbed = CreateEmbed
   , createEmbedImage       :: Maybe CreateEmbedImage
   , createEmbedFooterText  :: T.Text
   , createEmbedFooterIcon  :: Maybe CreateEmbedImage
---, createEmbedColor       :: Maybe T.Text
+  , createEmbedColor       :: Maybe ColorInteger
 --, createEmbedTimestamp   :: Maybe UTCTime
   } deriving (Show, Eq, Ord)
 
@@ -71,7 +73,7 @@ data CreateEmbedImage = CreateEmbedImageUrl T.Text
   deriving (Show, Eq, Ord)
 
 instance Default CreateEmbed where
- def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing -- Nothing Nothing
+ def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing Nothing  -- Nothing
 
 -- | An embed attached to a message.
 data Embed = Embed
@@ -83,8 +85,7 @@ data Embed = Embed
   , embedFields      :: [EmbedField]     -- ^ Fields of the embed
   , embedImage       :: Maybe EmbedImage
   , embedFooter      :: Maybe EmbedFooter
-
-  , embedColor       :: Maybe Integer    -- ^ The embed color
+  , embedColor       :: Maybe ColorInteger    -- ^ The embed color
   , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
   , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
   , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
