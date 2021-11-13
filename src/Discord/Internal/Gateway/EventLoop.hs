@@ -59,22 +59,94 @@ mvar heartbeatInterval :: Int                     set by Hello,  need heartbeat
 sequenceId :: Int id of last event received       set by Resume, need reconnect and heartbeat
 sessionId :: Text                                 set by Ready,  need reconnect
 
-endstream
-startstream
-  - kill old stuff [heartbeat + sendables]
-  -
-
-
 -}
 
+data NextState = DoStart
+               | DoClosed
+               | DoReconnect
+  deriving Show
 
-{-
+data OutOfCon = OutOfCon
+  { lastSequenceId :: IORef Int
+  , sesshionId :: IORef T.Text
+  }
+
+data SendablesData = SendablesData
+  { thatCon :: Connection
+  , heartbeatInterval :: IORef Int
+  , librarySendales :: Chan GatewaySendableInternal
+  , startsendingUsers :: IORef Bool
+  }
+
 betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
-betterLoop auth intent gatewayHandle log = startStream >> loop ConnStart 0
+betterLoop auth intent gatewayHandle log = do
+  outofcon <- OutOfCon <$> newIORef 0 <*> newIORef ""
+
+  let loop = connect $ \conn -> do
+        msg <- getPayload conn log
+        case msg of
+          Right (Hello interval) -> do
+            seshId <- readIORef (sesshionId outofcon)
+            if seshId == "" then sendTextData conn (encode (Identify auth intent (0, 1)))
+                            else readIORef (lastSequenceId outofcon) >>= \seqId ->
+                                    sendTextData conn (encode (Resume auth seshId (fromIntegral seqId)))
+
+            internal <- newChan
+            interv <- newIORef interval
+            us <- newIORef False
+            theloop gatewayHandle outofcon (SendablesData conn interv internal us) log
+          _ -> do
+            --writeChan events (Left (GatewayExceptionCouldNotConnect
+            --           "Gateway could not connect. Expected hello"))
+            pure DoClosed
+
+  _ <- loop -- write to outofcon
+  pure ()
+
+theloop :: GatewayHandle -> OutOfCon -> SendablesData -> Chan T.Text -> IO NextState
+theloop thehandle outofcon sendablesdata log = do loop
   where
-  loop = try $ connect $ \conn -> do
-         loop
--}
+  eventChan = gatewayHandleEvents thehandle
+
+  loop = do
+    interval <- readIORef (heartbeatInterval sendablesdata)
+    eitherPayload <- getPayloadTimeout (thatCon sendablesdata) interval log
+    case eitherPayload :: Either ConnectionException GatewayReceivable of
+      Right (Hello _interval) -> do writeChan log ("eventloop - unexpectedhello")
+                                    loop
+      Right (Dispatch event sq) -> do writeIORef (lastSequenceId outofcon) (fromInteger sq)
+                                      writeChan eventChan (Right event)
+                                      case event of
+                                        (Ready _ _ _ _ seshID) -> writeIORef (sesshionId outofcon) seshID
+                                        _ -> writeIORef (startsendingUsers sendablesdata) True
+                                      loop
+      Right (HeartbeatRequest sq) -> do writeIORef (lastSequenceId outofcon) (fromInteger sq)
+                                        writeChan (librarySendales sendablesdata) (Heartbeat sq)
+                                        loop
+      Right (Reconnect)      -> pure DoReconnect
+      Right (InvalidSession retry) -> pure $ if retry then DoReconnect else DoStart
+      Right (HeartbeatAck)   -> loop
+      Right (ParseError e) -> do writeChan eventChan (Left (GatewayExceptionEventParseError e
+                                                             "Normal event loop"))
+                                 pure DoClosed
+      Left (CloseRequest code str) -> case code of
+          -- see Discord and MDN documentation on gateway close event codes
+          -- https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
+          -- https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
+          1000 -> pure DoReconnect
+          1001 -> pure DoReconnect
+          4000 -> pure DoReconnect
+          4006 -> pure DoStart
+          4007 -> pure DoReconnect
+          4014 -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello 0) $
+                           "Tried to declare an unauthorized GatewayIntent. " <>
+                           "Use the discord app manager to authorize by following: " <>
+                           "https://github.com/aquarial/discord-haskell/issues/76"))
+                     pure DoClosed
+          _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
+                                              "Normal event loop close request"))
+                  pure DoClosed
+      Left _ -> pure DoReconnect
 
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = loop ConnStart 0
