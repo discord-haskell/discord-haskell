@@ -133,10 +133,10 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
 
       (ConnReconnect seshID seqID) -> do
           next <- try $ connect $ \conn -> do
-              sendTextData conn (encode (Resume auth seshID seqID))
               eitherPayload <- getPayload conn log
               case eitherPayload of
-                  Right (Hello interval) ->
+                  Right (Hello interval) -> do
+                      sendTextData conn (encode (Resume auth seshID seqID))
                       startEventStream (ConnData conn seshID events) interval seqID userSend lastStatus log
                   Right (InvalidSession retry) -> do
                       t <- getRandomR (1,5)
