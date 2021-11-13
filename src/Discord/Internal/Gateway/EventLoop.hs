@@ -138,12 +138,6 @@ connectionLoop auth intent gatewayHandle log = loop ConnStart 0
                   Right (Hello interval) -> do
                       sendTextData conn (encode (Resume auth seshID seqID))
                       startEventStream (ConnData conn seshID events) interval seqID userSend lastStatus log
-                  Right (InvalidSession retry) -> do
-                      t <- getRandomR (1,5)
-                      threadDelay (t * (10^(6 :: Int)))
-                      pure $ if retry
-                             then ConnReconnect seshID seqID
-                             else ConnStart
                   Right payload -> do
                       writeChan events (Left (GatewayExceptionUnexpected payload
                                                "Response to Resume must be Hello/Invalid Session"))
@@ -229,9 +223,11 @@ eventStream (ConnData conn seshID eventChan) seqKey interval send sendingUsers l
                                         writeChan send (Heartbeat sq)
                                         loop
       Right (Reconnect)      -> ConnReconnect seshID <$> readIORef seqKey
-      Right (InvalidSession retry) -> if retry
-                                      then ConnReconnect seshID <$> readIORef seqKey
-                                      else pure ConnStart
+      Right (InvalidSession retry) -> do t <- getRandomR (1,5)
+                                         threadDelay (t * (10^(6 :: Int)))
+                                         if retry
+                                         then ConnReconnect seshID <$> readIORef seqKey
+                                         else pure ConnStart
       Right (HeartbeatAck)   -> loop
       Right (Hello e) -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello e)
                                                              "Normal event loop"))
