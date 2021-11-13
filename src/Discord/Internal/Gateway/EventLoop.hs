@@ -82,14 +82,20 @@ betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 betterLoop auth intent gatewayHandle log = do
   outofcon <- OutOfCon <$> newIORef 0 <*> newIORef ""
 
-  let loop = connect $ \conn -> do
+  let outerloop state = do
+        case state of
+          DoStart -> next <- loop (Identify auth intent (0, 1))
+                     outerloop next
+          DoReconnect -> do seqId  <- readIORef (lastSequenceId outofcon)
+                            seshId <- readIORef     (sesshionId outofcon)
+                            next <- loop (Resume auth seshId (fromIntegral seqId))
+                            outerloop next
+          DoClosed -> pure ()
+      loop first = connect $ \conn -> do
         msg <- getPayload conn log
         case msg of
           Right (Hello interval) -> do
-            seshId <- readIORef (sesshionId outofcon)
-            if seshId == "" then sendTextData conn (encode (Identify auth intent (0, 1)))
-                            else readIORef (lastSequenceId outofcon) >>= \seqId ->
-                                    sendTextData conn (encode (Resume auth seshId (fromIntegral seqId)))
+            sendTextData conn (encode first)
 
             internal <- newChan
             interv <- newIORef interval
@@ -100,8 +106,7 @@ betterLoop auth intent gatewayHandle log = do
             --           "Gateway could not connect. Expected hello"))
             pure DoClosed
 
-  _ <- loop -- write to outofcon
-  pure ()
+  in outerloop DoStart
 
 theloop :: GatewayHandle -> OutOfCon -> SendablesData -> Chan T.Text -> IO NextState
 theloop thehandle outofcon sendablesdata log = do loop
