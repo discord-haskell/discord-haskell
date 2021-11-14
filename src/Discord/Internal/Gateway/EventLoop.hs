@@ -169,7 +169,7 @@ runEventLoop thehandle sendablesData log = do loop
           1001 -> pure LoopReconnect
           4000 -> pure LoopReconnect
           4006 -> pure LoopStart
-          4007 -> pure LoopReconnect
+          4007 -> pure LoopStart
           4014 -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello 0) $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
