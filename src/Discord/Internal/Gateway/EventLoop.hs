@@ -78,35 +78,53 @@ data SendablesData = SendablesData
   , startsendingUsers :: IORef Bool
   }
 
-betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
-betterLoop auth intent gatewayHandle log = do
-  outofcon <- OutOfCon <$> newIORef 0 <*> newIORef ""
+-- outofcon <- OutOfCon <$> newIORef 0 <*> newIORef ""
 
-  let outerloop state = do
-        case state of
-          DoStart -> next <- loop (Identify auth intent (0, 1))
-                     outerloop next
-          DoReconnect -> do seqId  <- readIORef (lastSequenceId outofcon)
-                            seshId <- readIORef     (sesshionId outofcon)
-                            next <- loop (Resume auth seshId (fromIntegral seqId))
-                            outerloop next
-          DoClosed -> pure ()
-      loop first = connect $ \conn -> do
-        msg <- getPayload conn log
-        case msg of
-          Right (Hello interval) -> do
-            sendTextData conn (encode first)
+betterLoop :: Auth -> GatewayIntent -> GatewayHandle -> OutOfCon -> Chan T.Text -> IO ()
+betterLoop auth intent gatewayHandle outofcon log = outerloop DoStart
+  where
 
-            internal <- newChan
-            interv <- newIORef interval
-            us <- newIORef False
-            theloop gatewayHandle outofcon (SendablesData conn interv internal us) log
-          _ -> do
-            --writeChan events (Left (GatewayExceptionCouldNotConnect
-            --           "Gateway could not connect. Expected hello"))
-            pure DoClosed
+  outerloop :: NextState -> IO ()
+  outerloop state = do
+      mfirst <- firstmessage state
+      case mfirst of
+        Nothing -> pure ()
+        Just first -> do
+            next <- try (startconnectionpls first)
+            case next :: Either SomeException NextState of
+              Left _ -> do writeChan (gatewayHandleEvents gatewayHandle)
+                                     (Left (GatewayExceptionCouldNotConnect "gateway - fatal exception"))
+                           pure ()
+              Right n -> outerloop n
 
-  in outerloop DoStart
+  firstmessage :: NextState -> IO (Maybe GatewaySendableInternal)
+  firstmessage state =
+    case state of
+      DoStart -> pure $ Just $ Identify auth intent (0, 1)
+      DoReconnect -> do seqId  <- readIORef (lastSequenceId outofcon)
+                        seshId <- readIORef     (sesshionId outofcon)
+                        pure $ Just $ Resume auth seshId (fromIntegral seqId)
+      DoClosed -> pure Nothing
+
+  startconnectionpls :: GatewaySendableInternal -> IO NextState
+  startconnectionpls first = connect $ \conn -> do
+                      msg <- getPayload conn log
+                      case msg of
+                        Right (Hello interval) -> do
+                          sendTextData conn (encode first)
+
+                          internal <- newChan
+                          interv <- newIORef interval
+                          us <- newIORef False
+                          -- start event loop
+                          theloop gatewayHandle outofcon (SendablesData conn interv internal us) log
+                        _ -> do
+                          writeChan (gatewayHandleEvents gatewayHandle)
+                                    (Left (GatewayExceptionCouldNotConnect
+                                       "Gateway could not connect. Expected hello"))
+                          pure DoClosed
+
+
 
 theloop :: GatewayHandle -> OutOfCon -> SendablesData -> Chan T.Text -> IO NextState
 theloop thehandle outofcon sendablesdata log = do loop
