@@ -67,18 +67,17 @@ data SendablesData = SendablesData
 {-
 Some quick documentation for some of the variables passed around:
 
-
 Auth                                                         needed to connect
 GatewayIntent                                                needed to connect
 GatewayHandle (eventsGifts,status,usersends,seq,sesh)        needed all over
 log :: Chan (T.Text)                                         needed all over
 
-sendableConnection                                set by setup,  need sendableLoop
+sendableConnection                                 set by setup,  need sendableLoop
 librarySendables :: Chan (GatewaySendableInternal) set by setup,  need heartbeat
-heartbeatInterval :: Int                          set by Hello,  need heartbeat
+heartbeatInterval :: Int                           set by Hello,  need heartbeat
 
-sequenceId :: Int id of last event received       set by Resume, need heartbeat and reconnect
-sessionId :: Text                                 set by Ready,  need reconnect
+sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
+sessionId :: Text                                  set by Ready,  need reconnect
 -}
 
 
