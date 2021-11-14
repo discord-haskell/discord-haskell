@@ -6,7 +6,7 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
-## 1.9.0
+## 1.9.1
 
 Add [color attribute for CreateEmbed](https://github.com/aquarial/discord-haskell/issues/78)
 
