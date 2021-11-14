@@ -17,7 +17,7 @@ import Data.IORef (newIORef)
 import qualified Data.Text as T
 
 import Discord.Internal.Types (Auth, Event, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
+import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..), OutOfCon(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
@@ -36,7 +36,8 @@ startGatewayThread auth intent cacheHandle log = do
   sends <- newChan
   status <- newIORef Nothing
   let gatewayHandle = GatewayHandle events sends status
-  tid <- forkIO $ connectionLoop auth intent gatewayHandle log
+  outofcon <- OutOfCon <$> newIORef 0 <*> newIORef ""
+  tid <- forkIO $ connectionLoop auth intent gatewayHandle outofcon log
   pure (gatewayHandle, tid)
 
 
