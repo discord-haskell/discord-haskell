@@ -27,7 +27,7 @@ data GatewayReceivable
   | HeartbeatRequest Integer
   | Reconnect
   | InvalidSession Bool
-  | Hello Int
+  | Hello Integer
   | HeartbeatAck
   | ParseError T.Text
   deriving (Show, Eq)
