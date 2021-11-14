@@ -106,7 +106,10 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
       LoopStart -> pure $ Just $ Identify auth intent (0, 1)
       LoopReconnect -> do seqId  <- readIORef (gatewayHandleLastSequenceId gatewayHandle)
                           seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
-                          pure $ Just $ Resume auth seshId seqId
+                          if seshId == ""
+                          then do writeChan log ("gateway - WARNING seshID was not set by READY?")
+                                  pure $ Just $ Identify auth intent (0, 1)
+                          else pure $ Just $ Resume auth seshId seqId
       LoopClosed -> pure Nothing
 
   startconnectionpls :: GatewaySendableInternal -> IO LoopState
