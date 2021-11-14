@@ -68,7 +68,7 @@ data NextState = DoStart
 
 data OutOfCon = OutOfCon
   { lastSequenceId :: IORef Int
-  , sesshionId :: IORef T.Text
+  , sessionId :: IORef T.Text
   }
 
 data SendablesData = SendablesData
@@ -102,7 +102,7 @@ betterLoop auth intent gatewayHandle outofcon log = outerloop DoStart
     case state of
       DoStart -> pure $ Just $ Identify auth intent (0, 1)
       DoReconnect -> do seqId  <- readIORef (lastSequenceId outofcon)
-                        seshId <- readIORef     (sesshionId outofcon)
+                        seshId <- readIORef     (sessionId outofcon)
                         pure $ Just $ Resume auth seshId (fromIntegral seqId)
       DoClosed -> pure Nothing
 
@@ -140,7 +140,7 @@ theloop thehandle outofcon sendablesdata log = do loop
       Right (Dispatch event sq) -> do writeIORef (lastSequenceId outofcon) (fromInteger sq)
                                       writeChan eventChan (Right event)
                                       case event of
-                                        (Ready _ _ _ _ seshID) -> writeIORef (sesshionId outofcon) seshID
+                                        (Ready _ _ _ _ seshID) -> writeIORef (sessionId outofcon) seshID
                                         _ -> writeIORef (startsendingUsers sendablesdata) True
                                       loop
       Right (HeartbeatRequest sq) -> do writeIORef (lastSequenceId outofcon) (fromInteger sq)
