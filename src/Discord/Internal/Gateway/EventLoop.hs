@@ -119,8 +119,8 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                                   (killThread heart >> killThread sendsId)
                         _ -> do
                           writeChan log "gateway - WARNING could not connect. Expected hello"
-                          sendClose conn "expected hello"
-                          void $ forever $ void (receiveData conn)
+                          sendClose conn ("expected hello" :: BL.ByteString)
+                          void $ forever $ void (receiveData conn :: IO BL.ByteString)
                           -- > after sendClose you should call receiveDataMessage until
                           -- > it throws an exception
                           -- haskell websockets documentation
