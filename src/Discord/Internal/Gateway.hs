@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Internal.Gateway
