@@ -239,6 +239,7 @@ sendableLoop conn ghandle sendables _log = sendSysLoop
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
       payload <- readChan (librarySendales sendables)
       sendTextData conn (encode payload)
+   -- writeChan _log ("gateway - sending " <> TE.decodeUtf8 (BL.toStrict (encode payload)))
       usersending <- readIORef (startsendingUsers sendables)
       if not usersending
       then sendSysLoop
@@ -253,5 +254,5 @@ sendableLoop conn ghandle sendables _log = sendSysLoop
    -- payload :: Either GatewaySendableInternal GatewaySendable
       payload <- race (readChan (gatewayHandleUserSendables ghandle)) (readChan (librarySendales sendables))
       sendTextData conn (either encode encode payload)
-   -- writeChan _log ("extrainfo - sending " <> TE.decodeUtf8 (BL.toStrict (either encode encode payload)))
+   -- writeChan _log ("gateway - sending " <> TE.decodeUtf8 (BL.toStrict (either encode encode payload)))
       sendUserLoop
