@@ -51,59 +51,67 @@ data GatewayHandle = GatewayHandle
   }
 
 
-{-
-Auth                                                         needed to connect
-GatewayIntent                                                needed to connect
-GatewayHandle (events,status,usersends)                      needed all over
-log :: Chan (T.Text)                                         needed all over
 
-channelSends :: Chan (GatewaySendableInternal)
-mvar heartbeatInterval :: Int                     set by Hello,  need heartbeat
-sequenceId :: Int id of last event received       set by Resume, need reconnect and heartbeat
-sessionId :: Text                                 set by Ready,  need reconnect
-
--}
-
-data NextState = DoStart
-               | DoClosed
-               | DoReconnect
+-- | State of the eventloop
+data LoopState = LoopStart
+               | LoopClosed
+               | LoopReconnect
   deriving Show
 
+-- | Enough info for library to send info to discord.
 data SendablesData = SendablesData
   { sendableConnection :: Connection
-  , librarySendales :: Chan GatewaySendableInternal
+  , librarySendables :: Chan GatewaySendableInternal
   , startsendingUsers :: IORef Bool
   , heartbeatInterval :: Integer
   }
 
+{-
+Some quick documentation for some of the variables passed around:
+
+
+Auth                                                         needed to connect
+GatewayIntent                                                needed to connect
+GatewayHandle (eventsGifts,status,usersends,seq,sesh)        needed all over
+log :: Chan (T.Text)                                         needed all over
+
+sendableConnection                                set by setup,  need sendableLoop
+librarySendables :: Chan (GatewaySendableInternal) set by setup,  need heartbeat
+heartbeatInterval :: Int                          set by Hello,  need heartbeat
+
+sequenceId :: Int id of last event received       set by Resume, need heartbeat and reconnect
+sessionId :: Text                                 set by Ready,  need reconnect
+-}
+
+
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
-connectionLoop auth intent gatewayHandle log = outerloop DoStart
+connectionLoop auth intent gatewayHandle log = outerloop LoopStart
   where
 
-  outerloop :: NextState -> IO ()
+  outerloop :: LoopState -> IO ()
   outerloop state = do
       mfirst <- firstmessage state
       case mfirst of
         Nothing -> pure ()
         Just first -> do
             next <- try (startconnectionpls first)
-            case next :: Either SomeException NextState of
+            case next :: Either SomeException LoopState of
               Left _ -> do t <- getRandomR (3,20)
                            threadDelay (t * (10^(6 :: Int)))
                            writeChan log ("gateway - trying to reconnect after failure(s)")
-                           outerloop DoReconnect
+                           outerloop LoopReconnect
               Right n -> outerloop n
 
-  firstmessage :: NextState -> IO (Maybe GatewaySendableInternal)
+  firstmessage :: LoopState -> IO (Maybe GatewaySendableInternal)
   firstmessage state =
     case state of
-      DoStart -> pure $ Just $ Identify auth intent (0, 1)
-      DoReconnect -> do seqId  <- readIORef (gatewayHandleLastSequenceId gatewayHandle)
-                        seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
-                        pure $ Just $ Resume auth seshId seqId
-      DoClosed -> pure Nothing
+      LoopStart -> pure $ Just $ Identify auth intent (0, 1)
+      LoopReconnect -> do seqId  <- readIORef (gatewayHandleLastSequenceId gatewayHandle)
+                          seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
+                          pure $ Just $ Resume auth seshId seqId
+      LoopClosed -> pure Nothing
 
-  startconnectionpls :: GatewaySendableInternal -> IO NextState
+  startconnectionpls :: GatewaySendableInternal -> IO LoopState
   startconnectionpls first = connect $ \conn -> do
                       msg <- getPayload conn log
                       case msg of
@@ -114,8 +122,7 @@ connectionLoop auth intent gatewayHandle log = outerloop DoStart
                           -- start event loop
                           let sending = SendablesData conn internal us interval
                           sendsId <- forkIO $ sendableLoop conn gatewayHandle sending log
-                          heart <- forkIO $ heartbeat internal interval
-                                              (gatewayHandleLastSequenceId gatewayHandle)
+                          heart <- forkIO $ heartbeat sending (gatewayHandleLastSequenceId gatewayHandle)
 
                           writeChan internal first
                           finally (theloop gatewayHandle sending log)
@@ -124,10 +131,10 @@ connectionLoop auth intent gatewayHandle log = outerloop DoStart
                           writeChan (gatewayHandleEvents gatewayHandle)
                                     (Left (GatewayExceptionCouldNotConnect
                                        "Gateway could not connect. Expected hello"))
-                          pure DoClosed
+                          pure LoopClosed
 
 
-theloop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO NextState
+theloop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
 theloop thehandle sendablesData log = do loop
   where
   eventChan = gatewayHandleEvents thehandle
@@ -145,41 +152,41 @@ theloop thehandle sendablesData log = do loop
                                         _ -> writeIORef (startsendingUsers sendablesData) True
                                       loop
       Right (HeartbeatRequest sq) -> do writeIORef (gatewayHandleLastSequenceId thehandle) sq
-                                        writeChan (librarySendales sendablesData) (Heartbeat sq)
+                                        writeChan (librarySendables sendablesData) (Heartbeat sq)
                                         loop
-      Right (Reconnect)      -> pure DoReconnect
-      Right (InvalidSession retry) -> pure $ if retry then DoReconnect else DoStart
+      Right (Reconnect)      -> pure LoopReconnect
+      Right (InvalidSession retry) -> pure $ if retry then LoopReconnect else LoopStart
       Right (HeartbeatAck)   -> loop
       Right (ParseError e) -> do writeChan eventChan (Left (GatewayExceptionEventParseError e
                                                              "Normal event loop"))
-                                 pure DoClosed
+                                 pure LoopClosed
       Left (CloseRequest code str) -> case code of
           -- see Discord and MDN documentation on gateway close event codes
           -- https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
           -- https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
-          1000 -> pure DoReconnect
-          1001 -> pure DoReconnect
-          4000 -> pure DoReconnect
-          4006 -> pure DoStart
-          4007 -> pure DoReconnect
+          1000 -> pure LoopReconnect
+          1001 -> pure LoopReconnect
+          4000 -> pure LoopReconnect
+          4006 -> pure LoopStart
+          4007 -> pure LoopReconnect
           4014 -> do writeChan eventChan (Left (GatewayExceptionUnexpected (Hello 0) $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
                            "https://github.com/aquarial/discord-haskell/issues/76"))
-                     pure DoClosed
+                     pure LoopClosed
           _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
                                               "Normal event loop close request"))
-                  pure DoClosed
-      Left _ -> pure DoReconnect
+                  pure LoopClosed
+      Left _ -> pure LoopReconnect
 
 
-heartbeat :: Chan GatewaySendableInternal -> Integer -> IORef Integer -> IO ()
-heartbeat send interval seqKey = do
+heartbeat :: SendablesData -> IORef Integer -> IO ()
+heartbeat sendablesData seqKey = do
   threadDelay (3 * 10^(6 :: Int))
   forever $ do
     num <- readIORef seqKey
-    writeChan send (Heartbeat num)
-    threadDelay (fromInteger (interval * 1000))
+    writeChan (librarySendables sendablesData) (Heartbeat num)
+    threadDelay (fromInteger (heartbeatInterval sendablesData * 1000))
 
 getPayloadTimeout :: SendablesData -> Chan T.Text -> IO (Either ConnectionException GatewayReceivable)
 getPayloadTimeout sendablesData log = do
@@ -207,7 +214,7 @@ sendableLoop conn ghandle sendablesData _log = sendSysLoop
   where
   sendSysLoop = do
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
-      payload <- readChan (librarySendales sendablesData)
+      payload <- readChan (librarySendables sendablesData)
       sendTextData conn (encode payload)
    -- writeChan _log ("gateway - sending " <> TE.decodeUtf8 (BL.toStrict (encode payload)))
       usersending <- readIORef (startsendingUsers sendablesData)
@@ -222,7 +229,7 @@ sendableLoop conn ghandle sendablesData _log = sendSysLoop
    -- send a ~120 events a min by delaying
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
    -- payload :: Either GatewaySendableInternal GatewaySendable
-      payload <- race (readChan (gatewayHandleUserSendables ghandle)) (readChan (librarySendales sendablesData))
+      payload <- race (readChan (gatewayHandleUserSendables ghandle)) (readChan (librarySendables sendablesData))
       sendTextData conn (either encode encode payload)
    -- writeChan _log ("gateway - sending " <> TE.decodeUtf8 (BL.toStrict (either encode encode payload)))
       sendUserLoop
