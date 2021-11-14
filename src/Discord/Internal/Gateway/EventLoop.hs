@@ -135,7 +135,7 @@ theloop thehandle sendablesData log = do loop
   loop = do
     eitherPayload <- getPayloadTimeout sendablesData log
     case eitherPayload :: Either ConnectionException GatewayReceivable of
-      Right (Hello _interval) -> do writeChan log ("eventloop - unexpectedhello")
+      Right (Hello _interval) -> do writeChan log ("eventloop - unexpected hello")
                                     loop
       Right (Dispatch event sq) -> do writeIORef (gatewayHandleLastSequenceId thehandle) sq
                                       writeChan eventChan (Right event)
