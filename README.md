@@ -40,6 +40,19 @@ isPing :: Message -> Bool
 isPing = ("ping" `isPrefixOf`) . toLower . messageText
 ```
 
+```
+-- ping-pong.cabal
+
+executable haskell-bot
+  main-is:             src/Main.hs
+  default-language:    Haskell2010
+  ghc-options:         -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+```
+
 ### Biggest TODOs
 
 - [ ] APIv9
