@@ -7,7 +7,7 @@ module Discord.Internal.Gateway.EventLoop where
 
 import Prelude hiding (log)
 
-import Control.Monad (forever)
+import Control.Monad (forever, void)
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
@@ -21,7 +21,7 @@ import qualified Data.ByteString.Lazy as BL
 
 import Wuss (runSecureClient)
 import Network.WebSockets (ConnectionException(..), Connection,
-                           receiveData, sendTextData)
+                           receiveData, sendTextData, sendClose)
 
 import Discord.Internal.Types
 
@@ -128,10 +128,13 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                           finally (runEventLoop gatewayHandle sending log)
                                   (killThread heart >> killThread sendsId)
                         _ -> do
-                          writeChan (gatewayHandleEvents gatewayHandle)
-                                    (Left (GatewayExceptionCouldNotConnect
-                                       "Gateway could not connect. Expected hello"))
-                          pure LoopClosed
+                          writeChan log "gateway - WARNING could not connect. Expected hello"
+                          sendClose conn "expected hello"
+                          void $ forever $ void (receiveData conn)
+                          -- > after sendClose you should call receiveDataMessage until
+                          -- > it throws an exception
+                          -- haskell websockets documentation
+                          pure LoopStart
 
 
 runEventLoop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
