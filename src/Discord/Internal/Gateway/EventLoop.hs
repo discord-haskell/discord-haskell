@@ -35,7 +35,7 @@ data GatewayException = GatewayExceptionCouldNotConnect T.Text
 data ConnLoopState = ConnStart
                    | ConnClosed
                    | ConnReconnect T.Text Integer
-  deriving Show
+  deriving (Show)
 
 -- | Securely run a connection IO action. Send a close on exception
 connect :: (Connection -> IO a) -> IO a
@@ -49,8 +49,6 @@ data GatewayHandle = GatewayHandle
   , gatewayHandleLastSequenceId :: IORef Integer
   , gatewayHandleSessionId      :: IORef T.Text
   }
-
-
 
 -- | State of the eventloop
 data LoopState = LoopStart
@@ -125,7 +123,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                           heart <- forkIO $ heartbeat sending (gatewayHandleLastSequenceId gatewayHandle)
 
                           writeChan internal first
-                          finally (theloop gatewayHandle sending log)
+                          finally (runEventLoop gatewayHandle sending log)
                                   (killThread heart >> killThread sendsId)
                         _ -> do
                           writeChan (gatewayHandleEvents gatewayHandle)
@@ -134,8 +132,8 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                           pure LoopClosed
 
 
-theloop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
-theloop thehandle sendablesData log = do loop
+runEventLoop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
+runEventLoop thehandle sendablesData log = do loop
   where
   eventChan = gatewayHandleEvents thehandle
 
