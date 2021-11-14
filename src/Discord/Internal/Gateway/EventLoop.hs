@@ -124,6 +124,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                           -- > after sendClose you should call receiveDataMessage until
                           -- > it throws an exception
                           -- haskell websockets documentation
+                          threadDelay (3 * (10^(6 :: Int)))
                           pure LoopStart
 
 
