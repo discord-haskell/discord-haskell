@@ -26,22 +26,6 @@ import Network.WebSockets (ConnectionException(..), Connection,
 import Discord.Internal.Types
 
 
-data GatewayException = GatewayExceptionCouldNotConnect T.Text
-                      | GatewayExceptionEventParseError T.Text T.Text
-                      | GatewayExceptionUnexpected GatewayReceivable T.Text
-                      | GatewayExceptionConnection ConnectionException T.Text
-  deriving (Show)
-
-data ConnLoopState = ConnStart
-                   | ConnClosed
-                   | ConnReconnect T.Text Integer
-  deriving (Show)
-
--- | Securely run a connection IO action. Send a close on exception
-connect :: (Connection -> IO a) -> IO a
-connect = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json"
-
-
 data GatewayHandle = GatewayHandle
   { gatewayHandleEvents         :: Chan (Either GatewayException Event)
   , gatewayHandleUserSendables  :: Chan GatewaySendable
@@ -49,6 +33,13 @@ data GatewayHandle = GatewayHandle
   , gatewayHandleLastSequenceId :: IORef Integer
   , gatewayHandleSessionId      :: IORef T.Text
   }
+
+data GatewayException = GatewayExceptionCouldNotConnect T.Text
+                      | GatewayExceptionEventParseError T.Text T.Text
+                      | GatewayExceptionUnexpected GatewayReceivable T.Text
+                      | GatewayExceptionConnection ConnectionException T.Text
+  deriving (Show)
+
 
 -- | State of the eventloop
 data LoopState = LoopStart
@@ -79,7 +70,6 @@ heartbeatInterval :: Int                           set by Hello,  need heartbeat
 sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
 sessionId :: Text                                  set by Ready,  need reconnect
 -}
-
 
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = outerloop LoopStart
@@ -112,7 +102,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
       LoopClosed -> pure Nothing
 
   startconnectionpls :: GatewaySendableInternal -> IO LoopState
-  startconnectionpls first = connect $ \conn -> do
+  startconnectionpls first = runSecureClient "gateway.discord.gg" 443 "/?v=6&encoding=json" $ \conn -> do
                       msg <- getPayload conn log
                       case msg of
                         Right (Hello interval) -> do
@@ -178,7 +168,7 @@ runEventLoop thehandle sendablesData log = do loop
                            "https://github.com/aquarial/discord-haskell/issues/76"))
                      pure LoopClosed
           _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
-                                              "Normal event loop close request"))
+                                              "Unknown close code. Closing connection. Consider opening an issue with discord-haskell"))
                   pure LoopClosed
       Left _ -> pure LoopReconnect
 
