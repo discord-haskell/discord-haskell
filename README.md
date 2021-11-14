@@ -43,7 +43,7 @@ isPing = ("ping" `isPrefixOf`) . toLower . messageText
 ### Biggest TODOs
 
 - [ ] APIv9
-- [ ] rewrite eventloop [issue 70](https://github.com/aquarial/discord-haskell/issues/70)
+- [x] rewrite eventloop [issue 70](https://github.com/aquarial/discord-haskell/issues/70)
 - [ ] Event type includes roles and other cached info
 - [ ] higher level bot interface? easier to add state and stuff
 

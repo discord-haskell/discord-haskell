@@ -6,6 +6,13 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.9.0
+
+Add [color attribute for CreateEmbed](https://github.com/aquarial/discord-haskell/issues/78)
+
+Rewrite [EventLoop.hs](https://github.com/aquarial/discord-haskell/issues/70) to be easier to modify
+
+Rename a bunch of internal handles so they have more consistent names
 
 ## 1.8.9
 
