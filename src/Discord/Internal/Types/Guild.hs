@@ -43,7 +43,7 @@ data Guild = Guild
       , guildSplash              :: Maybe T.Text    -- ^ Splash hash
       , guildOwnerId             :: UserId       -- ^ Guild owner id
       , guildPermissions         :: Maybe Integer
-      , guildRegion              :: T.Text          -- ^ Guild voice region
+      , guildRegion              :: Maybe T.Text    -- ^ Guild voice region
       , guildAfkId               :: Maybe ChannelId -- ^ Id of afk channel
       , guildAfkTimeout          :: Integer         -- ^ Afk timeout in seconds
       , guildEmbedEnabled        :: Maybe Bool      -- ^ Id of embedded channel
@@ -66,7 +66,7 @@ instance FromJSON Guild where
           <*> o .:? "splash"
           <*> o .:  "owner_id"
           <*> o .:? "permissions"
-          <*> o .:  "region"
+          <*> o .:? "region"
           <*> o .:? "afk_channel_id"
           <*> o .:  "afk_timeout"
           <*> o .:? "embed_enabled"
