@@ -23,40 +23,40 @@ import Discord.Internal.Types.User (User)
 data Event = NoInfo
 
 data EventInternalParse =
-    Ready                   Int User [Channel] [GuildUnavailable] T.Text
-  | Resumed                 [T.Text]
-  | ChannelCreate           Channel
-  | ChannelUpdate           Channel
-  | ChannelDelete           Channel
-  | ChannelPinsUpdate       ChannelId (Maybe UTCTime)
-  | GuildCreate             Guild GuildInfo
-  | GuildUpdate             Guild
-  | GuildDelete             GuildUnavailable
-  | GuildBanAdd             GuildId User
-  | GuildBanRemove          GuildId User
-  | GuildEmojiUpdate        GuildId [Emoji]
-  | GuildIntegrationsUpdate GuildId
-  | GuildMemberAdd          GuildId GuildMember
-  | GuildMemberRemove       GuildId User
-  | GuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
-  | GuildMemberChunk        GuildId [GuildMember]
-  | GuildRoleCreate         GuildId Role
-  | GuildRoleUpdate         GuildId Role
-  | GuildRoleDelete         GuildId RoleId
-  | MessageCreate           Message
-  | MessageUpdate           ChannelId MessageId
-  | MessageDelete           ChannelId MessageId
-  | MessageDeleteBulk       ChannelId [MessageId]
-  | MessageReactionAdd      ReactionInfo
-  | MessageReactionRemove   ReactionInfo
-  | MessageReactionRemoveAll ChannelId MessageId
-  | MessageReactionRemoveEmoji ReactionRemoveInfo
-  | PresenceUpdate          PresenceInfo
-  | TypingStart             TypingInfo
-  | UserUpdate              User
-  -- | VoiceStateUpdate
-  -- | VoiceServerUpdate
-  | UnknownEvent     T.Text Object
+    InternalReady                   Int User [Channel] [GuildUnavailable] T.Text
+  | InternalResumed                 [T.Text]
+  | InternalChannelCreate           Channel
+  | InternalChannelUpdate           Channel
+  | InternalChannelDelete           Channel
+  | InternalChannelPinsUpdate       ChannelId (Maybe UTCTime)
+  | InternalGuildCreate             Guild GuildInfo
+  | InternalGuildUpdate             Guild
+  | InternalGuildDelete             GuildUnavailable
+  | InternalGuildBanAdd             GuildId User
+  | InternalGuildBanRemove          GuildId User
+  | InternalGuildEmojiUpdate        GuildId [Emoji]
+  | InternalGuildIntegrationsUpdate GuildId
+  | InternalGuildMemberAdd          GuildId GuildMember
+  | InternalGuildMemberRemove       GuildId User
+  | InternalGuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
+  | InternalGuildMemberChunk        GuildId [GuildMember]
+  | InternalGuildRoleCreate         GuildId Role
+  | InternalGuildRoleUpdate         GuildId Role
+  | InternalGuildRoleDelete         GuildId RoleId
+  | InternalMessageCreate           Message
+  | InternalMessageUpdate           ChannelId MessageId
+  | InternalMessageDelete           ChannelId MessageId
+  | InternalMessageDeleteBulk       ChannelId [MessageId]
+  | InternalMessageReactionAdd      ReactionInfo
+  | InternalMessageReactionRemove   ReactionInfo
+  | InternalMessageReactionRemoveAll ChannelId MessageId
+  | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
+  | InternalPresenceUpdate          PresenceInfo
+  | InternalTypingStart             TypingInfo
+  | InternalUserUpdate              User
+  -- | InternalVoiceStateUpdate
+  -- | InternalVoiceServerUpdate
+  | InternalUnknownEvent     T.Text Object
   deriving (Show, Eq)
 
 data ReactionInfo = ReactionInfo
@@ -129,48 +129,48 @@ reparse val = case parseEither parseJSON $ toJSON val of
 
 eventParse :: T.Text -> Object -> Parser EventInternalParse
 eventParse t o = case t of
-    "READY"                     -> Ready <$> o .: "v"
+    "READY"                     -> InternalReady <$> o .: "v"
                                          <*> o .: "user"
                                          <*> o .: "private_channels"
                                          <*> o .: "guilds"
                                          <*> o .: "session_id"
-    "RESUMED"                   -> Resumed <$> o .: "_trace"
-    "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
-    "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
-    "CHANNEL_DELETE"            -> ChannelDelete             <$> reparse o
+    "RESUMED"                   -> InternalResumed <$> o .: "_trace"
+    "CHANNEL_CREATE"            -> InternalChannelCreate             <$> reparse o
+    "CHANNEL_UPDATE"            -> InternalChannelUpdate             <$> reparse o
+    "CHANNEL_DELETE"            -> InternalChannelDelete             <$> reparse o
     "CHANNEL_PINS_UPDATE"       -> do id <- o .: "channel_id"
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
-                                      pure (ChannelPinsUpdate id utc)
-    "GUILD_CREATE"              -> GuildCreate               <$> reparse o <*> reparse o
-    "GUILD_UPDATE"              -> GuildUpdate               <$> reparse o
-    "GUILD_DELETE"              -> GuildDelete               <$> reparse o
-    "GUILD_BAN_ADD"             -> GuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
-    "GUILD_BAN_REMOVE"          -> GuildBanRemove <$> o .: "guild_id" <*> o .: "user"
-    "GUILD_EMOJI_UPDATE"        -> GuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
-    "GUILD_INTEGRATIONS_UPDATE" -> GuildIntegrationsUpdate   <$> o .: "guild_id"
-    "GUILD_MEMBER_ADD"          -> GuildMemberAdd <$> o .: "guild_id" <*> reparse o
-    "GUILD_MEMBER_REMOVE"       -> GuildMemberRemove <$> o .: "guild_id" <*> o .: "user"
-    "GUILD_MEMBER_UPDATE"       -> GuildMemberUpdate <$> o .: "guild_id"
-                                                     <*> o .: "roles"
-                                                     <*> o .: "user"
-                                                     <*> o .:? "nick"
-    "GUILD_MEMBERS_CHUNK"       -> GuildMemberChunk <$> o .: "guild_id" <*> o .: "members"
-    "GUILD_ROLE_CREATE"         -> GuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
-    "GUILD_ROLE_UPDATE"         -> GuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
-    "GUILD_ROLE_DELETE"         -> GuildRoleDelete  <$> o .: "guild_id" <*> o .: "role_id"
-    "MESSAGE_CREATE"            -> MessageCreate     <$> reparse o
-    "MESSAGE_UPDATE"            -> MessageUpdate     <$> o .: "channel_id" <*> o .: "id"
-    "MESSAGE_DELETE"            -> MessageDelete     <$> o .: "channel_id" <*> o .: "id"
-    "MESSAGE_DELETE_BULK"       -> MessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
-    "MESSAGE_REACTION_ADD"      -> MessageReactionAdd <$> reparse o
-    "MESSAGE_REACTION_REMOVE"   -> MessageReactionRemove <$> reparse o
-    "MESSAGE_REACTION_REMOVE_ALL" -> MessageReactionRemoveAll <$> o .: "channel_id"
-                                                              <*> o .: "message_id"
-    "MESSAGE_REACTION_REMOVE_EMOJI" -> MessageReactionRemoveEmoji <$> reparse o
-    "PRESENCE_UPDATE"           -> PresenceUpdate            <$> reparse o
-    "TYPING_START"              -> TypingStart               <$> reparse o
-    "USER_UPDATE"               -> UserUpdate                <$> reparse o
- -- "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
- -- "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
-    _other_event                -> UnknownEvent t            <$> reparse o
+                                      pure (InternalChannelPinsUpdate id utc)
+    "GUILD_CREATE"              -> InternalGuildCreate               <$> reparse o <*> reparse o
+    "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
+    "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
+    "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
+    "GUILD_BAN_REMOVE"          -> InternalGuildBanRemove <$> o .: "guild_id" <*> o .: "user"
+    "GUILD_EMOJI_UPDATE"        -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
+    "GUILD_INTEGRATIONS_UPDATE" -> InternalGuildIntegrationsUpdate   <$> o .: "guild_id"
+    "GUILD_MEMBER_ADD"          -> InternalGuildMemberAdd <$> o .: "guild_id" <*> reparse o
+    "GUILD_MEMBER_REMOVE"       -> InternalGuildMemberRemove <$> o .: "guild_id" <*> o .: "user"
+    "GUILD_MEMBER_UPDATE"       -> InternalGuildMemberUpdate <$> o .: "guild_id"
+                                                             <*> o .: "roles"
+                                                             <*> o .: "user"
+                                                             <*> o .:? "nick"
+    "GUILD_MEMBERS_CHUNK"       -> InternalGuildMemberChunk <$> o .: "guild_id" <*> o .: "members"
+    "GUILD_ROLE_CREATE"         -> InternalGuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
+    "GUILD_ROLE_UPDATE"         -> InternalGuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
+    "GUILD_ROLE_DELETE"         -> InternalGuildRoleDelete  <$> o .: "guild_id" <*> o .: "role_id"
+    "MESSAGE_CREATE"            -> InternalMessageCreate     <$> reparse o
+    "MESSAGE_UPDATE"            -> InternalMessageUpdate     <$> o .: "channel_id" <*> o .: "id"
+    "MESSAGE_DELETE"            -> InternalMessageDelete     <$> o .: "channel_id" <*> o .: "id"
+    "MESSAGE_DELETE_BULK"       -> InternalMessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
+    "MESSAGE_REACTION_ADD"      -> InternalMessageReactionAdd <$> reparse o
+    "MESSAGE_REACTION_REMOVE"   -> InternalMessageReactionRemove <$> reparse o
+    "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> o .: "channel_id"
+                                                                      <*> o .: "message_id"
+    "MESSAGE_REACTION_REMOVE_EMOJI"-> InternalMessageReactionRemoveEmoji <$> reparse o
+    "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
+    "TYPING_START"              -> InternalTypingStart               <$> reparse o
+    "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
+ -- "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
+ -- "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
+    _other_event                -> InternalUnknownEvent t            <$> reparse o

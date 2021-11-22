@@ -29,7 +29,7 @@ cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
-        Right (Ready _ user dmChannels _unavailableGuilds _) -> do
+        Right (InternalReady _ user dmChannels _unavailableGuilds _) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
           putMVar cache (Right (Cache user dmChans M.empty M.empty))
           loop
@@ -53,21 +53,21 @@ cacheLoop cacheHandle log = do
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  --ChannelCreate Channel
-  --ChannelUpdate Channel
-  --ChannelDelete Channel
-  GuildCreate guild info ->
+  --InternalChannelCreate Channel
+  --InternalChannelUpdate Channel
+  --InternalChannelDelete Channel
+  InternalGuildCreate guild info ->
     let newChans = map (setChanGuildID (guildId guild)) $ guildChannels info
         g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (cacheGuilds minfo)
         c = M.unionWith (\a _ -> a)
                         (M.fromList [ (channelId ch, ch) | ch <- newChans ])
                         (cacheChannels minfo)
     in minfo { cacheGuilds = g, cacheChannels = c }
-  --GuildUpdate guild -> do
+  --InternalGuildUpdate guild -> do
   --  let g = M.insert (guildId guild) guild (cacheGuilds minfo)
   --      m2 = minfo { cacheGuilds = g }
   --  putMVar cache m2
-  --GuildDelete guild -> do
+  --InternalGuildDelete guild -> do
   --  let g = M.delete (guildId guild) (cacheGuilds minfo)
   --      c = M.filterWithKey (\(keyGuildId,_) _ -> keyGuildId /= guildId guild) (cacheChannels minfo)
   --      m2 = minfo { cacheGuilds = g, cacheChannels = c }

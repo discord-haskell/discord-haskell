@@ -169,7 +169,7 @@ instance FromJSON GatewayReceivable where
                ejson <- o .: "d"
                case ejson of
                  Object hm -> Dispatch <$> eventParse etype hm <*> o .: "s"
-                 _other -> Dispatch (UnknownEvent ("Dispatch payload wasn't an object") o)
+                 _other -> Dispatch (InternalUnknownEvent ("Dispatch payload wasn't an object") o)
                                   <$> o .: "s"
       1  -> HeartbeatRequest . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> pure Reconnect
