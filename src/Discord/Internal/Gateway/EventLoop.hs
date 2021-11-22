@@ -27,7 +27,7 @@ import Discord.Internal.Types
 
 
 data GatewayHandle = GatewayHandle
-  { gatewayHandleEvents         :: Chan (Either GatewayException Event)
+  { gatewayHandleEvents         :: Chan (Either GatewayException EventInternalParse)
   , gatewayHandleUserSendables  :: Chan GatewaySendable
   , gatewayHandleLastStatus     :: IORef (Maybe UpdateStatusOpts)
   , gatewayHandleLastSequenceId :: IORef Integer

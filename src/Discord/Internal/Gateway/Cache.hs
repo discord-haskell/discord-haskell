@@ -21,7 +21,7 @@ data Cache = Cache
      } deriving (Show)
 
 data CacheHandle = CacheHandle
-  { cacheHandleEvents :: Chan (Either GatewayException Event)
+  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
   , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
   }
 
@@ -51,7 +51,7 @@ cacheLoop cacheHandle log = do
                       Left e -> putMVar cache (Left (info, e))
                       Right event -> putMVar cache (Right (adjustCache info event))
 
-adjustCache :: Cache -> Event -> Cache
+adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
   --ChannelCreate Channel
   --ChannelUpdate Channel

@@ -23,7 +23,7 @@ import Discord.Internal.Types.Events
 
 -- | Sent by gateway
 data GatewayReceivable
-  = Dispatch Event Integer
+  = Dispatch EventInternalParse Integer
   | HeartbeatRequest Integer
   | Reconnect
   | InvalidSession Bool

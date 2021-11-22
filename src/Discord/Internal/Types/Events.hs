@@ -20,7 +20,9 @@ import Discord.Internal.Types.User (User)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
-data Event =
+data Event = NoInfo
+
+data EventInternalParse =
     Ready                   Int User [Channel] [GuildUnavailable] T.Text
   | Resumed                 [T.Text]
   | ChannelCreate           Channel
@@ -125,7 +127,7 @@ reparse val = case parseEither parseJSON $ toJSON val of
                 Left r -> fail r
                 Right b -> pure b
 
-eventParse :: T.Text -> Object -> Parser Event
+eventParse :: T.Text -> Object -> Parser EventInternalParse
 eventParse t o = case t of
     "READY"                     -> Ready <$> o .: "v"
                                          <*> o .: "user"

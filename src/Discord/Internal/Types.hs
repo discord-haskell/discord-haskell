@@ -25,5 +25,5 @@ import Data.Aeson (Object)
 import Data.Time.Clock (UTCTime(..))
 
 
-userFacingEvent :: Event -> Event
-userFacingEvent = id
+userFacingEvent :: EventInternalParse -> Event
+userFacingEvent _ = NoInfo

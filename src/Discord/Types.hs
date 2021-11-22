@@ -5,4 +5,5 @@ module Discord.Types
 import Discord.Internal.Types hiding
     ( GatewaySendableInternal
     , GatewayReceivable
+    , EventInternalParse
     )
