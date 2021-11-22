@@ -20,7 +20,42 @@ import Discord.Internal.Types.User (User)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
-data Event = NoInfo
+data Event =
+    Ready                   Int User [Channel] [GuildUnavailable] T.Text
+  | Resumed                 [T.Text]
+  | ChannelCreate           Channel
+  | ChannelUpdate           Channel
+  | ChannelDelete           Channel
+  | ChannelPinsUpdate       ChannelId (Maybe UTCTime)
+  | GuildCreate             Guild GuildInfo
+  | GuildUpdate             Guild
+  | GuildDelete             GuildUnavailable
+  | GuildBanAdd             GuildId User
+  | GuildBanRemove          GuildId User
+  | GuildEmojiUpdate        GuildId [Emoji]
+  | GuildIntegrationsUpdate GuildId
+  | GuildMemberAdd          GuildId GuildMember
+  | GuildMemberRemove       GuildId User
+  | GuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
+  | GuildMemberChunk        GuildId [GuildMember]
+  | GuildRoleCreate         GuildId Role
+  | GuildRoleUpdate         GuildId Role
+  | GuildRoleDelete         GuildId RoleId
+  | MessageCreate           Message
+  | MessageUpdate           ChannelId MessageId
+  | MessageDelete           ChannelId MessageId
+  | MessageDeleteBulk       ChannelId [MessageId]
+  | MessageReactionAdd      ReactionInfo
+  | MessageReactionRemove   ReactionInfo
+  | MessageReactionRemoveAll ChannelId MessageId
+  | MessageReactionRemoveEmoji ReactionRemoveInfo
+  | PresenceUpdate          PresenceInfo
+  | TypingStart             TypingInfo
+  | UserUpdate              User
+  -- | VoiceStateUpdate
+  -- | VoiceServerUpdate
+  | UnknownEvent     T.Text Object
+  deriving (Show, Eq)
 
 data EventInternalParse =
     InternalReady                   Int User [Channel] [GuildUnavailable] T.Text
