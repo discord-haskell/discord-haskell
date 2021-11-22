@@ -31,7 +31,7 @@ data Channel
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
-      , parentId           :: Maybe ParentId    -- ^ The id of the parent channel (category)
+      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
       }
   | ChannelNews
       { channelId          :: ChannelId
@@ -50,7 +50,7 @@ data Channel
       , channelPosition    :: Integer
       , channelNSFW        :: Bool
       , channelPermissions :: [Overwrite]
-      , parentId           :: Maybe ParentId
+      , channelParentId    :: Maybe ParentId
       }
   -- | A voice channel in a guild.
   | ChannelVoice
@@ -62,7 +62,7 @@ data Channel
       , channelNSFW        :: Bool
       , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
       , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
-      , parentId           :: Maybe ParentId
+      , channelParentId    :: Maybe ParentId
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
