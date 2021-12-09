@@ -1,9 +1,17 @@
-# discord-haskell           [![Build Status](https://app.travis-ci.com/aquarial/discord-haskell.svg?branch=master)](https://app.travis-ci.com/github/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)
+# discord-haskell           [![Build Status](https://app.travis-ci.com/aquarial/discord-haskell.svg?branch=master)](https://app.travis-ci.com/github/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)              [![Discord server](https://discord.com/api/guilds/918577626954739722/widget.png?style=shield)](https://discord.gg/eaRAGgX3bK)
 
-Build that discord bot in Haskell! Also checkout the [calamity](https://github.com/nitros12/calamity) 
-haskell discord library for a more advanced interface than `discord-haskell`.
+Build that discord bot in Haskell! Also checkout the [calamity haskell library](https://github.com/nitros12/calamity) 
+for a more advanced interface than `discord-haskell`.
 
-This is an example bot that replies "pong" to messages that start with "ping".
+### Discord Server
+
+Created a discord server: https://discord.gg/eaRAGgX3bK
+
+Ask questions, get updates, request features, etc
+
+### Quickstart
+
+This is an example bot that replies "pong" to messages that start with "ping". Also checkout the [other examples](./examples/)
 
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
@@ -55,10 +63,11 @@ executable haskell-bot
 
 ### Biggest TODOs
 
-- [ ] APIv9
-- [x] rewrite eventloop [issue 70](https://github.com/aquarial/discord-haskell/issues/70)
+- [ ] Add slash commands [issue](https://github.com/aquarial/discord-haskell/issues/59)
+- [ ] APIv9 [issue](https://github.com/aquarial/discord-haskell/issues/72)
 - [ ] Event type includes roles and other cached info
 - [ ] higher level bot interface? easier to add state and stuff
+- [x] rewrite eventloop [issue](https://github.com/aquarial/discord-haskell/issues/70)
 
 ### Installing
 
@@ -149,7 +158,7 @@ Remember to remove sensitive information before posting.
 
 #### Official discord docs
 
-For a list of rest requests, gateway events, and gateway sendables go to the 
+For a list of rest requests, gateway events, and gateway sendables go ggto the 
 [official discord documentation](https://discord.com/developers/docs/intro)
 
 The rest requests line up very closely. The documentation lists 
@@ -164,7 +173,3 @@ to display a variety of use cases. Read them with care.
 #### Open an Issue
 
 For deeper questions about how the library functions, feel free to open an issue.
-
-#### Discord server
-
-Coming sometime!
