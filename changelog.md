@@ -8,6 +8,8 @@ Discord API changes, so use the most recent version at all times
 
 [drewolson](https://github.com/aquarial/discord-haskell/pull/80) allows parsing an optional guild region
 
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/82) add 'animated' flag for Emoji
+
 ## 1.9.1
 
 Add [color attribute for CreateEmbed](https://github.com/aquarial/discord-haskell/issues/78)
