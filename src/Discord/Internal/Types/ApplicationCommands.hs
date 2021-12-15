@@ -1,19 +1,15 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
+
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE DeriveGeneric  #-}
-module Discord.Internal.Types.SlashCommands where
+
+module Discord.Internal.Types.ApplicationCommands where
 import Discord.Internal.Types.Prelude
-import Discord.Internal.Types.Guild
-import Discord.Internal.Types.User
-import Discord.Internal.Types.Embed
 import Data.Aeson
 import Data.Data
 import Data.Maybe (fromJust)
-import GHC.Generics
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
@@ -33,6 +29,10 @@ instance Enum ApplicationCommandType where
 instance ToJSON ApplicationCommandType where
     toJSON = toJSON . fromEnum
 
+--guild commands are approved instantly so that you can test quickly
+--global commands may take an hour
+
+-- makeSlashCommand :: String -> -> String ->Maybe Snowflake -> ApplicationCommand
 
 -- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure
 data ApplicationCommand = ApplicationCommand
