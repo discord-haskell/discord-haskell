@@ -66,6 +66,7 @@ library
                      , Discord.Internal.Types.Guild
                      , Discord.Internal.Types.User
                      , Discord.Internal.Types.Embed
+                     , Discord.Internal.Types.ApplicationCommands
   build-depends:
                        base >= 4 && <5
                      , aeson
