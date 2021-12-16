@@ -10,6 +10,7 @@ import UnliftIO.Concurrent
 import Discord
 import Discord.Types
 import qualified Discord.Requests as R
+import Debug.Trace
 
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
@@ -81,7 +82,35 @@ eventHandler event = case event of
                           def { referenceMessageId = Just $ messageId m }
                        }
         void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
+      Ready _ _ _ _ _ _ pa@(PartialApplication i f) -> trace (show pa) (
+        restCall (
+          R.CreateGuildApplicationCommand i serverid (
+            CreateApplicationCommand 
+              "test" 
+              "here is a description" 
+              (Just 
+                [
+                  ApplicationCommandOption 
+                    STRING 
+                    "randominput" 
+                    "I shall not" 
+                    (Just True) 
+                    (Just 
+                      [
+                        ApplicationCommandOptionChoice "firstopt" (Left "yay"), 
+                        ApplicationCommandOptionChoice "secondopt" (Left "nay")
+                      ]
+                    ) Nothing Nothing Nothing Nothing Nothing 
+                ]
+              ) 
+              Nothing
+              Nothing
+            ) 
+          )
+        ) >>= \rs -> trace (show rs) (return ())
       _ -> return ()
+  where
+    serverid = -1
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True

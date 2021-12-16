@@ -58,6 +58,7 @@ library
                      , Discord.Internal.Rest.Channel
                      , Discord.Internal.Rest.Voice
                      , Discord.Internal.Rest.Webhook
+                     , Discord.Internal.Rest.ApplicationCommands
                      , Discord.Internal.Types
                      , Discord.Internal.Types.Prelude
                      , Discord.Internal.Types.Channel

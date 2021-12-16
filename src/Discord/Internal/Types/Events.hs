@@ -21,7 +21,7 @@ import Discord.Internal.Types.User (User)
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Int User [Channel] [GuildUnavailable] T.Text
+    Ready                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   | Resumed                 [T.Text]
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
@@ -93,6 +93,14 @@ data EventInternalParse =
   -- | InternalVoiceServerUpdate
   | InternalUnknownEvent     T.Text Object
   deriving (Show, Read, Eq)
+
+data PartialApplication = PartialApplication {
+  partialApplicationID :: ApplicationId
+  , partialApplicationFlags :: Int
+} deriving (Show, Eq)
+
+instance FromJSON PartialApplication where
+  parseJSON = withObject "PartialApplication" (\v -> PartialApplication <$> v .: "id" <*> v .: "flags")
 
 data ReactionInfo = ReactionInfo
   { reactionUserId    :: UserId
@@ -169,6 +177,8 @@ eventParse t o = case t of
                                          <*> o .: "private_channels"
                                          <*> o .: "guilds"
                                          <*> o .: "session_id"
+                                         <*> o .: "shard"
+                                         <*> o .: "application"
     "RESUMED"                   -> InternalResumed <$> o .: "_trace"
     "CHANNEL_CREATE"            -> InternalChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> InternalChannelUpdate             <$> reparse o

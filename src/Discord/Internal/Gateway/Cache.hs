@@ -18,6 +18,7 @@ data Cache = Cache
      , cacheDMChannels :: M.Map ChannelId Channel
      , cacheGuilds :: M.Map GuildId (Guild, GuildInfo)
      , cacheChannels :: M.Map ChannelId Channel
+     , cacheApplication :: PartialApplication
      } deriving (Show)
 
 data CacheHandle = CacheHandle
@@ -29,9 +30,9 @@ cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
-        Right (InternalReady _ user dmChannels _unavailableGuilds _) -> do
+        Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
           let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-          putMVar cache (Right (Cache user dmChans M.empty M.empty))
+          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp))
           loop
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))

@@ -10,6 +10,7 @@ import Discord.Internal.Types.Prelude
 import Data.Aeson
 import Data.Data
 import Data.Maybe (fromJust)
+import Control.Applicative
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
@@ -29,19 +30,77 @@ instance Enum ApplicationCommandType where
 instance ToJSON ApplicationCommandType where
     toJSON = toJSON . fromEnum
 
+instance FromJSON ApplicationCommandType where
+    parseJSON = withScientific "ApplicationCommandType" (return . toEnum . round)
+
 --guild commands are approved instantly so that you can test quickly
 --global commands may take an hour
 
 -- makeSlashCommand :: String -> -> String ->Maybe Snowflake -> ApplicationCommand
 
+type ApplicationCommandId = Snowflake
+
+data CreateApplicationCommand = CreateApplicationCommand
+    { cApplicationCommandName :: String
+    , cApplicationCommandDescription :: String
+    , cApplicationCommandOptions :: Maybe [ApplicationCommandOption]
+    , cApplicationCommandDefaultPermission :: Maybe Bool
+    , cApplicationCommandType :: Maybe ApplicationCommandType
+}
+
+instance ToJSON CreateApplicationCommand where
+    toJSON CreateApplicationCommand{..} = object [(name, value) | (name, Just value) <-
+      [ ("name", toMaybeJSON cApplicationCommandName)
+      , ("description", toMaybeJSON cApplicationCommandDescription)
+      , ("options", toJSON <$> cApplicationCommandOptions)
+      , ("default_permission", toJSON <$> cApplicationCommandDefaultPermission)
+      , ("type", toJSON <$> cApplicationCommandType)
+      ] ]
+
+-- instance FromJSON CreateApplicationCommand where
+--     parseJSON = withObject "CreateApplicationCommand" (\v -> CreateApplicationCommand
+--         <$> v .:  "name"
+--         <*> v .:  "description"
+--         <*> v .:? "options"
+--         <*> v .:? "default_permission"
+--         <*> v .:? "type")
+
+-- convertCACToAC :: CreateApplicationCommand -> ApplicationCommand
+-- convertCACToAC CreateApplicationCommand{..} = ApplicationCommand 0 cApplicationCommandType 0 Nothing cApplicationCommandName cApplicationCommandDescription cApplicationCommandOptions cApplicationCommandDefaultPermission 0
+
+data EditApplicationCommand = EditApplicationCommand
+    { eApplicationCommandName :: Maybe String
+    , eApplicationCommandDescription :: Maybe String
+    , eApplicationCommandOptions :: Maybe [ApplicationCommandOption]
+    , eApplicationCommandDefaultPermission :: Maybe Bool
+    , eApplicationCommandType :: Maybe ApplicationCommandType
+}
+
+instance ToJSON EditApplicationCommand where
+    toJSON EditApplicationCommand{..} = object [(name, value) | (name, Just value) <-
+      [ ("name", toJSON <$> eApplicationCommandName)
+      , ("description", toJSON <$> eApplicationCommandDescription)
+      , ("options", toJSON <$> eApplicationCommandOptions)
+      , ("default_permission", toJSON <$> eApplicationCommandDefaultPermission)
+      , ("type", toJSON <$> eApplicationCommandType)
+      ] ]
+
+-- instance FromJSON EditApplicationCommand where
+--     parseJSON = withObject "ApplicationCommand" (\v -> EditApplicationCommand
+--         <$> v .:? "name"
+--         <*> v .:? "description"
+--         <*> v .:? "options"
+--         <*> v .:? "default_permission"
+--         <*> v .:? "type")
+
 -- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure
 data ApplicationCommand = ApplicationCommand
-    { applicationCommandId :: Snowflake -- ^ unique id of the command
+    { applicationCommandId :: ApplicationCommandId -- ^ unique id of the command
     , applicationCommandType :: Maybe ApplicationCommandType -- ^ the type of the command, 1, 2 or 3
-    , applicationCommandApplicationId        :: Snowflake -- ^ unique id of the parent application	
+    , applicationCommandApplicationId        :: ApplicationId  -- ^ unique id of the parent application	
     , applicationCommandGuildId        :: Maybe Snowflake -- ^ the guild id of the command if not global
     , applicationCommandName :: String -- ^ 1-32 characters
-    , applicationCommandDescription :: String -- ^ must be empty for USER and MESSAGE commands
+    , applicationCommandDescription :: String -- ^ must be empty for USER and MESSAGE commands, 1-100 chars
     , applicationCommandOptions     :: Maybe [ApplicationCommandOption] -- ^ CHAT_INPUT only, parameters to command
     , applicationCommandDefaultPermission             :: Maybe Bool -- ^ whether the command is enabled by default when the app is added to a guild. Defaults to true.
     , applicationCommandVersion :: Snowflake
@@ -58,7 +117,21 @@ instance ToJSON ApplicationCommand where
       , ("description", toMaybeJSON applicationCommandDescription)
       , ("options", toJSON <$> applicationCommandOptions)
       , ("default_permission", toJSON <$> applicationCommandDefaultPermission)
+      , ("version", toMaybeJSON applicationCommandVersion)
       ] ]
+
+instance FromJSON ApplicationCommand where
+    parseJSON = withObject "ApplicationCommand" (\v -> ApplicationCommand
+        <$> v .:  "id"
+        <*> v .:? "type"
+        <*> v .:  "application_id"
+        <*> v .:? "guild_id"
+        <*> v .:  "name"
+        <*> v .:  "description"
+        <*> v .:? "options"
+        <*> v .:? "default_permission"
+        <*> v .:  "version")
+
 
 
 data ApplicationCommandOption = ApplicationCommandOption
@@ -89,6 +162,19 @@ instance ToJSON ApplicationCommandOption where
       , ("autocomplete", toJSON <$> optionAutocomplete)
       ] ]
 
+instance FromJSON ApplicationCommandOption where
+    parseJSON =withObject "ApplicationCommandOption" (\v -> ApplicationCommandOption
+        <$> v .:  "type"
+        <*> v .:  "name"
+        <*> v .:  "description"
+        <*> v .:? "required"
+        <*> v .:? "choices"
+        <*> v .:? "options"
+        <*> v .:? "channel_types"
+        <*> v .:? "min_val"
+        <*> v .:? "max_val"
+        <*> v .:? "autocomplete")
+
 data ApplicationCommandOptionType = SUB_COMMAND | SUB_COMMAND_GROUP | STRING | INTEGER | BOOLEAN | USER | CHANNEL | ROLE | MENTIONABLE | NUMBER
     deriving (Show, Data)
 
@@ -109,6 +195,9 @@ instance Enum ApplicationCommandOptionType where
 instance ToJSON ApplicationCommandOptionType where
     toJSON = toJSON . fromEnum
 
+instance FromJSON ApplicationCommandOptionType where
+    parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
+
 
 data ApplicationCommandOptionChoice = ApplicationCommandOptionChoice
     { choiceName :: String
@@ -122,6 +211,11 @@ instance ToJSON ApplicationCommandOptionChoice where
                 (Left s) -> toJSON s
                 (Right (Left i)) -> toJSON i
                 (Right (Right d)) -> toJSON d
+
+instance FromJSON ApplicationCommandOptionChoice where
+    parseJSON = withObject "ApplicationCommandOptionChoice" (\v-> ApplicationCommandOptionChoice
+        <$> v .:  "name"
+        <*> (Left <$> v .: "value" <|> Right . Left <$> v .: "value" <|> Right . Right <$> v .: "value"))
 
 data ApplicationCommandChannelType = GUILD_TEXT | DM | GUILD_VOICE | GROUP_DM | GUILD_CATEGORY | GUILD_NEWS | GUILD_STORE | GUILD_NEWS_THREAD | GUILD_PUBLIC_THREAD | GUILD_PRIVATE_THREAD | GUILD_STAGE_VOICE
     deriving (Show, Data)
@@ -144,6 +238,9 @@ instance Enum ApplicationCommandChannelType where
 
 instance ToJSON ApplicationCommandChannelType where
     toJSON = toJSON . fromEnum
+
+instance FromJSON ApplicationCommandChannelType where
+    parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
 
 -- data ApplicationCommand = ApplicationCommand
 --     { applicationCommandId :: Snowflake -- ^ unique id of the command
