@@ -5,7 +5,37 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Discord.Internal.Types.ApplicationCommands where
+module Discord.Internal.Types.ApplicationCommands (
+    ApplicationCommand(..),
+    ApplicationCommandId,
+    CreateApplicationCommand(..),
+    EditApplicationCommand(..),
+    ApplicationCommandType(..),
+    ApplicationCommandOption(..),
+    ApplicationCommandOptionType(..),
+    ApplicationCommandOptionChoice(..),
+    ApplicationCommandChannelType(..),
+
+
+    Interaction(..),
+    InteractionId,
+    InteractionToken,
+    InteractionType(..),
+    InteractionData(..),
+    ResolvedData(..),
+    ApplicationCommandInteractionDataOption(..),
+
+    InteractionResponse(..),
+    InteractionCallbackType(..),
+    InteractionCallbackData(..),
+    InteractionCallbackAutocomplete,
+    InteractionCallbackMessages(..),
+    InteractionCallbackDataFlags(..),
+    InteractionCallbackDataFlag(..),
+
+
+    StringIntDouble(..),
+) where
 import Discord.Internal.Types.Prelude
 import Data.Aeson
 import Data.Data
@@ -17,8 +47,7 @@ import Data.Text (unpack, Text)
 import Discord.Internal.Types.Channel (Message, AllowedMentions, Attachment)
 import Discord.Internal.Types.Embed
 import Data.Bits
--- import Discord.Internal.Rest.Channel (AllowedMentions)
--- import Discord.Internal.Types (User(User))
+import Data.Default (Default(..))
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
@@ -26,8 +55,14 @@ toMaybeJSON = return . toJSON
 makeTable :: (Data t, Enum t) => t -> [(Int,t)]
 makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c) ) (dataTypeConstrs $ dataTypeOf t)
 
-data ApplicationCommandType = ACTCHAT_INPUT | ACTUSER | ACTMESSAGE
+-- | What type of application command. Represents slash commands, right clicking
+-- a user,  and right clicking a message respectively.
+data ApplicationCommandType = 
+      ACTCHAT_INPUT -- ^ Slash commands
+    | ACTUSER -- ^ User commands
+    | ACTMESSAGE -- ^ Message commands
     deriving (Show, Read, Data, Eq)
+
 instance Enum ApplicationCommandType where
     fromEnum ACTCHAT_INPUT = 1
     fromEnum ACTUSER = 2
@@ -41,20 +76,25 @@ instance ToJSON ApplicationCommandType where
 instance FromJSON ApplicationCommandType where
     parseJSON = withScientific "ApplicationCommandType" (return . toEnum . round)
 
---guild commands are approved instantly so that you can test quickly
---global commands may take an hour
-
--- makeSlashCommand :: String -> -> String ->Maybe Snowflake -> ApplicationCommand
-
 type ApplicationCommandId = Snowflake
 
+-- | Data type to be used when creating application commands. The specification
+-- is below. If a command of the same type and and name is sent to the server,
+-- it will overwrite any command that already exists. The description has to be
+-- empty for non-slash command application commands, as do the options. The
+-- options need to be `Nothing` for non-slash commands, too.
+--
+-- https://discord.com/developers/docs/interactions/application-commands#create-global-application-command
 data CreateApplicationCommand = CreateApplicationCommand
     { cApplicationCommandName :: String
     , cApplicationCommandDescription :: String
     , cApplicationCommandOptions :: Maybe [ApplicationCommandOption]
     , cApplicationCommandDefaultPermission :: Maybe Bool
     , cApplicationCommandType :: Maybe ApplicationCommandType
-}
+} deriving (Show, Eq, Read)
+
+instance Default CreateApplicationCommand where
+    def = CreateApplicationCommand "createappcom" "createappcom desc" Nothing Nothing Nothing
 
 instance ToJSON CreateApplicationCommand where
     toJSON CreateApplicationCommand{..} = object [(name, value) | (name, Just value) <-
@@ -76,6 +116,11 @@ instance ToJSON CreateApplicationCommand where
 -- convertCACToAC :: CreateApplicationCommand -> ApplicationCommand
 -- convertCACToAC CreateApplicationCommand{..} = ApplicationCommand 0 cApplicationCommandType 0 Nothing cApplicationCommandName cApplicationCommandDescription cApplicationCommandOptions cApplicationCommandDefaultPermission 0
 
+-- | Data type to be used when editing application commands. The specification
+-- is below. If a command of the same type and and name is sent to the server,
+-- it will overwrite any command that already exists.
+--
+-- https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command
 data EditApplicationCommand = EditApplicationCommand
     { eApplicationCommandName :: Maybe String
     , eApplicationCommandDescription :: Maybe String
@@ -83,6 +128,9 @@ data EditApplicationCommand = EditApplicationCommand
     , eApplicationCommandDefaultPermission :: Maybe Bool
     , eApplicationCommandType :: Maybe ApplicationCommandType
 }
+
+instance Default EditApplicationCommand where
+    def = EditApplicationCommand Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON EditApplicationCommand where
     toJSON EditApplicationCommand{..} = object [(name, value) | (name, Just value) <-
@@ -101,12 +149,16 @@ instance ToJSON EditApplicationCommand where
 --         <*> v .:? "default_permission"
 --         <*> v .:? "type")
 
+-- | The full information about an application command, obtainable with the
+-- various get requests. In theory, you never need to construct one of these -
+-- so if you are, reconsider what you're doing.
+--
 -- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-structure
 data ApplicationCommand = ApplicationCommand
     { applicationCommandId :: ApplicationCommandId -- ^ unique id of the command
     , applicationCommandType :: Maybe ApplicationCommandType -- ^ the type of the command, 1, 2 or 3
     , applicationCommandApplicationId        :: ApplicationId  -- ^ unique id of the parent application	
-    , applicationCommandGuildId        :: Maybe Snowflake -- ^ the guild id of the command if not global
+    , applicationCommandGuildId        :: Maybe GuildId -- ^ the guild id of the command if not global
     , applicationCommandName :: String -- ^ 1-32 characters
     , applicationCommandDescription :: String -- ^ must be empty for USER and MESSAGE commands, 1-100 chars
     , applicationCommandOptions     :: Maybe [ApplicationCommandOption] -- ^ CHAT_INPUT only, parameters to command
@@ -140,8 +192,9 @@ instance FromJSON ApplicationCommand where
         <*> v .:? "default_permission"
         <*> v .:  "version")
 
-
-
+-- | This is the structure that designates different options
+--
+-- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
 data ApplicationCommandOption = ApplicationCommandOption
     { optionType :: ApplicationCommandOptionType
     , optionName :: String -- ^ 1-32 characters
@@ -153,8 +206,10 @@ data ApplicationCommandOption = ApplicationCommandOption
     , optionMinVal :: Maybe (Either Int Double) -- ^ if option is number type, minimum value for the number
     , optionMaxVal :: Maybe (Either Int Double) -- ^ if option is number type, maximum value for the number
     , optionAutocomplete :: Maybe Bool -- ^ enable auto complete interactions. may not be set to true if choices is present
-    }
-    deriving (Show)
+    } deriving (Show, Eq, Read)
+
+instance Default ApplicationCommandOption where
+    def = ApplicationCommandOption STRING "appcomop" "appcomop desc" Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ApplicationCommandOption where
     toJSON ApplicationCommandOption{..} = object [(name, value) | (name, Just value) <-
@@ -261,6 +316,7 @@ instance FromJSON ApplicationCommandChannelType where
 type InteractionId = Snowflake
 type InteractionToken = Text
 
+-- | https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-structure
 data Interaction = Interaction
     { interactionId     :: InteractionId
     , interactionApplicationId     :: ApplicationId 
@@ -414,6 +470,9 @@ data InteractionResponse = InteractionResponse
     , interactionResponseData :: Maybe InteractionCallbackData
     } deriving (Show, Read, Eq)
 
+instance Default InteractionResponse where
+    def = InteractionResponse CHANNEL_MESSAGE_WITH_SOURCE Nothing
+
 instance ToJSON InteractionResponse where
     toJSON InteractionResponse{..} = object [(name, value) | (name, Just value) <-
       [ ("type", toMaybeJSON interactionResponseType)
@@ -436,16 +495,16 @@ instance Enum InteractionCallbackType where
 instance ToJSON InteractionCallbackType where
     toJSON = toJSON . fromEnum
 
-data InteractionCallbackData = ICDM InteractionCallbackDataMessages | ICDA InteractionCallbackDataAutocomplete
+data InteractionCallbackData = ICDM InteractionCallbackMessages | ICDA InteractionCallbackAutocomplete
     deriving (Show, Read, Eq)
 
 instance ToJSON InteractionCallbackData where
     toJSON (ICDM icdm) = toJSON icdm
     toJSON (ICDA icda) = toJSON icda
 
-type InteractionCallbackDataAutocomplete = [ApplicationCommandOptionChoice]
+type InteractionCallbackAutocomplete = [ApplicationCommandOptionChoice]
 
-data InteractionCallbackDataMessages = InteractionCallbackDataMessages 
+data InteractionCallbackMessages = InteractionCallbackMessages 
     { interactionCallbackDataMessagesTTS :: Maybe Bool
     , interactionCallbackDataMessagesContent :: Maybe Text
     , interactionCallbackDataMessagesEmbeds :: Maybe [Embed]
@@ -455,9 +514,11 @@ data InteractionCallbackDataMessages = InteractionCallbackDataMessages
     , interactionCallbackDataMessagesAttachments :: Maybe [Attachment]
     } deriving (Show, Read, Eq)
 
+instance Default InteractionCallbackMessages where
+    def = InteractionCallbackMessages Nothing Nothing Nothing Nothing Nothing Nothing
 
-instance ToJSON InteractionCallbackDataMessages where
-    toJSON InteractionCallbackDataMessages{..} = object [(name, value) | (name, Just value) <-
+instance ToJSON InteractionCallbackMessages where
+    toJSON InteractionCallbackMessages{..} = object [(name, value) | (name, Just value) <-
       [ ("tts", toJSON <$> interactionCallbackDataMessagesTTS)
       , ("content", toJSON <$> interactionCallbackDataMessagesContent)
       , ("embeds", toJSON <$> interactionCallbackDataMessagesEmbeds)
@@ -481,151 +542,3 @@ instance Enum InteractionCallbackDataFlag where
 
 instance ToJSON InteractionCallbackDataFlags where
     toJSON (InteractionCallbackDataFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
-
--- data ApplicationCommand = ApplicationCommand
---     { applicationCommandId :: Snowflake -- ^ unique id of the command
---     , applicationId        :: Snowflake 
---     , applicationCommandName :: String
---     , applicationCommandDescription :: String
---     , applicationCommandOptions     :: Maybe [ApplicationCommandOption]
---     , defaultPermission             :: Maybe Bool
---     }
--- instance ToJSON ApplicationCommand where
---     toJSON ApplicationCommand{..} = object [(name, value) | (name, Just value) <-
---       [ ("id", toJSON <$> pure applicationCommandId)
---       , ("application_id", toJSON <$> pure applicationId)
---       , ("name", toJSON <$> pure applicationCommandName)
---       , ("description", toJSON <$> pure applicationCommandDescription)
---       , ("options", toJSON <$> pure applicationCommandOptions)
---       , ("default_permission", toJSON <$> pure (case defaultPermission of {Nothing -> Just True; _ -> defaultPermission}))
---       ] ]
-
-
--- data ApplicationCommandOption = ApplicationCommandOption
---     { optionType :: Int
---     , optionName :: String
---     , optionDescription :: String
---     , optionRequired :: Maybe Bool
---     , optionChoices :: Maybe [ApplicationCommandOptionChoice]
---     , optionOptions :: Maybe [ApplicationCommandOption]
---     }
-
--- data ApplicationCommandPermissions = ApplicationCommandPermissions 
---     { applicationCommandPermissionId :: Snowflake
---     , commandPermissionType :: ApplicationCommandPermissionType
---     , commandPermission     :: Bool
---     }
-
-
--- type ApplicationCommandPermissionType = Int
-
-
--- data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions 
---     { guildApplicationCommandPermissionId :: Snowflake
---     , guildApplicationCommandPermissionApplicationId :: Snowflake
---     , guildApplicationCommandPermissionGuildId      :: Snowflake
---     , guildApplicationCommandPermissionPermissions :: [ApplicationCommandPermissions]
---     }
-
--- instance ToJSON ApplicationCommandOption where
---     toJSON ApplicationCommandOption{..} = object [(name, value) | (name, Just value) <-
---         [ ("type", toJSON <$> pure optionType)
---         , ("name", toJSON <$> pure optionName)
---         , ("description", toJSON <$> pure optionDescription)
---         , ("required", toJSON <$> pure optionRequired)
---         , ("choices", toJSON <$> pure optionChoices)
---         , ("options", toJSON <$> pure optionOptions)
---         ] ]
-
-
-
--- instance ToJSON ApplicationCommandOptionChoice where
---     toJSON ApplicationCommandOptionChoice{..} = object [(name, value) | (name, Just value) <-
---         [ ("name", toJSON <$> pure choiceName)
---         , ("value", toJSON <$> Just (show choiceValue))
---         ] ]  
-
--- data Interaction = Interaction
---     { interactionId     :: Snowflake
---     , applicationId'     :: Snowflake
---     , interactionType   :: InteractionType -- referenced as Type in API
---     , interactionData   :: Maybe ApplicationCommandInteractionData       -- referenced as Data in API
---     , guildId           :: Maybe GuildId
---     , channelId         :: Maybe ChannelId
---     , member            :: GuildMember
---     , user              :: User
---     , token             :: String
---     , version           :: Int
---     } deriving (Show, Read, Eq)
-
--- -- instance ToJSON Interaction where
---     -- toJSON Interaction{..} = withObject "Interaction" $ \o ->
---     --     Interaction <$> o .: ""
-
--- -- | 1 corresponds to Ping
--- -- 
--- -- 2 corresponds to ApplicationCommand
--- type InteractionType = Int
-
-
--- data ApplicationCommandInteractionData = ApplicationCommandInteractionData
---     { commandId         :: Snowflake
---     , commandName       :: String
---     , resolved          :: Maybe ApplicationCommandInteractionDataResolved
---     , options           :: Maybe [ApplicationCommandInteractionDataOption]
---     } deriving (Show, Read, Eq)
-
--- data ApplicationCommandInteractionDataResolved = ApplicationCommandInteractionDataResolved
---    { resolvedUsers     :: Maybe Value
---    , resolvedMembers   :: Maybe Value
---    , resolvedRoles     :: Maybe Value
---    , resolvedChannels  :: Maybe Value
---    } deriving (Show, Read, Eq)
-
-
--- data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionDataOption
---     { parameterName                 :: String
---     , applicationCommandOptionType  :: Int
---     , parameterValue                :: Maybe ApplicationCommandOptionType
---     , parameterOptions              :: [ApplicationCommandInteractionDataOption]
---     } deriving (Show, Read, Eq, Ord)
-
-
--- -- | NAME                           VALUE       DESCRIPTION
--- --  
--- -- Pong	                             1	        ACK a Ping
--- --  
--- -- ChannelMessageWithSource          4          Respond To an interaction with message
--- --
--- -- DeferredChannelMessageWithSource  5          ACK an interaction and edit a response later, the user sees a loading state
--- type InteractionCallbackType = Int
-
-
-
--- data InteractionApplicationCommandCallbackData = InteractionApplicationCommandCallbackData
---     { tts               :: Maybe Bool
---     , content           :: Maybe String
---     , embeds            :: Maybe [Embed]
---     , allowedMentions   :: Maybe AllowedMentions
---     , flags             :: Int
---     }
--- instance ToJSON InteractionApplicationCommandCallbackData where
---     toJSON InteractionApplicationCommandCallbackData{..} = object [(name, value) | (name, Just value) <-
---         [ ("tts", toJSON <$> pure tts)
---         , ("content", toJSON <$> pure content)
---         , ("embeds", toJSON <$> pure embeds)
---         , ("allowed_mentions", toJSON  <$> pure allowedMentions)
---         , ("flags", toJSON <$> pure flags)
---         ] ]
-
-
-
--- -- | ApplicationCommandOptionType references Values from https://discord.com/developers/docs/interactions/slash-commands#applicationcommandoptiontype
--- type ApplicationCommandOptionType = Int
-
--- data MessageInteraction = MessageInteraction
---     { messageInteractionId      :: Snowflake
---     , messageInteractionIdType  :: InteractionType
---     , messageInteractionIdname  :: String
---     , messageInteractionIduser  :: User
---     } deriving (Show, Read, Eq, Ord)
