@@ -125,7 +125,7 @@ eventHandler event = case event of
                             CHANNEL_MESSAGE_WITH_SOURCE 
                             (Just 
                               (ICDM 
-                                (InteractionCallbackDataMessages 
+                                (InteractionCallbackMessages 
                                   Nothing 
                                   (Just 
                                     (T.pack $ "Here's the reply! You chose: " 
