@@ -27,7 +27,7 @@ makeTable :: (Data t, Enum t) => t -> [(Int,t)]
 makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c) ) (dataTypeConstrs $ dataTypeOf t)
 
 data ApplicationCommandType = ACTCHAT_INPUT | ACTUSER | ACTMESSAGE
-    deriving (Show, Data, Eq)
+    deriving (Show, Read, Data, Eq)
 instance Enum ApplicationCommandType where
     fromEnum ACTCHAT_INPUT = 1
     fromEnum ACTUSER = 2
@@ -184,7 +184,7 @@ instance FromJSON ApplicationCommandOption where
         <*> v .:? "autocomplete")
 
 data ApplicationCommandOptionType = SUB_COMMAND | SUB_COMMAND_GROUP | STRING | INTEGER | BOOLEAN | USER | CHANNEL | ROLE | MENTIONABLE | NUMBER
-    deriving (Show, Data, Eq)
+    deriving (Show, Read, Data, Eq)
 
 instance Enum ApplicationCommandOptionType where
     fromEnum SUB_COMMAND = 1
@@ -207,7 +207,7 @@ instance FromJSON ApplicationCommandOptionType where
     parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
 
 data StringIntDouble = SIDS String | SIDI Int | SIDD Double
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 instance ToJSON StringIntDouble where
     toJSON (SIDS s) = toJSON s
@@ -223,7 +223,7 @@ data ApplicationCommandOptionChoice = ApplicationCommandOptionChoice
     { choiceName :: String
     , choiceValue :: StringIntDouble
     }
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 instance ToJSON ApplicationCommandOptionChoice where
     toJSON ApplicationCommandOptionChoice{..} = object [("name",toJSON choiceName), ("value",toJSON choiceValue)]
@@ -234,7 +234,7 @@ instance FromJSON ApplicationCommandOptionChoice where
         <*> v .: "value")
 
 data ApplicationCommandChannelType = GUILD_TEXT | DM | GUILD_VOICE | GROUP_DM | GUILD_CATEGORY | GUILD_NEWS | GUILD_STORE | GUILD_NEWS_THREAD | GUILD_PUBLIC_THREAD | GUILD_PRIVATE_THREAD | GUILD_STAGE_VOICE
-    deriving (Show, Data, Eq)
+    deriving (Show, Read, Data, Eq)
 
 
 instance Enum ApplicationCommandChannelType where
@@ -273,7 +273,7 @@ data Interaction = Interaction
     , interactionToken             :: InteractionToken
     , interactionVersion           :: Int
     , interactionMessage :: Maybe Message
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
 instance ToJSON Interaction where
     toJSON Interaction{..} = object [(name, value) | (name, Just value) <-
@@ -305,7 +305,7 @@ instance FromJSON Interaction where
         <*> v .:? "message")
 
 data InteractionType = PING | APPLICATION_COMMAND | MESSAGE_COMPONENT | APPLICATION_COMMAND_AUTOCOMPLETE
-    deriving (Show, Data, Eq)
+    deriving (Show, Read, Data, Eq)
 
 instance Enum InteractionType where
     fromEnum PING = 1
@@ -331,7 +331,7 @@ data InteractionData = InteractionData
     -- , interactionDataCustomId :: Maybe String
     -- , interactionDataComponentType :: Maybe Int -- ^ this is likely to change in future if and when it's needed
     , interactionDataTargetId :: Maybe Snowflake  -- ^ this is the id of the user or message being targetteed by a user command or a message command
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
 instance ToJSON InteractionData where
     toJSON InteractionData{..} = object [(name, value) | (name, Just value) <-
@@ -366,7 +366,7 @@ data ResolvedData = ResolvedData
    , resolvedDataMembers   :: Maybe Value
    , resolvedDataRoles     :: Maybe Value
    , resolvedDataChannels  :: Maybe Value
-   } deriving (Show, Eq)
+   } deriving (Show, Read, Eq)
 
 instance ToJSON ResolvedData where
     toJSON ResolvedData{..} = object [(name, value) | (name, Just value) <-
@@ -390,7 +390,7 @@ data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionData
     , applicationCommandInteractionDataOptionValue                :: Maybe StringIntDouble
     , applicationCommandInteractionDataOptionOptions              :: Maybe[ApplicationCommandInteractionDataOption]
     , applicationCommandInteractionDataOptionFocused :: Maybe Bool 
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
 instance ToJSON ApplicationCommandInteractionDataOption where
     toJSON ApplicationCommandInteractionDataOption{..} = object [(name, value) | (name, Just value) <-
@@ -412,7 +412,7 @@ instance FromJSON ApplicationCommandInteractionDataOption where
 data InteractionResponse = InteractionResponse 
     { interactionResponseType :: InteractionCallbackType
     , interactionResponseData :: Maybe InteractionCallbackData
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
 instance ToJSON InteractionResponse where
     toJSON InteractionResponse{..} = object [(name, value) | (name, Just value) <-
@@ -421,7 +421,7 @@ instance ToJSON InteractionResponse where
       ] ]
 
 data InteractionCallbackType = PONG | CHANNEL_MESSAGE_WITH_SOURCE | DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE | DEFERRED_UPDATE_MESSAGE | UPDATE_MESSAGE | APPLICATION_COMMAND_AUTOCOMPLETE_RESULT
-    deriving (Show, Eq, Data)
+    deriving (Show, Read, Eq, Data)
 
 instance Enum InteractionCallbackType where
     fromEnum PONG = 1
@@ -437,7 +437,7 @@ instance ToJSON InteractionCallbackType where
     toJSON = toJSON . fromEnum
 
 data InteractionCallbackData = ICDM InteractionCallbackDataMessages | ICDA InteractionCallbackDataAutocomplete
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 instance ToJSON InteractionCallbackData where
     toJSON (ICDM icdm) = toJSON icdm
@@ -453,7 +453,7 @@ data InteractionCallbackDataMessages = InteractionCallbackDataMessages
     , interactionCallbackDataMessagesFlags :: Maybe InteractionCallbackDataFlags
     -- missing components
     , interactionCallbackDataMessagesAttachments :: Maybe [Attachment]
-    } deriving (Show, Eq)
+    } deriving (Show, Read, Eq)
 
 
 instance ToJSON InteractionCallbackDataMessages where
@@ -468,10 +468,10 @@ instance ToJSON InteractionCallbackDataMessages where
 
 
 data InteractionCallbackDataFlag = EPHERMERAL
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 newtype InteractionCallbackDataFlags = InteractionCallbackDataFlags [InteractionCallbackDataFlag]
-    deriving (Show, Eq)
+    deriving (Show, Read, Eq)
 
 instance Enum InteractionCallbackDataFlag where
     fromEnum EPHERMERAL = 1 `shift` 6
@@ -556,7 +556,7 @@ instance ToJSON InteractionCallbackDataFlags where
 --     , user              :: User
 --     , token             :: String
 --     , version           :: Int
---     } deriving (Show, Eq)
+--     } deriving (Show, Read, Eq)
 
 -- -- instance ToJSON Interaction where
 --     -- toJSON Interaction{..} = withObject "Interaction" $ \o ->
@@ -573,14 +573,14 @@ instance ToJSON InteractionCallbackDataFlags where
 --     , commandName       :: String
 --     , resolved          :: Maybe ApplicationCommandInteractionDataResolved
 --     , options           :: Maybe [ApplicationCommandInteractionDataOption]
---     } deriving (Show, Eq)
+--     } deriving (Show, Read, Eq)
 
 -- data ApplicationCommandInteractionDataResolved = ApplicationCommandInteractionDataResolved
 --    { resolvedUsers     :: Maybe Value
 --    , resolvedMembers   :: Maybe Value
 --    , resolvedRoles     :: Maybe Value
 --    , resolvedChannels  :: Maybe Value
---    } deriving (Show, Eq)
+--    } deriving (Show, Read, Eq)
 
 
 -- data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionDataOption
@@ -588,7 +588,7 @@ instance ToJSON InteractionCallbackDataFlags where
 --     , applicationCommandOptionType  :: Int
 --     , parameterValue                :: Maybe ApplicationCommandOptionType
 --     , parameterOptions              :: [ApplicationCommandInteractionDataOption]
---     } deriving (Show, Eq, Ord)
+--     } deriving (Show, Read, Eq, Ord)
 
 
 -- -- | NAME                           VALUE       DESCRIPTION
@@ -628,4 +628,4 @@ instance ToJSON InteractionCallbackDataFlags where
 --     , messageInteractionIdType  :: InteractionType
 --     , messageInteractionIdname  :: String
 --     , messageInteractionIduser  :: User
---     } deriving (Show, Eq, Ord)
+--     } deriving (Show, Read, Eq, Ord)

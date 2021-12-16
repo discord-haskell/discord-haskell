@@ -106,9 +106,10 @@ runDiscordLoop handle opts = do
              case next of
                Left err -> libError err
                Right (Right event) -> do
+                 let userEvent = userFacingEvent event
                  let action = if discordForkThreadForEvents opts then void . forkIO
                                                                  else id
-                 action $ do me <- liftIO . runReaderT (try $ discordOnEvent opts event) $ handle
+                 action $ do me <- liftIO . runReaderT (try $ discordOnEvent opts userEvent) $ handle
                              case me of
                                Left (e :: SomeException) -> writeChan (discordHandleLog handle)
                                          ("discord-haskell stopped on an exception:\n\n" <> T.pack (show e))
@@ -118,7 +119,7 @@ runDiscordLoop handle opts = do
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => r a -> DiscordHandler (Either RestCallErrorCode a)

@@ -106,7 +106,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance Default MessageDetailedOpts where
   def = MessageDetailedOpts { messageDetailedContent         = ""
@@ -121,7 +121,7 @@ instance Default MessageDetailedOpts where
 data ReactionTiming = BeforeReaction MessageId
                     | AfterReaction MessageId
                     | LatestReaction
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
@@ -134,7 +134,7 @@ data MessageTiming = AroundMessage MessageId
                    | BeforeMessage MessageId
                    | AfterMessage MessageId
                    | LatestMessages
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
 messageTimingToQuery t = case t of
@@ -148,7 +148,7 @@ data ChannelInviteOpts = ChannelInviteOpts
   , channelInviteOptsMaxUsages              :: Maybe Integer
   , channelInviteOptsIsTemporary            :: Maybe Bool
   , channelInviteOptsDontReuseSimilarInvite :: Maybe Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ChannelInviteOpts where
   toJSON ChannelInviteOpts{..} = object [(name, val) | (name, Just val) <-
@@ -166,7 +166,7 @@ data ModifyChannelOpts = ModifyChannelOpts
   , modifyChannelUserRateLimit        :: Maybe Integer
   , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
   , modifyChannelParentId             :: Maybe ChannelId
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyChannelOpts where
   toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
@@ -183,11 +183,11 @@ data ChannelPermissionsOpts = ChannelPermissionsOpts
   { channelPermissionsOptsAllow :: Integer
   , channelPermissionsOptsDeny :: Integer
   , channelPermissionsOptsType :: ChannelPermissionsOptsType
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 data ChannelPermissionsOptsType = ChannelPermissionsOptsUser
                                 | ChannelPermissionsOptsRole
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ChannelPermissionsOptsType where
   toJSON t = case t of ChannelPermissionsOptsUser -> String "member"
@@ -203,7 +203,7 @@ data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
   { groupDMAddRecipientUserToAdd :: UserId
   , groupDMAddRecipientUserToAddNickName :: T.Text
   , groupDMAddRecipientGDMJoinAccessToken :: T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of

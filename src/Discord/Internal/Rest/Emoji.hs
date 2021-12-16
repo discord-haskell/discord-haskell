@@ -45,7 +45,7 @@ data EmojiRequest a where
 data ModifyGuildEmojiOpts = ModifyGuildEmojiOpts
      { modifyGuildEmojiName  :: T.Text
      , modifyGuildEmojiRoles :: [RoleId]
-     } deriving (Show, Eq, Ord)
+     } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildEmojiOpts where
   toJSON (ModifyGuildEmojiOpts name roles) =
@@ -53,7 +53,7 @@ instance ToJSON ModifyGuildEmojiOpts where
 
 
 data EmojiImageParsed = EmojiImageParsed T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
 parseEmojiImage bs =

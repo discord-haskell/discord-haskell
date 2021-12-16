@@ -27,7 +27,7 @@ import Discord.Internal.Types
 
 
 data GatewayHandle = GatewayHandle
-  { gatewayHandleEvents         :: Chan (Either GatewayException Event)
+  { gatewayHandleEvents         :: Chan (Either GatewayException EventInternalParse)
   , gatewayHandleUserSendables  :: Chan GatewaySendable
   , gatewayHandleLastStatus     :: IORef (Maybe UpdateStatusOpts)
   , gatewayHandleLastSequenceId :: IORef Integer
@@ -141,7 +141,7 @@ runEventLoop thehandle sendablesData log = do loop
       Right (Dispatch event sq) -> do writeIORef (gatewayHandleLastSequenceId thehandle) sq
                                       writeChan eventChan (Right event)
                                       case event of
-                                        (Ready _ _ _ _ seshID _ _) ->
+                                        (InternalReady _ _ _ _ seshID _ _) ->
                                             writeIORef (gatewayHandleSessionId thehandle) seshID
                                         _ -> writeIORef (startsendingUsers sendablesData) True
                                       loop

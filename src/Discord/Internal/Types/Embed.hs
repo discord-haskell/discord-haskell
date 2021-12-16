@@ -66,11 +66,11 @@ data CreateEmbed = CreateEmbed
   , createEmbedFooterIcon  :: Maybe CreateEmbedImage
   , createEmbedColor       :: Maybe ColorInteger
 --, createEmbedTimestamp   :: Maybe UTCTime
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 data CreateEmbedImage = CreateEmbedImageUrl T.Text
                       | CreateEmbedImageUpload B.ByteString
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 instance Default CreateEmbed where
  def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing Nothing  -- Nothing
@@ -90,7 +90,7 @@ data Embed = Embed
   , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
   , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
   , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 -- TODO
 instance ToJSON Embed where
@@ -132,7 +132,7 @@ data EmbedThumbnail = EmbedThumbnail
   , embedThumbnailProxyUrl :: Maybe T.Text
   , embedThumbnailHeight :: Maybe Integer
   , embedThumbnailWidth :: Maybe Integer
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedThumbnail where
   toJSON (EmbedThumbnail a b c d) = object
@@ -153,7 +153,7 @@ data EmbedVideo = EmbedVideo
   { embedVideoUrl :: Maybe T.Text
   , embedVideoHeight :: Maybe Integer
   , embedVideoWidth :: Maybe Integer
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedVideo where
   toJSON (EmbedVideo a b c) = object
@@ -173,7 +173,7 @@ data EmbedImage = EmbedImage
   , embedImageProxyUrl :: Maybe T.Text
   , embedImageHeight :: Maybe Integer
   , embedImageWidth :: Maybe Integer
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedImage where
   toJSON (EmbedImage a b c d) = object
@@ -193,7 +193,7 @@ instance FromJSON EmbedImage where
 data EmbedProvider = EmbedProvider
   { embedProviderName :: Maybe T.Text
   , embedProviderUrl :: Maybe T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedProvider where
   toJSON (EmbedProvider a b) = object
@@ -211,7 +211,7 @@ data EmbedAuthor = EmbedAuthor
   , embedAuthorUrl :: Maybe T.Text
   , embedAuthorIconUrl :: Maybe T.Text
   , embedAuthorProxyIconUrl :: Maybe T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedAuthor where
   toJSON (EmbedAuthor a b c d) = object
@@ -232,7 +232,7 @@ data EmbedFooter = EmbedFooter
   { embedFooterText :: T.Text
   , embedFooterIconUrl :: Maybe T.Text
   , embedFooterProxyIconUrl :: Maybe T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedFooter where
   toJSON (EmbedFooter a b c) = object
@@ -251,7 +251,7 @@ data EmbedField = EmbedField
   { embedFieldName :: T.Text
   , embedFieldValue :: T.Text
   , embedFieldInline :: Maybe Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedField where
   toJSON (EmbedField a b c) = object

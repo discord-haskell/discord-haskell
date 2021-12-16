@@ -23,21 +23,21 @@ import Discord.Internal.Types.Events
 
 -- | Sent by gateway
 data GatewayReceivable
-  = Dispatch Event Integer
+  = Dispatch EventInternalParse Integer
   | HeartbeatRequest Integer
   | Reconnect
   | InvalidSession Bool
   | Hello Integer
   | HeartbeatAck
   | ParseError T.Text
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
 
 -- | Sent to gateway by our library
 data GatewaySendableInternal
   = Heartbeat Integer
   | Identify Auth GatewayIntent (Int, Int)
   | Resume Auth T.Text Integer
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 
 -- | https://discord.com/developers/docs/topics/gateway#list-of-intents
@@ -57,7 +57,7 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentDirectMessageChanges :: Bool
   , gatewayIntentDirectMessageReactions :: Bool
   , gatewayIntentDirectMessageTyping :: Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance Default GatewayIntent where
   def = GatewayIntent { gatewayIntentGuilds                 = True
@@ -103,13 +103,13 @@ data GatewaySendable
   = RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 data RequestGuildMembersOpts = RequestGuildMembersOpts
                              { requestGuildMembersOptsGuildId :: GuildId
                              , requestGuildMembersOptsNamesStartingWith :: T.Text
                              , requestGuildMembersOptsLimit :: Integer }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            { updateStatusVoiceOptsGuildId :: GuildId
@@ -117,7 +117,7 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            , updateStatusVoiceOptsIsMuted :: Bool
                            , updateStatusVoiceOptsIsDeaf :: Bool
                            }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusOptsSince :: Maybe UTCTime
@@ -125,20 +125,20 @@ data UpdateStatusOpts = UpdateStatusOpts
                       , updateStatusOptsNewStatus :: UpdateStatusType
                       , updateStatusOptsAFK :: Bool
                       }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 data Activity = Activity
               { activityName :: T.Text
               , activityType :: ActivityType
               , activityUrl :: Maybe T.Text
               }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 data ActivityType = ActivityTypeGame
                   | ActivityTypeStreaming
                   | ActivityTypeListening
                   | ActivityTypeCompeting
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 activityTypeId :: ActivityType -> Int
 activityTypeId a = case a of ActivityTypeGame -> 0
@@ -151,7 +151,7 @@ data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusAwayFromKeyboard
                       | UpdateStatusInvisibleOffline
                       | UpdateStatusOffline
-  deriving (Show, Eq, Ord, Enum)
+  deriving (Show, Read, Eq, Ord, Enum)
 
 statusString :: UpdateStatusType -> T.Text
 statusString s = case s of
@@ -169,7 +169,7 @@ instance FromJSON GatewayReceivable where
                ejson <- o .: "d"
                case ejson of
                  Object hm -> Dispatch <$> eventParse etype hm <*> o .: "s"
-                 _other -> Dispatch (UnknownEvent ("Dispatch payload wasn't an object") o)
+                 _other -> Dispatch (InternalUnknownEvent ("Dispatch payload wasn't an object") o)
                                   <$> o .: "s"
       1  -> HeartbeatRequest . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> pure Reconnect

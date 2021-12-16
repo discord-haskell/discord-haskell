@@ -8,7 +8,6 @@
 module Discord.Internal.Rest.Guild
   ( GuildRequest(..)
   , CreateGuildChannelOpts(..)
-  , CreateGuildOpts(..)
   , ModifyGuildOpts(..)
   , AddGuildMemberOpts(..)
   , ModifyGuildMemberOpts(..)
@@ -34,7 +33,9 @@ instance Request (GuildRequest a) where
 
 -- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data GuildRequest a where
-  CreateGuild              :: CreateGuildOpts -> GuildRequest Guild
+  -- -- Creating a guild with the API is annoying. Do it manually.
+  -- -- https://discord.com/developers/docs/resources/guild#create-guild
+
   -- | Returns the new 'Guild' object for the given id
   GetGuild                 :: GuildId -> GuildRequest Guild
   -- | Modify a guild's settings. Returns the updated 'Guild' object on success. Fires a
@@ -139,21 +140,11 @@ data GuildRequest a where
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
-data CreateGuildOpts = CreateGuildOpts
-  { createGuildOptsName :: T.Text
-  , createGuildOptsChannels :: [Channel]
-  } deriving (Show, Eq, Ord)
-
-instance ToJSON CreateGuildOpts where
-  toJSON CreateGuildOpts{..} =  object [(name, val) | (name, Just val) <-
-         [ ("name", toJSON <$> pure createGuildOptsName )
-         , ("channels", toJSON <$> pure createGuildOptsChannels ) ]]
-
 data ModifyGuildIntegrationOpts = ModifyGuildIntegrationOpts
   { modifyGuildIntegrationOptsExpireBehavior :: Integer
   , modifyGuildIntegrationOptsExpireGraceSeconds :: Integer
   , modifyGuildIntegrationOptsEmoticonsEnabled :: Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildIntegrationOpts where
   toJSON ModifyGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -163,7 +154,7 @@ instance ToJSON ModifyGuildIntegrationOpts where
 
 data CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
   { createGuildIntegrationOptsType :: T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildIntegrationOpts where
   toJSON CreateGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -172,7 +163,7 @@ instance ToJSON CreateGuildIntegrationOpts where
 data CreateGuildBanOpts = CreateGuildBanOpts
   { createGuildBanOptsDeleteLastNMessages :: Maybe Int
   , createGuildBanOptsReason              :: Maybe T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildBanOpts where
   toJSON CreateGuildBanOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -186,7 +177,7 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   , modifyGuildRoleOptsColor           :: Maybe ColorInteger
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildRoleOpts where
   toJSON ModifyGuildRoleOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -202,7 +193,7 @@ data AddGuildMemberOpts = AddGuildMemberOpts
   , addGuildMemberOptsRoles       :: Maybe [RoleId]
   , addGuildMemberOptsIsMuted     :: Maybe Bool
   , addGuildMemberOptsIsDeafened  :: Maybe Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON AddGuildMemberOpts where
   toJSON AddGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -218,7 +209,7 @@ data ModifyGuildMemberOpts = ModifyGuildMemberOpts
   , modifyGuildMemberOptsIsMuted       :: Maybe Bool
   , modifyGuildMemberOptsIsDeafened    :: Maybe Bool
   , modifyGuildMemberOptsMoveToChannel :: Maybe ChannelId
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildMemberOpts where
   toJSON ModifyGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -238,7 +229,7 @@ data CreateGuildChannelOpts
   , createGuildChannelOptsMaxUsers :: Maybe Integer
   , createGuildChannelOptsCategoryId :: Maybe ChannelId }
   | CreateGuildChannelOptsCategory
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
 createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <- optsJSON]
@@ -275,7 +266,7 @@ data ModifyGuildOpts = ModifyGuildOpts
    -- VerificationLevel
    -- DefaultMessageNotification
    -- ExplicitContentFilter
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildOpts where
   toJSON ModifyGuildOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -287,7 +278,7 @@ instance ToJSON ModifyGuildOpts where
 data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
                           , guildMembersTimingAfter :: Maybe UserId
-                          } deriving (Show, Eq, Ord)
+                          } deriving (Show, Read, Eq, Ord)
 
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
@@ -301,7 +292,6 @@ guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
 
 guildMajorRoute :: GuildRequest a -> String
 guildMajorRoute c = case c of
-  (CreateGuild _) ->                      "guild "
   (GetGuild g) ->                         "guild " <> show g
   (ModifyGuild g _) ->                    "guild " <> show g
   (DeleteGuild g) ->                      "guild " <> show g
@@ -344,9 +334,6 @@ guilds = baseUrl /: "guilds"
 
 guildJsonRequest :: GuildRequest r -> JsonRequest
 guildJsonRequest c = case c of
-  (CreateGuild opts) ->
-      Post (guilds) (pure (R.ReqBodyJson opts)) mempty
-
   (GetGuild guild) ->
       Get (guilds // guild) mempty
 

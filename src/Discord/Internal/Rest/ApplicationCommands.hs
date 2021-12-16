@@ -13,8 +13,7 @@ import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Rest.Prelude    ( RestIO, Request(..), JsonRequest(..), baseUrl, (//) )
 import Data.Aeson ( Value, ToJSON(toJSON) )
 import Network.HTTP.Req as R
-import Discord.Internal.Rest (Snowflake, ApplicationId, GuildId, Message, MessageId)
-import Discord.Internal.Types.ApplicationCommands (InteractionToken)
+import Discord.Internal.Rest (ApplicationId, GuildId, Message, MessageId)
 
 instance Request (ApplicationCommandRequest a) where
     jsonRequest = applicationCommandJsonRequest

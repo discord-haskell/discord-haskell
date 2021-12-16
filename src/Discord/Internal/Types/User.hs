@@ -20,7 +20,7 @@ data User = User
   , userMfa      :: Maybe Bool   -- ^ User has two factor authentication enabled on the account.
   , userVerified :: Maybe Bool   -- ^ Whether the email has been verified.
   , userEmail    :: Maybe T.Text -- ^ The user's email.
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON User where
   parseJSON = withObject "User" $ \o ->
@@ -51,7 +51,7 @@ data Webhook = Webhook
   { webhookId :: WebhookId
   , webhookToken :: Text
   , webhookChannelId :: ChannelId
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Webhook where
   parseJSON = withObject "Webhook" $ \o ->
@@ -69,7 +69,7 @@ data ConnectionObject = ConnectionObject
   , connectionObjectFriendSyncOn :: Bool
   , connectionObjectShownInPresenceUpdates :: Bool
   , connectionObjectVisibleToOthers :: Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ConnectionObject where
   parseJSON = withObject "ConnectionObject" $ \o -> do

@@ -31,7 +31,7 @@ data Channel
       , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
-      , parentId           :: Maybe ParentId    -- ^ The id of the parent channel (category)
+      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
       }
   | ChannelNews
       { channelId          :: ChannelId
@@ -50,7 +50,7 @@ data Channel
       , channelPosition    :: Integer
       , channelNSFW        :: Bool
       , channelPermissions :: [Overwrite]
-      , parentId           :: Maybe ParentId
+      , channelParentId    :: Maybe ParentId
       }
   -- | A voice channel in a guild.
   | ChannelVoice
@@ -62,7 +62,7 @@ data Channel
       , channelNSFW        :: Bool
       , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
       , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
-      , parentId           :: Maybe ParentId
+      , channelParentId    :: Maybe ParentId
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
@@ -92,7 +92,7 @@ data Channel
   | ChannelUnknownType
       { channelId          :: ChannelId
       , channelJSON        :: Text
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Channel where
   parseJSON = withObject "Channel" $ \o -> do
@@ -158,73 +158,6 @@ instance FromJSON Channel where
       _ -> ChannelUnknownType <$> o .:  "id"
                               <*> pure (T.pack (show o))
 
-instance ToJSON Channel where
-  toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("topic",   toJSON <$> pure channelTopic)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id",  toJSON <$> pure parentId)
-              ] ]
-  toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("topic",   toJSON <$> pure channelTopic)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              ] ]
-  toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              ] ]
-  toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("recipients",   toJSON <$> pure channelRecipients)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              ] ]
-  toJSON ChannelVoice{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("bitrate",   toJSON <$> pure channelBitRate)
-              , ("user_limit",  toJSON <$> pure channelUserLimit)
-              ] ]
-  toJSON ChannelGroupDM{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("recipients",   toJSON <$> pure channelRecipients)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              ] ]
-  toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("name", toJSON <$> pure channelName)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              ] ]
-  toJSON ChannelStage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("channel_id", toJSON <$> pure channelStageId)
-              , ("topic", toJSON <$> pure channelStageTopic)
-              ] ]
-  toJSON ChannelUnknownType{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("json", toJSON <$> pure channelJSON)
-              ] ]
-
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
 channelIsInGuild c = case c of
@@ -241,7 +174,7 @@ data Overwrite = Overwrite
   , overwriteType  :: T.Text    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Overwrite where
   parseJSON = withObject "Overwrite" $ \o ->
@@ -285,7 +218,7 @@ data Message = Message
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
   , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
   , referencedMessage   :: Maybe Message   -- ^ The full original message
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
@@ -343,7 +276,7 @@ data AllowedMentions = AllowedMentions
   , mentionUserIds     :: [UserId]
   , mentionRoleIds     :: [RoleId]
   , mentionRepliedUser :: Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Eq, Ord, Read)
 
 instance Default AllowedMentions where
   def = AllowedMentions { mentionEveryone    = False
@@ -370,7 +303,7 @@ data MessageReaction = MessageReaction
   { messageReactionCount :: Int
   , messageReactionMeIncluded :: Bool
   , messageReactionEmoji :: Emoji
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON MessageReaction where
   parseJSON = withObject "MessageReaction" $ \o ->
@@ -387,12 +320,13 @@ instance ToJSON MessageReaction where
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId      :: Maybe EmojiId  -- ^ The emoji id
-  , emojiName    :: T.Text         -- ^ The emoji name
-  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
-  , emojiUser    :: Maybe User     -- ^ User that created this emoji
-  , emojiManaged :: Maybe Bool     -- ^ Whether this emoji is managed
-  } deriving (Show, Eq, Ord)
+  { emojiId       :: Maybe EmojiId  -- ^ The emoji id
+  , emojiName     :: T.Text         -- ^ The emoji name
+  , emojiRoles    :: Maybe [RoleId] -- ^ Roles the emoji is active for
+  , emojiUser     :: Maybe User     -- ^ User that created this emoji
+  , emojiManaged  :: Maybe Bool     -- ^ Whether this emoji is managed
+  , emojiAnimated :: Maybe Bool     -- ^ Whether this emoji is animated
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Emoji where
   parseJSON = withObject "Emoji" $ \o ->
@@ -401,6 +335,7 @@ instance FromJSON Emoji where
           <*> o .:? "roles"
           <*> o .:? "user"
           <*> o .:? "managed"
+          <*> o .:? "animated"
 
 instance ToJSON Emoji where
   toJSON Emoji{..} = object [(name, value) | (name, Just value) <-
@@ -409,6 +344,7 @@ instance ToJSON Emoji where
       , ("roles", toJSON <$> emojiRoles)
       , ("user", toJSON <$> emojiUser)
       , ("managed", toJSON <$> emojiManaged)
+      , ("animated", toJSON <$> emojiAnimated)
       ]]
 
 -- | Represents an attached to a message file.
@@ -420,7 +356,7 @@ data Attachment = Attachment
   , attachmentProxy    :: T.Text        -- ^ Proxied url of file
   , attachmentHeight   :: Maybe Integer -- ^ Height of file (if image)
   , attachmentWidth    :: Maybe Integer -- ^ Width of file (if image)
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Attachment where
   parseJSON = withObject "Attachment" $ \o ->
@@ -444,7 +380,7 @@ instance ToJSON Attachment where
       ] ]
 
 newtype Nonce = Nonce T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Nonce where
   parseJSON (String nonce) = pure $ Nonce nonce
@@ -461,7 +397,7 @@ data MessageReference = MessageReference
   , referenceChannelId      :: Maybe ChannelId  -- ^ id of the originating message's channel
   , referenceGuildId        :: Maybe GuildId    -- ^ id of the originating message's guild
   , failIfNotExists         :: Bool             -- ^ Whether to not send if reference not exist
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON MessageReference where
   parseJSON = withObject "MessageReference" $ \o ->

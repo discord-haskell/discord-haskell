@@ -6,7 +6,16 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+
+## 1.10.0
+
 [drewolson](https://github.com/aquarial/discord-haskell/pull/80) allows parsing an optional guild region
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/82) add 'animated' flag for Emoji
+
+Removed `CreateGuild` rest call! You can only do it if your bot is in fewer than 10 guilds, and it's [a pain to support](https://discord.com/developers/docs/resources/guild#create-guild). Just do it manually.
+
+Added `Read` instance to complement `Show` for lots of types. Removed ToJSON for `Channel`. 
 
 ## 1.9.1
 
