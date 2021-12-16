@@ -17,11 +17,12 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User)
+import Discord.Internal.Types.ApplicationCommands (Interaction)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Int User [Channel] [GuildUnavailable] T.Text
+    Ready                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   | Resumed                 [T.Text]
   | ChannelCreate           Channel
   | ChannelUpdate           Channel
@@ -52,10 +53,19 @@ data Event =
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
   | UserUpdate              User
+  | InteractionCreate       Interaction
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
   | UnknownEvent     T.Text Object
   deriving (Show, Eq)
+
+data PartialApplication = PartialApplication {
+  partialApplicationID :: ApplicationId
+  , partialApplicationFlags :: Int
+} deriving (Show, Eq)
+
+instance FromJSON PartialApplication where
+  parseJSON = withObject "PartialApplication" (\v -> PartialApplication <$> v .: "id" <*> v .: "flags")
 
 data ReactionInfo = ReactionInfo
   { reactionUserId    :: UserId
@@ -132,6 +142,8 @@ eventParse t o = case t of
                                          <*> o .: "private_channels"
                                          <*> o .: "guilds"
                                          <*> o .: "session_id"
+                                         <*> o .: "shard"
+                                         <*> o .: "application"
     "RESUMED"                   -> Resumed <$> o .: "_trace"
     "CHANNEL_CREATE"            -> ChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> ChannelUpdate             <$> reparse o
@@ -171,4 +183,7 @@ eventParse t o = case t of
     "USER_UPDATE"               -> UserUpdate                <$> reparse o
  -- "VOICE_STATE_UPDATE"        -> VoiceStateUpdate          <$> reparse o
  -- "VOICE_SERVER_UPDATE"       -> VoiceServerUpdate         <$> reparse o
+    "INTERACTION_CREATE"        -> InteractionCreate         <$> reparse o
     _other_event                -> UnknownEvent t            <$> reparse o
+
+-- TODO: add Interaction Create so that interactions can be used

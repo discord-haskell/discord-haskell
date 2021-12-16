@@ -46,7 +46,9 @@ data JsonRequest where
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
 
 class Request a where
+  -- | Grouping similar requests together - used mostly internally.
   majorRoute :: a -> String
+  -- | Get the structure for the request being sent.
   jsonRequest :: a -> JsonRequest
 
 -- | Same Monad as IO. Overwrite Req settings
