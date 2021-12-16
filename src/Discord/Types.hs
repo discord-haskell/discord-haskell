@@ -3,7 +3,7 @@ module Discord.Types
   ) where
 
 import Discord.Internal.Types hiding
-    ( GatewaySendableInternal
-    , GatewayReceivable
-    , EventInternalParse
+    ( GatewaySendableInternal(..)
+    , GatewayReceivable(..)
+    , EventInternalParse(..)
     )
