@@ -73,6 +73,7 @@ adjustCache minfo event = case event of
   --      c = M.filterWithKey (\(keyGuildId,_) _ -> keyGuildId /= guildId guild) (cacheChannels minfo)
   --      m2 = minfo { cacheGuilds = g, cacheChannels = c }
   --  putMVar cache m2
+  InternalReady _ _ _ _ _ _ pa -> minfo { cacheApplication = pa }
   _ -> minfo
 
 setChanGuildID :: GuildId -> Channel -> Channel
