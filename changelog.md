@@ -6,6 +6,9 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+
+## 1.10.0
+
 [drewolson](https://github.com/aquarial/discord-haskell/pull/80) allows parsing an optional guild region
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/82) add 'animated' flag for Emoji
