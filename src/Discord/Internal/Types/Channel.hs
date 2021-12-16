@@ -248,25 +248,56 @@ instance FromJSON Message where
 
 instance ToJSON Message where
   toJSON Message {..} = object [(name, value) | (name, Just value) <-
-      [ ("id",      toJSON <$> pure     messageId)
-      , ("channel_id",      toJSON <$> pure      messageChannel)
-      , ("author",     toJSON <$> pure messageAuthor)
-      , ("content", toJSON <$> pure messageText)
-      , ("timestamp", toJSON <$> pure messageTimestamp)
-      , ("edited_timestamp", toJSON <$>  messageEdited)
-      , ("tts", toJSON <$> pure messageTts)
-      , ("mention_everyone", toJSON <$> pure messageEveryone)
-      , ("mentions", toJSON <$> pure messageMentions)
-      , ("mention_roles", toJSON <$> pure messageMentionRoles)
-      , ("attachments", toJSON <$> pure messageAttachments)
-      , ("embeds", toJSON <$> pure messageEmbeds)
-      , ("reactions", toJSON <$> pure messageReactions)
-      , ("nonce",      toJSON <$> messageNonce)
-      , ("pinned",      toJSON <$> pure messagePinned)
-      , ("guild_id",      toJSON <$> messageGuild)
-      , ("message_reference",      toJSON <$> messageReference)
-      , ("referenced_message",      toJSON <$> referencedMessage)
+      [ ("id",                  toJSON <$> pure messageId)
+      , ("channel_id",          toJSON <$> pure messageChannel)
+      , ("author",              toJSON <$> pure messageAuthor)
+      , ("content",             toJSON <$> pure messageText)
+      , ("timestamp",           toJSON <$> pure messageTimestamp)
+      , ("edited_timestamp",    toJSON <$>      messageEdited)
+      , ("tts",                 toJSON <$> pure messageTts)
+      , ("mention_everyone",    toJSON <$> pure messageEveryone)
+      , ("mentions",            toJSON <$> pure messageMentions)
+      , ("mention_roles",       toJSON <$> pure messageMentionRoles)
+      , ("attachments",         toJSON <$> pure messageAttachments)
+      , ("embeds",              toJSON <$> pure messageEmbeds)
+      , ("reactions",           toJSON <$> pure messageReactions)
+      , ("nonce",               toJSON <$>      messageNonce)
+      , ("pinned",              toJSON <$> pure messagePinned)
+      , ("guild_id",            toJSON <$>      messageGuild)
+      , ("message_reference",   toJSON <$>      messageReference)
+      , ("referenced_message",  toJSON <$>      referencedMessage)
       ] ]
+
+-- | Data constructor for a part of MessageDetailedOpts.
+data AllowedMentions = AllowedMentions
+  { mentionEveryone    :: Bool
+  , mentionUsers       :: Bool
+  , mentionRoles       :: Bool
+  , mentionUserIds     :: [UserId]
+  , mentionRoleIds     :: [RoleId]
+  , mentionRepliedUser :: Bool
+  } deriving (Show, Eq, Ord)
+
+instance Default AllowedMentions where
+  def = AllowedMentions { mentionEveryone    = False
+                        , mentionUsers       = True
+                        , mentionRoles       = True
+                        , mentionUserIds     = []
+                        , mentionRoleIds     = []
+                        , mentionRepliedUser = True
+                        }
+
+instance ToJSON AllowedMentions where
+  toJSON AllowedMentions{..} = object [
+                                 ("parse" .= [name :: T.Text | (name, True) <-
+                                     [ ("everyone", mentionEveryone),
+                                       ("users",    mentionUsers && mentionUserIds == []),
+                                       ("roles",    mentionRoles && mentionRoleIds == []) ] ]),
+                                 -- https://discord.com/developers/docs/resources/channel#allowed-mentions-object
+                                 --  parse.users and users list cannot both be active, prioritize id list
+                                 ("roles"        .= mentionRoleIds),
+                                 ("users"        .= mentionUserIds),
+                                 ("replied_user" .= mentionRepliedUser) ]
 
 data MessageReaction = MessageReaction
   { messageReactionCount :: Int
@@ -317,7 +348,7 @@ instance ToJSON Emoji where
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
-  { attachmentId       :: Snowflake     -- ^ Attachment id
+  { attachmentId       :: AttachmentId     -- ^ Attachment id
   , attachmentFilename :: T.Text        -- ^ Name of attached file
   , attachmentSize     :: Integer       -- ^ Size of file (in bytes)
   , attachmentUrl      :: T.Text        -- ^ Source of file
@@ -336,7 +367,16 @@ instance FromJSON Attachment where
                <*> o .:? "height"
                <*> o .:? "width"
 
-
+instance ToJSON Attachment where
+  toJSON Attachment {..} = object [(name, value) | (name, Just value) <-
+      [ ("id",        toJSON <$> pure attachmentId)
+      , ("filename",  toJSON <$> pure attachmentFilename)
+      , ("size",      toJSON <$> pure attachmentSize)
+      , ("url",       toJSON <$> pure attachmentUrl)
+      , ("proxy_url", toJSON <$> pure attachmentProxy)
+      , ("height",    toJSON <$>      attachmentHeight)
+      , ("width",     toJSON <$>      attachmentWidth)
+      ] ]
 
 newtype Nonce = Nonce T.Text
   deriving (Show, Read, Eq, Ord)

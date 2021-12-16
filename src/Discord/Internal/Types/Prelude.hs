@@ -51,6 +51,7 @@ type ChannelId = Snowflake
 type StageId = Snowflake
 type GuildId = Snowflake
 type MessageId = Snowflake
+type AttachmentId = Snowflake
 type EmojiId = Snowflake
 type UserId = Snowflake
 type OverwriteId = Snowflake

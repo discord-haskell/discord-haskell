@@ -117,37 +117,6 @@ instance Default MessageDetailedOpts where
                             , messageDetailedReference       = Nothing
                             }
 
--- | Data constructor for a part of MessageDetailedOpts.
-data AllowedMentions = AllowedMentions
-  { mentionEveryone    :: Bool
-  , mentionUsers       :: Bool
-  , mentionRoles       :: Bool
-  , mentionUserIds     :: [UserId]
-  , mentionRoleIds     :: [RoleId]
-  , mentionRepliedUser :: Bool
-  } deriving (Show, Read, Eq, Ord)
-
-instance Default AllowedMentions where
-  def = AllowedMentions { mentionEveryone    = False
-                        , mentionUsers       = True
-                        , mentionRoles       = True
-                        , mentionUserIds     = []
-                        , mentionRoleIds     = []
-                        , mentionRepliedUser = True
-                        }
-
-instance ToJSON AllowedMentions where
-  toJSON AllowedMentions{..} = object [
-                                 ("parse" .= [name :: T.Text | (name, True) <-
-                                     [ ("everyone", mentionEveryone),
-                                       ("users",    mentionUsers && mentionUserIds == []),
-                                       ("roles",    mentionRoles && mentionRoleIds == []) ] ]),
-                                 -- https://discord.com/developers/docs/resources/channel#allowed-mentions-object
-                                 --  parse.users and users list cannot both be active, prioritize id list
-                                 ("roles"        .= mentionRoleIds),
-                                 ("users"        .= mentionUserIds),
-                                 ("replied_user" .= mentionRepliedUser) ]
-
 -- | Data constructor for GetReaction requests
 data ReactionTiming = BeforeReaction MessageId
                     | AfterReaction MessageId

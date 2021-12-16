@@ -34,6 +34,7 @@ executable ping-pong
                      , text
                      , unliftio
                      , discord-haskell
+                     , aeson
 
 library
   ghc-options:         -Wall
