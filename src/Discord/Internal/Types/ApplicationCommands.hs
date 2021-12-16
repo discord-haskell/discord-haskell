@@ -11,6 +11,12 @@ import Data.Aeson
 import Data.Data
 import Data.Maybe (fromJust)
 import Control.Applicative
+import Data.Map (Map)
+import Discord.Internal.Types.User (User(User))
+import Discord.Internal.Types.Guild (GuildMember)
+import Data.Text (unpack)
+import Discord.Internal.Types.Channel (Message)
+-- import Discord.Internal.Types (User(User))
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
@@ -19,7 +25,7 @@ makeTable :: (Data t, Enum t) => t -> [(Int,t)]
 makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c) ) (dataTypeConstrs $ dataTypeOf t)
 
 data ApplicationCommandType = ACTCHAT_INPUT | ACTUSER | ACTMESSAGE
-    deriving (Show, Data)
+    deriving (Show, Data, Eq)
 instance Enum ApplicationCommandType where
     fromEnum ACTCHAT_INPUT = 1
     fromEnum ACTUSER = 2
@@ -176,7 +182,7 @@ instance FromJSON ApplicationCommandOption where
         <*> v .:? "autocomplete")
 
 data ApplicationCommandOptionType = SUB_COMMAND | SUB_COMMAND_GROUP | STRING | INTEGER | BOOLEAN | USER | CHANNEL | ROLE | MENTIONABLE | NUMBER
-    deriving (Show, Data)
+    deriving (Show, Data, Eq)
 
 instance Enum ApplicationCommandOptionType where
     fromEnum SUB_COMMAND = 1
@@ -198,27 +204,35 @@ instance ToJSON ApplicationCommandOptionType where
 instance FromJSON ApplicationCommandOptionType where
     parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
 
+data StringIntDouble = SIDS String | SIDI Int | SIDD Double
+    deriving (Show, Eq)
+
+instance ToJSON StringIntDouble where
+    toJSON (SIDS s) = toJSON s
+    toJSON (SIDI i) = toJSON i
+    toJSON (SIDD d) = toJSON d
+
+instance FromJSON StringIntDouble where
+    parseJSON (String t) = return $ SIDS $ unpack t
+    parseJSON v = (SIDI <$> parseJSON v) <|> (SIDD <$> parseJSON v)
+
 
 data ApplicationCommandOptionChoice = ApplicationCommandOptionChoice
     { choiceName :: String
-    , choiceValue :: Either String (Either Int Double)
+    , choiceValue :: StringIntDouble
     }
-    deriving (Show)
+    deriving (Show, Eq)
 
 instance ToJSON ApplicationCommandOptionChoice where
-    toJSON ApplicationCommandOptionChoice{..} = object [("name",toJSON choiceName), ("value",cv)]
-        where cv = case choiceValue of
-                (Left s) -> toJSON s
-                (Right (Left i)) -> toJSON i
-                (Right (Right d)) -> toJSON d
+    toJSON ApplicationCommandOptionChoice{..} = object [("name",toJSON choiceName), ("value",toJSON choiceValue)]
 
 instance FromJSON ApplicationCommandOptionChoice where
     parseJSON = withObject "ApplicationCommandOptionChoice" (\v-> ApplicationCommandOptionChoice
-        <$> v .:  "name"
-        <*> (Left <$> v .: "value" <|> Right . Left <$> v .: "value" <|> Right . Right <$> v .: "value"))
+        <$> v .: "name"
+        <*> v .: "value")
 
 data ApplicationCommandChannelType = GUILD_TEXT | DM | GUILD_VOICE | GROUP_DM | GUILD_CATEGORY | GUILD_NEWS | GUILD_STORE | GUILD_NEWS_THREAD | GUILD_PUBLIC_THREAD | GUILD_PRIVATE_THREAD | GUILD_STAGE_VOICE
-    deriving (Show, Data)
+    deriving (Show, Data, Eq)
 
 
 instance Enum ApplicationCommandChannelType where
@@ -241,6 +255,155 @@ instance ToJSON ApplicationCommandChannelType where
 
 instance FromJSON ApplicationCommandChannelType where
     parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
+
+type InteractionId = Snowflake
+
+data Interaction = Interaction
+    { interactionId     :: InteractionId
+    , interactionApplicationId     :: ApplicationId 
+    , interactionType   :: InteractionType -- referenced as Type in API
+    , interactionData   :: Maybe InteractionData       -- referenced as Data in API
+    , interactionGuildId           :: Maybe GuildId
+    , interactionChannelId         :: Maybe ChannelId
+    , interactionMember            :: Maybe GuildMember
+    , interactionUser              :: Maybe User
+    , interactionToken             :: String
+    , interactionVersion           :: Int
+    , interactionMessage :: Maybe Message
+    } deriving (Show, Eq)
+
+instance ToJSON Interaction where
+    toJSON Interaction{..} = object [(name, value) | (name, Just value) <-
+      [ ("id", toMaybeJSON interactionId)
+      , ("application_id", toMaybeJSON interactionApplicationId)
+      , ("type", toMaybeJSON interactionType)
+      , ("data", toJSON <$> interactionData)
+      , ("guild_id", toJSON <$> interactionGuildId)
+      , ("channel_id", toJSON <$> interactionChannelId)
+      , ("member", toJSON <$> interactionMember)
+      , ("user", toJSON <$> interactionUser)
+      , ("token", toMaybeJSON interactionToken)
+      , ("version", toMaybeJSON interactionVersion)
+      , ("message", toJSON <$> interactionMessage)
+      ] ]
+
+instance FromJSON Interaction where
+    parseJSON = withObject "Interaction" (\v -> Interaction
+        <$> v .:  "id"
+        <*> v .:  "application_id"
+        <*> v .:  "type"
+        <*> v .:? "data" 
+        <*> v .:? "guild_id" 
+        <*> v .:? "channel_id" 
+        <*> v .:? "member" 
+        <*> v .:? "user" 
+        <*> v .:  "token"
+        <*> v .:  "version"
+        <*> v .:? "message")
+
+data InteractionType = PING | APPLICATION_COMMAND | MESSAGE_COMPONENT | APPLICATION_COMMAND_AUTOCOMPLETE
+    deriving (Show, Data, Eq)
+
+instance Enum InteractionType where
+    fromEnum PING = 1
+    fromEnum APPLICATION_COMMAND = 2
+    fromEnum MESSAGE_COMPONENT = 3
+    fromEnum APPLICATION_COMMAND_AUTOCOMPLETE = 4
+    toEnum a = fromJust $ lookup a table
+        where table = makeTable PING
+
+instance ToJSON InteractionType where
+    toJSON = toJSON . fromEnum
+
+instance FromJSON InteractionType where
+    parseJSON = withScientific "InteractionType" (return . toEnum . round)
+
+
+data InteractionData = InteractionData
+    { interactionDataApplicationCommandId         :: ApplicationCommandId
+    , interactionDataApplicationCommandName       :: String
+    , interactionDataApplicationCommandType              :: ApplicationCommandType
+    , interactionDataResolved          :: Maybe ResolvedData
+    , interactionDataOptions           :: Maybe [ApplicationCommandInteractionDataOption]
+    -- , interactionDataCustomId :: Maybe String
+    -- , interactionDataComponentType :: Maybe Int -- ^ this is likely to change in future if and when it's needed
+    , interactionDataTargetId :: Maybe Snowflake  -- ^ this is the id of the user or message being targetteed by a user command or a message command
+    } deriving (Show, Eq)
+
+instance ToJSON InteractionData where
+    toJSON InteractionData{..} = object [(name, value) | (name, Just value) <-
+      [ ("id", toMaybeJSON interactionDataApplicationCommandId)
+      , ("name", toMaybeJSON interactionDataApplicationCommandName)
+      , ("type", toMaybeJSON interactionDataApplicationCommandType)
+      , ("resolved", toJSON <$> interactionDataResolved)
+      , ("options", toJSON <$> interactionDataOptions)
+    --   , ("custom_id", toJSON <$> interactionDataCustomId)
+    --   , ("component_type", toJSON <$> interactionDataComponentType)
+      , ("target_id", toJSON <$> interactionDataTargetId)
+      ] ]
+
+instance FromJSON InteractionData where
+    parseJSON = withObject "InteractionData" (\v -> InteractionData
+        <$> v .:  "id"
+        <*> v .:  "name"
+        <*> v .:  "type"
+        <*> v .:? "resolved" 
+        <*> v .:? "options" 
+        -- <*> v .:? "custom_id" 
+        -- <*> v .:? "component_type" 
+        -- <*> v .:? "values"
+        <*> v .:? "target_id")
+
+-- | It's not worth the time working out how to create this stuff.
+-- If you need to extract from these values, check out the link below.
+-- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
+data ResolvedData = ResolvedData
+   { resolvedDataUsers     :: Maybe Value
+   , resolvedDataMembers   :: Maybe Value
+   , resolvedDataRoles     :: Maybe Value
+   , resolvedDataChannels  :: Maybe Value
+   } deriving (Show, Eq)
+
+instance ToJSON ResolvedData where
+    toJSON ResolvedData{..} = object [(name, value) | (name, Just value) <-
+      [ ("users", resolvedDataUsers)
+      , ("members",resolvedDataMembers)
+      , ("roles",  resolvedDataRoles)
+      , ("channels",  resolvedDataChannels)
+      ] ]
+
+instance FromJSON ResolvedData where
+    parseJSON = withObject "ResolvedData" (\v -> ResolvedData
+        <$> v .:?  "users"
+        <*> v .:?  "members"
+        <*> v .:? "roles" 
+        <*> v .:? "channels")
+
+
+data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionDataOption
+    { applicationCommandInteractionDataOptionName                 :: String
+    , applicationCommandInteractionDataOptionType  :: ApplicationCommandOptionType
+    , applicationCommandInteractionDataOptionValue                :: Maybe StringIntDouble
+    , applicationCommandInteractionDataOptionOptions              :: Maybe[ApplicationCommandInteractionDataOption]
+    , applicationCommandInteractionDataOptionFocused :: Maybe Bool 
+    } deriving (Show, Eq)
+
+instance ToJSON ApplicationCommandInteractionDataOption where
+    toJSON ApplicationCommandInteractionDataOption{..} = object [(name, value) | (name, Just value) <-
+      [ ("name", toMaybeJSON applicationCommandInteractionDataOptionName)
+      , ("type", toMaybeJSON applicationCommandInteractionDataOptionType)
+      , ("value", toJSON <$> applicationCommandInteractionDataOptionValue)
+      , ("options", toJSON <$> applicationCommandInteractionDataOptionOptions)
+      , ("focused", toJSON <$> applicationCommandInteractionDataOptionFocused)
+      ] ]
+
+instance FromJSON ApplicationCommandInteractionDataOption where
+    parseJSON = withObject "ApplicationCommandInteractionDataOption" (\v -> ApplicationCommandInteractionDataOption
+        <$> v .:  "name"
+        <*> v .:  "type"
+        <*> v .:? "value" 
+        <*> v .:? "options"
+        <*> v .:? "focused")
 
 -- data ApplicationCommand = ApplicationCommand
 --     { applicationCommandId :: Snowflake -- ^ unique id of the command
