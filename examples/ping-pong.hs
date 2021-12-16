@@ -82,29 +82,30 @@ eventHandler event = case event of
                           def { referenceMessageId = Just $ messageId m }
                        }
         void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
-      Ready _ _ _ _ _ _ pa@(PartialApplication i f) -> trace (show pa) (
-        restCall (
-          R.CreateGuildApplicationCommand i serverid (
-            CreateApplicationCommand 
-              "test" 
-              "here is a description" 
-              (Just 
-                [
-                  ApplicationCommandOption 
-                    STRING 
-                    "randominput" 
-                    "I shall not" 
-                    (Just True) 
-                    (Just 
-                      [
-                        ApplicationCommandOptionChoice "firstopt" (Left "yay"), 
-                        ApplicationCommandOptionChoice "secondopt" (Left "nay")
-                      ]
-                    ) Nothing Nothing Nothing Nothing Nothing 
-                ]
-              ) 
-              Nothing
-              Nothing
+      Ready _ _ _ _ _ _ pa@(PartialApplication i f) -> 
+        trace (show pa) (
+          restCall (
+            R.CreateGuildApplicationCommand i serverid (
+              CreateApplicationCommand 
+                "test" 
+                "here is a description" 
+                (Just 
+                  [
+                    ApplicationCommandOption 
+                      STRING 
+                      "randominput" 
+                      "I shall not" 
+                      (Just True) 
+                      (Just 
+                        [
+                          ApplicationCommandOptionChoice "firstopt" (Left "yay"), 
+                          ApplicationCommandOptionChoice "secondopt" (Left "nay")
+                        ]
+                      ) Nothing Nothing Nothing Nothing Nothing 
+                  ]
+                ) 
+                Nothing
+                Nothing
             ) 
           )
         ) >>= \rs -> trace (show rs) (return ())
