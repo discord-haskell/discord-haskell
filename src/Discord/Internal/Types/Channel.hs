@@ -327,12 +327,11 @@ instance FromJSON MessageReaction where
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
-  { emojiId       :: Maybe EmojiId  -- ^ The emoji id
-  , emojiName     :: T.Text         -- ^ The emoji name
-  , emojiRoles    :: Maybe [RoleId] -- ^ Roles the emoji is active for
-  , emojiUser     :: Maybe User     -- ^ User that created this emoji
-  , emojiManaged  :: Maybe Bool     -- ^ Whether this emoji is managed
-  , emojiAnimated :: Maybe Bool     -- ^ Whether this emoji is animated
+  { emojiId      :: Maybe EmojiId  -- ^ The emoji id
+  , emojiName    :: T.Text         -- ^ The emoji name
+  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
+  , emojiUser    :: Maybe User     -- ^ User that created this emoji
+  , emojiManaged :: Maybe Bool     -- ^ Whether this emoji is managed
   } deriving (Show, Eq, Ord)
 
 instance FromJSON Emoji where
@@ -342,7 +341,6 @@ instance FromJSON Emoji where
           <*> o .:? "roles"
           <*> o .:? "user"
           <*> o .:? "managed"
-          <*> o .:? "animated"
 
 
 -- | Represents an attached to a message file.
