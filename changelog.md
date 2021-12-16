@@ -12,6 +12,8 @@ Discord API changes, so use the most recent version at all times
 
 Removed `CreateGuild` rest call! You can only do it if your bot is in fewer than 10 guilds, and it's [a pain to support](https://discord.com/developers/docs/resources/guild#create-guild). Just do it manually.
 
+Added `Read` instance to complement `Show` for lots of types. Removed ToJSON for `Channel`. 
+
 ## 1.9.1
 
 Add [color attribute for CreateEmbed](https://github.com/aquarial/discord-haskell/issues/78)

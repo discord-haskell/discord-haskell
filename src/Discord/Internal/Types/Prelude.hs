@@ -18,7 +18,7 @@ import Data.Bifunctor (first)
 
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 
 -- | Get the raw token formatted for use with the websocket gateway

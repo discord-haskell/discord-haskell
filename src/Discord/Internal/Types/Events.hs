@@ -55,7 +55,7 @@ data Event =
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
   | UnknownEvent     T.Text Object
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
 
 data EventInternalParse =
     InternalReady                   Int User [Channel] [GuildUnavailable] T.Text
@@ -92,7 +92,7 @@ data EventInternalParse =
   -- | InternalVoiceStateUpdate
   -- | InternalVoiceServerUpdate
   | InternalUnknownEvent     T.Text Object
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
 
 data ReactionInfo = ReactionInfo
   { reactionUserId    :: UserId
@@ -100,7 +100,7 @@ data ReactionInfo = ReactionInfo
   , reactionChannelId :: ChannelId
   , reactionMessageId :: MessageId
   , reactionEmoji     :: Emoji
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ReactionInfo where
   parseJSON = withObject "ReactionInfo" $ \o ->
@@ -115,7 +115,7 @@ data ReactionRemoveInfo  = ReactionRemoveInfo
   , reactionRemoveGuildId   :: GuildId
   , reactionRemoveMessageId :: MessageId
   , reactionRemoveEmoji     :: Emoji
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ReactionRemoveInfo where
   parseJSON = withObject "ReactionRemoveInfo" $ \o ->
@@ -130,7 +130,7 @@ data PresenceInfo = PresenceInfo
   -- , presenceGame :: Maybe Activity
   , presenceGuildId :: GuildId
   , presenceStatus  :: T.Text
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
@@ -144,7 +144,7 @@ data TypingInfo = TypingInfo
   { typingUserId    :: UserId
   , typingChannelId :: ChannelId
   , typingTimestamp :: UTCTime
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON TypingInfo where
   parseJSON = withObject "TypingInfo" $ \o ->

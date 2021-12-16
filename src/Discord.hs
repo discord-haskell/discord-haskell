@@ -119,7 +119,7 @@ runDiscordLoop handle opts = do
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Execute one http request and get a response
 restCall :: (FromJSON a, Request (r a)) => r a -> DiscordHandler (Either RestCallErrorCode a)

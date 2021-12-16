@@ -20,7 +20,7 @@ data GuildMember = GuildMember
       , memberJoinedAt :: UTCTime
       , memberDeaf     :: Bool
       , memberMute     :: Bool
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildMember where
   parseJSON = withObject "GuildMember" $ \o ->
@@ -56,7 +56,7 @@ data Guild = Guild
       , guildFeatures            :: [T.Text]
       , guildMultiFactAuth       :: !Integer
       , guildApplicationId       :: Maybe Snowflake
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Guild where
   parseJSON = withObject "Guild" $ \o ->
@@ -82,7 +82,7 @@ instance FromJSON Guild where
 
 data GuildUnavailable = GuildUnavailable
       { idOnceAvailable :: GuildId
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildUnavailable where
   parseJSON = withObject "GuildUnavailable" $ \o ->
@@ -96,7 +96,7 @@ data GuildInfo = GuildInfo
       , guildMembers     :: [GuildMember]
       , guildChannels    :: [Channel]     -- ^ Channels in the guild (sent in GuildCreate)
    -- , guildPresences   :: [Presence]
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildInfo where
   parseJSON = withObject "GuildInfo" $ \o ->
@@ -113,7 +113,7 @@ data PartialGuild = PartialGuild
       , partialGuildIcon        :: Maybe T.Text
       , partialGuildOwner       :: Bool
       , partialGuildPermissions :: Integer
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON PartialGuild where
   parseJSON = withObject "PartialGuild" $ \o ->
@@ -138,7 +138,7 @@ data Role =
       , rolePerms   :: Integer                   -- ^ Permission bit set
       , roleManaged :: Bool                      -- ^ Whether this role is managed by an integration
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Role where
   parseJSON = withObject "Role" $ \o ->
@@ -159,7 +159,7 @@ data VoiceRegion = VoiceRegion
       , voiceRegionOptimal     :: Bool        -- ^ True for the closest server to a client
       , voiceRegionDeprecated  :: Bool        -- ^ Whether this is a deprecated region
       , voiceRegionCustom      :: Bool        -- ^ Whether this is a custom region
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON VoiceRegion where
   parseJSON = withObject "VoiceRegion" $ \o ->
@@ -174,7 +174,7 @@ instance FromJSON VoiceRegion where
 data GuildBan = GuildBan
       { guildBanReason  :: T.Text
       , guildBanUser    :: User
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildBan where
   parseJSON = withObject "GuildBan" $ \o -> GuildBan <$> o .: "reason" <*> o .: "user"
@@ -184,7 +184,7 @@ data Invite = Invite
       { inviteCode  :: T.Text    -- ^ The invite code
       , inviteGuildId :: Maybe GuildId -- ^ The guild the code will invite to
       , inviteChannelId :: ChannelId -- ^ The channel the code will invite to
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Invite where
   parseJSON = withObject "Invite" $ \o ->
@@ -209,7 +209,7 @@ data InviteMeta = InviteMeta
     , inviteTemp    :: Bool    -- ^ Whether this invite only grants temporary membership
     , inviteCreated :: UTCTime -- ^ When the invite was created
     , inviteRevoked :: Bool    -- ^ If the invite is revoked
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InviteMeta where
   parseJSON = withObject "InviteMeta" $ \o ->
@@ -234,7 +234,7 @@ data Integration = Integration
       , integrationOwner    :: User                      -- ^ The user of the integration
       , integrationAccount  :: IntegrationAccount        -- ^ The account the integration links to
       , integrationSync     :: UTCTime                   -- ^ When the integration was last synced
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Integration where
   parseJSON = withObject "Integration" $ \o ->
@@ -254,7 +254,7 @@ instance FromJSON Integration where
 data IntegrationAccount = IntegrationAccount
     { accountId   :: T.Text -- ^ The id of the account.
     , accountName :: T.Text -- ^ The name of the account.
-    } deriving (Show, Eq, Ord)
+    } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON IntegrationAccount where
   parseJSON = withObject "IntegrationAccount" $ \o ->
@@ -264,7 +264,7 @@ instance FromJSON IntegrationAccount where
 data GuildEmbed = GuildEmbed
       { embedEnabled :: Bool      -- ^ Whether the embed is enabled
       , embedChannel :: ChannelId -- ^ The embed channel id
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildEmbed where
   parseJSON = withObject "GuildEmbed" $ \o ->

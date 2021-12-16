@@ -92,7 +92,7 @@ data Channel
   | ChannelUnknownType
       { channelId          :: ChannelId
       , channelJSON        :: Text
-      } deriving (Show, Eq, Ord)
+      } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Channel where
   parseJSON = withObject "Channel" $ \o -> do
@@ -174,7 +174,7 @@ data Overwrite = Overwrite
   , overwriteType  :: T.Text    -- ^ Either "role" or "member
   , overwriteAllow :: Integer   -- ^ Allowed permission bit set
   , overwriteDeny  :: Integer   -- ^ Denied permission bit set
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Overwrite where
   parseJSON = withObject "Overwrite" $ \o ->
@@ -218,7 +218,7 @@ data Message = Message
   , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
   , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
   , referencedMessage   :: Maybe Message   -- ^ The full original message
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
@@ -250,7 +250,7 @@ data MessageReaction = MessageReaction
   { messageReactionCount :: Int
   , messageReactionMeIncluded :: Bool
   , messageReactionEmoji :: Emoji
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON MessageReaction where
   parseJSON = withObject "MessageReaction" $ \o ->
@@ -266,7 +266,7 @@ data Emoji = Emoji
   , emojiUser     :: Maybe User     -- ^ User that created this emoji
   , emojiManaged  :: Maybe Bool     -- ^ Whether this emoji is managed
   , emojiAnimated :: Maybe Bool     -- ^ Whether this emoji is animated
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Emoji where
   parseJSON = withObject "Emoji" $ \o ->
@@ -287,7 +287,7 @@ data Attachment = Attachment
   , attachmentProxy    :: T.Text        -- ^ Proxied url of file
   , attachmentHeight   :: Maybe Integer -- ^ Height of file (if image)
   , attachmentWidth    :: Maybe Integer -- ^ Width of file (if image)
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Attachment where
   parseJSON = withObject "Attachment" $ \o ->
@@ -302,7 +302,7 @@ instance FromJSON Attachment where
 
 
 newtype Nonce = Nonce T.Text
-  deriving (Show, Eq, Ord)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Nonce where
   parseJSON (String nonce) = pure $ Nonce nonce
@@ -316,7 +316,7 @@ data MessageReference = MessageReference
   , referenceChannelId      :: Maybe ChannelId  -- ^ id of the originating message's channel
   , referenceGuildId        :: Maybe GuildId    -- ^ id of the originating message's guild
   , failIfNotExists         :: Bool             -- ^ Whether to not send if reference not exist
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON MessageReference where
   parseJSON = withObject "MessageReference" $ \o ->
