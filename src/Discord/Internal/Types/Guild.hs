@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Types relating to Discord Guilds (servers)
 module Discord.Internal.Types.Guild where
@@ -14,9 +15,9 @@ import Discord.Internal.Types.User (User)
 
 -- | Representation of a guild member.
 data GuildMember = GuildMember
-      { memberUser     :: User
+      { memberUser     :: Maybe User
       , memberNick     :: Maybe T.Text
-      , memberRoles    :: [Snowflake]
+      , memberRoles    :: [RoleId]
       , memberJoinedAt :: UTCTime
       , memberDeaf     :: Bool
       , memberMute     :: Bool
@@ -24,12 +25,22 @@ data GuildMember = GuildMember
 
 instance FromJSON GuildMember where
   parseJSON = withObject "GuildMember" $ \o ->
-    GuildMember <$> o .:  "user"
+    GuildMember <$> o .:? "user"
                 <*> o .:? "nick"
                 <*> o .:  "roles"
                 <*> o .:  "joined_at"
                 <*> o .:  "deaf"
                 <*> o .:  "mute"
+
+instance ToJSON GuildMember where
+  toJSON GuildMember {..} = object [(name, value) | (name, Just value) <-
+      [ ("user",      toJSON <$>      memberUser)
+      , ("nick",      toJSON <$>      memberNick)
+      , ("roles",     toJSON <$> pure memberRoles)
+      , ("joined_at", toJSON <$> pure memberJoinedAt)
+      , ("deaf",      toJSON <$> pure memberDeaf)
+      , ("mute",      toJSON <$> pure memberMute)
+      ] ]
 
 
 -- https://discord.com/developers/docs/resources/guild#guild-object

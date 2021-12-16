@@ -246,6 +246,28 @@ instance FromJSON Message where
             <*> o .:? "referenced_message" .!= Nothing
 
 
+instance ToJSON Message where
+  toJSON Message {..} = object [(name, value) | (name, Just value) <-
+      [ ("id",      toJSON <$> pure     messageId)
+      , ("channel_id",      toJSON <$> pure      messageChannel)
+      , ("author",     toJSON <$> pure messageAuthor)
+      , ("content", toJSON <$> pure messageText)
+      , ("timestamp", toJSON <$> pure messageTimestamp)
+      , ("edited_timestamp", toJSON <$>  messageEdited)
+      , ("tts", toJSON <$> pure messageTts)
+      , ("mention_everyone", toJSON <$> pure messageEveryone)
+      , ("mentions", toJSON <$> pure messageMentions)
+      , ("mention_roles", toJSON <$> pure messageMentionRoles)
+      , ("attachments", toJSON <$> pure messageAttachments)
+      , ("embeds", toJSON <$> pure messageEmbeds)
+      , ("reactions", toJSON <$> pure messageReactions)
+      , ("nonce",      toJSON <$> messageNonce)
+      , ("pinned",      toJSON <$> pure messagePinned)
+      , ("guild_id",      toJSON <$> messageGuild)
+      , ("message_reference",      toJSON <$> messageReference)
+      , ("referenced_message",      toJSON <$> referencedMessage)
+      ] ]
+
 data MessageReaction = MessageReaction
   { messageReactionCount :: Int
   , messageReactionMeIncluded :: Bool
@@ -257,6 +279,13 @@ instance FromJSON MessageReaction where
     MessageReaction <$> o .: "count"
                     <*> o .: "me"
                     <*> o .: "emoji"
+
+instance ToJSON MessageReaction where
+  toJSON MessageReaction{..} = object [(name, value) | (name, Just value) <-
+      [ ("count", toJSON <$> pure messageReactionCount)
+      , ("me",    toJSON <$> pure messageReactionMeIncluded)
+      , ("emoji", toJSON <$> pure messageReactionEmoji)
+      ]]
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
@@ -277,6 +306,14 @@ instance FromJSON Emoji where
           <*> o .:? "user"
           <*> o .:? "managed"
 
+instance ToJSON Emoji where
+  toJSON Emoji{..} = object [(name, value) | (name, Just value) <-
+      [ ("id", toJSON <$> emojiId)
+      , ("name",    toJSON <$> pure emojiName)
+      , ("roles", toJSON <$> emojiRoles)
+      , ("user", toJSON <$> emojiUser)
+      , ("managed", toJSON <$> emojiManaged)
+      ]]
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -308,6 +345,9 @@ instance FromJSON Nonce where
   parseJSON (String nonce) = pure $ Nonce nonce
   parseJSON (Number nonce) = pure . Nonce . T.pack . show $ nonce
   parseJSON _ = empty
+
+instance ToJSON Nonce where
+  toJSON (Nonce t) = String t
 
 
 -- | Represents a Message Reference

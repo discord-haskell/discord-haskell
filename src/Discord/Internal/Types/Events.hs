@@ -17,6 +17,7 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User)
+import Discord.Internal.Types.ApplicationCommands (Interaction)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
@@ -52,6 +53,7 @@ data Event =
   | PresenceUpdate          PresenceInfo
   | TypingStart             TypingInfo
   | UserUpdate              User
+  | InteractionCreate       Interaction
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
   | UnknownEvent     T.Text Object
@@ -212,10 +214,11 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE"   -> InternalMessageReactionRemove <$> reparse o
     "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> o .: "channel_id"
                                                                       <*> o .: "message_id"
-    "MESSAGE_REACTION_REMOVE_EMOJI"-> InternalMessageReactionRemoveEmoji <$> reparse o
+    "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
  -- "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
  -- "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
+    "INTERACTION_CREATE"        -> InternalInteractionCreate         <$> reparse o
     _other_event                -> InternalUnknownEvent t            <$> reparse o

@@ -111,7 +111,7 @@ eventHandler event = case event of
         ) >>= \rs -> trace (show rs) (return ())
       _ -> return ()
   where
-    serverid = -1
+    serverid = 463428416008355872
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True
