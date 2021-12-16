@@ -11,11 +11,13 @@ import Data.Aeson
 import Data.Data
 import Data.Maybe (fromJust)
 import Control.Applicative
-import Data.Map (Map)
-import Discord.Internal.Types.User (User(User))
+import Discord.Internal.Types.User (User)
 import Discord.Internal.Types.Guild (GuildMember)
-import Data.Text (unpack)
-import Discord.Internal.Types.Channel (Message)
+import Data.Text (unpack, Text)
+import Discord.Internal.Types.Channel (Message, AllowedMentions, Attachment)
+import Discord.Internal.Types.Embed
+import Data.Bits
+-- import Discord.Internal.Rest.Channel (AllowedMentions)
 -- import Discord.Internal.Types (User(User))
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
@@ -257,6 +259,7 @@ instance FromJSON ApplicationCommandChannelType where
     parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
 
 type InteractionId = Snowflake
+type InteractionToken = Text
 
 data Interaction = Interaction
     { interactionId     :: InteractionId
@@ -267,7 +270,7 @@ data Interaction = Interaction
     , interactionChannelId         :: Maybe ChannelId
     , interactionMember            :: Maybe GuildMember
     , interactionUser              :: Maybe User
-    , interactionToken             :: String
+    , interactionToken             :: InteractionToken
     , interactionVersion           :: Int
     , interactionMessage :: Maybe Message
     } deriving (Show, Eq)
@@ -337,6 +340,7 @@ instance ToJSON InteractionData where
       , ("type", toMaybeJSON interactionDataApplicationCommandType)
       , ("resolved", toJSON <$> interactionDataResolved)
       , ("options", toJSON <$> interactionDataOptions)
+    -- missing info relevant for components
     --   , ("custom_id", toJSON <$> interactionDataCustomId)
     --   , ("component_type", toJSON <$> interactionDataComponentType)
       , ("target_id", toJSON <$> interactionDataTargetId)
@@ -404,6 +408,79 @@ instance FromJSON ApplicationCommandInteractionDataOption where
         <*> v .:? "value" 
         <*> v .:? "options"
         <*> v .:? "focused")
+
+data InteractionResponse = InteractionResponse 
+    { interactionResponseType :: InteractionCallbackType
+    , interactionResponseData :: Maybe InteractionCallbackData
+    } deriving (Show, Eq)
+
+instance ToJSON InteractionResponse where
+    toJSON InteractionResponse{..} = object [(name, value) | (name, Just value) <-
+      [ ("type", toMaybeJSON interactionResponseType)
+      , ("data", toJSON <$> interactionResponseData)
+      ] ]
+
+data InteractionCallbackType = PONG | CHANNEL_MESSAGE_WITH_SOURCE | DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE | DEFERRED_UPDATE_MESSAGE | UPDATE_MESSAGE | APPLICATION_COMMAND_AUTOCOMPLETE_RESULT
+    deriving (Show, Eq, Data)
+
+instance Enum InteractionCallbackType where
+    fromEnum PONG = 1
+    fromEnum CHANNEL_MESSAGE_WITH_SOURCE = 4
+    fromEnum DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5
+    fromEnum DEFERRED_UPDATE_MESSAGE = 6
+    fromEnum UPDATE_MESSAGE = 6
+    fromEnum APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 6
+    toEnum a = fromJust $ lookup a table
+        where table = makeTable PONG
+
+instance ToJSON InteractionCallbackType where
+    toJSON = toJSON . fromEnum
+
+data InteractionCallbackData = ICDM InteractionCallbackDataMessages | ICDA InteractionCallbackDataAutocomplete
+    deriving (Show, Eq)
+
+instance ToJSON InteractionCallbackData where
+    toJSON (ICDM icdm) = toJSON icdm
+    toJSON (ICDA icda) = toJSON icda
+
+type InteractionCallbackDataAutocomplete = [ApplicationCommandOptionChoice]
+
+data InteractionCallbackDataMessages = InteractionCallbackDataMessages 
+    { interactionCallbackDataMessagesTTS :: Maybe Bool
+    , interactionCallbackDataMessagesContent :: Maybe Text
+    , interactionCallbackDataMessagesEmbeds :: Maybe [Embed]
+    , interactionCallbackDataMessagesAllowedMentions :: Maybe [AllowedMentions]
+    , interactionCallbackDataMessagesFlags :: Maybe InteractionCallbackDataFlags
+    -- missing components
+    , interactionCallbackDataMessagesAttachments :: Maybe [Attachment]
+    } deriving (Show, Eq)
+
+
+instance ToJSON InteractionCallbackDataMessages where
+    toJSON InteractionCallbackDataMessages{..} = object [(name, value) | (name, Just value) <-
+      [ ("tts", toJSON <$> interactionCallbackDataMessagesTTS)
+      , ("content", toJSON <$> interactionCallbackDataMessagesContent)
+      , ("embeds", toJSON <$> interactionCallbackDataMessagesEmbeds)
+      , ("allowed_mentions", toJSON <$> interactionCallbackDataMessagesAllowedMentions)
+      , ("flags", toJSON <$> interactionCallbackDataMessagesFlags)
+      , ("attachments", toJSON <$> interactionCallbackDataMessagesAttachments)
+      ] ]
+
+
+data InteractionCallbackDataFlag = EPHERMERAL
+    deriving (Show, Eq)
+
+newtype InteractionCallbackDataFlags = InteractionCallbackDataFlags [InteractionCallbackDataFlag]
+    deriving (Show, Eq)
+
+instance Enum InteractionCallbackDataFlag where
+    fromEnum EPHERMERAL = 1 `shift` 6
+    toEnum i
+        | i == 1 `shift` 6 = EPHERMERAL
+        | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
+
+instance ToJSON InteractionCallbackDataFlags where
+    toJSON (InteractionCallbackDataFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
 
 -- data ApplicationCommand = ApplicationCommand
 --     { applicationCommandId :: Snowflake -- ^ unique id of the command

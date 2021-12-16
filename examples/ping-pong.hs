@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
+{-# LANGUAGE  RecordWildCards #-}
 
 import Control.Monad (when, forM_, void)
 import qualified Data.Text as T
@@ -11,6 +12,10 @@ import Discord
 import Discord.Types
 import qualified Discord.Requests as R
 import Debug.Trace
+import Data.Maybe (fromJust)
+import qualified Discord.Internal.Rest.ApplicationCommands as R
+import Discord.Internal.Types.ApplicationCommands (InteractionResponse(InteractionResponse))
+import Data.Aeson
 
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
@@ -47,12 +52,12 @@ startHandler = do
                               }
   sendCommand (UpdateStatus opts)
 
-  forM_ partialGuilds $ \pg -> do
-    Right guild <- restCall $ R.GetGuild (partialGuildId pg)
-    Right chans <- restCall $ R.GetGuildChannels (guildId guild)
-    forM_ (take 1 (filter isTextChannel chans))
-      (\channel -> restCall $ R.CreateMessage (channelId channel)
-                                      "Hello! I will reply to pings with pongs")
+  -- forM_ partialGuilds $ \pg -> do
+  --   Right guild <- restCall $ R.GetGuild (partialGuildId pg)
+  --   Right chans <- restCall $ R.GetGuildChannels (guildId guild)
+  --   forM_ (take 1 (filter isTextChannel chans))
+  --     (\channel -> restCall $ R.CreateMessage (channelId channel)
+  --                                     "Hello! I will reply to pings with pongs")
 
 
 -- If an event handler throws an exception, discord-haskell will continue to run
@@ -95,8 +100,8 @@ eventHandler event = case event of
                       (Just True) 
                       (Just 
                         [
-                          ApplicationCommandOptionChoice "firstopt" (Left "yay"), 
-                          ApplicationCommandOptionChoice "secondopt" (Left "nay")
+                          ApplicationCommandOptionChoice "firstopt" (SIDS "yay"), 
+                          ApplicationCommandOptionChoice "secondopt" (SIDS "nay")
                         ]
                       ) Nothing Nothing Nothing Nothing Nothing 
                   ]
@@ -106,9 +111,39 @@ eventHandler event = case event of
             ) 
           )
         ) >>= \rs -> trace (show rs) (return ())
+      InteractionCreate i@(Interaction {..}) ->  trace (show i) $ do
+        let cid = fromJust interactionChannelId
+        if not (interactionType == APPLICATION_COMMAND) then void $ restCall (R.CreateMessage cid "I don't know how to handle an interaction like that!")
+        else do
+          let d = fromJust interactionData
+          case interactionDataApplicationCommandType d of
+            ACTCHAT_INPUT -> void $  restCall (
+                let x = (InteractionResponse 
+                            CHANNEL_MESSAGE_WITH_SOURCE 
+                            (Just 
+                              (ICDM 
+                                (InteractionCallbackDataMessages 
+                                  Nothing 
+                                  (Just 
+                                    (T.pack $ "Here's the reply! You chose: " 
+                                      ++ (show $ fromJust $ applicationCommandInteractionDataOptionValue $ head  (fromJust $ interactionDataOptions d))
+                                    )
+                                  )
+                                  Nothing
+                                  Nothing
+                                  Nothing
+                                  Nothing
+                                )
+                              )
+                            )
+                          ) in trace (show (toJSON x)) (R.CreateInteractionResponse interactionId interactionToken x)
+                )
+            _ -> void $ restCall (R.CreateMessage cid "I got some other kind of application command!")
+      -- Note that the above is not the required way of receiving and replying to interactions - this is marked as a failure
+
       _ -> return ()
   where
-    serverid = 463428416008355872
+    serverid = -1
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True
