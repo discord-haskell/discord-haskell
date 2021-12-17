@@ -9,6 +9,7 @@ module Discord.Internal.Types
   , module Discord.Internal.Types.User
   , module Discord.Internal.Types.Embed
   , module Discord.Internal.Types.ApplicationCommands
+  , module Discord.Internal.Types.Interactions
   , module Data.Aeson
   , module Data.Time.Clock
   , userFacingEvent
@@ -22,6 +23,7 @@ import Discord.Internal.Types.User
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.ApplicationCommands
+import Discord.Internal.Types.Interactions
 
 import Data.Aeson (Object)
 import Data.Time.Clock (UTCTime(..))
