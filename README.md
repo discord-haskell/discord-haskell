@@ -176,3 +176,9 @@ to display a variety of use cases. Read them with care.
 #### Open an Issue
 
 For deeper questions about how the library functions, feel free to open an issue.
+
+#### Contributing
+
+We have a small amount of continuous integration enabled, so to make sure your code passes the standards, please make sure your PR is formatted correctly using `ormolu` (see command below).
+
+`ormolu --mode inplace $(git ls-files '*.hs')`
