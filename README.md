@@ -141,6 +141,7 @@ The following features are not implemented:
 
 - Voice & Audio
 - Authenticating with a user token
+- Components (buttons, lists, dropdowns, etc)
 
 ### Debugging
 
