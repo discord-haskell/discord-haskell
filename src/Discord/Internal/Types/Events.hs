@@ -17,7 +17,7 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User)
-import Discord.Internal.Types.ApplicationCommands (Interaction)
+import Discord.Internal.Types.Interactions (Interaction)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.

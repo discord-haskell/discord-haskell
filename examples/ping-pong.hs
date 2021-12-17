@@ -13,8 +13,7 @@ import Discord.Types
 import qualified Discord.Requests as R
 import Debug.Trace
 import Data.Maybe (fromJust)
-import qualified Discord.Internal.Rest.ApplicationCommands as R
-import Discord.Internal.Types.ApplicationCommands (InteractionResponse(InteractionResponse))
+import Discord.Internal.Types.ApplicationCommands 
 import Data.Aeson
 
 -- Allows this code to be an executable. See discord-haskell.cabal
@@ -100,8 +99,8 @@ eventHandler event = case event of
                       (Just True) 
                       (Just 
                         [
-                          ApplicationCommandOptionChoice "firstopt" (SIDS "yay"), 
-                          ApplicationCommandOptionChoice "secondopt" (SIDS "nay")
+                          ApplicationCommandOptionChoice "firstopt" (SNS "yay"), 
+                          ApplicationCommandOptionChoice "secondopt" (SNS "nay")
                         ]
                       ) Nothing Nothing Nothing Nothing Nothing 
                   ]
@@ -111,14 +110,14 @@ eventHandler event = case event of
             ) 
           )
         ) >>= \rs -> trace (show rs) (return ())
-      InteractionCreate i@(Interaction {..}) ->  trace (show i) $ do
+      InteractionCreate i@Interaction {..} ->  trace (show i) $ do
         let cid = fromJust interactionChannelId
-        if not (interactionType == APPLICATION_COMMAND) then void $ restCall (R.CreateMessage cid "I don't know how to handle an interaction like that!")
+        if interactionType /= APPLICATION_COMMAND then void $ restCall (R.CreateMessage cid "I don't know how to handle an interaction like that!")
         else do
           let d = fromJust interactionData
           case interactionDataApplicationCommandType d of
             ACTCHAT_INPUT -> void $  restCall (
-                let x = (InteractionResponse 
+                let x = InteractionResponse 
                             CHANNEL_MESSAGE_WITH_SOURCE 
                             (Just 
                               (ICDM 
@@ -126,7 +125,7 @@ eventHandler event = case event of
                                   Nothing 
                                   (Just 
                                     (T.pack $ "Here's the reply! You chose: " 
-                                      ++ (show $ fromJust $ applicationCommandInteractionDataOptionValue $ head  (fromJust $ interactionDataOptions d))
+                                      ++ show (fromJust $ applicationCommandInteractionDataOptionValue $ head  (fromJust $ interactionDataOptions d))
                                     )
                                   )
                                   Nothing
@@ -136,7 +135,7 @@ eventHandler event = case event of
                                 )
                               )
                             )
-                          ) in trace (show (toJSON x)) (R.CreateInteractionResponse interactionId interactionToken x)
+                          in trace (show (toJSON x)) (R.CreateInteractionResponse interactionId interactionToken x)
                 )
             _ -> void $ restCall (R.CreateMessage cid "I got some other kind of application command!")
       -- Note that the above is not the required way of receiving and replying to interactions - this is marked as a failure

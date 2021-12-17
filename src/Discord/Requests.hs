@@ -7,6 +7,7 @@ module Discord.Requests
   , module Discord.Internal.Rest.Voice
   , module Discord.Internal.Rest.Webhook
   , module Discord.Internal.Rest.ApplicationCommands
+  , module Discord.Internal.Rest.Interactions
   ) where
 
 import Discord.Internal.Rest.Channel
@@ -17,3 +18,4 @@ import Discord.Internal.Rest.User
 import Discord.Internal.Rest.Voice
 import Discord.Internal.Rest.Webhook
 import Discord.Internal.Rest.ApplicationCommands
+import Discord.Internal.Rest.Interactions
