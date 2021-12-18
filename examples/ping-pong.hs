@@ -3,13 +3,11 @@
 {-# LANGUAGE RecordWildCards #-}
 
 import Control.Monad (forM_, void, when)
-import Data.Aeson
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
 import Discord
-import Discord.Internal.Types.ApplicationCommands
 import qualified Discord.Requests as R
 import Discord.Types
 import UnliftIO (liftIO)
@@ -69,6 +67,28 @@ startHandler = do
               "Hello! I will reply to pings with pongs"
       )
 
+-- | An example of the example slash command using the defaults
+exampleSlashCommand' :: CreateApplicationCommand
+exampleSlashCommand' =
+  def
+    { createApplicationCommandName = "test",
+      createApplicationCommandDescription = "here is a description",
+      createApplicationCommandOptions = Just [h]
+    }
+  where
+    h =
+      def
+        { applicationCommandOptionName = "randominput",
+          applicationCommandOptionDescription = "I shall not",
+          applicationCommandOptionRequired = Just True,
+          applicationCommandOptionChoices =
+            Just
+              [ ApplicationCommandOptionChoice "firstopt" (StringNumberValueString "yay"),
+                ApplicationCommandOptionChoice "secondopt" (StringNumberValueString "nay")
+              ]
+        }
+
+-- | An example slash command.
 exampleSlashCommand :: CreateApplicationCommand
 exampleSlashCommand =
   CreateApplicationCommand
@@ -76,13 +96,13 @@ exampleSlashCommand =
     "here is a description"
     ( Just
         [ ApplicationCommandOption
-            STRING
+            ApplicationCommandOptionTypeString
             "randominput"
             "I shall not"
             (Just True)
             ( Just
-                [ ApplicationCommandOptionChoice "firstopt" (SNS "yay"),
-                  ApplicationCommandOptionChoice "secondopt" (SNS "nay")
+                [ ApplicationCommandOptionChoice "firstopt" (StringNumberValueString "yay"),
+                  ApplicationCommandOptionChoice "secondopt" (StringNumberValueString "nay")
                 ]
             )
             Nothing
@@ -98,7 +118,7 @@ exampleSlashCommand =
 exampleInteractionResponse :: Maybe [ApplicationCommandInteractionDataOption] -> InteractionResponse
 exampleInteractionResponse d =
   InteractionResponse
-    CHANNEL_MESSAGE_WITH_SOURCE
+    InteractionCallbackTypeChannelMessageWithSource
     ( Just
         ( ICDM
             ( InteractionCallbackMessages
@@ -146,7 +166,7 @@ eventHandler event = case event of
                   def {referenceMessageId = Just $ messageId m}
             }
     void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
-  Ready _ _ _ _ _ _ pa@(PartialApplication i f) ->
+  Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
     trace
       (show pa)
       ( restCall
@@ -156,12 +176,12 @@ eventHandler event = case event of
       >>= \rs -> trace (show rs) (return ())
   InteractionCreate i@Interaction {..} -> trace (show i) $ do
     let cid = fromJust interactionChannelId
-    if interactionType /= APPLICATION_COMMAND
+    if interactionType /= InteractionTypeApplicationCommand
       then void $ restCall (R.CreateMessage cid "I don't know how to handle an interaction like that!")
       else do
         let d = fromJust interactionData
         case interactionDataApplicationCommandType d of
-          ACTCHAT_INPUT ->
+          ApplicationCommandTypeChatInput ->
             void $
               restCall
                 ( R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse (interactionDataOptions d))

@@ -24,7 +24,7 @@ where
 
 import Data.Aeson
 import Data.Bits (Bits (shift, (.|.)))
-import Data.Data ( Data(dataTypeOf), dataTypeConstrs, fromConstr )
+import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 import Data.Default (Default (..))
 import Data.Maybe (fromJust)
 import Data.Text (Text)
@@ -103,17 +103,21 @@ instance FromJSON Interaction where
 
 -- | What type of interaction has a user requested? Each requires its own type
 -- of response.
-data InteractionType = PING | APPLICATION_COMMAND | MESSAGE_COMPONENT | APPLICATION_COMMAND_AUTOCOMPLETE
+data InteractionType
+  = InteractionTypePing
+  | InteractionTypeApplicationCommand
+  | InteractionTypeMessageComponent
+  | InteractionTypeApplicationCommandAutocomplete
   deriving (Show, Read, Data, Eq)
 
 instance Enum InteractionType where
-  fromEnum PING = 1
-  fromEnum APPLICATION_COMMAND = 2
-  fromEnum MESSAGE_COMPONENT = 3
-  fromEnum APPLICATION_COMMAND_AUTOCOMPLETE = 4
+  fromEnum InteractionTypePing = 1
+  fromEnum InteractionTypeApplicationCommand = 2
+  fromEnum InteractionTypeMessageComponent = 3
+  fromEnum InteractionTypeApplicationCommandAutocomplete = 4
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable PING
+      table = makeTable InteractionTypePing
 
 instance ToJSON InteractionType where
   toJSON = toJSON . fromEnum
@@ -217,7 +221,7 @@ data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionData
   { applicationCommandInteractionDataOptionName :: String,
     applicationCommandInteractionDataOptionType :: ApplicationCommandOptionType,
     -- | The value itself. Mutually exclusive with options.
-    applicationCommandInteractionDataOptionValue :: Maybe StringNumber,
+    applicationCommandInteractionDataOptionValue :: Maybe StringNumberValue,
     -- | Only present in group subcommands and subcommands. Mutually exclusive with value.
     applicationCommandInteractionDataOptionOptions :: Maybe [ApplicationCommandInteractionDataOption],
     -- | Whether this is the field that the user is currently typing in.
@@ -261,7 +265,7 @@ data InteractionResponse = InteractionResponse
   deriving (Show, Read, Eq)
 
 instance Default InteractionResponse where
-  def = InteractionResponse CHANNEL_MESSAGE_WITH_SOURCE Nothing
+  def = InteractionResponse InteractionCallbackTypeChannelMessageWithSource Nothing
 
 instance ToJSON InteractionResponse where
   toJSON InteractionResponse {..} =
@@ -276,30 +280,30 @@ instance ToJSON InteractionResponse where
 -- | What's the type of the response?
 data InteractionCallbackType
   = -- | Responds to a PING.
-    PONG
+    InteractionCallbackTypePong
   | -- | Respond with a message to the interaction
-    CHANNEL_MESSAGE_WITH_SOURCE
+    InteractionCallbackTypeChannelMessageWithSource
   | -- | Respond with a message to the interaction, after a delay. Sending this
     -- back means the interaction token lasts for 15 minutes.
-    DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+    InteractionCallbackTypeDeferredChannelMessageWithSource
   | -- | For components, edit the original message later.
-    DEFERRED_UPDATE_MESSAGE
+    InteractionCallbackTypeDeferredUpdateMessage
   | -- | For components, edit the original message.
-    UPDATE_MESSAGE
+    InteractionCallbackTypeUpdateMessage
   | -- | Respond to an autocomplete interaction with suggested choices.
-    APPLICATION_COMMAND_AUTOCOMPLETE_RESULT
+    InteractionCallbackTypeApplicationCommandAutocompleteResult
   deriving (Show, Read, Eq, Data)
 
 instance Enum InteractionCallbackType where
-  fromEnum PONG = 1
-  fromEnum CHANNEL_MESSAGE_WITH_SOURCE = 4
-  fromEnum DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE = 5
-  fromEnum DEFERRED_UPDATE_MESSAGE = 6
-  fromEnum UPDATE_MESSAGE = 6
-  fromEnum APPLICATION_COMMAND_AUTOCOMPLETE_RESULT = 6
+  fromEnum InteractionCallbackTypePong = 1
+  fromEnum InteractionCallbackTypeChannelMessageWithSource = 4
+  fromEnum InteractionCallbackTypeDeferredChannelMessageWithSource = 5
+  fromEnum InteractionCallbackTypeDeferredUpdateMessage = 6
+  fromEnum InteractionCallbackTypeUpdateMessage = 6
+  fromEnum InteractionCallbackTypeApplicationCommandAutocompleteResult = 6
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable PONG
+      table = makeTable InteractionCallbackTypePong
 
 instance ToJSON InteractionCallbackType where
   toJSON = toJSON . fromEnum
