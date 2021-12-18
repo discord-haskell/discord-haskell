@@ -1,13 +1,17 @@
-# discord-haskell           [![Build Status](https://app.travis-ci.com/aquarial/discord-haskell.svg?branch=master)](https://app.travis-ci.com/github/aquarial/discord-haskell)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)              [![Discord server](https://discord.com/api/guilds/918577626954739722/widget.png?style=shield)](https://discord.gg/eaRAGgX3bK)
+# discord-haskell           [![CI Status](https://github.com/aquarial/discord-haskell/actions/workflows/main.yml/badge.svg)](https://github.com/aquarial/discord-haskell/actions/)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)              [![Discord server](https://discord.com/api/guilds/918577626954739722/widget.png?style=shield)](https://discord.gg/eaRAGgX3bK)
 
-Build that discord bot in Haskell! Also checkout the [calamity haskell library](https://github.com/nitros12/calamity) 
+## About
+
+Build that discord bot in Haskell! Also checkout the [calamity haskell library](https://github.com/nitros12/calamity)
 for a more advanced interface than `discord-haskell`.
 
 ### Discord Server
 
-Created a discord server: https://discord.gg/eaRAGgX3bK
+Created a discord server: <https://discord.gg/eaRAGgX3bK>
 
 Ask questions, get updates, request features, etc
+
+## Implementation and Progress
 
 ### Quickstart
 
@@ -48,7 +52,7 @@ isPing :: Message -> Bool
 isPing = ("ping" `isPrefixOf`) . toLower . messageText
 ```
 
-```
+```cabal
 -- ping-pong.cabal
 
 executable haskell-bot
@@ -71,7 +75,7 @@ executable haskell-bot
 
 ### Installing
 
-discord-haskell is on hosted on hackage at https://hackage.haskell.org/package/discord-haskell, 
+discord-haskell is on hosted on hackage at <https://hackage.haskell.org/package/discord-haskell>,
 
 In `stack.yaml`
 
@@ -93,13 +97,12 @@ executable haskell-bot
                      , discord-haskell
 ```
 
-For a more complete example with various options go to 
+For a more complete example with various options go to
 [Installing the Library](https://github.com/aquarial/discord-haskell/wiki/Installing-the-Library) wiki page
 
-Also take a look at 
+Also take a look at
 [Creating your first Bot](https://github.com/aquarial/discord-haskell/wiki/Creating-your-first-Bot)
 for some help setting up your bot token
-
 
 ### Emoji
 
@@ -108,12 +111,12 @@ For single character Emoji you can use the unicode name ("eyes", "fire", etc).
 For multi-character Emoji you must use the discord format. Type `\:emoji:` into
 a discord chat and paste that into the Text
 
-For example `:thumbsup::skin-tone-3:` is `"👍\127997"`. 
+For example `:thumbsup::skin-tone-3:` is `"👍\127997"`.
 A custom emoji will look like `<name:id_number>` or `name:id_number`.
 
 See [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/blob/master/examples/ping-pong.hs)
  for a `CreateReaction` request in use.
- 
+
 ### Embeds
 
 Embeds are special messages with boarders and images. [Example embed created by discord-haskell](./examples/embed-photo.jpg)
@@ -134,7 +137,7 @@ _ <- restCall (R.CreateMessageEmbed <channel_id> "Pong!" $
 ```
 
 Uploading a file each time is slow, prefer uploading images to a hosting site like imgur.com, and then referencing them.
- 
+
 ### Limitations
 
 The following features are not implemented:
@@ -158,10 +161,10 @@ Remember to remove sensitive information before posting.
 
 #### Official discord docs
 
-For a list of rest requests, gateway events, and gateway sendables go ggto the 
+For a list of rest requests, gateway events, and gateway sendables go ggto the
 [official discord documentation](https://discord.com/developers/docs/intro)
 
-The rest requests line up very closely. The documentation lists 
+The rest requests line up very closely. The documentation lists
 [Get Channel](https://discord.com/developers/docs/resources/channel#get-channel)
 and discord-haskell has `GetChannel :: ChannelId -> ChannelRequest Channel`. Same for gateway `Event`s.
 
@@ -173,3 +176,9 @@ to display a variety of use cases. Read them with care.
 #### Open an Issue
 
 For deeper questions about how the library functions, feel free to open an issue.
+
+#### Contributing
+
+We have a small amount of continuous integration enabled, so to make sure your code passes the standards, please make sure your PR is formatted correctly using `ormolu` (see command below).
+
+`ormolu --mode inplace $(git ls-files '*.hs')`
