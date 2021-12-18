@@ -21,13 +21,16 @@ pingpongExample = do
   tok <- TIO.readFile "./examples/auth-token.secret"
 
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
-  t <- runDiscord $ def { discordToken = tok
-                        , discordOnStart = startHandler
-                        , discordOnEnd = liftIO $ putStrLn "Ended"
-                        , discordOnEvent = eventHandler
-                        , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
-                        }
-  TIO.putStrLn t
+  err <- runDiscord $ def { discordToken = tok
+                          , discordOnStart = startHandler
+                          , discordOnEnd = liftIO $ putStrLn "Ended"
+                          , discordOnEvent = eventHandler
+                          , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
+                          }
+
+  -- only reached on an unrecoverable error
+  -- put normal 'cleanup' code in discordOnEnd
+  TIO.putStrLn err
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
 --     Use place to execute commands you know you want to complete

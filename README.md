@@ -36,9 +36,12 @@ pingpongExample = do userFacingError <- runDiscord $ def
                                             { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
                                             , discordOnEvent = eventHandler }
                      TIO.putStrLn userFacingError
+                     -- only reached on an unrecoverable error
+                     -- put normal 'cleanup' code in discordOnEnd
 
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
+       -- eventHandler is called concurrently unless discordForkThreadForEvents = False
        MessageCreate m -> when (not (fromBot m) && isPing m) $ do
                void $ restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
                threadDelay (2 * 10^6)
