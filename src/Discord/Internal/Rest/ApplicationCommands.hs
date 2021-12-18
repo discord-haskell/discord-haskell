@@ -8,32 +8,28 @@
 module Discord.Internal.Rest.ApplicationCommands where
 
 import Data.Aeson (ToJSON (toJSON), Value)
-import Discord.Internal.Types.Prelude ( ApplicationId, GuildId )
 import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
 import Discord.Internal.Types.ApplicationCommands
+import Discord.Internal.Types.Prelude (ApplicationId, GuildId)
 import Network.HTTP.Req as R
 
 instance Request (ApplicationCommandRequest a) where
   jsonRequest = applicationCommandJsonRequest
   majorRoute = applicationCommandMajorRoute
 
-type AppCom = ApplicationCommand
-
-type CreateAppCom = CreateApplicationCommand
-
 data ApplicationCommandRequest a where
-  GetGlobalApplicationCommands :: ApplicationId -> ApplicationCommandRequest [AppCom]
-  CreateGlobalApplicationCommand :: ApplicationId -> CreateAppCom -> ApplicationCommandRequest AppCom
-  GetGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest AppCom
-  EditGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> EditApplicationCommand -> ApplicationCommandRequest AppCom
+  GetGlobalApplicationCommands :: ApplicationId -> ApplicationCommandRequest [ApplicationCommand]
+  CreateGlobalApplicationCommand :: ApplicationId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
+  GetGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest ApplicationCommand
+  EditGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> EditApplicationCommand -> ApplicationCommandRequest ApplicationCommand
   DeleteGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest ()
-  BulkOverWriteGlobalApplicationCommand :: ApplicationId -> [CreateAppCom] -> ApplicationCommandRequest ()
-  GetGuildApplicationCommands :: ApplicationId -> GuildId -> ApplicationCommandRequest [AppCom]
-  CreateGuildApplicationCommand :: ApplicationId -> GuildId -> CreateAppCom -> ApplicationCommandRequest AppCom
-  GetGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest AppCom
-  EditGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> CreateAppCom -> ApplicationCommandRequest AppCom
+  BulkOverWriteGlobalApplicationCommand :: ApplicationId -> [CreateApplicationCommand] -> ApplicationCommandRequest ()
+  GetGuildApplicationCommands :: ApplicationId -> GuildId -> ApplicationCommandRequest [ApplicationCommand]
+  CreateGuildApplicationCommand :: ApplicationId -> GuildId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
+  GetGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest ApplicationCommand
+  EditGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
   DeleteGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest ()
-  BulkOverWriteGuildApplicationCommand :: ApplicationId -> GuildId -> [CreateAppCom] -> ApplicationCommandRequest ()
+  BulkOverWriteGuildApplicationCommand :: ApplicationId -> GuildId -> [CreateApplicationCommand] -> ApplicationCommandRequest ()
 
 -- TODO: permissions checks
 -- GetGuildApplicationCommandPermissions :: ApplicationId -> GuildID -> ApplicationCommandR

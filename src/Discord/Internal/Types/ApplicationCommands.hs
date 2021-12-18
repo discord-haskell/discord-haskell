@@ -14,18 +14,17 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandOptionType (..),
     ApplicationCommandOptionChoice (..),
     ApplicationCommandChannelType (..),
-    StringNumber (..),
-    IntDouble (..),
+    StringNumberValue (..),
   )
 where
 
-import Control.Applicative (Alternative ((<|>)))
 import Data.Aeson
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 import Data.Default (Default (..))
 import Data.Maybe (fromJust)
+import Data.Scientific (Scientific)
 import Data.Text (unpack)
-import Discord.Internal.Types.Prelude (ApplicationId, GuildId, Snowflake)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Snowflake)
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
@@ -37,28 +36,26 @@ makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataT
 -- a user, and right clicking a message respectively.
 data ApplicationCommandType
   = -- | Slash commands
-    ACTCHAT_INPUT
+    ApplicationCommandTypeChatInput
   | -- | User commands
-    ACTUSER
+    ApplicationCommandTypeUser
   | -- | Message commands
-    ACTMESSAGE
+    ApplicationCommandTypeMessage
   deriving (Show, Read, Data, Eq)
 
 instance Enum ApplicationCommandType where
-  fromEnum ACTCHAT_INPUT = 1
-  fromEnum ACTUSER = 2
-  fromEnum ACTMESSAGE = 3
+  fromEnum ApplicationCommandTypeChatInput = 1
+  fromEnum ApplicationCommandTypeUser = 2
+  fromEnum ApplicationCommandTypeMessage = 3
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable ACTCHAT_INPUT
+      table = makeTable ApplicationCommandTypeChatInput
 
 instance ToJSON ApplicationCommandType where
   toJSON = toJSON . fromEnum
 
 instance FromJSON ApplicationCommandType where
   parseJSON = withScientific "ApplicationCommandType" (return . toEnum . round)
-
-type ApplicationCommandId = Snowflake
 
 -- | Data type to be used when creating application commands. The specification
 -- is below.
@@ -78,19 +75,19 @@ type ApplicationCommandId = Snowflake
 -- https://discord.com/developers/docs/interactions/application-commands#create-global-application-command
 data CreateApplicationCommand = CreateApplicationCommand
   { -- | The application command name (1-32 chars).
-    cApplicationCommandName :: String,
+    createApplicationCommandName :: String,
     -- | The application command description (1-100 chars). Has to be empty for
     -- non-slash commands.
-    cApplicationCommandDescription :: String,
+    createApplicationCommandDescription :: String,
     -- | What options the application (max length 25). Has to be `Nothing` for
     -- non-slash  commands.
-    cApplicationCommandOptions :: Maybe [ApplicationCommandOption],
+    createApplicationCommandOptions :: Maybe [ApplicationCommandOption],
     -- | Whether the command is enabled by default when the application is added
     -- to a guild. Defaults to true if not present
-    cApplicationCommandDefaultPermission :: Maybe Bool,
+    createApplicationCommandDefaultPermission :: Maybe Bool,
     -- | What the type of the command is. If `Nothing`, defaults to slash
     -- commands.
-    cApplicationCommandType :: Maybe ApplicationCommandType
+    createApplicationCommandType :: Maybe ApplicationCommandType
   }
   deriving (Show, Eq, Read)
 
@@ -102,11 +99,11 @@ instance ToJSON CreateApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toMaybeJSON cApplicationCommandName),
-              ("description", toMaybeJSON cApplicationCommandDescription),
-              ("options", toJSON <$> cApplicationCommandOptions),
-              ("default_permission", toJSON <$> cApplicationCommandDefaultPermission),
-              ("type", toJSON <$> cApplicationCommandType)
+            [ ("name", toMaybeJSON createApplicationCommandName),
+              ("description", toMaybeJSON createApplicationCommandDescription),
+              ("options", toJSON <$> createApplicationCommandOptions),
+              ("default_permission", toJSON <$> createApplicationCommandDefaultPermission),
+              ("type", toJSON <$> createApplicationCommandType)
             ]
       ]
 
@@ -116,11 +113,11 @@ instance ToJSON CreateApplicationCommand where
 --
 -- https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command
 data EditApplicationCommand = EditApplicationCommand
-  { eApplicationCommandName :: Maybe String,
-    eApplicationCommandDescription :: Maybe String,
-    eApplicationCommandOptions :: Maybe [ApplicationCommandOption],
-    eApplicationCommandDefaultPermission :: Maybe Bool,
-    eApplicationCommandType :: Maybe ApplicationCommandType
+  { editApplicationCommandName :: Maybe String,
+    editApplicationCommandDescription :: Maybe String,
+    editApplicationCommandOptions :: Maybe [ApplicationCommandOption],
+    editApplicationCommandDefaultPermission :: Maybe Bool,
+    editApplicationCommandType :: Maybe ApplicationCommandType
   }
 
 instance Default EditApplicationCommand where
@@ -131,11 +128,11 @@ instance ToJSON EditApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toJSON <$> eApplicationCommandName),
-              ("description", toJSON <$> eApplicationCommandDescription),
-              ("options", toJSON <$> eApplicationCommandOptions),
-              ("default_permission", toJSON <$> eApplicationCommandDefaultPermission),
-              ("type", toJSON <$> eApplicationCommandType)
+            [ ("name", toJSON <$> editApplicationCommandName),
+              ("description", toJSON <$> editApplicationCommandDescription),
+              ("options", toJSON <$> editApplicationCommandOptions),
+              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+              ("type", toJSON <$> editApplicationCommandType)
             ]
       ]
 
@@ -149,7 +146,7 @@ data ApplicationCommand = ApplicationCommand
     applicationCommandId :: ApplicationCommandId,
     -- | The type of the command.
     applicationCommandType :: Maybe ApplicationCommandType,
-    -- | Unique id of the parent application.
+    -- | Unique id of the parent application (the bot).
     applicationCommandApplicationId :: ApplicationId,
     -- | The guild id of the command if not global.
     applicationCommandGuildId :: Maybe GuildId,
@@ -188,49 +185,49 @@ instance FromJSON ApplicationCommand where
 -- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-structure
 data ApplicationCommandOption = ApplicationCommandOption
   { -- | What the type of this option is.
-    optionType :: ApplicationCommandOptionType,
+    applicationCommandOptionType :: ApplicationCommandOptionType,
     -- | The name of the option . 1-32 characters
-    optionName :: String,
+    applicationCommandOptionName :: String,
     -- | 1-100 characters
-    optionDescription :: String,
+    applicationCommandOptionDescription :: String,
     -- | Is the parameter required? default false
-    optionRequired :: Maybe Bool,
+    applicationCommandOptionRequired :: Maybe Bool,
     -- | If specified, these are the only valid options to choose from. Type
     -- depends on optionType, and can only be specified for STRING, INTEGER or
     -- NUMBER types.
-    optionChoices :: Maybe [ApplicationCommandOptionChoice],
+    applicationCommandOptionChoices :: Maybe [ApplicationCommandOptionChoice],
     -- | If the option type is a subcommand or subcommand group type, these are
     -- the parameters to the subcommand.
-    optionOptions :: Maybe [ApplicationCommandOption],
+    applicationCommandOptionOptions :: Maybe [ApplicationCommandOption],
     -- | If option is channel type, these are the only channel types allowed.
-    optionChannelTypes :: Maybe [ApplicationCommandChannelType],
+    applicationCommandOptionChannelTypes :: Maybe [ApplicationCommandChannelType],
     -- | If option is number type, minimum value for the number
-    optionMinVal :: Maybe IntDouble,
+    applicationCommandOptionMinVal :: Maybe Scientific,
     -- | if option is number type, maximum value for the number
-    optionMaxVal :: Maybe IntDouble,
+    applicationCommandOptionMaxVal :: Maybe Scientific,
     -- | Enable auto complete interactions. may not be set to true if choices is present.
-    optionAutocomplete :: Maybe Bool
+    applicationCommandOptionAutocomplete :: Maybe Bool
   }
   deriving (Show, Eq, Read)
 
 instance Default ApplicationCommandOption where
-  def = ApplicationCommandOption STRING "appcomop" "appcomop desc" Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+  def = ApplicationCommandOption ApplicationCommandOptionTypeString "appcomop" "appcomop desc" Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ApplicationCommandOption where
   toJSON ApplicationCommandOption {..} =
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("type", toMaybeJSON optionType),
-              ("name", toMaybeJSON optionName),
-              ("description", toMaybeJSON optionDescription),
-              ("required", toJSON <$> optionRequired),
-              ("choices", toJSON <$> optionChoices),
-              ("options", toJSON <$> optionOptions),
-              ("channel_types", toJSON <$> optionChannelTypes),
-              ("min_val", toJSON <$> optionMinVal),
-              ("max_val", toJSON <$> optionMaxVal),
-              ("autocomplete", toJSON <$> optionAutocomplete)
+            [ ("type", toMaybeJSON applicationCommandOptionType),
+              ("name", toMaybeJSON applicationCommandOptionName),
+              ("description", toMaybeJSON applicationCommandOptionDescription),
+              ("required", toJSON <$> applicationCommandOptionRequired),
+              ("choices", toJSON <$> applicationCommandOptionChoices),
+              ("options", toJSON <$> applicationCommandOptionOptions),
+              ("channel_types", toJSON <$> applicationCommandOptionChannelTypes),
+              ("min_val", toJSON <$> applicationCommandOptionMinVal),
+              ("max_val", toJSON <$> applicationCommandOptionMaxVal),
+              ("autocomplete", toJSON <$> applicationCommandOptionAutocomplete)
             ]
       ]
 
@@ -259,41 +256,41 @@ instance FromJSON ApplicationCommandOption where
 data ApplicationCommandOptionType
   = -- | A subcommand. It can take further options, excluding sub commands and
     -- sub command groups.
-    SUB_COMMAND
+    ApplicationCommandOptionTypeSubCommand
   | -- | A subcommand group. It can take further options, excluding sub command
     -- groups.
-    SUB_COMMAND_GROUP
+    ApplicationCommandOptionTypeSubCommandGroup
   | -- | Can typically be provided with default values.
-    STRING
+    ApplicationCommandOptionTypeString
   | -- | Can typically be provided with default values, and possibly with
     -- minimum and maximum values.
-    INTEGER
-  | BOOLEAN
-  | USER
+    ApplicationCommandOptionTypeInteger
+  | ApplicationCommandOptionTypeBoolean
+  | ApplicationCommandOptionTypeUser
   | -- | Can be limited in the types of the channel allowed.
-    CHANNEL
-  | ROLE
+    ApplicationCommandOptionTypeChannel
+  | ApplicationCommandOptionTypeRole
   | -- | Users and roles.
-    MENTIONABLE
+    ApplicationCommandOptionTypeMentionable
   | -- | Can typically be provided with default values, and possibly with
     -- minimum and maximum values. Represents a double.
-    NUMBER
+    ApplicationCommandOptionTypeNumber
   deriving (Show, Read, Data, Eq)
 
 instance Enum ApplicationCommandOptionType where
-  fromEnum SUB_COMMAND = 1
-  fromEnum SUB_COMMAND_GROUP = 2
-  fromEnum STRING = 3
-  fromEnum INTEGER = 4
-  fromEnum BOOLEAN = 5
-  fromEnum USER = 6
-  fromEnum CHANNEL = 7
-  fromEnum ROLE = 8
-  fromEnum MENTIONABLE = 9
-  fromEnum NUMBER = 10
+  fromEnum ApplicationCommandOptionTypeSubCommand = 1
+  fromEnum ApplicationCommandOptionTypeSubCommandGroup = 2
+  fromEnum ApplicationCommandOptionTypeString = 3
+  fromEnum ApplicationCommandOptionTypeInteger = 4
+  fromEnum ApplicationCommandOptionTypeBoolean = 5
+  fromEnum ApplicationCommandOptionTypeUser = 6
+  fromEnum ApplicationCommandOptionTypeChannel = 7
+  fromEnum ApplicationCommandOptionTypeRole = 8
+  fromEnum ApplicationCommandOptionTypeMentionable = 9
+  fromEnum ApplicationCommandOptionTypeNumber = 10
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable SUB_COMMAND
+      table = makeTable ApplicationCommandOptionTypeSubCommand
 
 instance ToJSON ApplicationCommandOptionType where
   toJSON = toJSON . fromEnum
@@ -301,38 +298,27 @@ instance ToJSON ApplicationCommandOptionType where
 instance FromJSON ApplicationCommandOptionType where
   parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
 
--- | Utility data type to store integers or doubles.
-data IntDouble = IDI Int | IDD Double
-  deriving (Show, Read, Eq)
-
-instance ToJSON IntDouble where
-  toJSON (IDI s) = toJSON s
-  toJSON (IDD i) = toJSON i
-
-instance FromJSON IntDouble where
-  parseJSON v = (IDI <$> parseJSON v) <|> (IDD <$> parseJSON v)
-
 -- | Utility data type to store strings or number types.
-data StringNumber = SNS String | SNN IntDouble
+data StringNumberValue = StringNumberValueString String | StringNumberValueNumber Scientific
   deriving (Show, Read, Eq)
 
-instance ToJSON StringNumber where
-  toJSON (SNS s) = toJSON s
-  toJSON (SNN i) = toJSON i
+instance ToJSON StringNumberValue where
+  toJSON (StringNumberValueString s) = toJSON s
+  toJSON (StringNumberValueNumber i) = toJSON i
 
-instance FromJSON StringNumber where
-  parseJSON (String t) = return $ SNS $ unpack t
-  parseJSON v = SNN <$> parseJSON v
+instance FromJSON StringNumberValue where
+  parseJSON (String t) = return $ StringNumberValueString $ unpack t
+  parseJSON v = StringNumberValueNumber <$> parseJSON v
 
 -- | The choices for a particular option.
 data ApplicationCommandOptionChoice = ApplicationCommandOptionChoice
-  { choiceName :: String,
-    choiceValue :: StringNumber
+  { applicationCommandOptionChoiceName :: String,
+    applicationCommandOptionChoiceValue :: StringNumberValue
   }
   deriving (Show, Read, Eq)
 
 instance ToJSON ApplicationCommandOptionChoice where
-  toJSON ApplicationCommandOptionChoice {..} = object [("name", toJSON choiceName), ("value", toJSON choiceValue)]
+  toJSON ApplicationCommandOptionChoice {..} = object [("name", toJSON applicationCommandOptionChoiceName), ("value", toJSON applicationCommandOptionChoiceValue)]
 
 instance FromJSON ApplicationCommandOptionChoice where
   parseJSON =
@@ -349,45 +335,45 @@ instance FromJSON ApplicationCommandOptionChoice where
 -- https://discord.com/developers/docs/resources/channel#channel-object-channel-types
 data ApplicationCommandChannelType
   = -- | A text channel in a server.
-    GUILD_TEXT
+    ApplicationCommandChannelTypeGuildText
   | -- | A direct message between users.
-    DM
+    ApplicationCommandChannelTypeDM
   | -- | A voice channel in a server.
-    GUILD_VOICE
+    ApplicationCommandChannelTypeGuildVoice
   | -- | A direct message between multiple users.
-    GROUP_DM
+    ApplicationCommandChannelTypeGroupDM
   | -- | An organizational category that contains up to 50 channels.
-    GUILD_CATEGORY
+    ApplicationCommandChannelTypeGuildCategory
   | -- | A channel that users can follow and crosspost into their own server.
-    GUILD_NEWS
+    ApplicationCommandChannelTypeGuildNews
   | -- | A channel in which game developers can sell their game on discord.
-    GUILD_STORE
+    ApplicationCommandChannelTypeGuildStore
   | -- | A temporary sub-channel within a guild_news channel.
-    GUILD_NEWS_THREAD
+    ApplicationCommandChannelTypeGuildNewsThread
   | -- | A temporary sub-channel within a guild_text channel
-    GUILD_PUBLIC_THREAD
+    ApplicationCommandChannelTypeGuildPublicThread
   | -- | A temporary sub-channel within a GUILD_TEXT channel that is only
     -- viewable by those invited and those with the MANAGE_THREADS permission
-    GUILD_PRIVATE_THREAD
+    ApplicationCommandChannelTypeGuildPrivateThread
   | -- | A voice channel for hosting events with an audience.
-    GUILD_STAGE_VOICE
+    ApplicationCommandChannelTypeGuildStageVoice
   deriving (Show, Read, Data, Eq)
 
 instance Enum ApplicationCommandChannelType where
-  fromEnum GUILD_TEXT = 0
-  fromEnum DM = 1
-  fromEnum GUILD_VOICE = 2
-  fromEnum GROUP_DM = 3
-  fromEnum GUILD_CATEGORY = 4
-  fromEnum GUILD_NEWS = 5
-  fromEnum GUILD_STORE = 6
-  fromEnum GUILD_NEWS_THREAD = 10
-  fromEnum GUILD_PUBLIC_THREAD = 11
-  fromEnum GUILD_PRIVATE_THREAD = 12
-  fromEnum GUILD_STAGE_VOICE = 13
+  fromEnum ApplicationCommandChannelTypeGuildText = 0
+  fromEnum ApplicationCommandChannelTypeDM = 1
+  fromEnum ApplicationCommandChannelTypeGuildVoice = 2
+  fromEnum ApplicationCommandChannelTypeGroupDM = 3
+  fromEnum ApplicationCommandChannelTypeGuildCategory = 4
+  fromEnum ApplicationCommandChannelTypeGuildNews = 5
+  fromEnum ApplicationCommandChannelTypeGuildStore = 6
+  fromEnum ApplicationCommandChannelTypeGuildNewsThread = 10
+  fromEnum ApplicationCommandChannelTypeGuildPublicThread = 11
+  fromEnum ApplicationCommandChannelTypeGuildPrivateThread = 12
+  fromEnum ApplicationCommandChannelTypeGuildStageVoice = 13
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable GUILD_TEXT
+      table = makeTable ApplicationCommandChannelTypeGuildText
 
 instance ToJSON ApplicationCommandChannelType where
   toJSON = toJSON . fromEnum
