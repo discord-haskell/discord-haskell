@@ -179,6 +179,5 @@ For deeper questions about how the library functions, feel free to open an issue
 
 #### Contributing
 
-We have a small amount of continuous integration enabled, so to make sure your code passes the standards, please make sure your PR is formatted correctly using `ormolu` (see command below).
-
-`ormolu --mode inplace $(git ls-files '*.hs')`
+Open to code formatting. We're planning to use ormolu to autoformat the sourcecode eventually.
+See [the formatting tracking issue](https://github.com/aquarial/discord-haskell/issues/87)
