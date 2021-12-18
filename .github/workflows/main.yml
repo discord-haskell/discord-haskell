@@ -1,0 +1,39 @@
+name: CI
+
+# when the workflow will run
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+  # Allows manually starting this workflow from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # TODO: autoformatting
+  #ormolu:
+  #  runs-on: ubuntu-latest
+  #  steps:
+  #    - uses: actions/checkout@v2
+  #    - uses: mrkkrp/ormolu-action@v4
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    #needs: ormolu
+    steps:
+      - uses: actions/checkout@v2
+      - uses: haskell/actions/setup@v1
+        with:
+          ghc-version: 'latest'
+          enable-stack: true
+          stack-version: 'latest'
+      - name: Cache .stack
+        id: cache-stack
+        uses: actions/cache@v2
+        with:
+          path: ~/.stack
+          key: ${{ runner.os }}-stack-${{ hashFiles('stack.yaml') }}
+          restore-keys: |
+              ${{ runner.os }}-stack
+              ${{ runner.os }}
+      - run: stack build

@@ -21,11 +21,12 @@ gatewayExample = do
   -- write to stdout at the same time
   threadId <- forkIO $ forever $ readChan outChan >>= putStrLn
 
-  void $ runDiscord $ def { discordToken = tok
+  err <- runDiscord $ def { discordToken = tok
                           , discordOnStart = startHandler
                           , discordOnEvent = eventHandler outChan
                           , discordOnEnd = killThread threadId
                           }
+  TIO.putStrLn err
 
 -- Events are enumerated in the discord docs
 -- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-events
