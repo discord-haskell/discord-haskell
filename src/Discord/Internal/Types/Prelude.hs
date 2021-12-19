@@ -15,6 +15,7 @@ import Control.Monad (mzero)
 
 import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
+import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
@@ -70,3 +71,9 @@ epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
 type ColorInteger = Integer
+
+makeTable :: (Data t, Enum t) => t -> [(Int, t)]
+makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataTypeConstrs $ dataTypeOf t)
+
+toMaybeJSON :: (ToJSON a) => a -> Maybe Value
+toMaybeJSON = return . toJSON

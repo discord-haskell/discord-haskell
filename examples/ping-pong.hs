@@ -144,11 +144,11 @@ exampleInteractionResponse d =
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
   MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-    void $ restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
+    void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
     threadDelay (2 * 10 ^ (6 :: Int))
 
     -- A very simple message.
-    void $ restCall (R.CreateMessage (messageChannel m) "Pong!")
+    void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
 
     -- A more complex message. Text-to-speech, does not mention everyone nor
     -- the user, and uses Discord native replies.
@@ -168,7 +168,7 @@ eventHandler event = case event of
                 Just $
                   def {referenceMessageId = Just $ messageId m}
             }
-    void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
+    void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
   Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
     trace
       (show pa)
@@ -204,4 +204,4 @@ fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageContent

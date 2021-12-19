@@ -24,26 +24,19 @@ where
 
 import Data.Aeson
 import Data.Bits (Bits (shift, (.|.)))
-import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
+import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Maybe (fromJust)
-import Data.Text (Text)
+import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Embed (Embed)
-import Discord.Internal.Types.Guild (GuildMember)
-import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, Snowflake)
-import Discord.Internal.Types.User (User)
-
-toMaybeJSON :: (ToJSON a) => a -> Maybe Value
-toMaybeJSON = return . toJSON
-
-makeTable :: (Data t, Enum t) => t -> [(Int, t)]
-makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataTypeConstrs $ dataTypeOf t)
+import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, Snowflake, makeTable, toMaybeJSON)
+import Discord.Internal.Types.User (GuildMember, User)
 
 type InteractionId = Snowflake
 
-type InteractionToken = Text
+type InteractionToken = T.Text
 
 -- | This is the data that is recieved when an interaction occurs.
 --
@@ -132,7 +125,7 @@ instance FromJSON InteractionType where
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data-structure
 data InteractionData = InteractionData
   { interactionDataApplicationCommandId :: ApplicationCommandId,
-    interactionDataApplicationCommandName :: String,
+    interactionDataApplicationCommandName :: T.Text,
     interactionDataApplicationCommandType :: ApplicationCommandType,
     interactionDataResolved :: Maybe ResolvedData,
     interactionDataOptions :: Maybe [ApplicationCommandInteractionDataOption],
@@ -218,7 +211,7 @@ instance FromJSON ResolvedData where
 
 -- | The application command payload for an interaction.
 data ApplicationCommandInteractionDataOption = ApplicationCommandInteractionDataOption
-  { applicationCommandInteractionDataOptionName :: String,
+  { applicationCommandInteractionDataOptionName :: T.Text,
     applicationCommandInteractionDataOptionType :: ApplicationCommandOptionType,
     -- | The value itself. Mutually exclusive with options.
     applicationCommandInteractionDataOptionValue :: Maybe StringNumberValue,
@@ -321,7 +314,7 @@ type InteractionCallbackAutocomplete = [ApplicationCommandOptionChoice]
 -- | A cut down message structure.
 data InteractionCallbackMessages = InteractionCallbackMessages
   { interactionCallbackDataMessagesTTS :: Maybe Bool,
-    interactionCallbackDataMessagesContent :: Maybe Text,
+    interactionCallbackDataMessagesContent :: Maybe T.Text,
     interactionCallbackDataMessagesEmbeds :: Maybe [Embed],
     interactionCallbackDataMessagesAllowedMentions :: Maybe [AllowedMentions],
     interactionCallbackDataMessagesFlags :: Maybe InteractionCallbackDataFlags,
@@ -347,7 +340,7 @@ instance ToJSON InteractionCallbackMessages where
             ]
       ]
 
--- | Types of flags to attack to the message.
+-- | Types of flags to attach to the interaction message.
 --
 -- Currently the only flag is EPHERMERAL, which means only the user can see the
 -- message.
