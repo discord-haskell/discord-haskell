@@ -19,7 +19,7 @@ import Discord.Internal.Types.Embed
 import Data.Data (Data)
 import Data.Maybe (fromJust)
 import Data.Bits
-import Discord.Internal.Types.Components (Component)
+import Discord.Internal.Types.Components (Component, Emoji)
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -421,35 +421,6 @@ instance ToJSON MessageReaction where
       [ ("count", toJSON <$> pure messageReactionCount)
       , ("me",    toJSON <$> pure messageReactionMeIncluded)
       , ("emoji", toJSON <$> pure messageReactionEmoji)
-      ]]
-
--- | Represents an emoticon (emoji)
-data Emoji = Emoji
-  { emojiId      :: Maybe EmojiId  -- ^ The emoji id
-  , emojiName    :: Maybe T.Text   -- ^ The emoji name
-  , emojiRoles   :: Maybe [RoleId] -- ^ Roles the emoji is active for
-  , emojiUser    :: Maybe User     -- ^ User that created this emoji
-  , emojiManaged :: Maybe Bool     -- ^ Whether this emoji is managed
-  , emojiAnimated :: Maybe Bool     -- ^ Whether this emoji is animated
-  -- TODO MAY NEED TO REMOVE EMOJI ANIMATED
-  } deriving (Show, Read, Eq, Ord)
-
-instance FromJSON Emoji where
-  parseJSON = withObject "Emoji" $ \o ->
-    Emoji <$> o .:  "id"
-          <*> o .:  "name"
-          <*> o .:? "roles"
-          <*> o .:? "user"
-          <*> o .:? "managed"
-
-instance ToJSON Emoji where
-  toJSON Emoji{..} = object [(name, value) | (name, Just value) <-
-      [ ("id",        toJSON <$>      emojiId)
-      , ("name",      toJSON <$> pure emojiName)
-      , ("roles",     toJSON <$>      emojiRoles)
-      , ("user",      toJSON <$>      emojiUser)
-      , ("managed",   toJSON <$>      emojiManaged)
-      , ("animated",  toJSON <$>      emojiAnimated)
       ]]
 
 -- TODO: expand stickers and have full objects
