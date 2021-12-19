@@ -35,7 +35,6 @@ import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, Snowfl
 import Discord.Internal.Types.User (GuildMember, User)
 
 type InteractionId = Snowflake
-
 type InteractionToken = T.Text
 
 -- | This is the data that is recieved when an interaction occurs.
