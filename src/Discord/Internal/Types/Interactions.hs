@@ -32,7 +32,7 @@ import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Embed (Embed)
 import Discord.Internal.Types.Guild (GuildMember)
-import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, Snowflake)
+import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, Snowflake)
 import Discord.Internal.Types.User (User)
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
