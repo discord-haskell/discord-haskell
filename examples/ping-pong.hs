@@ -166,6 +166,7 @@ eventHandler event = case event of
                   def {referenceMessageId = Just $ messageId m}
             }
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
+    
   Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
     trace
       (show pa)

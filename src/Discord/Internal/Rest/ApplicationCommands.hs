@@ -9,8 +9,7 @@ module Discord.Internal.Rest.ApplicationCommands where
 
 import Data.Aeson (ToJSON (toJSON), Value)
 import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
-import Discord.Internal.Types.ApplicationCommands
-import Discord.Internal.Types.Prelude (ApplicationId, GuildId)
+import Discord.Internal.Types
 import Network.HTTP.Req as R
 
 instance Request (ApplicationCommandRequest a) where
@@ -30,6 +29,12 @@ data ApplicationCommandRequest a where
   EditGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
   DeleteGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest ()
   BulkOverWriteGuildApplicationCommand :: ApplicationId -> GuildId -> [CreateApplicationCommand] -> ApplicationCommandRequest ()
+  GetGuildApplicationCommandPermissions :: ApplicationId -> GuildId -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  GetApplicationCommandPermissions :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  EditApplicationCommandPermissions :: ApplicationId -> GuildId -> ApplicationCommandId -> [ApplicationCommandPermissions] -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  -- | The only parameters needed in the GuildApplicationCommandPermissions
+  -- objects are id and permissions.
+  BatchEditApplicationCommandPermissions :: ApplicationId -> GuildId -> [GuildApplicationCommandPermissions] -> ApplicationCommandRequest [GuildApplicationCommandPermissions]
 
 -- TODO: permissions checks
 -- GetGuildApplicationCommandPermissions :: ApplicationId -> GuildID -> ApplicationCommandR
@@ -51,6 +56,10 @@ applicationCommandMajorRoute a = case a of
   (EditGuildApplicationCommand aid _ _ _) -> "write_appcomm" <> show aid
   (DeleteGuildApplicationCommand aid _ _) -> "write_appcomm" <> show aid
   (BulkOverWriteGuildApplicationCommand aid _ _) -> "write_appcomm" <> show aid
+  (GetGuildApplicationCommandPermissions aid _) -> "appcom_perm " <> show aid
+  (GetApplicationCommandPermissions aid _ _) -> "appcom_perm " <> show aid
+  (EditApplicationCommandPermissions aid _ _ _) -> "appcom_perm " <> show aid
+  (BatchEditApplicationCommandPermissions aid _ _) -> "appcom_perm " <> show aid
 
 applicationCommandJsonRequest :: ApplicationCommandRequest a -> JsonRequest
 applicationCommandJsonRequest a = case a of
@@ -78,6 +87,14 @@ applicationCommandJsonRequest a = case a of
     Delete (applications aid /: "guilds" // gid /: "commands" // aci) mempty
   (BulkOverWriteGuildApplicationCommand aid gid cacs) ->
     Put (applications aid /: "guilds" // gid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
+  (GetGuildApplicationCommandPermissions aid gid) ->
+    Get (applications aid /: "guilds" // gid /: "commands" /: "permissions") mempty
+  (GetApplicationCommandPermissions aid gid cid) ->
+    Get (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") mempty
+  (EditApplicationCommandPermissions aid gid cid ps) ->
+    Put (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions aid cid gid ps)) mempty
+  (BatchEditApplicationCommandPermissions aid gid ps) ->
+    Put (applications aid /: "guilds" // gid /: "commands" /: "permissions") (R.ReqBodyJson $ toJSON ps) mempty
   where
     convert :: (ToJSON a) => a -> RestIO (ReqBodyJson Value)
     convert = (pure @RestIO) . R.ReqBodyJson . toJSON
