@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Data structures pertaining to Discord Channels
 module Discord.Internal.Types.Channel where
@@ -13,8 +14,10 @@ import Data.Time.Clock
 import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
-import Discord.Internal.Types.User (User(..))
+import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
+import Data.Data (Data)
+import Data.Maybe (fromJust)
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -194,11 +197,13 @@ instance ToJSON Overwrite where
 -- | Represents information about a message in a Discord channel.
 data Message = Message
   { messageId           :: MessageId       -- ^ The id of the message
-  , messageChannel      :: ChannelId       -- ^ Id of the channel the message
+  , messageChannelId    :: ChannelId       -- ^ Id of the channel the message
                                            --   was sent in
+  , messageGuildId      :: Maybe GuildId   -- ^ The guild the message went to
   , messageAuthor       :: User            -- ^ The 'User' the message was sent
                                            --   by
-  , messageText         :: Text            -- ^ Contents of the message
+  , messageMember       :: Maybe GuildMember     -- ^ A partial guild member object
+  , messageContent      :: Text            -- ^ Contents of the message
   , messageTimestamp    :: UTCTime         -- ^ When the message was sent
   , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
   , messageTts          :: Bool            -- ^ Whether this message was a TTS
@@ -215,7 +220,11 @@ data Message = Message
   , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
                                            --   was sent
   , messagePinned       :: Bool            -- ^ Whether this message is pinned
-  , messageGuild        :: Maybe GuildId   -- ^ The guild the message went to
+  , messageWebhookId    :: Maybe WebhookId      -- ^ The webhook id of the webhook that made the message
+  , messageType         :: MessageType -- ^ What type of message is this.
+  , messageActivity     :: Maybe MessageActivity -- ^ sent with Rich Presence-related chat embeds
+  -- , messageApplication :: Maybe ??? -- ^ a partial application object
+  , messageApplicationId :: Maybe ApplicationId -- ^ if the message is a response to an Interaction, this is the id of the interaction's application
   , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
   , referencedMessage   :: Maybe Message   -- ^ The full original message
   } deriving (Show, Read, Eq, Ord)
@@ -224,11 +233,13 @@ instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
     Message <$> o .:  "id"
             <*> o .:  "channel_id"
+            <*> o .:? "guild_id" .!= Nothing
             <*> (do isW <- o .:? "webhook_id"
                     a <- o .: "author"
                     case isW :: Maybe WebhookId of
                       Nothing -> pure a
                       Just _ -> pure $ a { userIsWebhook = True })
+            <*> o .:? "member"
             <*> o .:? "content" .!= ""
             <*> o .:? "timestamp" .!= epochTime
             <*> o .:? "edited_timestamp"
@@ -241,7 +252,11 @@ instance FromJSON Message where
             <*> o .:? "reactions" .!= []
             <*> o .:? "nonce"
             <*> o .:? "pinned" .!= False
-            <*> o .:? "guild_id" .!= Nothing
+            <*> o .:? "webhook_id"
+            <*> o .:  "type"
+            <*> o .:? "activity"
+            -- <*> o .:? "application"
+            <*> o .:? "application_id"
             <*> o .:? "message_reference" .!= Nothing
             <*> o .:? "referenced_message" .!= Nothing
 
@@ -249,9 +264,11 @@ instance FromJSON Message where
 instance ToJSON Message where
   toJSON Message {..} = object [(name, value) | (name, Just value) <-
       [ ("id",                  toJSON <$> pure messageId)
-      , ("channel_id",          toJSON <$> pure messageChannel)
+      , ("channel_id",          toJSON <$> pure messageChannelId)
+      , ("guild_id",            toJSON <$>      messageGuildId)
       , ("author",              toJSON <$> pure messageAuthor)
-      , ("content",             toJSON <$> pure messageText)
+      , ("member",              toJSON <$>      messageMember)
+      , ("content",             toJSON <$> pure messageContent)
       , ("timestamp",           toJSON <$> pure messageTimestamp)
       , ("edited_timestamp",    toJSON <$>      messageEdited)
       , ("tts",                 toJSON <$> pure messageTts)
@@ -263,7 +280,11 @@ instance ToJSON Message where
       , ("reactions",           toJSON <$> pure messageReactions)
       , ("nonce",               toJSON <$>      messageNonce)
       , ("pinned",              toJSON <$> pure messagePinned)
-      , ("guild_id",            toJSON <$>      messageGuild)
+      , ("webhook_id",          toJSON <$>      messageWebhookId)
+      , ("type",                toJSON <$> pure messageType)
+      , ("activity",            toJSON <$>      messageActivity)
+      -- , ("application",            toJSON <$>      messageApplication)
+      , ("application_id",            toJSON <$>      messageApplicationId)
       , ("message_reference",   toJSON <$>      messageReference)
       , ("referenced_message",  toJSON <$>      referencedMessage)
       ] ]
@@ -419,3 +440,125 @@ instance Default MessageReference where
                          , referenceGuildId   = Nothing
                          , failIfNotExists    = False
                          }
+
+
+data MessageType
+  = MessageTypeDefault 
+  | MessageTypeRecipientAdd 
+  | MessageTypeRecipientRemove 
+  | MessageTypeCall
+  | MessageTypeChannelNameChange
+  | MessageTypeChannelIconChange
+  | MessageTypeChannelPinnedMessage
+  | MessageTypeGuildMemberJoin
+  | MessageTypeUserPremiumGuildSubscription
+  | MessageTypeUserPremiumGuildSubscriptionTier1
+  | MessageTypeUserPremiumGuildSubscriptionTier2
+  | MessageTypeUserPremiumGuildSubscriptionTier3
+  | MessageTypeChannelFollowAdd
+  | MessageTypeGuildDiscoveryDisqualified
+  | MessageTypeGuildDiscoveryRequalified
+  | MessageTypeGuildDiscoveryGracePeriodInitialWarning
+  | MessageTypeGuildDiscoveryGracePeriodFinalWarning
+  | MessageTypeThreadCreated
+  | MessageTypeReply
+  | MessageTypeChatInputCommand
+  | MessageTypeThreadStarterMessage
+  | MessageTypeGuildInviteReminder
+  | MessageTypeContectMenuCommand
+  deriving (Show, Read, Data, Eq, Ord)
+
+instance Enum MessageType where
+  fromEnum MessageTypeDefault = 0
+  fromEnum MessageTypeRecipientAdd = 1
+  fromEnum MessageTypeRecipientRemove = 2
+  fromEnum MessageTypeCall = 3
+  fromEnum MessageTypeChannelNameChange = 4
+  fromEnum MessageTypeChannelIconChange = 5
+  fromEnum MessageTypeChannelPinnedMessage = 6
+  fromEnum MessageTypeGuildMemberJoin = 7
+  fromEnum MessageTypeUserPremiumGuildSubscription = 8
+  fromEnum MessageTypeUserPremiumGuildSubscriptionTier1 = 9
+  fromEnum MessageTypeUserPremiumGuildSubscriptionTier2 = 10
+  fromEnum MessageTypeUserPremiumGuildSubscriptionTier3 = 11
+  fromEnum MessageTypeChannelFollowAdd = 12
+  fromEnum MessageTypeGuildDiscoveryDisqualified = 14
+  fromEnum MessageTypeGuildDiscoveryRequalified = 15
+  fromEnum MessageTypeGuildDiscoveryGracePeriodInitialWarning = 16
+  fromEnum MessageTypeGuildDiscoveryGracePeriodFinalWarning = 17
+  fromEnum MessageTypeThreadCreated = 18
+  fromEnum MessageTypeReply = 19
+  fromEnum MessageTypeChatInputCommand = 20
+  fromEnum MessageTypeThreadStarterMessage = 21
+  fromEnum MessageTypeGuildInviteReminder = 22
+  fromEnum MessageTypeContectMenuCommand = 23
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable MessageTypeDefault
+
+instance ToJSON MessageType where
+  toJSON = toJSON . fromEnum
+
+instance FromJSON MessageType where
+  parseJSON = withScientific "MessageType" (return . toEnum . round)
+
+data MessageActivity = MessageActivity
+  { messageActivityType :: MessageActivityType
+  , messageActivityPartyId :: Maybe T.Text
+  }
+  deriving (Show, Read, Data, Eq, Ord)
+
+instance FromJSON MessageActivity where
+  parseJSON = withObject "MessageActivity" $ \o ->
+    MessageActivity <$> o .:   "type"
+                     <*> o .:? "party_id"
+
+instance ToJSON MessageActivity where
+  toJSON MessageActivity{..} = object [(name,value) | (name, Just value) <-
+              [ ("type",     toJSON <$> pure messageActivityType)
+              , ("party_id", toJSON <$>      messageActivityPartyId)
+              ] ]
+
+data MessageActivityType
+  = MessageActivityTypeJoin -- ^ Join a Rich Presence event
+  | MessageActivityTypeSpectate -- ^ Spectate a Rich Presence event
+  | MessageActivityTypeListen -- ^ Listen to a Rich Presence event
+  | MessageActivityTypeJoinRequest -- ^ Request to join a Rich Presence event
+  deriving (Show, Read, Data, Eq, Ord)
+
+instance Enum MessageActivityType where
+  fromEnum MessageActivityTypeJoin = 1
+  fromEnum MessageActivityTypeSpectate = 2
+  fromEnum MessageActivityTypeListen = 3
+  fromEnum MessageActivityTypeJoinRequest = 4
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable MessageActivityTypeJoin
+
+instance ToJSON MessageActivityType where
+  toJSON = toJSON . fromEnum
+
+instance FromJSON MessageActivityType where
+  parseJSON = withScientific "MessageActivityType" (return . toEnum . round)
+
+
+-- | Types of flags to attack to the message.
+data InteractionCallbackDataFlag = 
+    EPHERMERAL
+  | 
+  deriving (Show, Read, Eq)
+
+newtype InteractionCallbackDataFlags = InteractionCallbackDataFlags [InteractionCallbackDataFlag]
+  deriving (Show, Read, Eq)
+
+instance Enum InteractionCallbackDataFlag where
+  fromEnum EPHERMERAL = 1 `shift` 6
+  toEnum i
+    | i == 1 `shift` 6 = EPHERMERAL
+    | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
+
+instance ToJSON InteractionCallbackDataFlags where
+  toJSON (InteractionCallbackDataFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+
+
+
