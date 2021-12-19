@@ -23,7 +23,7 @@ import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 import Data.Default (Default (..))
 import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
-import Data.Text (unpack)
+import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Snowflake)
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
@@ -75,10 +75,10 @@ instance FromJSON ApplicationCommandType where
 -- https://discord.com/developers/docs/interactions/application-commands#create-global-application-command
 data CreateApplicationCommand = CreateApplicationCommand
   { -- | The application command name (1-32 chars).
-    createApplicationCommandName :: String,
+    createApplicationCommandName :: T.Text,
     -- | The application command description (1-100 chars). Has to be empty for
     -- non-slash commands.
-    createApplicationCommandDescription :: String,
+    createApplicationCommandDescription :: T.Text,
     -- | What options the application (max length 25). Has to be `Nothing` for
     -- non-slash  commands.
     createApplicationCommandOptions :: Maybe [ApplicationCommandOption],
@@ -113,8 +113,8 @@ instance ToJSON CreateApplicationCommand where
 --
 -- https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command
 data EditApplicationCommand = EditApplicationCommand
-  { editApplicationCommandName :: Maybe String,
-    editApplicationCommandDescription :: Maybe String,
+  { editApplicationCommandName :: Maybe T.Text,
+    editApplicationCommandDescription :: Maybe T.Text,
     editApplicationCommandOptions :: Maybe [ApplicationCommandOption],
     editApplicationCommandDefaultPermission :: Maybe Bool,
     editApplicationCommandType :: Maybe ApplicationCommandType
@@ -151,9 +151,9 @@ data ApplicationCommand = ApplicationCommand
     -- | The guild id of the command if not global.
     applicationCommandGuildId :: Maybe GuildId,
     -- | Must be 1-32 characters.
-    applicationCommandName :: String,
+    applicationCommandName :: T.Text,
     -- | Must be empty for USER and MESSAGE commands, otherwise 1-100 chars.
-    applicationCommandDescription :: String,
+    applicationCommandDescription :: T.Text,
     -- | CHAT_INPUT only, parameters to command
     applicationCommandOptions :: Maybe [ApplicationCommandOption],
     -- | whether the command is enabled by default when the app is added to a
@@ -187,9 +187,9 @@ data ApplicationCommandOption = ApplicationCommandOption
   { -- | What the type of this option is.
     applicationCommandOptionType :: ApplicationCommandOptionType,
     -- | The name of the option . 1-32 characters
-    applicationCommandOptionName :: String,
+    applicationCommandOptionName :: T.Text,
     -- | 1-100 characters
-    applicationCommandOptionDescription :: String,
+    applicationCommandOptionDescription :: T.Text,
     -- | Is the parameter required? default false
     applicationCommandOptionRequired :: Maybe Bool,
     -- | If specified, these are the only valid options to choose from. Type
@@ -299,7 +299,7 @@ instance FromJSON ApplicationCommandOptionType where
   parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
 
 -- | Utility data type to store strings or number types.
-data StringNumberValue = StringNumberValueString String | StringNumberValueNumber Scientific
+data StringNumberValue = StringNumberValueString T.Text | StringNumberValueNumber Scientific
   deriving (Show, Read, Eq)
 
 instance ToJSON StringNumberValue where
@@ -307,7 +307,7 @@ instance ToJSON StringNumberValue where
   toJSON (StringNumberValueNumber i) = toJSON i
 
 instance FromJSON StringNumberValue where
-  parseJSON (String t) = return $ StringNumberValueString $ unpack t
+  parseJSON (String t) = return $ StringNumberValueString t
   parseJSON v = StringNumberValueNumber <$> parseJSON v
 
 -- | The choices for a particular option.
