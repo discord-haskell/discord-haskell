@@ -56,6 +56,7 @@ type GuildId = Snowflake
 type MessageId = Snowflake
 type AttachmentId = Snowflake
 type EmojiId = Snowflake
+type StickerId = Snowflake
 type UserId = Snowflake
 type OverwriteId = Snowflake
 type RoleId = Snowflake
@@ -91,7 +92,7 @@ data InteractionType
   | InteractionTypeApplicationCommand
   | InteractionTypeMessageComponent
   | InteractionTypeApplicationCommandAutocomplete
-  deriving (Show, Read, Data, Eq)
+  deriving (Show, Read, Data, Eq, Ord)
 
 instance Enum InteractionType where
   fromEnum InteractionTypePing = 1

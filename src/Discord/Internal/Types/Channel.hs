@@ -19,6 +19,7 @@ import Discord.Internal.Types.Embed
 import Data.Data (Data)
 import Data.Maybe (fromJust)
 import Data.Bits
+import Discord.Internal.Types.Components (Component)
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -162,6 +163,73 @@ instance FromJSON Channel where
       _ -> ChannelUnknownType <$> o .:  "id"
                               <*> pure (T.pack (show o))
 
+instance ToJSON Channel where
+  toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
+              , ("nsfw", toJSON <$> pure channelNSFW)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("topic",   toJSON <$> pure channelTopic)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              , ("parent_id",  toJSON <$> pure channelParentId)
+              ] ]
+  toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("nsfw", toJSON <$> pure channelNSFW)
+              , ("topic",   toJSON <$> pure channelTopic)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("nsfw", toJSON <$> pure channelNSFW)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              ] ]
+  toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("recipients",   toJSON <$> pure channelRecipients)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelVoice{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("name",  toJSON <$> pure channelName)
+              , ("position",   toJSON <$> pure channelPosition)
+              , ("nsfw", toJSON <$> pure channelNSFW)
+              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
+              , ("bitrate",   toJSON <$> pure channelBitRate)
+              , ("user_limit",  toJSON <$> pure channelUserLimit)
+              ] ]
+  toJSON ChannelGroupDM{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("recipients",   toJSON <$> pure channelRecipients)
+              , ("last_message_id",  toJSON <$> channelLastMessage)
+              ] ]
+  toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("name", toJSON <$> pure channelName)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              ] ]
+  toJSON ChannelStage{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("guild_id", toJSON <$> pure channelGuild)
+              , ("channel_id", toJSON <$> pure channelStageId)
+              , ("topic", toJSON <$> pure channelStageTopic)
+              ] ]
+  toJSON ChannelUnknownType{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure channelId)
+              , ("json", toJSON <$> pure channelJSON)
+              ] ]
+
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
 channelIsInGuild c = case c of
@@ -197,38 +265,42 @@ instance ToJSON Overwrite where
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
-  { messageId           :: MessageId       -- ^ The id of the message
-  , messageChannelId    :: ChannelId       -- ^ Id of the channel the message
-                                           --   was sent in
-  , messageGuildId      :: Maybe GuildId   -- ^ The guild the message went to
-  , messageAuthor       :: User            -- ^ The 'User' the message was sent
-                                           --   by
-  , messageMember       :: Maybe GuildMember     -- ^ A partial guild member object
-  , messageContent      :: Text            -- ^ Contents of the message
-  , messageTimestamp    :: UTCTime         -- ^ When the message was sent
-  , messageEdited       :: Maybe UTCTime   -- ^ When/if the message was edited
-  , messageTts          :: Bool            -- ^ Whether this message was a TTS
-                                           --   message
-  , messageEveryone     :: Bool            -- ^ Whether this message mentions
-                                           --   everyone
-  , messageMentions     :: [User]          -- ^ 'User's specifically mentioned in
-                                           --   the message
-  , messageMentionRoles :: [RoleId]        -- ^ 'Role's specifically mentioned in
-                                           --   the message
-  , messageAttachments  :: [Attachment]    -- ^ Any attached files
-  , messageEmbeds       :: [Embed]         -- ^ Any embedded content
-  , messageReactions    :: [MessageReaction] -- ^ Any reactions to message
-  , messageNonce        :: Maybe Nonce     -- ^ Used for validating if a message
-                                           --   was sent
-  , messagePinned       :: Bool            -- ^ Whether this message is pinned
-  , messageWebhookId    :: Maybe WebhookId      -- ^ The webhook id of the webhook that made the message
-  , messageType         :: MessageType -- ^ What type of message is this.
-  , messageActivity     :: Maybe MessageActivity -- ^ sent with Rich Presence-related chat embeds
-  -- , messageApplication :: Maybe ??? -- ^ a partial application object
-  , messageApplicationId :: Maybe ApplicationId -- ^ if the message is a response to an Interaction, this is the id of the interaction's application
-  , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
-  , messageFlags        :: Maybe MessageFlags -- ^ Various message flags
-  , messageReferencedMessage   :: Maybe Message   -- ^ The full original message
+  { messageId                 :: MessageId                -- ^ The id of the message
+  , messageChannelId          :: ChannelId                -- ^ Id of the channel the message
+                                                          --   was sent in
+  , messageGuildId            :: Maybe GuildId            -- ^ The guild the message went to
+  , messageAuthor             :: User                     -- ^ The 'User' the message was sent
+                                                          --   by
+  , messageMember             :: Maybe GuildMember        -- ^ A partial guild member object
+  , messageContent            :: Text                     -- ^ Contents of the message
+  , messageTimestamp          :: UTCTime                  -- ^ When the message was sent
+  , messageEdited             :: Maybe UTCTime            -- ^ When/if the message was edited
+  , messageTts                :: Bool                     -- ^ Whether this message was a TTS
+                                                          --   message
+  , messageEveryone           :: Bool                     -- ^ Whether this message mentions
+                                                          --   everyone
+  , messageMentions           :: [User]                   -- ^ 'User's specifically mentioned in
+                                                          --   the message
+  , messageMentionRoles       :: [RoleId]                 -- ^ 'Role's specifically mentioned in
+                                                          --   the message
+  , messageAttachments        :: [Attachment]             -- ^ Any attached files
+  , messageEmbeds             :: [Embed]                  -- ^ Any embedded content
+  , messageReactions          :: [MessageReaction]        -- ^ Any reactions to message
+  , messageNonce              :: Maybe Nonce              -- ^ Used for validating if a message
+                                                          --   was sent
+  , messagePinned             :: Bool                     -- ^ Whether this message is pinned
+  , messageWebhookId          :: Maybe WebhookId          -- ^ The webhook id of the webhook that made the message
+  , messageType               :: MessageType              -- ^ What type of message is this.
+  , messageActivity           :: Maybe MessageActivity    -- ^ sent with Rich Presence-related chat embeds
+  -- , messageApplication  :: Maybe ??? -- ^ a partial application object
+  , messageApplicationId      :: Maybe ApplicationId      -- ^ if the message is a response to an Interaction, this is the id of the interaction's application
+  , messageReference          :: Maybe MessageReference   -- ^ Reference IDs of the original message
+  , messageFlags              :: Maybe MessageFlags       -- ^ Various message flags
+  , messageReferencedMessage  :: Maybe Message            -- ^ The full original message
+  , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
+  , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
+  , messageComponents         :: Maybe [Component]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
+  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers 
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
@@ -262,6 +334,10 @@ instance FromJSON Message where
             <*> o .:? "message_reference" .!= Nothing
             <*> o .:? "flags"
             <*> o .:? "referenced_message" .!= Nothing
+            <*> o .:? "interaction"
+            <*> o .:? "thread"
+            <*> o .:? "components"
+            <*> o .:? "sticker_items"
 
 
 instance ToJSON Message where
@@ -287,10 +363,14 @@ instance ToJSON Message where
       , ("type",                toJSON <$> pure messageType)
       , ("activity",            toJSON <$>      messageActivity)
       -- , ("application",            toJSON <$>      messageApplication)
-      , ("application_id",            toJSON <$>      messageApplicationId)
+      , ("application_id",      toJSON <$>      messageApplicationId)
       , ("message_reference",   toJSON <$>      messageReference)
       , ("flags",               toJSON <$>      messageFlags)
       , ("referenced_message",  toJSON <$>      messageReferencedMessage)
+      , ("interaction",         toJSON <$>      messageInteraction)
+      , ("thread",              toJSON <$>      messageThread)
+      , ("components",          toJSON <$>      messageComponents)
+      , ("sticker_items",       toJSON <$>      messageStickerItems)
       ] ]
 
 -- | Data constructor for a part of MessageDetailedOpts.
@@ -364,12 +444,53 @@ instance FromJSON Emoji where
 
 instance ToJSON Emoji where
   toJSON Emoji{..} = object [(name, value) | (name, Just value) <-
-      [ ("id", toJSON <$> emojiId)
-      , ("name",    toJSON <$> pure emojiName)
-      , ("roles", toJSON <$> emojiRoles)
-      , ("user", toJSON <$> emojiUser)
-      , ("managed", toJSON <$> emojiManaged)
+      [ ("id",        toJSON <$>      emojiId)
+      , ("name",      toJSON <$> pure emojiName)
+      , ("roles",     toJSON <$>      emojiRoles)
+      , ("user",      toJSON <$>      emojiUser)
+      , ("managed",   toJSON <$>      emojiManaged)
+      , ("animated",  toJSON <$>      emojiAnimated)
       ]]
+
+-- TODO: expand stickers and have full objects
+data StickerItem = StickerItem
+  { stickerItemId :: StickerId
+  , stickerItemName :: T.Text
+  , stickerItemFormatType :: StickerFormatType
+  }  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON StickerItem where
+  parseJSON = withObject "StickerItem" $ \o ->
+    StickerItem <$> o .: "id"
+                <*> o .: "name"
+                <*> o .: "format_type"
+
+instance ToJSON StickerItem where
+  toJSON StickerItem{..} = object [(name, value) | (name, Just value) <-
+      [ ("id",          toJSON <$> pure stickerItemId)
+      , ("name",        toJSON <$> pure stickerItemName)
+      , ("format_type", toJSON <$> pure stickerItemFormatType)
+      ]]
+
+data StickerFormatType =
+    StickerFormatTypePNG
+  | StickerFormatTypeAPNG
+  | StickerFormatTypeLOTTIE
+  deriving (Show, Read, Eq, Ord, Data)
+
+instance Enum StickerFormatType where
+  fromEnum StickerFormatTypePNG = 1
+  fromEnum StickerFormatTypeAPNG = 2
+  fromEnum StickerFormatTypeLOTTIE = 3
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable StickerFormatTypePNG
+
+instance ToJSON StickerFormatType where
+  toJSON = toJSON . fromEnum
+
+instance FromJSON StickerFormatType where
+  parseJSON = withScientific "StickerFormatType" (return . toEnum . round)
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -591,4 +712,19 @@ data MessageInteraction = MessageInteraction
   , messageInteractionUser :: User
   } deriving (Show, Eq, Ord, Read)
 
-instance ToJSON MessageInteraction
+instance ToJSON MessageInteraction where
+  toJSON MessageInteraction{..} = object [(name,value) | (name, Just value) <-
+              [ ("id",     toJSON <$> pure messageInteractionId)
+              , ("type",   toJSON <$> pure messageInteractionType)
+              , ("name",   toJSON <$> pure messageInteractionName)
+              , ("user",   toJSON <$> pure messageInteractionUser)
+              ] ]
+
+
+instance FromJSON MessageInteraction where
+  parseJSON = withObject "MessageInteraction" $ \o ->
+    MessageInteraction <$> o .: "id"
+                       <*> o .: "type"
+                       <*> o .: "name"
+                       <*> o .: "user"
+
