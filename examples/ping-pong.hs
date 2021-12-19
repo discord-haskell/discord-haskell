@@ -67,7 +67,8 @@ startHandler = do
               "Hello! I will reply to pings with pongs"
       )
 
--- | An example of the example slash command using the defaults
+-- | An example of the example slash command using the defaults. Is equivalent
+-- to `exampleSlashCommand`
 exampleSlashCommand' :: CreateApplicationCommand
 exampleSlashCommand' =
   def
@@ -120,7 +121,7 @@ exampleInteractionResponse d =
   InteractionResponse
     InteractionCallbackTypeChannelMessageWithSource
     ( Just
-        ( ICDM
+        ( InteractionCallbackDataMessages
             ( InteractionCallbackMessages
                 Nothing
                 ( Just
