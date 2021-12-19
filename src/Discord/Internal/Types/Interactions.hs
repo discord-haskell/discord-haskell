@@ -31,10 +31,8 @@ import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Embed (Embed)
-import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, Snowflake, makeTable, toMaybeJSON)
+import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, InteractionType, Snowflake, toMaybeJSON, makeTable)
 import Discord.Internal.Types.User (GuildMember, User)
-
-type InteractionId = Snowflake
 
 type InteractionToken = T.Text
 

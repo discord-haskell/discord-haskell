@@ -61,6 +61,7 @@ type WebhookId = Snowflake
 type ParentId = Snowflake
 type ApplicationId = Snowflake 
 type ApplicationCommandId = Snowflake
+type InteractionId = Snowflake
 type Shard = (Int, Int)
 
 -- | Gets a creation date from a snowflake.
