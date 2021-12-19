@@ -63,6 +63,7 @@ type ParentId = Snowflake
 type ApplicationId = Snowflake 
 type ApplicationCommandId = Snowflake
 type InteractionId = Snowflake
+type InteractionToken = T.Text
 type Shard = (Int, Int)
 
 -- | Gets a creation date from a snowflake.

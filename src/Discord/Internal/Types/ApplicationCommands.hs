@@ -14,6 +14,9 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandOptionType (..),
     ApplicationCommandOptionChoice (..),
     ApplicationCommandChannelType (..),
+    GuildApplicationCommandPermissions (..),
+    ApplicationCommandPermissions (..),
+    ApplicationCommandPermissionType (..),
     StringNumberValue (..),
   )
 where
@@ -374,3 +377,89 @@ instance ToJSON ApplicationCommandChannelType where
 
 instance FromJSON ApplicationCommandChannelType where
   parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
+
+data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions
+  { -- | The id of the command
+    guildApplicationCommandPermissionsId :: ApplicationCommandId,
+    -- | The id of the application
+    guildApplicationCommandPermissionsApplicationId :: ApplicationId,
+    -- | The id of the guild
+    guildApplicationCommandPermissionsGuildId :: GuildId,
+    -- | The permissions for the command in the guild
+    guildApplicationCommandPermissionsPermissions :: [ApplicationCommandPermissions]
+  }
+  deriving (Show, Eq, Ord, Read)
+
+instance FromJSON GuildApplicationCommandPermissions where
+  parseJSON =
+    withObject
+      "GuildApplicationCommandPermissions"
+      ( \v ->
+          GuildApplicationCommandPermissions
+            <$> v .: "id"
+            <*> v .: "application_id"
+            <*> v .: "guild_id"
+            <*> v .: "permissions"
+      )
+
+instance ToJSON GuildApplicationCommandPermissions where
+  toJSON GuildApplicationCommandPermissions {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("id", toMaybeJSON guildApplicationCommandPermissionsId),
+              ("application_id", toMaybeJSON guildApplicationCommandPermissionsApplicationId),
+              ("guild_id", toMaybeJSON guildApplicationCommandPermissionsGuildId),
+              ("permissions", toMaybeJSON guildApplicationCommandPermissionsPermissions)
+            ]
+      ]
+
+data ApplicationCommandPermissions = ApplicationCommandPermissions
+  { -- | The id of the role or user
+    applicationCommandPermissionsId :: Snowflake,
+    -- | Choose either role or user
+    applicationCommandPermissionsType :: ApplicationCommandPermissionType,
+    -- | Whether to allow or not
+    applicationCommandPermissionsPermission :: Bool
+  }
+  deriving (Show, Eq, Ord, Read)
+
+instance FromJSON ApplicationCommandPermissions where
+  parseJSON =
+    withObject
+      "ApplicationCommandPermissions"
+      ( \v ->
+          ApplicationCommandPermissions
+            <$> v .: "id"
+            <*> v .: "type"
+            <*> v .: "permission"
+      )
+
+instance ToJSON ApplicationCommandPermissions where
+  toJSON ApplicationCommandPermissions {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("id", toMaybeJSON applicationCommandPermissionsId),
+              ("type", toMaybeJSON applicationCommandPermissionsType),
+              ("permission", toMaybeJSON applicationCommandPermissionsPermission)
+            ]
+      ]
+
+data ApplicationCommandPermissionType
+  = ApplicationCommandPermissionTypeRole
+  | ApplicationCommandPermissionTypeUser
+  deriving (Show, Eq, Ord, Read, Data)
+
+instance Enum ApplicationCommandPermissionType where
+  fromEnum ApplicationCommandPermissionTypeRole = 1
+  fromEnum ApplicationCommandPermissionTypeUser = 2
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable ApplicationCommandPermissionTypeRole
+
+instance ToJSON ApplicationCommandPermissionType where
+  toJSON = toJSON . fromEnum
+
+instance FromJSON ApplicationCommandPermissionType where
+  parseJSON = withScientific "ApplicationCommandPermissionType" (return . toEnum . round)

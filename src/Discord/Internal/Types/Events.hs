@@ -18,6 +18,7 @@ import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild     ( Role, GuildInfo, GuildUnavailable, Guild )
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
+import Discord.Internal.Types.Components (Emoji)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.

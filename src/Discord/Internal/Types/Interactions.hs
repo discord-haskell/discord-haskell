@@ -6,9 +6,8 @@
 
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
-    InteractionId,
     InteractionToken,
-    InteractionType (..),
+    InteractionType,
     InteractionData (..),
     ResolvedData (..),
     ApplicationCommandInteractionDataOption (..),
@@ -30,11 +29,10 @@ import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
+import Discord.Internal.Types.Components (ComponentType, SelectOption)
 import Discord.Internal.Types.Embed (Embed)
-import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, InteractionType, Snowflake, toMaybeJSON, makeTable)
+import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, InteractionType, Snowflake, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (GuildMember, User)
-
-type InteractionToken = T.Text
 
 -- | This is the data that is recieved when an interaction occurs.
 --
@@ -94,19 +92,25 @@ instance FromJSON Interaction where
 
 -- | This is received if the interaction was a component or application command.
 --
--- Components are currently not supported.
---
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data-structure
 data InteractionData = InteractionData
-  { interactionDataApplicationCommandId :: ApplicationCommandId,
+  { -- | Application command only, id of the invoked command
+    interactionDataApplicationCommandId :: ApplicationCommandId,
+    -- | Application command only, name of the invoked command
     interactionDataApplicationCommandName :: T.Text,
+    -- | Application command only, the type of the invoked command
     interactionDataApplicationCommandType :: ApplicationCommandType,
+    -- | Application command only, converted users, roles, channels
     interactionDataResolved :: Maybe ResolvedData,
+    -- | Application command only, params and values
     interactionDataOptions :: Maybe [ApplicationCommandInteractionDataOption],
-    -- , interactionDataCustomId :: Maybe String
-    -- , interactionDataComponentType :: Maybe Int -- ^ this is likely to change in future if and when it's needed
-
+    -- | Component only, the unique id
+    interactionDataCustomId :: Maybe T.Text,
+    -- | Component only, the type of the component
+    interactionDataComponentType :: Maybe ComponentType,
+    -- | Component only, the slected options if is the select type
     -- | this is the id of the user or message being targetteed by a user command or a message command
+    interactionDataValues :: Maybe [SelectOption],
     interactionDataTargetId :: Maybe Snowflake
   }
   deriving (Show, Read, Eq)
@@ -139,9 +143,9 @@ instance FromJSON InteractionData where
             <*> v .: "type"
             <*> v .:? "resolved"
             <*> v .:? "options"
-            -- <*> v .:? "custom_id"
-            -- <*> v .:? "component_type"
-            -- <*> v .:? "values"
+            <*> v .:? "custom_id"
+            <*> v .:? "component_type"
+            <*> v .:? "values"
             <*> v .:? "target_id"
       )
 
