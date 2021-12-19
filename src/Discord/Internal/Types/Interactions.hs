@@ -280,12 +280,14 @@ instance ToJSON InteractionCallbackType where
   toJSON = toJSON . fromEnum
 
 -- | Convenience wrapper for two separate types of callback.
-data InteractionCallbackData = ICDM InteractionCallbackMessages | ICDA InteractionCallbackAutocomplete
+data InteractionCallbackData
+  = InteractionCallbackDataMessages InteractionCallbackMessages
+  | InteractionCallbackDataAutocomplete InteractionCallbackAutocomplete
   deriving (Show, Read, Eq)
 
 instance ToJSON InteractionCallbackData where
-  toJSON (ICDM icdm) = toJSON icdm
-  toJSON (ICDA icda) = toJSON icda
+  toJSON (InteractionCallbackDataMessages icdm) = toJSON icdm
+  toJSON (InteractionCallbackDataAutocomplete icda) = toJSON icda
 
 type InteractionCallbackAutocomplete = [ApplicationCommandOptionChoice]
 
