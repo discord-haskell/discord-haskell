@@ -41,8 +41,6 @@ toMaybeJSON = return . toJSON
 makeTable :: (Data t, Enum t) => t -> [(Int, t)]
 makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataTypeConstrs $ dataTypeOf t)
 
-type InteractionId = Snowflake
-
 type InteractionToken = Text
 
 -- | This is the data that is recieved when an interaction occurs.
