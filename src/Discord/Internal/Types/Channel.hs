@@ -18,6 +18,7 @@ import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
 import Data.Data (Data)
 import Data.Maybe (fromJust)
+import Data.Bits
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -226,7 +227,8 @@ data Message = Message
   -- , messageApplication :: Maybe ??? -- ^ a partial application object
   , messageApplicationId :: Maybe ApplicationId -- ^ if the message is a response to an Interaction, this is the id of the interaction's application
   , messageReference    :: Maybe MessageReference -- ^ Reference IDs of the original message
-  , referencedMessage   :: Maybe Message   -- ^ The full original message
+  , messageFlags        :: Maybe MessageFlags -- ^ Various message flags
+  , messageReferencedMessage   :: Maybe Message   -- ^ The full original message
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
@@ -258,6 +260,7 @@ instance FromJSON Message where
             -- <*> o .:? "application"
             <*> o .:? "application_id"
             <*> o .:? "message_reference" .!= Nothing
+            <*> o .:? "flags"
             <*> o .:? "referenced_message" .!= Nothing
 
 
@@ -286,7 +289,8 @@ instance ToJSON Message where
       -- , ("application",            toJSON <$>      messageApplication)
       , ("application_id",            toJSON <$>      messageApplicationId)
       , ("message_reference",   toJSON <$>      messageReference)
-      , ("referenced_message",  toJSON <$>      referencedMessage)
+      , ("flags",               toJSON <$>      messageFlags)
+      , ("referenced_message",  toJSON <$>      messageReferencedMessage)
       ] ]
 
 -- | Data constructor for a part of MessageDetailedOpts.
@@ -541,24 +545,50 @@ instance ToJSON MessageActivityType where
 instance FromJSON MessageActivityType where
   parseJSON = withScientific "MessageActivityType" (return . toEnum . round)
 
+-- | Types of flags to attach to the message.
+data MessageFlag = 
+    MessageFlagCrossposted
+  | MessageFlagIsCrosspost
+  | MessageFlagSupressEmbeds
+  | MessageFlagSourceMessageDeleted
+  | MessageFlagUrgent
+  | MessageFlagHasThread
+  | MessageFlagEphemeral
+  | MessageFlagLoading
+  deriving (Show, Read, Eq, Data, Ord)
 
--- | Types of flags to attack to the message.
-data InteractionCallbackDataFlag = 
-    EPHERMERAL
-  | 
-  deriving (Show, Read, Eq)
+newtype MessageFlags = MessageFlags [MessageFlag]
+  deriving (Show, Read, Eq, Ord)
 
-newtype InteractionCallbackDataFlags = InteractionCallbackDataFlags [InteractionCallbackDataFlag]
-  deriving (Show, Read, Eq)
+instance Enum MessageFlag where
+  fromEnum MessageFlagCrossposted = 1 `shift` 0
+  fromEnum MessageFlagIsCrosspost = 1 `shift` 1
+  fromEnum MessageFlagSupressEmbeds = 1 `shift` 2
+  fromEnum MessageFlagSourceMessageDeleted = 1 `shift` 3
+  fromEnum MessageFlagUrgent = 1 `shift` 4
+  fromEnum MessageFlagHasThread = 1 `shift` 5
+  fromEnum MessageFlagEphemeral = 1 `shift` 6
+  fromEnum MessageFlagLoading = 1 `shift` 7
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable MessageFlagCrossposted
 
-instance Enum InteractionCallbackDataFlag where
-  fromEnum EPHERMERAL = 1 `shift` 6
-  toEnum i
-    | i == 1 `shift` 6 = EPHERMERAL
-    | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
+instance ToJSON MessageFlags where
+  toJSON (MessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
 
-instance ToJSON InteractionCallbackDataFlags where
-  toJSON (InteractionCallbackDataFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+-- TODO: maybe make this a type class or something - the ability to handle flags automatically would be Very Good.
 
+instance FromJSON MessageFlags where
+  parseJSON = withScientific "MessageFlags" (\s -> let i = round s in if i /= (i .&. range) then fail "could not get message flags" else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') table))
+    where 
+      table = makeTable MessageFlagCrossposted
+      range = sum $ fst <$> table
 
+data MessageInteraction = MessageInteraction
+  { messageInteractionId :: InteractionId
+  , messageInteractionType :: InteractionType
+  , messageInteractionName :: T.Text
+  , messageInteractionUser :: User
+  } deriving (Show, Eq, Ord, Read)
 
+instance ToJSON MessageInteraction

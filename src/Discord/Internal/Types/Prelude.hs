@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -17,6 +18,7 @@ import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
 import Text.Read (readMaybe)
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
+import Data.Maybe (fromJust)
 
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
@@ -80,3 +82,27 @@ makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataT
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
+
+-- | What type of interaction has a user requested? Each requires its own type
+-- of response.
+data InteractionType
+  = InteractionTypePing
+  | InteractionTypeApplicationCommand
+  | InteractionTypeMessageComponent
+  | InteractionTypeApplicationCommandAutocomplete
+  deriving (Show, Read, Data, Eq)
+
+instance Enum InteractionType where
+  fromEnum InteractionTypePing = 1
+  fromEnum InteractionTypeApplicationCommand = 2
+  fromEnum InteractionTypeMessageComponent = 3
+  fromEnum InteractionTypeApplicationCommandAutocomplete = 4
+  toEnum a = fromJust $ lookup a table
+    where
+      table = makeTable InteractionTypePing
+
+instance ToJSON InteractionType where
+  toJSON = toJSON . fromEnum
+
+instance FromJSON InteractionType where
+  parseJSON = withScientific "InteractionType" (return . toEnum . round)

@@ -94,30 +94,6 @@ instance FromJSON Interaction where
             <*> v .:? "message"
       )
 
--- | What type of interaction has a user requested? Each requires its own type
--- of response.
-data InteractionType
-  = InteractionTypePing
-  | InteractionTypeApplicationCommand
-  | InteractionTypeMessageComponent
-  | InteractionTypeApplicationCommandAutocomplete
-  deriving (Show, Read, Data, Eq)
-
-instance Enum InteractionType where
-  fromEnum InteractionTypePing = 1
-  fromEnum InteractionTypeApplicationCommand = 2
-  fromEnum InteractionTypeMessageComponent = 3
-  fromEnum InteractionTypeApplicationCommandAutocomplete = 4
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable InteractionTypePing
-
-instance ToJSON InteractionType where
-  toJSON = toJSON . fromEnum
-
-instance FromJSON InteractionType where
-  parseJSON = withScientific "InteractionType" (return . toEnum . round)
-
 -- | This is received if the interaction was a component or application command.
 --
 -- Components are currently not supported.
