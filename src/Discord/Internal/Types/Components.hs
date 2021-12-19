@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -10,8 +12,72 @@ import Data.Aeson
 import Data.Data (Data)
 import Data.Maybe (fromJust)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (EmojiId, RoleId, makeTable, toMaybeJSON)
+import Data.Tuple (swap)
+import Discord.Internal.Types.Prelude (EmojiId, Internals (..), RoleId, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (User)
+
+-- | Component type for a button, split into URL button and not URL button.
+--
+-- Don't directly send button components - they need to be within an action row.
+data ComponentButton
+  = ComponentButton
+      { componentButtonCustomId :: T.Text,
+        componentButtonDisabled :: Bool,
+        componentButtonStyle :: ButtonStyle,
+        componentButtonLabel :: T.Text,
+        componentButtonEmoji :: Maybe Emoji
+      }
+  | ComponentButtonUrl
+      { componentButtonUrl :: T.Text,
+        componentButtonDisabled :: Bool,
+        componentButtonLabel :: T.Text,
+        componentButtonEmoji :: Maybe Emoji
+      }
+  deriving (Show, Eq)
+
+data ButtonStyle = ButtonStylePrimary | ButtonStyleSecondary | ButtonStyleSuccess | ButtonStyleDanger
+  deriving (Show, Eq)
+
+buttonStyles :: [(ButtonStyle, InternalButtonStyle)]
+buttonStyles =
+  [ (ButtonStylePrimary, InternalButtonStylePrimary),
+    (ButtonStyleSecondary, InternalButtonStyleSecondary),
+    (ButtonStyleSuccess, InternalButtonStyleSuccess),
+    (ButtonStyleDanger, InternalButtonStyleDanger)
+  ]
+
+instance Internals ButtonStyle InternalButtonStyle where
+  toInternal a = fromJust (lookup a buttonStyles)
+  fromInternal b = lookup b (swap <$> buttonStyles)
+
+-- | Component type for a select menus.
+--
+-- Don't directly send select menus - they need to be within an action row.
+data ComponentSelectMenu = ComponentSelectMenu
+  { componentSelectMenuCustomId :: T.Text,
+    componentSelectMenuDisabled :: Bool,
+    componentSelectMenuOptions :: [SelectOption],
+    componentSelectMenuPlaceholder :: Maybe T.Text,
+    componentSelectMenuMinValues :: Maybe Integer,
+    componentSelectMenuMaxValues :: Maybe Integer
+  }
+
+data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionSelectMenu ComponentSelectMenu
+
+instance Internals ComponentActionRow Component where
+  toInternal (ComponentActionRowButton as) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just (toInternal' <$> as))
+    where
+      toInternal' ComponentButtonUrl {..} = Component ComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just componentButtonUrl) Nothing Nothing Nothing Nothing Nothing
+      toInternal' ComponentButton {..} = Component ComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
+  toInternal (ComponentActionSelectMenu ComponentSelectMenu {..}) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [Component ComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
+
+  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = (Just (Component {componentType = ComponentTypeSelectMenu, ..} : _))} = ComponentActionSelectMenu <$> ((ComponentSelectMenu <$> componentCustomId <*> componentDisabled <*> componentOptions) >>= \f -> return $ f componentPlaceholder componentMinValues componentMaxValues)
+  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
+    where
+      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = ComponentButtonUrl <$> componentUrl <*> componentDisabled <*> componentLabel >>= \f -> return $ f componentEmoji
+      fromInternal' Component {componentType = ComponentTypeButton, ..} = ComponentButton <$> componentCustomId <*> componentDisabled <*> (componentStyle >>= fromInternal) <*> componentLabel >>= \f -> return $ f componentEmoji
+      fromInternal' _ = Nothing
+  fromInternal _ = Nothing
 
 data Component = Component
   { componentType :: ComponentType,
@@ -20,7 +86,7 @@ data Component = Component
     -- | Buttons and Select Menus only
     componentDisabled :: Maybe Bool,
     -- | Button only
-    componentStyle :: Maybe ButtonStyle,
+    componentStyle :: Maybe InternalButtonStyle,
     -- | Button only
     componentLabel :: Maybe T.Text,
     -- | Button only
@@ -99,34 +165,34 @@ instance ToJSON ComponentType where
 instance FromJSON ComponentType where
   parseJSON = withScientific "StickerFormatType" (return . toEnum . round)
 
-data ButtonStyle
+data InternalButtonStyle
   = -- | Blurple button
-    ButtonStylePrimary
+    InternalButtonStylePrimary
   | -- | Grey button
-    ButtonStyleSecondary
+    InternalButtonStyleSecondary
   | -- | Green button
-    ButtonStyleSuccess
+    InternalButtonStyleSuccess
   | -- | Red button
-    ButtonStyleDanger
+    InternalButtonStyleDanger
   | -- | Grey button, navigates to URL
-    ButtonStyleLink
+    InternalButtonStyleLink
   deriving (Show, Read, Eq, Ord, Data)
 
-instance Enum ButtonStyle where
-  fromEnum ButtonStylePrimary = 1
-  fromEnum ButtonStyleSecondary = 2
-  fromEnum ButtonStyleSuccess = 3
-  fromEnum ButtonStyleDanger = 4
-  fromEnum ButtonStyleLink = 5
+instance Enum InternalButtonStyle where
+  fromEnum InternalButtonStylePrimary = 1
+  fromEnum InternalButtonStyleSecondary = 2
+  fromEnum InternalButtonStyleSuccess = 3
+  fromEnum InternalButtonStyleDanger = 4
+  fromEnum InternalButtonStyleLink = 5
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable ButtonStylePrimary
+      table = makeTable InternalButtonStylePrimary
 
-instance ToJSON ButtonStyle where
+instance ToJSON InternalButtonStyle where
   toJSON = toJSON . fromEnum
 
-instance FromJSON ButtonStyle where
-  parseJSON = withScientific "ButtonStyle" (return . toEnum . round)
+instance FromJSON InternalButtonStyle where
+  parseJSON = withScientific "InternalButtonStyle" (return . toEnum . round)
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji

@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude where
@@ -106,3 +107,7 @@ instance ToJSON InteractionType where
 
 instance FromJSON InteractionType where
   parseJSON = withScientific "InteractionType" (return . toEnum . round)
+
+class Internals a b where
+  toInternal :: a -> b
+  fromInternal :: b -> Maybe a
