@@ -109,9 +109,10 @@ data InteractionData = InteractionData
     interactionDataCustomId :: Maybe T.Text,
     -- | Component only, the type of the component
     interactionDataComponentType :: Maybe ComponentType,
-    -- | Component only, the slected options if is the select type
-    -- | this is the id of the user or message being targetteed by a user command or a message command
+    -- | Component only, the selected options if component is the select type
     interactionDataValues :: Maybe [SelectOption],
+    -- | This is the id of the user or message being targetted by a user command
+    -- or a message command
     interactionDataTargetId :: Maybe Snowflake
   }
   deriving (Show, Read, Eq)
@@ -126,9 +127,9 @@ instance ToJSON InteractionData where
               ("type", toMaybeJSON interactionDataApplicationCommandType),
               ("resolved", toJSON <$> interactionDataResolved),
               ("options", toJSON <$> interactionDataOptions),
-              -- missing info relevant for components
-              --   , ("custom_id", toJSON <$> interactionDataCustomId)
-              --   , ("component_type", toJSON <$> interactionDataComponentType)
+              ("custom_id", toJSON <$> interactionDataCustomId),
+              ("component_type", toJSON <$> interactionDataComponentType),
+              ("values", toJSON <$> interactionDataValues),
               ("target_id", toJSON <$> interactionDataTargetId)
             ]
       ]
