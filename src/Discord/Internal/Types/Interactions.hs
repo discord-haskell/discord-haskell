@@ -351,16 +351,16 @@ instance ToJSON InteractionCallbackMessages where
 --
 -- Currently the only flag is EPHERMERAL, which means only the user can see the
 -- message.
-data InteractionCallbackDataFlag = EPHERMERAL
+data InteractionCallbackDataFlag = InteractionCallbackDataFlagEphermeral
   deriving (Show, Read, Eq)
 
 newtype InteractionCallbackDataFlags = InteractionCallbackDataFlags [InteractionCallbackDataFlag]
   deriving (Show, Read, Eq)
 
 instance Enum InteractionCallbackDataFlag where
-  fromEnum EPHERMERAL = 1 `shift` 6
+  fromEnum InteractionCallbackDataFlagEphermeral = 1 `shift` 6
   toEnum i
-    | i == 1 `shift` 6 = EPHERMERAL
+    | i == 1 `shift` 6 = InteractionCallbackDataFlagEphermeral
     | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
 
 instance ToJSON InteractionCallbackDataFlags where
