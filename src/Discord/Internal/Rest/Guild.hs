@@ -131,12 +131,12 @@ data GuildRequest a where
   DeleteGuildIntegration   :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
   SyncGuildIntegration     :: GuildId -> IntegrationId -> GuildRequest ()
-  -- | Returns the 'GuildEmbed' object. Requires the 'MANAGE_GUILD' permission.
-  GetGuildEmbed            :: GuildId -> GuildRequest GuildEmbed
-  -- | Modify a 'GuildEmbed' object for the guild. All attributes may be passed in with
+  -- | Returns the 'GuildWidget' object. Requires the 'MANAGE_GUILD' permission.
+  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget 
+  -- | Modify a 'GuildWidget' object for the guild. All attributes may be passed in with
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
-  --   'GuildEmbed' object.
-  ModifyGuildEmbed         :: GuildId -> GuildEmbed -> GuildRequest GuildEmbed
+  --   'GuildWidget' object.
+  ModifyGuildWidget         :: GuildId -> GuildWidget -> GuildRequest GuildWidget
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
@@ -167,13 +167,13 @@ data CreateGuildBanOpts = CreateGuildBanOpts
 
 instance ToJSON CreateGuildBanOpts where
   toJSON CreateGuildBanOpts{..} =  object [(name, val) | (name, Just val) <-
-                       [("delete-message-days",
+                       [("delete_message_days",
                              toJSON <$> createGuildBanOptsDeleteLastNMessages ),
                         ("reason", toJSON <$> createGuildBanOptsReason )]]
 
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   { modifyGuildRoleOptsName            :: Maybe T.Text
-  , modifyGuildRoleOptsPermissions     :: Maybe Integer
+  , modifyGuildRoleOptsPermissions     :: Maybe T.Text
   , modifyGuildRoleOptsColor           :: Maybe ColorInteger
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
@@ -324,8 +324,8 @@ guildMajorRoute c = case c of
   (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
   (DeleteGuildIntegration g _) ->   "guild_intgr " <> show g
   (SyncGuildIntegration g _) ->      "guild_sync " <> show g
-  (GetGuildEmbed g) ->              "guild_embed " <> show g
-  (ModifyGuildEmbed g _) ->         "guild_embed " <> show g
+  (GetGuildWidget g) ->              "guild_widget " <> show g
+  (ModifyGuildWidget g _) ->         "guild_widget " <> show g
   (GetGuildVanityURL g) ->                "guild " <> show g
 
 
@@ -436,10 +436,10 @@ guildJsonRequest c = case c of
   (SyncGuildIntegration guild integ) ->
       Post (guilds // guild /: "integrations" // integ) (pure R.NoReqBody) mempty
 
-  (GetGuildEmbed guild) ->
+  (GetGuildWidget guild) ->
       Get (guilds // guild /: "integrations") mempty
 
-  (ModifyGuildEmbed guild patch) ->
+  (ModifyGuildWidget guild patch) ->
       Patch (guilds // guild /: "embed") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildVanityURL guild) ->

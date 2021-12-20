@@ -135,8 +135,8 @@ instance ToJSON Component where
               ("url", toJSON <$> componentUrl),
               ("options", toJSON <$> componentOptions),
               ("placeholder", toJSON <$> componentPlaceholder),
-              ("min_values", toJSON <$> componentComponents),
-              ("max_values", toJSON <$> componentComponents),
+              ("min_values", toJSON <$> componentMinValues),
+              ("max_values", toJSON <$> componentMaxValues),
               ("components", toJSON <$> componentComponents)
             ]
       ]

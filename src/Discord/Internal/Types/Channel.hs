@@ -243,9 +243,9 @@ channelIsInGuild c = case c of
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
   { overwriteId    :: OverwriteId -- ^ 'Role' or 'User' id
-  , overwriteType  :: T.Text    -- ^ Either "role" or "member
-  , overwriteAllow :: Integer   -- ^ Allowed permission bit set
-  , overwriteDeny  :: Integer   -- ^ Denied permission bit set
+  , overwriteType  :: Integer    -- ^ Either role (0) or member (1)
+  , overwriteAllow :: T.Text   -- ^ Allowed permission bit set
+  , overwriteDeny  :: T.Text   -- ^ Denied permission bit set
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Overwrite where

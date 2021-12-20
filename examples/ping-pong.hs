@@ -17,6 +17,9 @@ import UnliftIO.Concurrent
 main :: IO ()
 main = pingpongExample
 
+testserverid :: Snowflake
+testserverid = -1
+
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
@@ -58,17 +61,20 @@ startHandler = do
           }
   sendCommand (UpdateStatus opts)
 
-  forM_ partialGuilds $ \pg -> do
-    Right guild <- restCall $ R.GetGuild (partialGuildId pg)
-    Right chans <- restCall $ R.GetGuildChannels (guildId guild)
-    forM_
-      (take 1 (filter isTextChannel chans))
-      ( \channel ->
-          restCall $
-            R.CreateMessage
-              (channelId channel)
-              "Hello! I will reply to pings with pongs"
-      )
+  chans' <- restCall $ R.GetGuildChannels testserverid
+  either
+    (const (return ()))
+    ( \chans ->
+        forM_
+          (take 1 (filter isTextChannel chans))
+          ( \channel ->
+              restCall $
+                R.CreateMessage
+                  (channelId channel)
+                  "Hello! I will reply to pings with pongs"
+          )
+    )
+    chans'
 
 -- | An example of the example slash command using the defaults. Is equivalent
 -- to `exampleSlashCommand`
@@ -170,23 +176,55 @@ eventHandler event = case event of
                   def {referenceMessageId = Just $ messageId m}
             }
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
-    
+    let opts' :: R.MessageDetailedOpts
+        opts' =
+          def
+            { R.messageDetailedContent = "An example of a message with buttons!",
+              R.messageDetailedComponents =
+                Just
+                  [ toInternal
+                      ( ComponentActionRowButton
+                          [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" Nothing,
+                            ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
+                            ComponentButtonUrl "https://www.github.com" False "Button 3" Nothing
+                          ]
+                      ),
+                    toInternal
+                      ( ComponentActionSelectMenu
+                          ( ComponentSelectMenu
+                              "action select menu"
+                              False
+                              [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
+                                SelectOption "Second option" "opt2" Nothing Nothing (Just True),
+                                SelectOption "third option" "opt3" Nothing Nothing Nothing,
+                                SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
+                                SelectOption "fifth option" "opt5" Nothing Nothing Nothing
+                              ]
+                              (Just "this is a place holder")
+                              (Just 2)
+                              (Just 5)
+                          )
+                      )
+                  ]
+            }
+    void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts')
+  -- void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
   Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
     trace
       (show pa)
       ( restCall
-          ( R.CreateGuildApplicationCommand i serverid exampleSlashCommand
+          ( R.CreateGuildApplicationCommand i testserverid exampleSlashCommand
           )
       )
       >>= \rs -> trace (show rs) (return ())
-  InteractionCreate i@Interaction {..} -> trace (show i) $ do
+  InteractionCreate i@Interaction {..} -> do
     let cid = fromJust interactionChannelId
     if interactionType /= InteractionTypeApplicationCommand
-      then void $ restCall (R.CreateMessage cid "I don't know how to handle an interaction like that!")
+      then void $ restCall (R.CreateMessage cid (T.pack $ "I don't know how to handle an interaction like that! " <> (show interactionType)))
       else do
         let d = fromJust interactionData
         case interactionDataApplicationCommandType d of
-          ApplicationCommandTypeChatInput ->
+          (Just ApplicationCommandTypeChatInput) ->
             void $
               restCall
                 ( R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse (interactionDataOptions d))
@@ -195,8 +233,6 @@ eventHandler event = case event of
   -- Note that the above is not the required way of receiving and replying to interactions - this is marked as a failure
 
   _ -> return ()
-  where
-    serverid = -1
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True

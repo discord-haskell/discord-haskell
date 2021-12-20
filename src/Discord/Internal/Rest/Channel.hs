@@ -106,6 +106,8 @@ data MessageDetailedOpts = MessageDetailedOpts
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
+  , messageDetailedComponents               :: Maybe [Component]
+  , messageDetailedStickerIds               :: Maybe [StickerId]
   } deriving (Show, Read, Eq, Ord)
 
 instance Default MessageDetailedOpts where
@@ -115,6 +117,8 @@ instance Default MessageDetailedOpts where
                             , messageDetailedFile            = Nothing
                             , messageDetailedAllowedMentions = Nothing
                             , messageDetailedReference       = Nothing
+                            , messageDetailedComponents      = Nothing
+                            , messageDetailedStickerIds      = Nothing
                             }
 
 -- | Data constructor for GetReaction requests
@@ -299,12 +303,14 @@ channelJsonRequest c = case c of
             Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
               $ RequestBodyBS $ snd f]
 
-          payloadData = object $ [ "content" .= messageDetailedContent msgOpts
+          payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
                                  , "tts"     .= messageDetailedTTS msgOpts ] ++
                                  [ name .= value | (name, Just value) <-
                                     [ ("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
                                     , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
                                     , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
+                                    , ("components", toJSON <$> messageDetailedComponents msgOpts)
+                                    , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
                                     ] ]
           payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
 
