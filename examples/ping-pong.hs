@@ -8,6 +8,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
 import Discord
+import Discord.Internal.Rest.Prelude (baseUrl)
 import qualified Discord.Requests as R
 import Discord.Types
 import UnliftIO (liftIO)
@@ -181,9 +182,9 @@ eventHandler event = case event of
                 Just
                   [ toInternal
                       ( ComponentActionRowButton
-                          [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" Nothing,
+                          [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (Emoji (Just 0) "🔥" Nothing Nothing Nothing (Just False))),
                             ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
-                            ComponentButtonUrl "https://www.github.com" False "Button 3" Nothing
+                            ComponentButtonUrl baseUrl False "Button 3" Nothing
                           ]
                       ),
                     toInternal
@@ -192,7 +193,7 @@ eventHandler event = case event of
                               "action select menu"
                               False
                               [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
-                                SelectOption "Second option" "opt2" Nothing Nothing (Just True),
+                                SelectOption "Second option" "opt2" Nothing (Just (Emoji (Just 0) "😭" Nothing Nothing Nothing (Just False))) (Just True),
                                 SelectOption "third option" "opt3" Nothing Nothing Nothing,
                                 SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
                                 SelectOption "fifth option" "opt5" Nothing Nothing Nothing
