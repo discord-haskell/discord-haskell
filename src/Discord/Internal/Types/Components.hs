@@ -15,6 +15,7 @@ import qualified Data.Text as T
 import Data.Tuple (swap)
 import Discord.Internal.Types.Prelude (EmojiId, Internals (..), RoleId, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (User)
+import qualified Network.HTTP.Req as R
 
 -- | Component type for a button, split into URL button and not URL button.
 --
@@ -28,7 +29,7 @@ data ComponentButton
         componentButtonEmoji :: Maybe Emoji
       }
   | ComponentButtonUrl
-      { componentButtonUrl :: T.Text,
+      { componentButtonUrl :: R.Url 'R.Https,
         componentButtonDisabled :: Bool,
         componentButtonLabel :: T.Text,
         componentButtonEmoji :: Maybe Emoji
@@ -64,17 +65,23 @@ data ComponentSelectMenu = ComponentSelectMenu
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionSelectMenu ComponentSelectMenu
 
+validPartialEmoji :: Emoji -> Maybe Emoji
+validPartialEmoji Emoji {..} = do
+  eid <- emojiId
+  ean <- emojiAnimated
+  return $ Emoji (Just eid) emojiName Nothing Nothing Nothing (Just ean)
+
 instance Internals ComponentActionRow Component where
   toInternal (ComponentActionRowButton as) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just (toInternal' <$> as))
     where
-      toInternal' ComponentButtonUrl {..} = Component ComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just componentButtonUrl) Nothing Nothing Nothing Nothing Nothing
+      toInternal' ComponentButtonUrl {..} = Component ComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just (R.renderUrl componentButtonUrl)) Nothing Nothing Nothing Nothing Nothing
       toInternal' ComponentButton {..} = Component ComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
   toInternal (ComponentActionSelectMenu ComponentSelectMenu {..}) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [Component ComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
 
   fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = (Just (Component {componentType = ComponentTypeSelectMenu, ..} : _))} = ComponentActionSelectMenu <$> ((ComponentSelectMenu <$> componentCustomId <*> componentDisabled <*> componentOptions) >>= \f -> return $ f componentPlaceholder componentMinValues componentMaxValues)
   fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
     where
-      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = ComponentButtonUrl <$> componentUrl <*> componentDisabled <*> componentLabel >>= \f -> return $ f componentEmoji
+      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = ComponentButtonUrl <$> (R.https <$> componentUrl) <*> componentDisabled <*> componentLabel >>= \f -> return $ f componentEmoji
       fromInternal' Component {componentType = ComponentTypeButton, ..} = ComponentButton <$> componentCustomId <*> componentDisabled <*> (componentStyle >>= fromInternal) <*> componentLabel >>= \f -> return $ f componentEmoji
       fromInternal' _ = Nothing
   fromInternal _ = Nothing
@@ -268,3 +275,9 @@ instance ToJSON SelectOption where
               ("default", toJSON <$> selectOptionDefault)
             ]
       ]
+
+filterOutIncorrectEmoji :: Component -> Component
+filterOutIncorrectEmoji c@Component{componentType=ComponentTypeActionRow,componentComponents=(Just cs)} = c { componentComponents = Just (filterOutIncorrectEmoji <$> cs) }
+filterOutIncorrectEmoji c@Component{componentType=ComponentTypeSelectMenu,componentOptions=(Just os)} = c { componentOptions = Just ((\so -> so {selectOptionEmoji = selectOptionEmoji so >>= validPartialEmoji}) <$> os) }
+filterOutIncorrectEmoji c@Component{componentType=ComponentTypeButton,componentEmoji=(Just e)} = c { componentEmoji = validPartialEmoji e }
+filterOutIncorrectEmoji c = c

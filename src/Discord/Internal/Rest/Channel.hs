@@ -306,10 +306,10 @@ channelJsonRequest c = case c of
           payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
                                  , "tts"     .= messageDetailedTTS msgOpts ] ++
                                  [ name .= value | (name, Just value) <-
-                                    [ ("embed", toJSON <$> createEmbed <$> messageDetailedEmbed msgOpts)
+                                    [ ("embed", toJSON . createEmbed <$> messageDetailedEmbed msgOpts)
                                     , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
                                     , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                    , ("components", toJSON <$> messageDetailedComponents msgOpts)
+                                    , ("components", toJSON . (filterOutIncorrectEmoji <$>) <$> messageDetailedComponents msgOpts)
                                     , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
                                     ] ]
           payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
