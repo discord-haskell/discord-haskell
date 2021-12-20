@@ -120,7 +120,7 @@ data GuildMember = GuildMember
       , memberDeaf     :: Bool -- ^ Whether the user is deafened
       , memberMute     :: Bool -- ^ Whether the user is muted
       , memberPending     :: Bool -- ^ Whether the user has passed the guild's membership screening
-      , memberPermissions     :: Bool -- ^ total permissions of the member
+      , memberPermissions     :: Maybe T.Text -- ^ total permissions of the member
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildMember where
@@ -130,11 +130,11 @@ instance FromJSON GuildMember where
                 <*> o .:? "avatar"
                 <*> o .:  "roles"
                 <*> o .:  "joined_at"
-                <*> o .:? "premium_sincec"
+                <*> o .:? "premium_since"
                 <*> o .:  "deaf"
                 <*> o .:  "mute"
                 <*> o .:? "pending" .!= False
-                <*> o .:  "permissions"
+                <*> o .:? "permissions"
 
 instance ToJSON GuildMember where
   toJSON GuildMember {..} = object [(name, value) | (name, Just value) <-
@@ -143,6 +143,9 @@ instance ToJSON GuildMember where
       , ("avatar",    toJSON <$>      memberAvatar)
       , ("roles",     toJSON <$> pure memberRoles)
       , ("joined_at", toJSON <$> pure memberJoinedAt)
+      , ("premium_since",    toJSON <$>      memberPremiumSince)
       , ("deaf",      toJSON <$> pure memberDeaf)
       , ("mute",      toJSON <$> pure memberMute)
+      , ("pending",      toJSON <$> pure memberPending)
+      , ("permissions",    toJSON <$>      memberPermissions)
       ] ]

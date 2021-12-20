@@ -19,7 +19,7 @@ import Discord.Internal.Types
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
 baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v6"
+  where apiVersion = "v8"
 
 -- | Discord requires HTTP headers for authentication.
 authHeader :: Auth -> R.Option 'R.Https

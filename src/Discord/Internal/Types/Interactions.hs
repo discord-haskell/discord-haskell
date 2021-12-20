@@ -29,7 +29,7 @@ import Data.Maybe (fromJust)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
-import Discord.Internal.Types.Components (ComponentType, SelectOption)
+import Discord.Internal.Types.Components (ComponentType)
 import Discord.Internal.Types.Embed (Embed)
 
 import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, InteractionType, Snowflake, makeTable, toMaybeJSON)
@@ -96,11 +96,11 @@ instance FromJSON Interaction where
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data-structure
 data InteractionData = InteractionData
   { -- | Application command only, id of the invoked command
-    interactionDataApplicationCommandId :: ApplicationCommandId,
+    interactionDataApplicationCommandId :: Maybe ApplicationCommandId,
     -- | Application command only, name of the invoked command
-    interactionDataApplicationCommandName :: T.Text,
+    interactionDataApplicationCommandName :: Maybe T.Text,
     -- | Application command only, the type of the invoked command
-    interactionDataApplicationCommandType :: ApplicationCommandType,
+    interactionDataApplicationCommandType :: Maybe ApplicationCommandType,
     -- | Application command only, converted users, roles, channels
     interactionDataResolved :: Maybe ResolvedData,
     -- | Application command only, params and values
@@ -110,7 +110,7 @@ data InteractionData = InteractionData
     -- | Component only, the type of the component
     interactionDataComponentType :: Maybe ComponentType,
     -- | Component only, the selected options if component is the select type
-    interactionDataValues :: Maybe [SelectOption],
+    interactionDataValues :: Maybe [T.Text],
     -- | This is the id of the user or message being targetted by a user command
     -- or a message command
     interactionDataTargetId :: Maybe Snowflake
@@ -122,9 +122,9 @@ instance ToJSON InteractionData where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("id", toMaybeJSON interactionDataApplicationCommandId),
-              ("name", toMaybeJSON interactionDataApplicationCommandName),
-              ("type", toMaybeJSON interactionDataApplicationCommandType),
+            [ ("id", toJSON <$> interactionDataApplicationCommandId),
+              ("name", toJSON <$> interactionDataApplicationCommandName),
+              ("type", toJSON <$> interactionDataApplicationCommandType),
               ("resolved", toJSON <$> interactionDataResolved),
               ("options", toJSON <$> interactionDataOptions),
               ("custom_id", toJSON <$> interactionDataCustomId),
@@ -140,9 +140,9 @@ instance FromJSON InteractionData where
       "InteractionData"
       ( \v ->
           InteractionData
-            <$> v .: "id"
-            <*> v .: "name"
-            <*> v .: "type"
+            <$> v .:? "id"
+            <*> v .:? "name"
+            <*> v .:? "type"
             <*> v .:? "resolved"
             <*> v .:? "options"
             <*> v .:? "custom_id"
