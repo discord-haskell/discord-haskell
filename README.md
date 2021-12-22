@@ -34,7 +34,8 @@ import qualified Discord.Requests as R
 pingpongExample :: IO ()
 pingpongExample = do userFacingError <- runDiscord $ def
                                             { discordToken = "Bot ZZZZZZZZZZZZZZZZZZZ"
-                                            , discordOnEvent = eventHandler }
+                                            , discordOnEvent = eventHandler
+                                            , discordOnLog = \s -> TIO.putStrLn s }
                      TIO.putStrLn userFacingError
                      -- only reached on an unrecoverable error
                      -- put normal 'cleanup' code in discordOnEnd
