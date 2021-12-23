@@ -63,7 +63,7 @@ data ComponentSelectMenu = ComponentSelectMenu
     componentSelectMenuMaxValues :: Maybe Integer
   }
 
-data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionSelectMenu ComponentSelectMenu
+data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
 
 validPartialEmoji :: Emoji -> Maybe Emoji
 validPartialEmoji Emoji {..} = do
@@ -76,9 +76,13 @@ instance Internals ComponentActionRow Component where
     where
       toInternal' ComponentButtonUrl {..} = Component ComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just (R.renderUrl componentButtonUrl)) Nothing Nothing Nothing Nothing Nothing
       toInternal' ComponentButton {..} = Component ComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
-  toInternal (ComponentActionSelectMenu ComponentSelectMenu {..}) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [Component ComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
+  toInternal (ComponentActionRowSelectMenu ComponentSelectMenu {..}) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [Component ComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
 
-  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = (Just (Component {componentType = ComponentTypeSelectMenu, ..} : _))} = ComponentActionSelectMenu <$> ((ComponentSelectMenu <$> componentCustomId <*> componentDisabled <*> componentOptions) >>= \f -> return $ f componentPlaceholder componentMinValues componentMaxValues)
+  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = (Just (Component {componentType = ComponentTypeSelectMenu, ..} : _))} = do
+    cid <- componentCustomId
+    cd <- componentDisabled
+    co <- componentOptions
+    return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid cd co componentPlaceholder componentMinValues componentMaxValues
   fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
     where
       fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = ComponentButtonUrl <$> (R.https <$> componentUrl) <*> componentDisabled <*> componentLabel >>= \f -> return $ f componentEmoji

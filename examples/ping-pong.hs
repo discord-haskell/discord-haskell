@@ -3,7 +3,6 @@
 {-# LANGUAGE RecordWildCards #-}
 
 import Control.Monad (forM_, void, when)
-import Data.Char (toLower)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Debug.Trace
@@ -75,126 +74,119 @@ startHandler = do
     chans'
 
 -- | Example user command
-exampleUserCommand :: CreateApplicationCommand
-exampleUserCommand =
-  def
-    { createApplicationCommandName = "usercomm",
-      createApplicationCommandType = Just ApplicationCommandTypeUser
-    }
+exampleUserCommand :: Maybe CreateApplicationCommand
+exampleUserCommand = createApplicationCommandUser "usercomm"
 
 -- | Example slash command that has subcommands and multiple types of fields.
-newExampleSlashCommand :: CreateApplicationCommand
+newExampleSlashCommand :: Maybe CreateApplicationCommand
 newExampleSlashCommand =
-  def
-    { createApplicationCommandName = "subtest",
-      createApplicationCommandDescription = "testing out subcommands",
-      createApplicationCommandOptions =
-        Just
-          [ def
-              { applicationCommandOptionType = ApplicationCommandOptionTypeSubcommandGroup,
-                applicationCommandOptionDescription = "the sub command group",
-                applicationCommandOptionName = "frstsubcmdgrp",
-                applicationCommandOptionOptions =
-                  Just
-                    [ def
-                        { applicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
-                          applicationCommandOptionDescription = "the first sub command",
-                          applicationCommandOptionName = "frstsubcmd",
-                          applicationCommandOptionOptions =
-                            Just
-                              [ def
-                                  { applicationCommandOptionName = "onestringinput",
-                                    applicationCommandOptionDescription = "two options",
-                                    applicationCommandOptionRequired = Just True,
-                                    applicationCommandOptionChoices =
-                                      Just
-                                        [ ApplicationCommandOptionChoice "yellow" (StringNumberValueString "yellow"),
-                                          ApplicationCommandOptionChoice "blue" (StringNumberValueString "blue")
-                                        ]
-                                  },
-                                def
-                                  { applicationCommandOptionName = "oneintinput",
-                                    applicationCommandOptionDescription = "choices galore",
-                                    applicationCommandOptionType = ApplicationCommandOptionTypeInteger
-                                  }
-                              ]
-                        }
-                    ]
-              },
-            def
-              { applicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
-                applicationCommandOptionDescription = "the first sub command",
-                applicationCommandOptionName = "frstsubcmd",
-                applicationCommandOptionOptions =
-                  Just
-                    [ def
-                        { applicationCommandOptionName = "onestringinput",
-                          applicationCommandOptionDescription = "two options",
-                          applicationCommandOptionRequired = Just True,
-                          applicationCommandOptionChoices =
-                            Just
-                              [ ApplicationCommandOptionChoice "yellow" (StringNumberValueString "yellow"),
-                                ApplicationCommandOptionChoice "blue" (StringNumberValueString "blue")
-                              ]
-                        },
-                      def
-                        { applicationCommandOptionName = "oneintinput",
-                          applicationCommandOptionDescription = "choices galore",
-                          applicationCommandOptionType = ApplicationCommandOptionTypeInteger
-                        }
-                    ]
-              },
-            def
-              { applicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
-                applicationCommandOptionDescription = "the second sub command",
-                applicationCommandOptionName = "sndsubcmd",
-                applicationCommandOptionOptions =
-                  Just
-                    [ def
-                        { applicationCommandOptionName = "trueorfalse",
-                          applicationCommandOptionDescription = "true or false",
-                          applicationCommandOptionRequired = Just True,
-                          applicationCommandOptionType = ApplicationCommandOptionTypeBoolean
-                        },
-                      def
-                        { applicationCommandOptionName = "oneuserinput",
-                          applicationCommandOptionDescription = "who is chosen",
-                          applicationCommandOptionRequired = Just True,
-                          applicationCommandOptionType = ApplicationCommandOptionTypeUser
-                        }
-                    ]
-              },
-            def
-              { applicationCommandOptionName = "randominput",
-                applicationCommandOptionDescription = "I shall not",
-                applicationCommandOptionChoices =
-                  Just
-                    [ ApplicationCommandOptionChoice "firstopt" (StringNumberValueString "yay"),
-                      ApplicationCommandOptionChoice "secondopt" (StringNumberValueString "nay")
-                    ]
-              }
-          ]
-    }
+  createApplicationCommandChatInput
+    "subtest"
+    "testing out subcommands" >>= \d -> Just $ d
+      { createApplicationCommandOptions =
+          Just
+            [ def
+                { internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommandGroup,
+                  internalApplicationCommandOptionDescription = "the sub command group",
+                  internalApplicationCommandOptionName = "frstsubcmdgrp",
+                  internalApplicationCommandOptionOptions =
+                    Just
+                      [ def
+                          { internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
+                            internalApplicationCommandOptionDescription = "the first sub command",
+                            internalApplicationCommandOptionName = "frstsubcmd",
+                            internalApplicationCommandOptionOptions =
+                              Just
+                                [ def
+                                    { internalApplicationCommandOptionName = "onestringinput",
+                                      internalApplicationCommandOptionDescription = "two options",
+                                      internalApplicationCommandOptionRequired = Just True,
+                                      internalApplicationCommandOptionChoices =
+                                        Just
+                                          [ Choice "yellow" (StringNumberValueString "yellow"),
+                                            Choice "blue" (StringNumberValueString "blue")
+                                          ]
+                                    },
+                                  def
+                                    { internalApplicationCommandOptionName = "oneintinput",
+                                      internalApplicationCommandOptionDescription = "choices galore",
+                                      internalApplicationCommandOptionType = ApplicationCommandOptionTypeInteger
+                                    }
+                                ]
+                          }
+                      ]
+                },
+              def
+                { internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
+                  internalApplicationCommandOptionDescription = "the first sub command",
+                  internalApplicationCommandOptionName = "frstsubcmd",
+                  internalApplicationCommandOptionOptions =
+                    Just
+                      [ def
+                          { internalApplicationCommandOptionName = "onestringinput",
+                            internalApplicationCommandOptionDescription = "two options",
+                            internalApplicationCommandOptionRequired = Just True,
+                            internalApplicationCommandOptionChoices =
+                              Just
+                                [ Choice "yellow" (StringNumberValueString "yellow"),
+                                  Choice "blue" (StringNumberValueString "blue")
+                                ]
+                          },
+                        def
+                          { internalApplicationCommandOptionName = "oneintinput",
+                            internalApplicationCommandOptionDescription = "choices galore",
+                            internalApplicationCommandOptionType = ApplicationCommandOptionTypeInteger
+                          }
+                      ]
+                },
+              def
+                { internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,
+                  internalApplicationCommandOptionDescription = "the second sub command",
+                  internalApplicationCommandOptionName = "sndsubcmd",
+                  internalApplicationCommandOptionOptions =
+                    Just
+                      [ def
+                          { internalApplicationCommandOptionName = "trueorfalse",
+                            internalApplicationCommandOptionDescription = "true or false",
+                            internalApplicationCommandOptionRequired = Just True,
+                            internalApplicationCommandOptionType = ApplicationCommandOptionTypeBoolean
+                          },
+                        def
+                          { internalApplicationCommandOptionName = "oneuserinput",
+                            internalApplicationCommandOptionDescription = "who is chosen",
+                            internalApplicationCommandOptionRequired = Just True,
+                            internalApplicationCommandOptionType = ApplicationCommandOptionTypeUser
+                          }
+                      ]
+                },
+              def
+                { internalApplicationCommandOptionName = "randominput",
+                  internalApplicationCommandOptionDescription = "I shall not",
+                  internalApplicationCommandOptionChoices =
+                    Just
+                      [ Choice "firstopt" (StringNumberValueString "yay"),
+                        Choice "secondopt" (StringNumberValueString "nay")
+                      ]
+                }
+            ]
+      }
 
 -- | An example of the example slash command using the defaults. Is equivalent
 -- to `exampleSlashCommand`
-exampleSlashCommand' :: CreateApplicationCommand
+exampleSlashCommand' :: Maybe CreateApplicationCommand
 exampleSlashCommand' =
-  def
-    { createApplicationCommandName = "test",
-      createApplicationCommandDescription = "here is a description",
-      createApplicationCommandOptions = Just [h]
+  (createApplicationCommandChatInput "test" "here is a description")  >>= \d -> Just $ d  { createApplicationCommandOptions = Just [h]
     }
   where
     h =
       def
-        { applicationCommandOptionName = "randominput",
-          applicationCommandOptionDescription = "I shall not",
-          applicationCommandOptionRequired = Just True,
-          applicationCommandOptionChoices =
+        { internalApplicationCommandOptionName = "randominput",
+          internalApplicationCommandOptionDescription = "I shall not",
+          internalApplicationCommandOptionRequired = Just True,
+          internalApplicationCommandOptionChoices =
             Just
-              [ ApplicationCommandOptionChoice "firstopt" (StringNumberValueString "yay"),
-                ApplicationCommandOptionChoice "secondopt" (StringNumberValueString "nay")
+              [ Choice "firstopt" (StringNumberValueString "yay"),
+                Choice "secondopt" (StringNumberValueString "nay")
               ]
         }
 
@@ -205,14 +197,14 @@ exampleSlashCommand =
     "test"
     "here is a description"
     ( Just
-        [ ApplicationCommandOption
+        [ InternalApplicationCommandOption
             ApplicationCommandOptionTypeString
             "randominput"
             "I shall not"
             (Just True)
             ( Just
-                [ ApplicationCommandOptionChoice "firstopt" (StringNumberValueString "yay"),
-                  ApplicationCommandOptionChoice "secondopt" (StringNumberValueString "nay")
+                [ Choice "firstopt" (StringNumberValueString "yay"),
+                  Choice "secondopt" (StringNumberValueString "nay")
                 ]
             )
             Nothing
@@ -225,30 +217,12 @@ exampleSlashCommand =
     Nothing
     Nothing
 
-exampleInteractionResponse :: InteractionDataApplicationCommandChatInputOption -> InteractionResponse
-exampleInteractionResponse d@(InteractionDataApplicationCommandChatInputOptionValues [InteractionDataApplicationCommandChatInputOptionValue {interactionDataApplicationCommandChatInputOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
-  InteractionResponse
-    InteractionCallbackTypeChannelMessageWithSource
-    ( Just
-        ( InteractionCallbackDataMessages
-            ( interactionCallbackMessagesBasic
-                ( T.pack $
-                    "Here's the reply! You chose: "
-                      ++ show s
-                )
-            )
-        )
-    )
+exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
+exampleInteractionResponse d@(InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue {interactionDataApplicationCommandOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
+  interactionResponseBasic (T.pack $ "Here's the reply! You chose: " ++ show s)
 exampleInteractionResponse _ =
-  InteractionResponse
-    InteractionCallbackTypeChannelMessageWithSource
-    ( Just
-        ( InteractionCallbackDataMessages
-            ( interactionCallbackMessagesBasic
-                "Something unexpected happened - the value was not what I expected!"
-            )
-        )
-    )
+  interactionResponseBasic
+    "Something unexpected happened - the value was not what I expected!"
 
 -- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: Event -> DiscordHandler ()
@@ -293,7 +267,7 @@ eventHandler event = case event of
                           ]
                       ),
                     toInternal
-                      ( ComponentActionSelectMenu
+                      ( ComponentActionRowSelectMenu
                           ( ComponentSelectMenu
                               "action select menu"
                               False
@@ -311,45 +285,16 @@ eventHandler event = case event of
                   ]
             }
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts')
-  -- void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
   Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
+    mapM_ (maybe (return ()) (void . restCall . R.CreateGuildApplicationCommand i testserverid)) [Just exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandUser {interactionDataApplicationCommandName = nm, interactionDataApplicationCommandTargetId = uid, ..}, ..} ->
     void $
-      restCall (R.CreateGuildApplicationCommand i testserverid exampleSlashCommand) >> restCall (R.CreateGuildApplicationCommand i testserverid exampleUserCommand) >> restCall (R.CreateGuildApplicationCommand i testserverid newExampleSlashCommand)
-  -- InteractionCreate
-  --   i@InternalInteraction
-  --     { internalInteractionType = InteractionTypeApplicationCommand,
-  --       internalInteractionData = Just InternalInteractionData {internalInteractionDataApplicationCommandType = (Just ApplicationCommandTypeUser), internalInteractionDataApplicationCommandName = Just "usercomm"},
-  --       ..
-  --     } ->
-  --     void $
-  --       restCall (R.CreateInteractionResponse internalInteractionId internalInteractionToken (InteractionResponse InteractionCallbackTypeDeferredChannelMessageWithSource Nothing))
-  --         >> restCall
-  --           ( R.EditOriginalInteractionResponse
-  --               internalInteractionApplicationId
-  --               internalInteractionToken
-  --               (interactionCallbackMessagesBasic $ T.pack $ "You clicked on " <> show (internalInteractionData i >>= \d -> internalInteractionDataResolved d))
-  --           )
-  InteractionCreate InteractionApplicationCommand 
-  InteractionCreate InteractionApplicationCommand {interactionChannelId = Just cid, interactionDataApplicationCommand = Just InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "test", interactionDataApplicationCommandOptions = Just d, ..}, ..} ->
+      restCall
+        (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic $ "Command " <> nm <> T.pack (" selected user: " ++ show uid)))
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "test", interactionDataApplicationCommandOptions = Just d, ..}, ..} ->
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse d))
-  -- case interactionChannelId of
-  --   Nothing -> return ()
-  --   Just cid -> do
-  --       case interactionDataApplicationCommand of
-  --         Nothing -> return ()
-  --         Just d -> do
-  --           case internalInteractionDataApplicationCommandType d of
-  --             (Just ApplicationCommandTypeChatInput) -> case internalInteractionDataOptions d of
-  --               Nothing -> return ()
-  --               Just d' ->
-  --                 void $
-  --                   restCall
-  --                     (R.CreateInteractionResponse internalInteractionId internalInteractionToken (exampleInteractionResponse d'))
-  --             _ -> void $ restCall (R.CreateMessage cid "I got some other kind of application command!")
-  -- Note that the above is not the required way of receiving and replying to interactions - this is marked as a failure
-
   e -> trace ("uncaught:" ++ show e) $ return ()
 
 isTextChannel :: Channel -> Bool
