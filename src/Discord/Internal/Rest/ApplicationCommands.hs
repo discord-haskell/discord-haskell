@@ -17,16 +17,16 @@ instance Request (ApplicationCommandRequest a) where
   majorRoute = applicationCommandMajorRoute
 
 data ApplicationCommandRequest a where
-  GetGlobalApplicationCommands :: ApplicationId -> ApplicationCommandRequest [ApplicationCommand]
-  CreateGlobalApplicationCommand :: ApplicationId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
-  GetGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest ApplicationCommand
-  EditGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> EditApplicationCommand -> ApplicationCommandRequest ApplicationCommand
+  GetGlobalApplicationCommands :: ApplicationId -> ApplicationCommandRequest [InternalApplicationCommand]
+  CreateGlobalApplicationCommand :: ApplicationId -> CreateApplicationCommand -> ApplicationCommandRequest InternalApplicationCommand
+  GetGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest InternalApplicationCommand
+  EditGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> EditApplicationCommand -> ApplicationCommandRequest InternalApplicationCommand
   DeleteGlobalApplicationCommand :: ApplicationId -> ApplicationCommandId -> ApplicationCommandRequest ()
   BulkOverWriteGlobalApplicationCommand :: ApplicationId -> [CreateApplicationCommand] -> ApplicationCommandRequest ()
-  GetGuildApplicationCommands :: ApplicationId -> GuildId -> ApplicationCommandRequest [ApplicationCommand]
-  CreateGuildApplicationCommand :: ApplicationId -> GuildId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
-  GetGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest ApplicationCommand
-  EditGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> CreateApplicationCommand -> ApplicationCommandRequest ApplicationCommand
+  GetGuildApplicationCommands :: ApplicationId -> GuildId -> ApplicationCommandRequest [InternalApplicationCommand]
+  CreateGuildApplicationCommand :: ApplicationId -> GuildId -> CreateApplicationCommand -> ApplicationCommandRequest InternalApplicationCommand
+  GetGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest InternalApplicationCommand
+  EditGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> CreateApplicationCommand -> ApplicationCommandRequest InternalApplicationCommand
   DeleteGuildApplicationCommand :: ApplicationId -> GuildId -> ApplicationCommandId -> ApplicationCommandRequest ()
   BulkOverWriteGuildApplicationCommand :: ApplicationId -> GuildId -> [CreateApplicationCommand] -> ApplicationCommandRequest ()
   GetGuildApplicationCommandPermissions :: ApplicationId -> GuildId -> ApplicationCommandRequest GuildApplicationCommandPermissions

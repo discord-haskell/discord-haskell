@@ -10,10 +10,10 @@ module Discord.Internal.Types.Interactions
   ( Interaction (..),
     InteractionDataComponent (..),
     InteractionDataApplicationCommand (..),
-    InteractionDataApplicationCommandChatInputOption (..),
-    InteractionDataApplicationCommandChatInputOptionSubcommandOrGroup (..),
-    InteractionDataApplicationCommandChatInputOptionSubcommand (..),
-    InteractionDataApplicationCommandChatInputOptionValue (..),
+    InteractionDataApplicationCommandOptions (..),
+    InteractionDataApplicationCommandOptionSubcommandOrGroup (..),
+    InteractionDataApplicationCommandOptionSubcommand (..),
+    InteractionDataApplicationCommandOptionValue (..),
     ApplicationCommandInteractionDataValue (..),
     InternalInteraction (..),
     InteractionToken,
@@ -22,6 +22,7 @@ module Discord.Internal.Types.Interactions
     ResolvedData (..),
     InternalInteractionDataApplicationCommandOption (..),
     InteractionResponse (..),
+    interactionResponseBasic,
     InteractionCallbackType (..),
     InteractionCallbackData (..),
     InteractionCallbackAutocomplete,
@@ -41,15 +42,15 @@ import Data.Maybe (fromJust, fromMaybe)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
-  ( ApplicationCommandId,
-    ApplicationCommandOptionChoice,
+  ( 
+    InternalApplicationCommandOptionChoice,
     ApplicationCommandOptionType (..),
     ApplicationCommandType (..),
   )
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (Component, ComponentType (..))
 import Discord.Internal.Types.Embed (Embed)
-import Discord.Internal.Types.Prelude (ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, InteractionType (..), Internals (..), MessageId, Snowflake, UserId, makeTable, toMaybeJSON)
+import Discord.Internal.Types.Prelude (ApplicationId, ApplicationCommandId, ChannelId, GuildId, InteractionId, InteractionToken, InteractionType (..), Internals (..), MessageId, Snowflake, UserId, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (GuildMember, User)
 
 import Debug.Trace
@@ -124,74 +125,74 @@ data InteractionDataApplicationCommand
         -- | Application command only, name of the invoked command
         interactionDataApplicationCommandName :: T.Text,
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
-        interactionDataApplicationCommandOptions :: Maybe InteractionDataApplicationCommandChatInputOption
+        interactionDataApplicationCommandOptions :: Maybe InteractionDataApplicationCommandOptions
       }
   deriving (Show, Read, Eq)
 
-data InteractionDataApplicationCommandChatInputOption
-  = InteractionDataApplicationCommandChatInputOptionSubcommands [InteractionDataApplicationCommandChatInputOptionSubcommandOrGroup]
-  | InteractionDataApplicationCommandChatInputOptionValues [InteractionDataApplicationCommandChatInputOptionValue]
+data InteractionDataApplicationCommandOptions
+  = InteractionDataApplicationCommandOptionsSubcommands [InteractionDataApplicationCommandOptionSubcommandOrGroup]
+  | InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue]
   deriving (Show, Read, Eq)
 
-data InteractionDataApplicationCommandChatInputOptionSubcommandOrGroup
-  = InteractionDataApplicationCommandChatInputOptionSubcommandGroup
-      { interactionDataApplicationCommandChatInputOptionSubcommandGroupName :: T.Text,
-        interactionDataApplicationCommandChatInputOptionSubcommandGroupOptions :: [InteractionDataApplicationCommandChatInputOptionSubcommand],
-        interactionDataApplicationCommandChatInputOptionSubcommandGroupFocused :: Maybe Bool
+data InteractionDataApplicationCommandOptionSubcommandOrGroup
+  = InteractionDataApplicationCommandOptionSubcommandGroup
+      { interactionDataApplicationCommandOptionSubcommandGroupName :: T.Text,
+        interactionDataApplicationCommandOptionSubcommandGroupOptions :: [InteractionDataApplicationCommandOptionSubcommand],
+        interactionDataApplicationCommandOptionSubcommandGroupFocused :: Maybe Bool
       }
-  | InteractionDataApplicationCommandChatInputOptionSubcommandOrGroupSubcommand InteractionDataApplicationCommandChatInputOptionSubcommand
+  | InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand InteractionDataApplicationCommandOptionSubcommand
   deriving (Show, Read, Eq)
 
-data InteractionDataApplicationCommandChatInputOptionSubcommand = InteractionDataApplicationCommandChatInputOptionSubcommand
-  { interactionDataApplicationCommandChatInputOptionSubcommandName :: T.Text,
-    interactionDataApplicationCommandChatInputOptionSubcommandOptions :: [InteractionDataApplicationCommandChatInputOptionValue],
-    interactionDataApplicationCommandChatInputOptionSubcommandFocused :: Maybe Bool
+data InteractionDataApplicationCommandOptionSubcommand = InteractionDataApplicationCommandOptionSubcommand
+  { interactionDataApplicationCommandOptionSubcommandName :: T.Text,
+    interactionDataApplicationCommandOptionSubcommandOptions :: [InteractionDataApplicationCommandOptionValue],
+    interactionDataApplicationCommandOptionSubcommandFocused :: Maybe Bool
   }
   deriving (Show, Read, Eq)
 
-data InteractionDataApplicationCommandChatInputOptionValue = InteractionDataApplicationCommandChatInputOptionValue
-  { interactionDataApplicationCommandChatInputOptionValueName :: T.Text,
-    interactionDataApplicationCommandChatInputOptionValueValue :: ApplicationCommandInteractionDataValue,
-    interactionDataApplicationCommandChatInputOptionValueFocused :: Maybe Bool
+data InteractionDataApplicationCommandOptionValue = InteractionDataApplicationCommandOptionValue
+  { interactionDataApplicationCommandOptionValueName :: T.Text,
+    interactionDataApplicationCommandOptionValueValue :: ApplicationCommandInteractionDataValue,
+    interactionDataApplicationCommandOptionValueFocused :: Maybe Bool
   }
   deriving (Show, Read, Eq)
 
-instance Internals InteractionDataApplicationCommandChatInputOptionValue InternalInteractionDataApplicationCommandOption where
-  toInternal InteractionDataApplicationCommandChatInputOptionValue {..} = InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandChatInputOptionValueName (getTypeFromACIDV interactionDataApplicationCommandChatInputOptionValueValue) (Just interactionDataApplicationCommandChatInputOptionValueValue) Nothing interactionDataApplicationCommandChatInputOptionValueFocused
+instance Internals InteractionDataApplicationCommandOptionValue InternalInteractionDataApplicationCommandOption where
+  toInternal InteractionDataApplicationCommandOptionValue {..} = InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandOptionValueName (getTypeFromACIDV interactionDataApplicationCommandOptionValueValue) (Just interactionDataApplicationCommandOptionValueValue) Nothing interactionDataApplicationCommandOptionValueFocused
 
   fromInternal InternalInteractionDataApplicationCommandOption {..}
     | internalInteractionDataApplicationCommandOptionType `elem` [ApplicationCommandOptionTypeSubcommand, ApplicationCommandOptionTypeSubcommandGroup] = Nothing
     | otherwise = do
       v <- trace ("this" ++ show internalInteractionDataApplicationCommandOptionValue) internalInteractionDataApplicationCommandOptionValue
-      return $ InteractionDataApplicationCommandChatInputOptionValue internalInteractionDataApplicationCommandOptionName v internalInteractionDataApplicationCommandOptionFocused
+      return $ InteractionDataApplicationCommandOptionValue internalInteractionDataApplicationCommandOptionName v internalInteractionDataApplicationCommandOptionFocused
 
-instance Internals InteractionDataApplicationCommandChatInputOptionSubcommand InternalInteractionDataApplicationCommandOption where
-  toInternal InteractionDataApplicationCommandChatInputOptionSubcommand {..} =
-    InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandChatInputOptionSubcommandName ApplicationCommandOptionTypeSubcommand Nothing (Just $ toInternal <$> interactionDataApplicationCommandChatInputOptionSubcommandOptions) interactionDataApplicationCommandChatInputOptionSubcommandFocused
+instance Internals InteractionDataApplicationCommandOptionSubcommand InternalInteractionDataApplicationCommandOption where
+  toInternal InteractionDataApplicationCommandOptionSubcommand {..} =
+    InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandOptionSubcommandName ApplicationCommandOptionTypeSubcommand Nothing (Just $ toInternal <$> interactionDataApplicationCommandOptionSubcommandOptions) interactionDataApplicationCommandOptionSubcommandFocused
 
   fromInternal InternalInteractionDataApplicationCommandOption {internalInteractionDataApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand, ..} = do
     o <- internalInteractionDataApplicationCommandOptionOptions
     o' <- mapM fromInternal o
-    return $ InteractionDataApplicationCommandChatInputOptionSubcommand internalInteractionDataApplicationCommandOptionName o' internalInteractionDataApplicationCommandOptionFocused
+    return $ InteractionDataApplicationCommandOptionSubcommand internalInteractionDataApplicationCommandOptionName o' internalInteractionDataApplicationCommandOptionFocused
   fromInternal _ = Nothing
 
-instance Internals InteractionDataApplicationCommandChatInputOptionSubcommandOrGroup InternalInteractionDataApplicationCommandOption where
-  toInternal InteractionDataApplicationCommandChatInputOptionSubcommandGroup {..} =
-    InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandChatInputOptionSubcommandGroupName ApplicationCommandOptionTypeSubcommand Nothing (Just $ toInternal <$> interactionDataApplicationCommandChatInputOptionSubcommandGroupOptions) interactionDataApplicationCommandChatInputOptionSubcommandGroupFocused
-  toInternal (InteractionDataApplicationCommandChatInputOptionSubcommandOrGroupSubcommand s) = toInternal s
+instance Internals InteractionDataApplicationCommandOptionSubcommandOrGroup InternalInteractionDataApplicationCommandOption where
+  toInternal InteractionDataApplicationCommandOptionSubcommandGroup {..} =
+    InternalInteractionDataApplicationCommandOption interactionDataApplicationCommandOptionSubcommandGroupName ApplicationCommandOptionTypeSubcommand Nothing (Just $ toInternal <$> interactionDataApplicationCommandOptionSubcommandGroupOptions) interactionDataApplicationCommandOptionSubcommandGroupFocused
+  toInternal (InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand s) = toInternal s
 
   fromInternal InternalInteractionDataApplicationCommandOption {internalInteractionDataApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommandGroup, ..} = do
     o <- internalInteractionDataApplicationCommandOptionOptions
     o' <- mapM fromInternal o
-    return $ InteractionDataApplicationCommandChatInputOptionSubcommandGroup internalInteractionDataApplicationCommandOptionName o' internalInteractionDataApplicationCommandOptionFocused
-  fromInternal i@InternalInteractionDataApplicationCommandOption {internalInteractionDataApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand, ..} = InteractionDataApplicationCommandChatInputOptionSubcommandOrGroupSubcommand <$> fromInternal i
+    return $ InteractionDataApplicationCommandOptionSubcommandGroup internalInteractionDataApplicationCommandOptionName o' internalInteractionDataApplicationCommandOptionFocused
+  fromInternal i@InternalInteractionDataApplicationCommandOption {internalInteractionDataApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand, ..} = InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand <$> fromInternal i
   fromInternal _ = Nothing
 
-instance Internals InteractionDataApplicationCommandChatInputOption [InternalInteractionDataApplicationCommandOption] where
-  toInternal (InteractionDataApplicationCommandChatInputOptionSubcommands lst) = toInternal <$> lst
-  toInternal (InteractionDataApplicationCommandChatInputOptionValues lst) = toInternal <$> lst
+instance Internals InteractionDataApplicationCommandOptions [InternalInteractionDataApplicationCommandOption] where
+  toInternal (InteractionDataApplicationCommandOptionsSubcommands lst) = toInternal <$> lst
+  toInternal (InteractionDataApplicationCommandOptionsValues lst) = toInternal <$> lst
 
-  fromInternal is = (InteractionDataApplicationCommandChatInputOptionSubcommands <$> mapM fromInternal is) <|> (InteractionDataApplicationCommandChatInputOptionValues <$> mapM fromInternal is)
+  fromInternal is = (InteractionDataApplicationCommandOptionsSubcommands <$> mapM fromInternal is) <|> (InteractionDataApplicationCommandOptionsValues <$> mapM fromInternal is)
 
 instance Internals InteractionDataApplicationCommand InternalInteractionData where
   toInternal InteractionDataApplicationCommandUser {..} = InternalInteractionData (Just interactionDataApplicationCommandId) (Just interactionDataApplicationCommandName) (Just ApplicationCommandTypeUser) interactionDataApplicationCommandResolvedData Nothing Nothing Nothing Nothing Nothing
@@ -451,6 +452,9 @@ data InteractionResponse = InteractionResponse
   }
   deriving (Show, Read, Eq)
 
+interactionResponseBasic :: T.Text -> InteractionResponse
+interactionResponseBasic t = InteractionResponse InteractionCallbackTypeChannelMessageWithSource (Just . InteractionCallbackDataMessages $ interactionCallbackMessagesBasic t)
+
 instance ToJSON InteractionResponse where
   toJSON InteractionResponse {..} =
     object
@@ -502,7 +506,7 @@ instance ToJSON InteractionCallbackData where
   toJSON (InteractionCallbackDataMessages icdm) = toJSON icdm
   toJSON (InteractionCallbackDataAutocomplete icda) = toJSON icda
 
-type InteractionCallbackAutocomplete = [ApplicationCommandOptionChoice]
+type InteractionCallbackAutocomplete = [InternalApplicationCommandOptionChoice]
 
 -- | A cut down message structure.
 data InteractionCallbackMessages = InteractionCallbackMessages
