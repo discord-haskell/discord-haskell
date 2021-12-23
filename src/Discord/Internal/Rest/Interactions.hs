@@ -7,20 +7,20 @@
 
 module Discord.Internal.Rest.Interactions where
 
-import Data.Aeson (ToJSON (toJSON), Value)
+import Data.Aeson (ToJSON (toJSON), Value, encode)
 import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
-import Discord.Internal.Types (ApplicationId, InteractionId, InteractionResponse, InteractionToken, Message, MessageId)
+import Discord.Internal.Types (ApplicationId, InteractionId, InteractionResponse, InteractionToken, Message, MessageId, InteractionCallbackMessages)
 import Network.HTTP.Req as R
 
 data InteractionResponseRequest a where
   CreateInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
   GetOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest Message
-  EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest Message
+  EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionCallbackMessages -> InteractionResponseRequest Message
   DeleteOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest ()
-  CreateFollowupInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
-  GetFollowupInteractionResponse :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
-  EditFollowupInteractionResponse :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
-  DeleteFollowupInteractionResponse :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
+  CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionCallbackMessages  -> InteractionResponseRequest ()
+  GetFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
+  EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
+  DeleteFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
 
 instance Request (InteractionResponseRequest a) where
   jsonRequest = interactionResponseJsonRequest
@@ -32,10 +32,10 @@ interactionResponseMajorRoute a = case a of
   (GetOriginalInteractionResponse aid _) -> "intresp " <> show aid
   (EditOriginalInteractionResponse aid _ _) -> "intresp " <> show aid
   (DeleteOriginalInteractionResponse aid _) -> "intresp " <> show aid
-  (CreateFollowupInteractionResponse iid _ _) -> "intrespf " <> show iid
-  (GetFollowupInteractionResponse aid _ _) -> "intrespf " <> show aid
-  (EditFollowupInteractionResponse aid _ _ _) -> "intrespf " <> show aid
-  (DeleteFollowupInteractionResponse aid _ _) -> "intrespf " <> show aid
+  (CreateFollowupInteractionMessage iid _ _) -> "intrespf " <> show iid
+  (GetFollowupInteractionMessage aid _ _) -> "intrespf " <> show aid
+  (EditFollowupInteractionMessage aid _ _ _) -> "intrespf " <> show aid
+  (DeleteFollowupInteractionMessage aid _ _) -> "intrespf " <> show aid
 
 interaction :: ApplicationId -> InteractionToken -> R.Url 'R.Https
 interaction aid it = baseUrl /: "webhooks" // aid /: it /: "messages"
@@ -50,13 +50,13 @@ interactionResponseJsonRequest a = case a of
     Patch (interaction aid it /: "@original") (convert i) mempty
   (DeleteOriginalInteractionResponse aid it) ->
     Delete (interaction aid it /: "@original") mempty
-  (CreateFollowupInteractionResponse iid it i) ->
-    Post (baseUrl /: "interactions" // iid /: it /: "callback") (convert i) mempty
-  (GetFollowupInteractionResponse aid it mid) ->
+  (CreateFollowupInteractionMessage aid it i) ->
+    Post (baseUrl /: "webhooks" // aid /: it) (convert i) mempty
+  (GetFollowupInteractionMessage aid it mid) ->
     Get (interaction aid it // mid) mempty
-  (EditFollowupInteractionResponse aid it mid i) ->
+  (EditFollowupInteractionMessage aid it mid i) ->
     Patch (interaction aid it // mid) (convert i) mempty
-  (DeleteFollowupInteractionResponse aid it mid) ->
+  (DeleteFollowupInteractionMessage aid it mid) ->
     Delete (interaction aid it // mid) mempty
   where
     convert :: (ToJSON a) => a -> RestIO (ReqBodyJson Value)

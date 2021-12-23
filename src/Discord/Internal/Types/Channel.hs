@@ -561,7 +561,7 @@ data MessageType
   | MessageTypeChatInputCommand
   | MessageTypeThreadStarterMessage
   | MessageTypeGuildInviteReminder
-  | MessageTypeContectMenuCommand
+  | MessageTypeContextMenuCommand
   deriving (Show, Read, Data, Eq, Ord)
 
 instance Enum MessageType where
@@ -587,7 +587,7 @@ instance Enum MessageType where
   fromEnum MessageTypeChatInputCommand = 20
   fromEnum MessageTypeThreadStarterMessage = 21
   fromEnum MessageTypeGuildInviteReminder = 22
-  fromEnum MessageTypeContectMenuCommand = 23
+  fromEnum MessageTypeContextMenuCommand = 23
   toEnum a = fromJust $ lookup a table
     where
       table = makeTable MessageTypeDefault

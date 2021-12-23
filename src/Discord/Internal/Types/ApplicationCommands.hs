@@ -89,7 +89,7 @@ data CreateApplicationCommand = CreateApplicationCommand
   deriving (Show, Eq, Read)
 
 instance Default CreateApplicationCommand where
-  def = CreateApplicationCommand "createappcom" "createappcom desc" Nothing Nothing Nothing
+  def = CreateApplicationCommand "createappcom" "" Nothing Nothing Nothing
 
 instance ToJSON CreateApplicationCommand where
   toJSON CreateApplicationCommand {..} =
@@ -253,10 +253,10 @@ instance FromJSON ApplicationCommandOption where
 data ApplicationCommandOptionType
   = -- | A subcommand. It can take further options, excluding sub commands and
     -- sub command groups.
-    ApplicationCommandOptionTypeSubCommand
+    ApplicationCommandOptionTypeSubcommand
   | -- | A subcommand group. It can take further options, excluding sub command
     -- groups.
-    ApplicationCommandOptionTypeSubCommandGroup
+    ApplicationCommandOptionTypeSubcommandGroup
   | -- | Can typically be provided with default values.
     ApplicationCommandOptionTypeString
   | -- | Can typically be provided with default values, and possibly with
@@ -275,8 +275,8 @@ data ApplicationCommandOptionType
   deriving (Show, Read, Data, Eq)
 
 instance Enum ApplicationCommandOptionType where
-  fromEnum ApplicationCommandOptionTypeSubCommand = 1
-  fromEnum ApplicationCommandOptionTypeSubCommandGroup = 2
+  fromEnum ApplicationCommandOptionTypeSubcommand = 1
+  fromEnum ApplicationCommandOptionTypeSubcommandGroup = 2
   fromEnum ApplicationCommandOptionTypeString = 3
   fromEnum ApplicationCommandOptionTypeInteger = 4
   fromEnum ApplicationCommandOptionTypeBoolean = 5
@@ -287,7 +287,7 @@ instance Enum ApplicationCommandOptionType where
   fromEnum ApplicationCommandOptionTypeNumber = 10
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable ApplicationCommandOptionTypeSubCommand
+      table = makeTable ApplicationCommandOptionTypeSubcommand
 
 instance ToJSON ApplicationCommandOptionType where
   toJSON = toJSON . fromEnum

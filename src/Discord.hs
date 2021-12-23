@@ -131,7 +131,7 @@ restCall r = do h <- ask
                     resp <- liftIO $ writeRestCall (discordHandleRestChan h) r
                     case resp of
                       Right x -> pure (Right x)
-                      Left (RestCallInternalErrorCode c e1 e2) ->
+                      Left (RestCallInternalErrorCode c e1 e2) -> do
                         pure (Left (RestCallErrorCode c (TE.decodeUtf8 e1) (TE.decodeUtf8 e2)))
                       Left (RestCallInternalHttpException _) ->
                         threadDelay (10 * 10^(6 :: Int)) >> restCall r
