@@ -2,6 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE FlexibleInstances  #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude where
@@ -111,3 +112,7 @@ instance FromJSON InteractionType where
 class Internals a b where
   toInternal :: a -> b
   fromInternal :: b -> Maybe a
+
+instance Internals a a where
+  toInternal = id
+  fromInternal = Just
