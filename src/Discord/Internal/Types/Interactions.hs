@@ -42,7 +42,7 @@ import Data.Maybe (fromJust, fromMaybe)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
-  ( 
+  (
     InternalApplicationCommandOptionChoice,
     ApplicationCommandOptionType (..),
     ApplicationCommandType (..),
@@ -77,7 +77,17 @@ data Interaction
   | InteractionApplicationCommand
       { interactionId :: InteractionId,
         interactionApplicationId :: ApplicationId,
-        interactionIsAutoCompleteRequest :: Bool,
+        interactionDataApplicationCommand :: Maybe InteractionDataApplicationCommand, -- referenced as Data in API
+        interactionGuildId :: Maybe GuildId,
+        interactionChannelId :: Maybe ChannelId,
+        interactionMember :: Maybe GuildMember,
+        interactionUser :: Maybe User,
+        interactionToken :: InteractionToken,
+        interactionVersion :: Int
+      }
+  | InteractionApplicationCommandAutocomplete
+      { interactionId :: InteractionId,
+        interactionApplicationId :: ApplicationId,
         interactionDataApplicationCommand :: Maybe InteractionDataApplicationCommand, -- referenced as Data in API
         interactionGuildId :: Maybe GuildId,
         interactionChannelId :: Maybe ChannelId,
@@ -226,16 +236,19 @@ instance Internals InteractionDataComponent InternalInteractionData where
 instance Internals Interaction InternalInteraction where
   toInternal InteractionPing {..} = InternalInteraction interactionId interactionApplicationId InteractionTypePing Nothing Nothing Nothing Nothing Nothing interactionToken interactionVersion Nothing
   toInternal InteractionComponent {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeMessageComponent (toInternal <$> interactionDataComponent) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion (Just interactionMessage)
-  toInternal InteractionApplicationCommand {..} = InternalInteraction interactionId interactionApplicationId typ (toInternal <$> interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
-    where
-      typ
-        | interactionIsAutoCompleteRequest = InteractionTypeApplicationCommandAutocomplete
-        | otherwise = InteractionTypeApplicationCommand
+  toInternal InteractionApplicationCommand {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommand (toInternal <$> interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
+  toInternal InteractionApplicationCommandAutocomplete {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommandAutocomplete (toInternal <$> interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
   toInternal (InteractionUnknown i) = i
 
   fromInternal InternalInteraction {internalInteractionType = InteractionTypePing, ..} = Just $ InteractionPing internalInteractionId internalInteractionApplicationId internalInteractionToken internalInteractionVersion
   fromInternal i@InternalInteraction {internalInteractionType = InteractionTypeMessageComponent, ..} = Just $ fromMaybe (InteractionUnknown i) $ internalInteractionMessage >>= Just . InteractionComponent internalInteractionId internalInteractionApplicationId (internalInteractionData >>= fromInternal) internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-  fromInternal InternalInteraction {..} = Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (internalInteractionType == InteractionTypeApplicationCommandAutocomplete) (internalInteractionData >>= fromInternal) internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+  fromInternal i@InternalInteraction {internalInteractionType=InteractionTypeApplicationCommandAutocomplete,..} = Just $ fromMaybe (InteractionUnknown i) $ process internalInteractionData
+    where process Nothing = Just $ InteractionApplicationCommandAutocomplete internalInteractionId internalInteractionApplicationId Nothing internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+          process (Just d) = fromInternal d >>= \d' -> Just $ InteractionApplicationCommandAutocomplete internalInteractionId internalInteractionApplicationId (Just d') internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+  fromInternal i@InternalInteraction {internalInteractionType=InteractionTypeApplicationCommand,..} = Just $ fromMaybe (InteractionUnknown i) $ process internalInteractionData
+    where process Nothing = Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId Nothing internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+          process (Just d) = fromInternal d >>= \d' -> Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (Just d') internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+    -- Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (internalInteractionType == InteractionTypeApplicationCommandAutocomplete) (internalInteractionData >>= fromInternal) internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
 
 -- instance Internals Interaction InternalInteraction where
 

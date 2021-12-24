@@ -9,7 +9,11 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Discord.Internal.Types.ApplicationCommands
-  ( InternalApplicationCommand (..),
+  ( ApplicationCommand (..),
+    ApplicationCommandOptionSubcommandOrGroup (..),
+    ApplicationCommandOptionSubcommand (..),
+    ApplicationCommandOptionValue (..),
+    InternalApplicationCommand (..),
     CreateApplicationCommand (..),
     createApplicationCommandChatInput,
     createApplicationCommandUser,
@@ -65,6 +69,7 @@ data ApplicationCommand
         applicationCommandDefaultPermission :: Maybe Bool,
         applicationCommandVersion :: Snowflake
       }
+  | ApplicationCommandUnknown InternalApplicationCommand
 
 data ApplicationCommandOptions
   = ApplicationCommandOptionsSubcommands [ApplicationCommandOptionSubcommandOrGroup]
@@ -76,7 +81,7 @@ data ApplicationCommandOptionSubcommandOrGroup
         applicationCommandOptionSubcommandGroupDescription :: T.Text,
         applicationCommandOptionSubcommandGroupOptions :: [ApplicationCommandOptionSubcommand]
       }
-  | ApplicationCommandOptionSubcommands ApplicationCommandOptionSubcommand
+  | ApplicationCommandOptionSubcommandOrGroupSubcommand ApplicationCommandOptionSubcommand
 
 data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
   { applicationCommandOptionSubcommandName :: T.Text,
@@ -147,42 +152,74 @@ instance Internals ApplicationCommandOptionValue InternalApplicationCommandOptio
   toInternal ApplicationCommandOptionValueRole {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeRole applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired Nothing Nothing Nothing Nothing Nothing Nothing
   toInternal ApplicationCommandOptionValueMentionable {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeMentionable applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired Nothing Nothing Nothing Nothing Nothing Nothing
 
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeNumber,..} = do
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeNumber, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
     return $ ApplicationCommandOptionValueNumber internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) internalApplicationCommandOptionMinVal internalApplicationCommandOptionMaxVal internalApplicationCommandOptionAutocomplete
-    where extractChoices (Choice s (StringNumberValueNumber n)) = Just (Choice s n)
-          extractChoices _ = Nothing
-          fromResult [] = Nothing
-          fromResult is = Just is
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeInteger,..} = do
+    where
+      extractChoices (Choice s (StringNumberValueNumber n)) = Just (Choice s n)
+      extractChoices _ = Nothing
+      fromResult [] = Nothing
+      fromResult is = Just is
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeInteger, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
     return $ ApplicationCommandOptionValueInteger internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) (round <$> internalApplicationCommandOptionMinVal) (round <$> internalApplicationCommandOptionMaxVal) internalApplicationCommandOptionAutocomplete
-    where extractChoices (Choice s (StringNumberValueInteger n)) = Just (Choice s n)
-          extractChoices _ = Nothing
-          fromResult [] = Nothing
-          fromResult is = Just is
--- note with the above: the bounds are rounded for simplicity but ideally they wouldn't be
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeString,..} = do
+    where
+      extractChoices (Choice s (StringNumberValueInteger n)) = Just (Choice s n)
+      extractChoices _ = Nothing
+      fromResult [] = Nothing
+      fromResult is = Just is
+  -- note with the above: the bounds are rounded for simplicity but ideally they wouldn't be
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeString, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
     return $ ApplicationCommandOptionValueString internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) internalApplicationCommandOptionAutocomplete
-    where extractChoices (Choice s (StringNumberValueString n)) = Just (Choice s n)
-          extractChoices _ = Nothing
-          fromResult [] = Nothing
-          fromResult is = Just is
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeBoolean,..} = Just $ ApplicationCommandOptionValueBoolean internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeUser,..} = Just $ ApplicationCommandOptionValueUser internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeRole,..} = Just $ ApplicationCommandOptionValueRole internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeMentionable,..} = Just $ ApplicationCommandOptionValueMentionable internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType=ApplicationCommandOptionTypeChannel,..} = Just $ ApplicationCommandOptionValueChannel internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired internalApplicationCommandOptionChannelTypes
+    where
+      extractChoices (Choice s (StringNumberValueString n)) = Just (Choice s n)
+      extractChoices _ = Nothing
+      fromResult [] = Nothing
+      fromResult is = Just is
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeBoolean, ..} = Just $ ApplicationCommandOptionValueBoolean internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeUser, ..} = Just $ ApplicationCommandOptionValueUser internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeRole, ..} = Just $ ApplicationCommandOptionValueRole internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeMentionable, ..} = Just $ ApplicationCommandOptionValueMentionable internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeChannel, ..} = Just $ ApplicationCommandOptionValueChannel internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired internalApplicationCommandOptionChannelTypes
   fromInternal _ = Nothing
 
 instance Internals ApplicationCommandOptionSubcommand InternalApplicationCommandOption where
   toInternal ApplicationCommandOptionSubcommand {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeSubcommand applicationCommandOptionSubcommandName applicationCommandOptionSubcommandDescription Nothing Nothing (Just $ toInternal <$> applicationCommandOptionSubcommandOptions) Nothing Nothing Nothing Nothing
 
-  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand,..} = do
-    os <- maybe (Just []) (mapM fromInternal)  internalApplicationCommandOptionOptions
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand, ..} = do
+    os <- maybe (Just []) (mapM fromInternal) internalApplicationCommandOptionOptions
     return $ ApplicationCommandOptionSubcommand internalApplicationCommandOptionName internalApplicationCommandOptionDescription os
   fromInternal _ = Nothing
+
+instance Internals ApplicationCommandOptionSubcommandOrGroup InternalApplicationCommandOption where
+  toInternal (ApplicationCommandOptionSubcommandOrGroupSubcommand s) = toInternal s
+  toInternal ApplicationCommandOptionSubcommandGroup {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeSubcommandGroup applicationCommandOptionSubcommandGroupName applicationCommandOptionSubcommandGroupDescription Nothing Nothing (Just $ toInternal <$> applicationCommandOptionSubcommandGroupOptions) Nothing Nothing Nothing Nothing
+
+  fromInternal io@InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommand, ..} = ApplicationCommandOptionSubcommandOrGroupSubcommand <$> fromInternal io
+  fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeSubcommandGroup, ..} = do
+    os <- maybe (Just []) (mapM fromInternal) internalApplicationCommandOptionOptions
+    return $ ApplicationCommandOptionSubcommandGroup internalApplicationCommandOptionName internalApplicationCommandOptionDescription os
+  fromInternal _ = Nothing
+
+instance Internals ApplicationCommandOptions [InternalApplicationCommandOption] where
+  toInternal (ApplicationCommandOptionsSubcommands is) = toInternal <$> is
+  toInternal (ApplicationCommandOptionsValues is) = toInternal <$> is
+
+  fromInternal is = (ApplicationCommandOptionsSubcommands <$> mapM fromInternal is) <|> (ApplicationCommandOptionsValues <$> mapM fromInternal is)
+
+instance Internals ApplicationCommand InternalApplicationCommand where
+  toInternal ApplicationCommandUser {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeUser) applicationCommandApplicationId applicationCommandGuildId applicationCommandName "" Nothing applicationCommandDefaultPermission applicationCommandVersion
+  toInternal ApplicationCommandMessage {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeMessage) applicationCommandApplicationId applicationCommandGuildId applicationCommandName "" Nothing applicationCommandDefaultPermission applicationCommandVersion
+  toInternal ApplicationCommandChatInput {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeChatInput) applicationCommandApplicationId applicationCommandGuildId applicationCommandName applicationCommandDescription (toInternal <$> applicationCommandOptions) applicationCommandDefaultPermission applicationCommandVersion
+  toInternal (ApplicationCommandUnknown ai) = ai
+
+  fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeUser, ..} = Just $ ApplicationCommandUser internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
+  fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeMessage, ..} = Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
+  fromInternal a@InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = Just $ fromMaybe (ApplicationCommandUnknown a) $ ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
+  fromInternal a = fromInternal (a {internalApplicationCommandType = Just ApplicationCommandTypeChatInput})
+
+-- Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
 
 -- | What type of application command. Represents slash commands, right clicking
 -- a user, and right clicking a message respectively.
