@@ -30,7 +30,6 @@ import Discord.Internal.Types.Components
 import Data.Aeson (Object)
 import Data.Time.Clock (UTCTime(..))
 import Data.Maybe (fromMaybe)
-import Debug.Trace
 
 
 userFacingEvent :: EventInternalParse -> Event
@@ -66,5 +65,5 @@ userFacingEvent event = case event of
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
-  InternalInteractionCreate a -> trace ("intrec:" ++ show a) $ InteractionCreate (fromMaybe (InteractionUnknown a) (fromInternal a))
+  InternalInteractionCreate a -> InteractionCreate (fromMaybe (InteractionUnknown a) (fromInternal a))
   InternalUnknownEvent a b -> UnknownEvent a b

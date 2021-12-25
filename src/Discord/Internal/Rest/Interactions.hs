@@ -7,7 +7,7 @@
 
 module Discord.Internal.Rest.Interactions where
 
-import Data.Aeson (ToJSON (toJSON), Value, encode)
+import Data.Aeson (ToJSON (toJSON), Value)
 import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
 import Discord.Internal.Types (ApplicationId, InteractionId, InteractionResponse, InteractionToken, Message, MessageId, InteractionCallbackMessages)
 import Network.HTTP.Req as R
@@ -17,7 +17,7 @@ data InteractionResponseRequest a where
   GetOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest Message
   EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionCallbackMessages -> InteractionResponseRequest Message
   DeleteOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest ()
-  CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionCallbackMessages  -> InteractionResponseRequest ()
+  CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionCallbackMessages  -> InteractionResponseRequest Message
   GetFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
   EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
   DeleteFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
