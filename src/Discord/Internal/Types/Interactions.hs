@@ -526,7 +526,7 @@ data InteractionCallbackMessages = InteractionCallbackMessages
   { interactionCallbackMessagesTTS :: Maybe Bool,
     interactionCallbackMessagesContent :: Maybe T.Text,
     interactionCallbackMessagesEmbeds :: Maybe [Embed],
-    interactionCallbackMessagesAllowedMentions :: Maybe [AllowedMentions],
+    interactionCallbackMessagesAllowedMentions :: Maybe AllowedMentions,
     interactionCallbackMessagesFlags :: Maybe InteractionCallbackDataFlags,
     interactionCallbackMessagesComponents :: Maybe [Component],
     interactionCallbackMessagesAttachments :: Maybe [Attachment]

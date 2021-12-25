@@ -70,10 +70,12 @@ data ApplicationCommand
         applicationCommandVersion :: Snowflake
       }
   | ApplicationCommandUnknown InternalApplicationCommand
+  deriving (Show, Eq, Read)
 
 data ApplicationCommandOptions
   = ApplicationCommandOptionsSubcommands [ApplicationCommandOptionSubcommandOrGroup]
   | ApplicationCommandOptionsValues [ApplicationCommandOptionValue]
+  deriving (Show, Eq, Read)
 
 data ApplicationCommandOptionSubcommandOrGroup
   = ApplicationCommandOptionSubcommandGroup
@@ -82,12 +84,14 @@ data ApplicationCommandOptionSubcommandOrGroup
         applicationCommandOptionSubcommandGroupOptions :: [ApplicationCommandOptionSubcommand]
       }
   | ApplicationCommandOptionSubcommandOrGroupSubcommand ApplicationCommandOptionSubcommand
+  deriving (Show, Eq, Read)
 
 data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
   { applicationCommandOptionSubcommandName :: T.Text,
     applicationCommandOptionSubcommandDescription :: T.Text,
     applicationCommandOptionSubcommandOptions :: [ApplicationCommandOptionValue]
   }
+  deriving (Show, Eq, Read)
 
 data ApplicationCommandOptionValue
   = ApplicationCommandOptionValueString
@@ -141,6 +145,7 @@ data ApplicationCommandOptionValue
         applicationCommandOptionValueNumberMaxVal :: Maybe Scientific,
         applicationCommandOptionValueAutocomplete :: Maybe Bool
       }
+  deriving (Show, Eq, Read)
 
 instance Internals ApplicationCommandOptionValue InternalApplicationCommandOption where
   toInternal ApplicationCommandOptionValueNumber {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeNumber applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueNumber <$>) <$>) <$> applicationCommandOptionValueNumberChoices) Nothing Nothing applicationCommandOptionValueNumberMinVal applicationCommandOptionValueNumberMaxVal applicationCommandOptionValueAutocomplete
@@ -376,7 +381,7 @@ data InternalApplicationCommand = InternalApplicationCommand
     internalApplicationCommandDefaultPermission :: Maybe Bool,
     internalApplicationCommandVersion :: Snowflake
   }
-  deriving (Show)
+  deriving (Show, Eq, Read)
 
 instance FromJSON InternalApplicationCommand where
   parseJSON =

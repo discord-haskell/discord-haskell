@@ -1,3 +1,4 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings  #-}
 
 -- | Provides a higher level interface to the rest functions.
@@ -43,8 +44,9 @@ writeRestCall c req = do
   r <- readMVar m
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
-    Right (Left er) -> Left (RestCallInternalNoParse er (case r of Right x -> x
-                                                                   Left _ -> ""))
+    (Right (Left er)) -> Left (RestCallInternalNoParse er (case r of 
+      Right x -> x
+      Left _ -> ""))
     Left e -> Left e
 
 

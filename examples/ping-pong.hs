@@ -1,15 +1,18 @@
 -- allows "strings" to be Data.Text
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
 
 import Control.Monad (forM_, void, when)
+import Data.Char (isDigit)
+import Data.List (transpose)
+import Data.Maybe (fromJust, isNothing)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Debug.Trace
 import Discord
-import Discord.Internal.Rest.Prelude (baseUrl)
 import qualified Discord.Requests as R
 import Discord.Types
+import qualified Network.HTTP.Req as RH
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 
@@ -41,7 +44,7 @@ pingpongExample = do
 --     Use place to execute commands you know you want to complete
 startHandler :: DiscordHandler ()
 startHandler = do
-  Right partialGuilds <- restCall R.GetCurrentUserGuilds
+  -- Right partialGuilds <- restCall R.GetCurrentUserGuilds
 
   let activity =
         Activity
@@ -164,7 +167,7 @@ exampleSlashCommand =
     Nothing
 
 exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
-exampleInteractionResponse d@(InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue {interactionDataApplicationCommandOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
+exampleInteractionResponse (InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue {interactionDataApplicationCommandOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
   interactionResponseBasic (T.pack $ "Here's the reply! You chose: " ++ show s)
 exampleInteractionResponse _ =
   interactionResponseBasic
@@ -209,7 +212,11 @@ eventHandler event = case event of
                       ( ComponentActionRowButton
                           [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (Emoji (Just 0) "🔥" Nothing Nothing Nothing (Just False))),
                             ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
-                            ComponentButtonUrl baseUrl False "Button 3" Nothing
+                            ComponentButtonUrl
+                              (RH.https "github.com" RH./: "aquarial" RH./: "discord-haskell")
+                              False
+                              "Button 3"
+                              Nothing
                           ]
                       ),
                     toInternal
@@ -230,9 +237,52 @@ eventHandler event = case event of
                       )
                   ]
             }
+        tictactoe :: R.MessageDetailedOpts
+        tictactoe =
+          def
+            { R.messageDetailedContent = "Playing tic tac toe! Player 0",
+              R.messageDetailedComponents = Just $ updateTicTacToe Nothing []
+            }
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts')
-  Ready _ _ _ _ _ _ pa@(PartialApplication i _) ->
+    void $ restCall (R.CreateMessageDetailed (messageChannelId m) tictactoe)
+  Ready _ _ _ _ _ _ (PartialApplication i _) ->
     mapM_ (maybe (return ()) (void . restCall . R.CreateGuildApplicationCommand i testserverid)) [Just exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+  InteractionCreate InteractionComponent {interactionDataComponent = Just cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
+    [r] ->
+      void
+        ( restCall
+            ( R.CreateInteractionResponse
+                interactionId
+                interactionToken
+                ( InteractionResponse
+                    InteractionCallbackTypeUpdateMessage
+                    ( Just
+                        (InteractionCallbackDataMessages r)
+                    )
+                )
+            )
+        )
+    r : rs ->
+      void
+        ( restCall $
+            R.CreateInteractionResponse
+              interactionId
+              interactionToken
+              ( InteractionResponse
+                  InteractionCallbackTypeUpdateMessage
+                  ( Just
+                      (InteractionCallbackDataMessages r)
+                  )
+              )
+        )
+        >> mapM_
+          ( restCall
+              . R.CreateFollowupInteractionMessage
+                interactionApplicationId
+                interactionToken
+          )
+          rs
+    _ -> return ()
   InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandUser {interactionDataApplicationCommandName = nm, interactionDataApplicationCommandTargetId = uid, ..}, ..} ->
     void $
       restCall
@@ -255,7 +305,52 @@ eventHandler event = case event of
               )
         )
   _ -> return ()
-  -- e -> trace ("uncaught:" ++ show e) $ return ()
+
+-- e -> trace ("uncaught:" ++ show e) $ return ()
+
+processTicTacToe :: InteractionDataComponent -> Message -> [InteractionCallbackMessages]
+processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents m of
+  Nothing -> [interactionCallbackMessagesBasic "Sorry, I couldn't get the components on that message."]
+  (Just cs) ->
+    let newComp = newComp' cs
+     in ( ( interactionCallbackMessagesBasic
+              ("Some Tic Tac Toe! Player " <> (if '0' == T.last (messageContent m) then "1" else "0"))
+          )
+            { interactionCallbackMessagesComponents = Just ((if checkTicTacToe newComp then (disableAll <$>) else id) newComp)
+            }
+        ) :
+          [interactionCallbackMessagesBasic ("Player " <> T.singleton player <> " has won!") | checkTicTacToe newComp]
+  where
+    player = T.last (messageContent m)
+    newComp' = \c -> updateTicTacToe (Just (cid, '0' == player)) c
+    disableAll c@Component {componentType = ComponentTypeActionRow, componentComponents = Just cs, ..} = c {componentComponents = Just (disableAll <$> cs)}
+    disableAll c = c {componentDisabled = Just True}
+processTicTacToe _ _ = [interactionCallbackMessagesBasic "Sorry, I couldn't understand that button."]
+
+checkTicTacToe :: [Component] -> Bool
+checkTicTacToe xs = checkRows unwrapped || checkRows unwrappedT || checkRows [diagonal unwrapped, diagonal (reverse <$> unwrapped)]
+  where
+    checkRows = any (\cbs -> all (\cb -> cb == head cbs && cb /= InternalButtonStyleSecondary) cbs)
+    unwrapped = (\Component {componentComponents = Just cbs} -> (\Component {componentStyle = Just style} -> style) <$> cbs) <$> xs
+    unwrappedT = transpose unwrapped
+    diagonal [] = []
+    diagonal ([] : _) = []
+    diagonal (ys : yss) = head ys : diagonal (tail <$> yss)
+
+updateTicTacToe :: Maybe (T.Text, Bool) -> [Component] -> [Component]
+updateTicTacToe Nothing _ = (\y -> toInternal (ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 2])) <$> [0 .. 2]
+updateTicTacToe (Just (tttxy, isFirst)) car
+  | isNothing car' || not (checkIsValid tttxy) = car
+  | otherwise = (\(ComponentActionRowButton cbs) -> toInternal $ ComponentActionRowButton (changeIf <$> cbs)) <$> fromJust car'
+  where
+    car' = mapM fromInternal car :: Maybe [ComponentActionRow]
+    checkIsValid tttxy' = T.length tttxy' == 6 && all isDigit [T.index tttxy' 4, T.index tttxy' 5]
+    getxy tttxy' = (T.index tttxy' 4, T.index tttxy' 5)
+    (style, symbol) = if isFirst then (ButtonStyleSuccess, "[X]") else (ButtonStyleDanger, "[O]")
+    changeIf cb@ComponentButton {..}
+      | checkIsValid componentButtonCustomId && getxy tttxy == getxy componentButtonCustomId = cb {componentButtonDisabled = True, componentButtonStyle = style, componentButtonLabel = symbol}
+      | otherwise = cb
+    changeIf cb = cb
 
 isTextChannel :: Channel -> Bool
 isTextChannel (ChannelText {}) = True

@@ -10,7 +10,7 @@ module Discord.Internal.Types.Components where
 
 import Data.Aeson
 import Data.Data (Data)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, fromMaybe)
 import qualified Data.Text as T
 import Data.Tuple (swap)
 import Discord.Internal.Types.Prelude (EmojiId, Internals (..), RoleId, makeTable, toMaybeJSON)
@@ -37,7 +37,7 @@ data ComponentButton
   deriving (Show, Eq)
 
 data ButtonStyle = ButtonStylePrimary | ButtonStyleSecondary | ButtonStyleSuccess | ButtonStyleDanger
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 buttonStyles :: [(ButtonStyle, InternalButtonStyle)]
 buttonStyles =
@@ -62,8 +62,10 @@ data ComponentSelectMenu = ComponentSelectMenu
     componentSelectMenuMinValues :: Maybe Integer,
     componentSelectMenuMaxValues :: Maybe Integer
   }
+  deriving (Show, Eq, Read)
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
+  deriving (Show, Eq)
 
 validPartialEmoji :: Emoji -> Maybe Emoji
 validPartialEmoji Emoji {..} = do
@@ -85,8 +87,15 @@ instance Internals ComponentActionRow Component where
     return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid cd co componentPlaceholder componentMinValues componentMaxValues
   fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
     where
-      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = ComponentButtonUrl <$> (R.https <$> componentUrl) <*> componentDisabled <*> componentLabel >>= \f -> return $ f componentEmoji
-      fromInternal' Component {componentType = ComponentTypeButton, ..} = ComponentButton <$> componentCustomId <*> componentDisabled <*> (componentStyle >>= fromInternal) <*> componentLabel >>= \f -> return $ f componentEmoji
+      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = do
+        url <- R.https <$> componentUrl
+        label <- componentLabel
+        return $ ComponentButtonUrl url (fromMaybe False componentDisabled) label componentEmoji
+      fromInternal' Component {componentType = ComponentTypeButton, ..} = do
+        customId <- componentCustomId
+        label <- componentLabel
+        style <- componentStyle >>= fromInternal
+        return $ ComponentButton customId (fromMaybe False componentDisabled) style label componentEmoji
       fromInternal' _ = Nothing
   fromInternal _ = Nothing
 
@@ -281,7 +290,7 @@ instance ToJSON SelectOption where
       ]
 
 filterOutIncorrectEmoji :: Component -> Component
-filterOutIncorrectEmoji c@Component{componentType=ComponentTypeActionRow,componentComponents=(Just cs)} = c { componentComponents = Just (filterOutIncorrectEmoji <$> cs) }
-filterOutIncorrectEmoji c@Component{componentType=ComponentTypeSelectMenu,componentOptions=(Just os)} = c { componentOptions = Just ((\so -> so {selectOptionEmoji = selectOptionEmoji so >>= validPartialEmoji}) <$> os) }
-filterOutIncorrectEmoji c@Component{componentType=ComponentTypeButton,componentEmoji=(Just e)} = c { componentEmoji = validPartialEmoji e }
+filterOutIncorrectEmoji c@Component {componentType = ComponentTypeActionRow, componentComponents = (Just cs)} = c {componentComponents = Just (filterOutIncorrectEmoji <$> cs)}
+filterOutIncorrectEmoji c@Component {componentType = ComponentTypeSelectMenu, componentOptions = (Just os)} = c {componentOptions = Just ((\so -> so {selectOptionEmoji = selectOptionEmoji so >>= validPartialEmoji}) <$> os)}
+filterOutIncorrectEmoji c@Component {componentType = ComponentTypeButton, componentEmoji = (Just e)} = c {componentEmoji = validPartialEmoji e}
 filterOutIncorrectEmoji c = c
