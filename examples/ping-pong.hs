@@ -322,7 +322,7 @@ processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents
           [interactionCallbackMessagesBasic ("Player " <> T.singleton player <> " has won!") | checkTicTacToe newComp]
   where
     player = T.last (messageContent m)
-    newComp' = \c -> updateTicTacToe (Just (cid, '0' == player)) c
+    newComp' = updateTicTacToe (Just (cid, '0' == player))
     disableAll c@Component {componentType = ComponentTypeActionRow, componentComponents = Just cs, ..} = c {componentComponents = Just (disableAll <$> cs)}
     disableAll c = c {componentDisabled = Just True}
 processTicTacToe _ _ = [interactionCallbackMessagesBasic "Sorry, I couldn't understand that button."]
@@ -338,7 +338,7 @@ checkTicTacToe xs = checkRows unwrapped || checkRows unwrappedT || checkRows [di
     diagonal (ys : yss) = head ys : diagonal (tail <$> yss)
 
 updateTicTacToe :: Maybe (T.Text, Bool) -> [Component] -> [Component]
-updateTicTacToe Nothing _ = (\y -> toInternal (ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 2])) <$> [0 .. 2]
+updateTicTacToe Nothing _ = (\y -> toInternal (ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 4])) <$> [0 .. 4]
 updateTicTacToe (Just (tttxy, isFirst)) car
   | isNothing car' || not (checkIsValid tttxy) = car
   | otherwise = (\(ComponentActionRowButton cbs) -> toInternal $ ComponentActionRowButton (changeIf <$> cbs)) <$> fromJust car'
@@ -353,7 +353,7 @@ updateTicTacToe (Just (tttxy, isFirst)) car
     changeIf cb = cb
 
 isTextChannel :: Channel -> Bool
-isTextChannel (ChannelText {}) = True
+isTextChannel ChannelText {} = True
 isTextChannel _ = False
 
 fromBot :: Message -> Bool

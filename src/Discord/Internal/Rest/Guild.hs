@@ -440,7 +440,7 @@ guildJsonRequest c = case c of
       Get (guilds // guild /: "integrations") mempty
 
   (ModifyGuildWidget guild patch) ->
-      Patch (guilds // guild /: "embed") (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds // guild /: "widget") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildVanityURL guild) ->
       Get (guilds // guild /: "vanity-url") mempty
