@@ -26,15 +26,16 @@ stateExample = do
   threadId <- forkIO $ forever $ readChan printQueue >>= TIO.putStrLn
 
   -- try to read previous state, otherwise use 0
-  state <- do mfile <- try $ read . T.unpack <$> TIO.readFile "./cachedState"
-              s <- case mfile of
-                  Right file -> do
-                          writeChan printQueue "loaded state from file"
-                          pure file
-                  Left (_ :: IOException) -> do
-                          writeChan printQueue "created new state"
-                          pure $ State { pingCount = 0 }
-              newMVar s
+  state :: MVar (State) <- do
+        mfile <- try $ read . T.unpack <$> TIO.readFile "./cachedState"
+        s <- case mfile of
+            Right file -> do
+                    writeChan printQueue "loaded state from file"
+                    pure file
+            Left (_ :: IOException) -> do
+                    writeChan printQueue "created new state"
+                    pure $ State { pingCount = 0 }
+        newMVar s
 
   t <- runDiscord $ def { discordToken = tok
                         , discordOnStart = liftIO $ writeChan printQueue "starting ping loop"
