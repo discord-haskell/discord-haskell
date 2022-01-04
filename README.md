@@ -1,19 +1,15 @@
 # discord-haskell           [![CI Status](https://github.com/aquarial/discord-haskell/actions/workflows/main.yml/badge.svg)](https://github.com/aquarial/discord-haskell/actions/)        [![Hackage version](http://img.shields.io/hackage/v/discord-haskell.svg?label=Hackage)](https://hackage.haskell.org/package/discord-haskell)              [![Discord server](https://discord.com/api/guilds/918577626954739722/widget.png?style=shield)](https://discord.gg/eaRAGgX3bK)
 
-
-## TODO TODO
-cache rest requests (configure time to live)
-cleanup readme for simple
-make a markdown doc folder for notes about emoji, ping, embed audio, etc
-
-
 ## About
 
 Build that discord bot in Haskell! Also checkout the [calamity haskell library](https://github.com/nitros12/calamity)
 for a more advanced interface than `discord-haskell`.
 
-
 ### Documentation 
+
+#### Local Documentation
+
+Find docs on features, metadata, and parts is found in [./docs/README.md#Documentation](./docs/README.md#Documentation)
 
 #### Discord Server
 
@@ -21,16 +17,16 @@ Current project discord server: <https://discord.gg/eaRAGgX3bK>
 
 Ask questions, get updates, request features, etc
 
-#### [Local Documentation](./docs/README.md#Documentation)
-
 #### Official Discord Documentation
 
 The [official discord documentation](https://discord.com/developers/docs/intro)
 lists the rest requests, gateway events, and gateway sendables. The library
-matches very closely. For example: 
+matches very closely. 
+
+For example: 
 [Get Channel](https://discord.com/developers/docs/resources/channel#get-channel)
 and discord-haskell has a rest request ADT including 
-`GetChannel :: ChannelId -> ChannelRequest Channel`. Similar matching for gateway `Event`s.
+`[GetChannel :: ChannelId -> ChannelRequest Channel]`. Similar matching exists for gateway `Event`s.
 
 #### Open an Issue
 
