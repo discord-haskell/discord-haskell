@@ -261,7 +261,7 @@ instance FromJSON MessageReaction where
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
   { emojiId       :: Maybe EmojiId  -- ^ The emoji id
-  , emojiName     :: T.Text         -- ^ The emoji name
+  , emojiName     :: Maybe T.Text   -- ^ The emoji name
   , emojiRoles    :: Maybe [RoleId] -- ^ Roles the emoji is active for
   , emojiUser     :: Maybe User     -- ^ User that created this emoji
   , emojiManaged  :: Maybe Bool     -- ^ Whether this emoji is managed
