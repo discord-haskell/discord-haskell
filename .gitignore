@@ -7,7 +7,6 @@ stack.yaml.lock
 **/.stack/*
 **/.stack-work/*
 cabal.sandbox.config
-docs/build
 shell.nix
 _cache
 _site
