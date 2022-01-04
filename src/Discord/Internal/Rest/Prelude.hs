@@ -37,7 +37,7 @@ infixl 5 //
 (//) url part = url R./: T.pack (show part)
 
 
--- | Represtents a HTTP request made to an API that supplies a Json response
+-- | A compiled HTTP request ready to execute
 data JsonRequest where
   Delete ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
   Get    ::                 R.Url 'R.Https ->      R.Option 'R.Https -> JsonRequest
@@ -46,7 +46,11 @@ data JsonRequest where
   Post   :: R.HttpBody a => R.Url 'R.Https -> RestIO a -> R.Option 'R.Https -> JsonRequest
 
 class Request a where
+  -- | used for putting a request into a rate limit bucket
+  --   https://discord.com/developers/docs/topics/rate-limits#rate-limits
   majorRoute :: a -> String
+
+  -- | build a JSON http request
   jsonRequest :: a -> JsonRequest
 
 -- | Same Monad as IO. Overwrite Req settings
