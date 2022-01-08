@@ -15,6 +15,7 @@ import Control.Monad (mzero)
 
 import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
+import Text.Read (readMaybe)
 
 -- | Authorization token for the Discord API
 data Auth = Auth T.Text
@@ -41,7 +42,9 @@ instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
 
 instance FromJSON Snowflake where
-  parseJSON (String snowflake) = pure . read $ T.unpack snowflake
+  parseJSON (String snowflake) = case readMaybe (T.unpack snowflake) of
+    Nothing -> fail "null snowflake"
+    (Just i) -> pure i
   parseJSON _ = mzero
 
 type ChannelId = Snowflake

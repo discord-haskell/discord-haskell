@@ -47,16 +47,17 @@ instance ToJSON User where
               , ("email",         toJSON <$>      userEmail)
               ] ]
 
+-- TODO: fully update webhook structure
 data Webhook = Webhook
   { webhookId :: WebhookId
-  , webhookToken :: Text
+  , webhookToken :: Maybe Text
   , webhookChannelId :: ChannelId
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Webhook where
   parseJSON = withObject "Webhook" $ \o ->
     Webhook <$> o .:  "id"
-            <*> o .:  "token"
+            <*> o .:? "token"
             <*> o .:  "channel_id"
 
 data ConnectionObject = ConnectionObject
