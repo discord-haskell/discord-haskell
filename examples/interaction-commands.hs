@@ -8,10 +8,13 @@ import Data.List (transpose)
 import Data.Maybe (fromJust, isNothing)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Discord
-import qualified Discord.Requests as R
-import Discord.Types
 import qualified Network.HTTP.Req as RH
+
+import Discord
+import Discord.Types
+import Discord.Interactions
+import qualified Discord.Requests as R
+
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 

@@ -8,9 +8,12 @@
 module Discord.Internal.Rest.ApplicationCommands where
 
 import Data.Aeson (ToJSON (toJSON), Value)
-import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
-import Discord.Internal.Types
 import Network.HTTP.Req as R
+
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
+import Discord.Internal.Types.ApplicationCommands
+
 
 instance Request (ApplicationCommandRequest a) where
   jsonRequest = applicationCommandJsonRequest

@@ -45,6 +45,7 @@ library
   exposed-modules:     Discord
                      , Discord.Types
                      , Discord.Handle
+                     , Discord.Interactions
                      , Discord.Requests
                      , Discord.Internal.Gateway
                      , Discord.Internal.Gateway.Cache

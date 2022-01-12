@@ -8,9 +8,11 @@
 module Discord.Internal.Rest.Interactions where
 
 import Data.Aeson (ToJSON (toJSON), Value)
-import Discord.Internal.Rest.Prelude (JsonRequest (..), Request (..), RestIO, baseUrl, (//))
-import Discord.Internal.Types (ApplicationId, InteractionId, InteractionResponse, InteractionToken, Message, MessageId, InteractionCallbackMessages)
 import Network.HTTP.Req as R
+
+import Discord.Internal.Rest.Prelude
+import Discord.Internal.Types
+import Discord.Internal.Types.Interactions
 
 data InteractionResponseRequest a where
   CreateInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
