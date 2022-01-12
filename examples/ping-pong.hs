@@ -13,8 +13,15 @@ import qualified Discord.Requests as R
 
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
-main = pingpongExample
+main = if testserverid > 0
+       then pingpongExample
+       else TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
 
+
+
+-- check the url in a discord server
+--                                <server id>           <channel id>
+-- https://discord.com/channels/2385235298674262408/4286572469284672046
 testserverid :: Snowflake
 testserverid = -1
 
