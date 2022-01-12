@@ -381,7 +381,7 @@ data AllowedMentions = AllowedMentions
   , mentionUserIds     :: [UserId]
   , mentionRoleIds     :: [RoleId]
   , mentionRepliedUser :: Bool
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance Default AllowedMentions where
   def = AllowedMentions { mentionEveryone    = False

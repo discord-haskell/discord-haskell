@@ -61,7 +61,7 @@ data Event =
   deriving (Show, Read, Eq)
 
 data EventInternalParse =
-    InternalReady                   Int User [Channel] [GuildUnavailable] T.Text
+    InternalReady                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   | InternalResumed                 [T.Text]
   | InternalChannelCreate           Channel
   | InternalChannelUpdate           Channel

@@ -34,7 +34,7 @@ import Data.Maybe (fromMaybe)
 
 userFacingEvent :: EventInternalParse -> Event
 userFacingEvent event = case event of
-  InternalReady a b c d e -> Ready a b c d e
+  InternalReady a b c d e f g -> Ready a b c d e f g
   InternalResumed a -> Resumed a
   InternalChannelCreate a -> ChannelCreate a
   InternalChannelUpdate a -> ChannelUpdate a
