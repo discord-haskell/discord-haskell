@@ -79,7 +79,7 @@ eventHandler event = case event of
                        , R.messageDetailedReference = Just $
                           def { referenceMessageId = Just $ messageId m }
                        }
-        void $ restCall (R.CreateMessageDetailed (messageChannel m) opts)
+        void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
       _ -> return ()
 
 isTextChannel :: Channel -> Bool
@@ -90,4 +90,4 @@ fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageContent

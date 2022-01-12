@@ -7,6 +7,8 @@ Discord API changes, so use the most recent version at all times
 ## master
 
 
+rename fields `messageText` -> `messageContent`, `messageChannel` -> `messageChannelId`
+
 ## 1.10.0
 
 [drewolson](https://github.com/aquarial/discord-haskell/pull/80) allows parsing an optional guild region

@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import Control.Monad (void, forever)
+import Control.Monad (forever)
 import Control.Concurrent (forkIO, killThread)
 import UnliftIO (liftIO)
 import Control.Concurrent.Chan

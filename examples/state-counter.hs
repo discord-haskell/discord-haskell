@@ -56,7 +56,7 @@ eventHandler state printQueue event = case event of
 
     s <- liftIO $ takeMVar state
 
-    void $ restCall (R.CreateMessage (messageChannel m) (T.pack ("Pong #" <> show (pingCount s))))
+    void $ restCall (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
 
     liftIO $ putMVar state $ State { pingCount = pingCount s + 1 }
 
@@ -67,4 +67,4 @@ fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageText
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageContent

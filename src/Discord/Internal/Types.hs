@@ -10,7 +10,7 @@ module Discord.Internal.Types
   , module Discord.Internal.Types.Embed
   , module Discord.Internal.Types.ApplicationCommands
   , module Discord.Internal.Types.Interactions
-  , module  Discord.Internal.Types.Components
+  , module Discord.Internal.Types.Components
   , module Data.Aeson
   , module Data.Time.Clock
   , userFacingEvent

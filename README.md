@@ -63,16 +63,16 @@ pingpongExample = do
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
        MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-               void $ restCall (R.CreateReaction (messageChannel m, messageId m) "eyes")
+               void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
                threadDelay (2 * 10^6)
-               void $ restCall (R.CreateMessage (messageChannel m) "Pong!")
+               void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
        _ -> return ()
 
 fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor
 
 isPing :: Message -> Bool
-isPing = ("ping" `isPrefixOf`) . toLower . messageText
+isPing = ("ping" `isPrefixOf`) . toLower . messageContent
 ```
 
 ```cabal
