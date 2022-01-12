@@ -6,6 +6,7 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/88) did a LOT of work wrangling the discord API for interactions and commands!
 
 rename fields `messageText` -> `messageContent`, `messageChannel` -> `messageChannelId`
 

@@ -1,6 +1,6 @@
 ### Application Commands
 
-There are a couple special features discord has added, including slash commands, user commands, and message commands. These can now be created using discord-haskell.
+https://discord.com/developers/docs/interactions/application-commands
 
 There are three steps to application commands.
 
@@ -14,5 +14,5 @@ There are three steps to application commands.
 3. Respond to the interaction
    1. When you have captured an interaction, you can act on the information within, and send a reply using the appropriate method, creating an `InteractionResponse` and sending that with `CreateInteractionResponse`.
 
-Now you're ready to create application commands! If you have any questions, please investigate the source and docs first, and then join the discord above and ask questions there.
+Now you're ready to create application commands! If you have any questions, please investigate the source and docs first, and then join the discord server and ask questions there.
 
