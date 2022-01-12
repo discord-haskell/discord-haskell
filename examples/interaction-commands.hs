@@ -19,8 +19,8 @@ testserverid :: Snowflake
 testserverid = -1
 
 -- | Replies "pong" to every message that starts with "ping"
-slashCommandExample :: IO ()
-slashCommandExample = do
+interactionCommandExample :: IO ()
+interactionCommandExample = do
   tok <- TIO.readFile "./examples/auth-token.secret"
 
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
