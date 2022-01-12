@@ -34,7 +34,7 @@ executable ping-pong
                      , text
                      , unliftio
                      , discord-haskell
-                     , req
+                     -- , req               {- needed for slash commands -}
 
 library
   ghc-options:         -Wall
