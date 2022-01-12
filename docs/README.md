@@ -12,6 +12,8 @@
 
 ### Features
 
+#### [applicationcommands](./applicationcommands.md)
+
 #### [components](./components.md)
 
 #### [cache](./cache.md)
