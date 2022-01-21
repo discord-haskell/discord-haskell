@@ -150,23 +150,27 @@ newExampleSlashCommand =
           }
 
 -- | An example slash command.
-exampleSlashCommand :: CreateApplicationCommand
+exampleSlashCommand :: Maybe CreateApplicationCommand
 exampleSlashCommand =
-  CreateApplicationCommand
-    "test"
-    "here is a description"
-    ( Just $
-        ApplicationCommandOptionsValues
-          [ ApplicationCommandOptionValueString
-              "randominput"
-              "I shall not"
-              (Just True)
-              (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
-              Nothing
-          ]
-    )
-    Nothing
-    Nothing
+  ( createApplicationCommandChatInput
+      "test"
+      "here is a description"
+  )
+    >>= \cac ->
+      return $
+        cac
+          { createApplicationCommandOptions =
+              ( Just $
+                  ApplicationCommandOptionsValues
+                    [ ApplicationCommandOptionValueString
+                        "randominput"
+                        "I shall not"
+                        (Just True)
+                        (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
+                        Nothing
+                    ]
+              )
+          }
 
 exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
 exampleInteractionResponse (InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue {interactionDataApplicationCommandOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
@@ -248,7 +252,7 @@ eventHandler event = case event of
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts')
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) tictactoe)
   Ready _ _ _ _ _ _ (PartialApplication i _) ->
-    mapM_ (maybe (return ()) (void . restCall . R.CreateGuildApplicationCommand i testserverid)) [Just exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+    mapM_ (maybe (return ()) (void . restCall . R.CreateGuildApplicationCommand i testserverid)) [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
   InteractionCreate InteractionComponent {interactionDataComponent = Just cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
     [r] ->
       void
