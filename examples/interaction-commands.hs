@@ -243,8 +243,16 @@ eventHandler event = case event of
             }
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts')
     void $ restCall (R.CreateMessageDetailed (messageChannelId m) tictactoe)
-  Ready _ _ _ _ _ _ (PartialApplication i _) ->
-    mapM_ (maybe (return ()) (void . restCall . R.CreateGuildApplicationCommand i testserverid)) [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+  Ready _ _ _ _ _ _ (PartialApplication i _) -> do
+    vs <-
+      mapM
+        (maybe (return (Left $ RestCallErrorCode 0 "" "")) (restCall . R.CreateGuildApplicationCommand i testserverid))
+        [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+    liftIO (putStrLn $ "number of application commands added " ++ show (length vs))
+    acs <- restCall (R.GetGuildApplicationCommands i testserverid)
+    case acs of
+      Left r -> liftIO $ print r
+      Right ls -> liftIO $ putStrLn $ "number of application commands total " ++ show (length ls)
   InteractionCreate InteractionComponent {interactionDataComponent = Just cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
     [r] ->
       void
