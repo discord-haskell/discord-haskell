@@ -255,6 +255,13 @@ instance Internals ApplicationCommand InternalApplicationCommand where
   fromInternal a@InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = Just $ fromMaybe (ApplicationCommandUnknown a) $ ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal a = fromInternal (a {internalApplicationCommandType = Just ApplicationCommandTypeChatInput})
 
+instance FromJSON ApplicationCommand where
+  parseJSON v = do
+    iac <- parseJSON @InternalApplicationCommand v
+    case fromInternal iac of
+      Nothing -> fail "could not convert internal application command"
+      Just v' -> return v'
+
 -- | What type of application command. Represents slash commands, right clicking
 -- a user, and right clicking a message respectively.
 data ApplicationCommandType
