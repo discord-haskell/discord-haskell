@@ -16,10 +16,11 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandOptionSubcommand (..),
     ApplicationCommandOptionValue (..),
     InternalApplicationCommand (..),
-    CreateApplicationCommand (..),
     createApplicationCommandChatInput,
     createApplicationCommandUser,
     createApplicationCommandMessage,
+    CreateApplicationCommand (
+      createApplicationCommandName,createApplicationCommandDescription,createApplicationCommandOptions,createApplicationCommandDefaultPermission),
     EditApplicationCommand (..),
     ApplicationCommandType (..),
     InternalApplicationCommandOption (..),
@@ -43,12 +44,13 @@ import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Internals (..), Snowflake, makeTable, toMaybeJSON)
 
+-- | The structure for an application command.
 data ApplicationCommand
   = ApplicationCommandUser
-      { applicationCommandId :: ApplicationCommandId,
-        applicationCommandApplicationId :: ApplicationId,
-        applicationCommandGuildId :: Maybe GuildId,
-        applicationCommandName :: T.Text,
+      { applicationCommandId :: ApplicationCommandId, -- ^ The id of the application command
+        applicationCommandApplicationId :: ApplicationId, -- ^ The id of the application the command comes from
+        applicationCommandGuildId :: Maybe GuildId, -- ^ The guild the application command is registered in
+        applicationCommandName :: T.Text, -- ^ The name of the application command
         applicationCommandDefaultPermission :: Maybe Bool,
         applicationCommandVersion :: Snowflake
       }
