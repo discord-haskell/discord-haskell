@@ -7,9 +7,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Discord.Internal.Types.ApplicationCommands
   ( ApplicationCommand (..),
+    ApplicationCommandOptions (..),
     ApplicationCommandOptionSubcommandOrGroup (..),
     ApplicationCommandOptionSubcommand (..),
     ApplicationCommandOptionValue (..),
@@ -34,7 +36,6 @@ where
 
 import Control.Applicative
 import Data.Aeson
-import Data.Char (isLower)
 import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Maybe (fromJust, fromMaybe)
@@ -275,7 +276,7 @@ data CreateApplicationCommand = CreateApplicationCommand
     createApplicationCommandDescription :: T.Text,
     -- | What options the application (max length 25). Has to be `Nothing` for
     -- non-slash commands.
-    createApplicationCommandOptions :: Maybe [InternalApplicationCommandOption],
+    createApplicationCommandOptions :: Maybe ApplicationCommandOptions,
     -- | Whether the command is enabled by default when the application is added
     -- to a guild. Defaults to true if not present
     createApplicationCommandDefaultPermission :: Maybe Bool,
@@ -292,11 +293,17 @@ instance ToJSON CreateApplicationCommand where
         | (name, Just value) <-
             [ ("name", toMaybeJSON createApplicationCommandName),
               ("description", toMaybeJSON createApplicationCommandDescription),
-              ("options", toJSON <$> createApplicationCommandOptions),
+              ("options", toJSON . (toInternal @_ @[InternalApplicationCommandOption]) <$> createApplicationCommandOptions),
               ("default_permission", toJSON <$> createApplicationCommandDefaultPermission),
               ("type", toJSON <$> createApplicationCommandType)
             ]
       ]
+
+nameIsValid :: Bool -> T.Text -> Bool
+nameIsValid isChatInput name = l >= 1 && l <= 32 && (isChatInput <= T.all (`elem` validChars) name)
+  where
+    l = T.length name
+    validChars = '-' : ['a' .. 'z']
 
 -- | Create the basics for a chat input (slash command). Use record overwriting
 -- to enter the other values. The name needs to be all lower case letters, and
@@ -304,28 +311,22 @@ instance ToJSON CreateApplicationCommand where
 -- than or equal to 100 characters.
 createApplicationCommandChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandChatInput name desc
-  | T.all isLower name && not (T.null desc) && l >= 1 && l <= 32 && T.length desc <= 100 = Just $ CreateApplicationCommand name desc Nothing Nothing (Just ApplicationCommandTypeChatInput)
+  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommand name desc Nothing Nothing (Just ApplicationCommandTypeChatInput)
   | otherwise = Nothing
-  where
-    l = T.length name
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
 createApplicationCommandUser :: T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandUser name
-  | l >= 1 && l <= 32 = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeUser)
+  | nameIsValid False name = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeUser)
   | otherwise = Nothing
-  where
-    l = T.length name
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
 createApplicationCommandMessage :: T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandMessage name
-  | l >= 1 && l <= 32 = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeMessage)
+  | nameIsValid False name = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeMessage)
   | otherwise = Nothing
-  where
-    l = T.length name
 
 -- | Data type to be used when editing application commands. The specification
 -- is below. See `CreateApplicationCommand` for an explanation for the
@@ -534,14 +535,9 @@ data Choice a = Choice {choiceName :: T.Text, choiceValue :: a}
 instance Functor Choice where
   fmap f (Choice s a) = Choice s (f a)
 
+-- | The choices for a particular option.
 type InternalApplicationCommandOptionChoice = Choice StringNumberValue
 
--- | The choices for a particular option.
--- data InternalApplicationCommandOptionChoice = InternalApplicationCommandOptionChoice
---   { internalApplicationCommandOptionChoiceName :: T.Text,
---     internalApplicationCommandOptionChoiceValue :: StringNumberValue
---   }
---   deriving (Show, Read, Eq)
 instance (ToJSON a) => ToJSON (Choice a) where
   toJSON Choice {..} = object [("name", toJSON choiceName), ("value", toJSON choiceValue)]
 

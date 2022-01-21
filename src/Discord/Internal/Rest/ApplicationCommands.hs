@@ -1,19 +1,15 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Discord.Internal.Rest.ApplicationCommands where
 
 import Data.Aeson (ToJSON (toJSON), Value)
-import Network.HTTP.Req as R
-
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Discord.Internal.Types.ApplicationCommands
-
+import Network.HTTP.Req as R
 
 instance Request (ApplicationCommandRequest a) where
   jsonRequest = applicationCommandJsonRequest
@@ -38,9 +34,6 @@ data ApplicationCommandRequest a where
   -- | The only parameters needed in the GuildApplicationCommandPermissions
   -- objects are id and permissions.
   BatchEditApplicationCommandPermissions :: ApplicationId -> GuildId -> [GuildApplicationCommandPermissions] -> ApplicationCommandRequest [GuildApplicationCommandPermissions]
-
--- TODO: permissions checks
--- GetGuildApplicationCommandPermissions :: ApplicationId -> GuildID -> ApplicationCommandR
 
 applications :: ApplicationId -> R.Url 'R.Https
 applications s = baseUrl /: "applications" // s
