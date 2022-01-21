@@ -23,7 +23,7 @@ main = if testserverid == -1
 --                                <server id>           <channel id>
 -- https://discord.com/channels/2385235298674262408/4286572469284672046
 testserverid :: Snowflake
-testserverid = 453207241294610442
+testserverid = -1
 
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()

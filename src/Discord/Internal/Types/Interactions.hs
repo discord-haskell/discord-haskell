@@ -504,6 +504,7 @@ data InteractionResponse = InteractionResponse
   }
   deriving (Show, Read, Eq)
 
+-- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
 interactionResponseBasic t = InteractionResponse InteractionCallbackTypeChannelMessageWithSource (Just . InteractionCallbackDataMessages $ interactionCallbackMessagesBasic t)
 
@@ -572,6 +573,8 @@ data InteractionCallbackMessages = InteractionCallbackMessages
   }
   deriving (Show, Read, Eq)
 
+-- | A basic interaction response, sending back the given text. This is
+-- effectively a helper function.
 interactionCallbackMessagesBasic :: T.Text -> InteractionCallbackMessages
 interactionCallbackMessagesBasic t = InteractionCallbackMessages Nothing (Just t) Nothing Nothing Nothing Nothing Nothing
 

@@ -8,15 +8,19 @@ import Data.List (transpose)
 import Data.Maybe (fromJust, isNothing)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import qualified Network.HTTP.Req as RH
-
 import Discord
-import Discord.Types
 import Discord.Interactions
 import qualified Discord.Requests as R
-
+import Discord.Types
+import qualified Network.HTTP.Req as RH
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
+
+main :: IO ()
+main =
+  if testserverid == -1
+    then TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
+    else interactionCommandExample
 
 testserverid :: Snowflake
 testserverid = -1
@@ -89,59 +93,59 @@ newExampleSlashCommand =
         d
           { createApplicationCommandOptions =
               Just
-                ( toInternal
-                    <$> [ ApplicationCommandOptionSubcommandGroup
-                            "frstsubcmdgrp"
-                            "the sub command group"
-                            [ ApplicationCommandOptionSubcommand
-                                "frstsubcmd"
-                                "the first sub command"
-                                [ ApplicationCommandOptionValueString
-                                    "onestringinput"
-                                    "two options"
-                                    (Just True)
-                                    ( Just
-                                        [ Choice "green" "green",
-                                          Choice "red" "red"
-                                        ]
-                                    )
-                                    Nothing,
-                                  ApplicationCommandOptionValueInteger "oneintinput" "choices galore" Nothing Nothing Nothing Nothing Nothing
-                                ]
-                            ],
-                          ApplicationCommandOptionSubcommandOrGroupSubcommand $
-                            ApplicationCommandOptionSubcommand
-                              "frstsubcmd"
-                              "the first subcommand"
-                              [ ApplicationCommandOptionValueString
-                                  "onestringinput"
-                                  "two options"
-                                  (Just True)
-                                  ( Just
-                                      [ Choice "yellow" "yellow",
-                                        Choice "blue" "blue"
-                                      ]
-                                  )
-                                  Nothing
-                              ],
-                          ApplicationCommandOptionSubcommandOrGroupSubcommand $
-                            ApplicationCommandOptionSubcommand
-                              "sndsubcmd"
-                              "the second subcommand"
-                              [ ApplicationCommandOptionValueBoolean
-                                  "trueorfalse"
-                                  "true or false"
-                                  (Just True),
-                                ApplicationCommandOptionValueNumber
-                                  "numbercomm"
-                                  "number option"
-                                  Nothing
-                                  Nothing
-                                  (Just 3.1415)
-                                  (Just 101)
-                                  (Just True)
-                              ]
-                        ]
+                ( ApplicationCommandOptionsSubcommands
+                    [ ApplicationCommandOptionSubcommandGroup
+                        "frstsubcmdgrp"
+                        "the sub command group"
+                        [ ApplicationCommandOptionSubcommand
+                            "frstsubcmd"
+                            "the first sub command"
+                            [ ApplicationCommandOptionValueString
+                                "onestringinput"
+                                "two options"
+                                (Just True)
+                                ( Just
+                                    [ Choice "green" "green",
+                                      Choice "red" "red"
+                                    ]
+                                )
+                                Nothing,
+                              ApplicationCommandOptionValueInteger "oneintinput" "choices galore" Nothing Nothing Nothing Nothing Nothing
+                            ]
+                        ],
+                      ApplicationCommandOptionSubcommandOrGroupSubcommand $
+                        ApplicationCommandOptionSubcommand
+                          "frstsubcmd"
+                          "the first subcommand"
+                          [ ApplicationCommandOptionValueString
+                              "onestringinput"
+                              "two options"
+                              (Just True)
+                              ( Just
+                                  [ Choice "yellow" "yellow",
+                                    Choice "blue" "blue"
+                                  ]
+                              )
+                              Nothing
+                          ],
+                      ApplicationCommandOptionSubcommandOrGroupSubcommand $
+                        ApplicationCommandOptionSubcommand
+                          "sndsubcmd"
+                          "the second subcommand"
+                          [ ApplicationCommandOptionValueBoolean
+                              "trueorfalse"
+                              "true or false"
+                              (Just True),
+                            ApplicationCommandOptionValueNumber
+                              "numbercomm"
+                              "number option"
+                              Nothing
+                              Nothing
+                              (Just 3.1415)
+                              (Just 101)
+                              (Just True)
+                          ]
+                    ]
                 )
           }
 
@@ -152,14 +156,14 @@ exampleSlashCommand =
     "test"
     "here is a description"
     ( Just $
-        toInternal
-          <$> [ ApplicationCommandOptionValueString
-                  "randominput"
-                  "I shall not"
-                  (Just True)
-                  (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
-                  Nothing
-              ]
+        ApplicationCommandOptionsValues
+          [ ApplicationCommandOptionValueString
+              "randominput"
+              "I shall not"
+              (Just True)
+              (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
+              Nothing
+          ]
     )
     Nothing
     Nothing
@@ -289,6 +293,7 @@ eventHandler event = case event of
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse d))
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just d, ..}, ..} -> void $ restCall (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic (T.pack $ "oh boy, subcommands! welp, here's everything I got from that: " <> show d)))
   InteractionCreate InteractionComponent {interactionDataComponent = Just InteractionDataComponentButton {..}, ..} ->
     void $
       restCall
