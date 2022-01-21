@@ -439,7 +439,7 @@ data InternalApplicationCommandOption = InternalApplicationCommandOption
     internalApplicationCommandOptionName :: T.Text,
     -- | 1-100 characters
     internalApplicationCommandOptionDescription :: T.Text,
-    -- | Is the parameter required? default fals.
+    -- | Is the parameter required? default false.
     internalApplicationCommandOptionRequired :: Maybe Bool,
     -- | If specified, these are the only valid options to choose from. Type
     -- depends on optionType, and can only be specified for STRING, INTEGER or
@@ -599,9 +599,9 @@ data ApplicationCommandChannelType
     ApplicationCommandChannelTypeGuildStore
   | -- | A temporary sub-channel within a guild_news channel.
     ApplicationCommandChannelTypeGuildNewsThread
-  | -- | A temporary sub-channel within a guild_text channe.
+  | -- | A temporary sub-channel within a guild_text channel.
     ApplicationCommandChannelTypeGuildPublicThread
-  | -- | A temporary sub-channel within a GUILD_TEXT channel that is onl.
+  | -- | A temporary sub-channel within a GUILD_TEXT channel that is only
     -- viewable by those invited and those with the MANAGE_THREADS permission
     ApplicationCommandChannelTypeGuildPrivateThread
   | -- | A voice channel for hosting events with an audience.
