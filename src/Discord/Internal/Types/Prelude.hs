@@ -14,7 +14,6 @@ import Data.Aeson.Types
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
-import Control.Monad (mzero)
 
 import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
@@ -47,10 +46,14 @@ instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
 
 instance FromJSON Snowflake where
-  parseJSON (String snowflake) = case readMaybe (T.unpack snowflake) of
-    Nothing -> fail "null snowflake"
-    (Just i) -> pure i
-  parseJSON _ = mzero
+  parseJSON =
+    withText
+      "Snowflake"
+      ( \snowflake ->
+          case readMaybe (T.unpack snowflake) of
+            Nothing -> fail "null snowflake"
+            (Just i) -> pure i
+      )
 
 type ChannelId = Snowflake
 type StageId = Snowflake
