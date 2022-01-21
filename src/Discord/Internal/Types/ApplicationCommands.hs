@@ -96,7 +96,6 @@ data ApplicationCommand
         -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
-  | ApplicationCommandUnknown InternalApplicationCommand
   deriving (Show, Eq, Read)
 
 -- | Either subcommands and groups, or values.
@@ -248,11 +247,10 @@ instance Internals ApplicationCommand InternalApplicationCommand where
   toInternal ApplicationCommandUser {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeUser) applicationCommandApplicationId applicationCommandGuildId applicationCommandName "" Nothing applicationCommandDefaultPermission applicationCommandVersion
   toInternal ApplicationCommandMessage {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeMessage) applicationCommandApplicationId applicationCommandGuildId applicationCommandName "" Nothing applicationCommandDefaultPermission applicationCommandVersion
   toInternal ApplicationCommandChatInput {..} = InternalApplicationCommand applicationCommandId (Just ApplicationCommandTypeChatInput) applicationCommandApplicationId applicationCommandGuildId applicationCommandName applicationCommandDescription (toInternal <$> applicationCommandOptions) applicationCommandDefaultPermission applicationCommandVersion
-  toInternal (ApplicationCommandUnknown ai) = ai
 
   fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeUser, ..} = Just $ ApplicationCommandUser internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeMessage, ..} = Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
-  fromInternal a@InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = Just $ fromMaybe (ApplicationCommandUnknown a) $ ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
+  fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal a = fromInternal (a {internalApplicationCommandType = Just ApplicationCommandTypeChatInput})
 
 instance FromJSON ApplicationCommand where
