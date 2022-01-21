@@ -1,38 +1,33 @@
 -- | Provides types and encoding/decoding code. Types should be identical to those provided
 --   in the Discord API documentation.
 module Discord.Internal.Types
-  ( module Discord.Internal.Types.Prelude
-  , module Discord.Internal.Types.Channel
-  , module Discord.Internal.Types.Events
-  , module Discord.Internal.Types.Gateway
-  , module Discord.Internal.Types.Guild
-  , module Discord.Internal.Types.User
-  , module Discord.Internal.Types.Embed
-  , module Discord.Internal.Types.Components
---, module Discord.Internal.Types.ApplicationCommands
---, module Discord.Internal.Types.Interactions
-  , module Data.Aeson
-  , module Data.Time.Clock
-  , userFacingEvent
-  ) where
+  ( module Discord.Internal.Types.Prelude,
+    module Discord.Internal.Types.Channel,
+    module Discord.Internal.Types.Events,
+    module Discord.Internal.Types.Gateway,
+    module Discord.Internal.Types.Guild,
+    module Discord.Internal.Types.User,
+    module Discord.Internal.Types.Embed,
+    module Discord.Internal.Types.Components,
+    module Data.Aeson,
+    module Data.Time.Clock,
+    userFacingEvent,
+  )
+where
 
+import Data.Aeson (Object)
+import Data.Maybe (fromMaybe)
+import Data.Time.Clock (UTCTime (..))
 import Discord.Internal.Types.Channel
+import Discord.Internal.Types.Components
+import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
+import Discord.Internal.Types.Interactions (Interaction (InteractionUnknown))
+import Discord.Internal.Types.Prelude hiding (Internals (..))
+import qualified Discord.Internal.Types.Prelude as TP
 import Discord.Internal.Types.User
-import Discord.Internal.Types.Embed
-import Discord.Internal.Types.Prelude
-import Discord.Internal.Types.Components
-
--- import Discord.Internal.Types.ApplicationCommands
-import Discord.Internal.Types.Interactions
-
-
-import Data.Aeson (Object)
-import Data.Time.Clock (UTCTime(..))
-import Data.Maybe (fromMaybe)
-
 
 userFacingEvent :: EventInternalParse -> Event
 userFacingEvent event = case event of
@@ -67,5 +62,5 @@ userFacingEvent event = case event of
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
-  InternalInteractionCreate a -> InteractionCreate (fromMaybe (InteractionUnknown a) (fromInternal a))
+  InternalInteractionCreate a -> InteractionCreate (fromMaybe (InteractionUnknown a) (TP.fromInternal a))
   InternalUnknownEvent a b -> UnknownEvent a b
