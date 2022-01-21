@@ -29,7 +29,7 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandType (..),
     InternalApplicationCommandOption (..),
     ApplicationCommandOptionType (..),
-    InternalApplicationCommandOptionChoice,
+    ApplicationCommandOptionChoice,
     Choice (..),
     ApplicationCommandChannelType (..),
     GuildApplicationCommandPermissions (..),
@@ -451,7 +451,7 @@ data InternalApplicationCommandOption = InternalApplicationCommandOption
     -- | If specified, these are the only valid options to choose from. Type
     -- depends on optionType, and can only be specified for STRING, INTEGER or
     -- NUMBER types.
-    internalApplicationCommandOptionChoices :: Maybe [InternalApplicationCommandOptionChoice],
+    internalApplicationCommandOptionChoices :: Maybe [ApplicationCommandOptionChoice],
     -- | If the option type is a subcommand or subcommand group type, these are
     -- the parameters to the subcommand.
     internalApplicationCommandOptionOptions :: Maybe [InternalApplicationCommandOption],
@@ -571,7 +571,7 @@ instance Functor Choice where
   fmap f (Choice s a) = Choice s (f a)
 
 -- | The choices for a particular option.
-type InternalApplicationCommandOptionChoice = Choice StringNumberValue
+type ApplicationCommandOptionChoice = Choice StringNumberValue
 
 instance (ToJSON a) => ToJSON (Choice a) where
   toJSON Choice {..} = object [("name", toJSON choiceName), ("value", toJSON choiceValue)]
