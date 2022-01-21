@@ -47,7 +47,7 @@ import Discord.Internal.Types.ApplicationCommands
     ApplicationCommandType (..),
   )
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
-import Discord.Internal.Types.Components (Component, ComponentType (..))
+import Discord.Internal.Types.Components (ComponentActionRow, InternalComponentType (..))
 import Discord.Internal.Types.Embed (Embed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, InteractionType (..), Internals (..), MessageId, Snowflake, UserId, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (GuildMember, User)
@@ -127,7 +127,7 @@ data Interaction
         interactionVersion :: Int
       }
   | InteractionUnknown InternalInteraction
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 data InteractionDataComponent
   = InteractionDataComponentButton
@@ -266,11 +266,11 @@ instance Internals InteractionDataApplicationCommand InternalInteractionData whe
   fromInternal _ = Nothing
 
 instance Internals InteractionDataComponent InternalInteractionData where
-  toInternal InteractionDataComponentButton {..} = InternalInteractionData Nothing Nothing Nothing Nothing Nothing (Just interactionDataComponentCustomId) (Just ComponentTypeButton) Nothing Nothing
-  toInternal InteractionDataComponentSelectMenu {..} = InternalInteractionData Nothing Nothing Nothing Nothing Nothing (Just interactionDataComponentCustomId) (Just ComponentTypeSelectMenu) (Just interactionDataComponentValues) Nothing
+  toInternal InteractionDataComponentButton {..} = InternalInteractionData Nothing Nothing Nothing Nothing Nothing (Just interactionDataComponentCustomId) (Just InternalComponentTypeButton) Nothing Nothing
+  toInternal InteractionDataComponentSelectMenu {..} = InternalInteractionData Nothing Nothing Nothing Nothing Nothing (Just interactionDataComponentCustomId) (Just InternalComponentTypeSelectMenu) (Just interactionDataComponentValues) Nothing
 
-  fromInternal InternalInteractionData {internalInteractionDataComponentType = Just ComponentTypeButton, ..} = InteractionDataComponentButton <$> internalInteractionDataCustomId
-  fromInternal InternalInteractionData {internalInteractionDataComponentType = Just ComponentTypeSelectMenu, ..} = InteractionDataComponentSelectMenu <$> internalInteractionDataCustomId <*> internalInteractionDataValues
+  fromInternal InternalInteractionData {internalInteractionDataComponentType = Just InternalComponentTypeButton, ..} = InteractionDataComponentButton <$> internalInteractionDataCustomId
+  fromInternal InternalInteractionData {internalInteractionDataComponentType = Just InternalComponentTypeSelectMenu, ..} = InteractionDataComponentSelectMenu <$> internalInteractionDataCustomId <*> internalInteractionDataValues
   fromInternal _ = Nothing
 
 instance Internals Interaction InternalInteraction where
@@ -310,7 +310,7 @@ data InternalInteraction = InternalInteraction
     internalInteractionVersion :: Int,
     internalInteractionMessage :: Maybe Message
   }
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 instance ToJSON InternalInteraction where
   toJSON InternalInteraction {..} =
@@ -367,7 +367,7 @@ data InternalInteractionData = InternalInteractionData
     -- | Component only, the unique id.
     internalInteractionDataCustomId :: Maybe T.Text,
     -- | Component only, the type of the component.
-    internalInteractionDataComponentType :: Maybe ComponentType,
+    internalInteractionDataComponentType :: Maybe InternalComponentType,
     -- | Component only, the selected options if component is the select type.
     internalInteractionDataValues :: Maybe [T.Text],
     -- | This is the id of the user or message being targetted by a user command
@@ -498,7 +498,7 @@ data InteractionResponse = InteractionResponse
   { interactionResponseType :: InteractionCallbackType,
     interactionResponseData :: Maybe InteractionCallbackData
   }
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
@@ -549,7 +549,7 @@ instance ToJSON InteractionCallbackType where
 data InteractionCallbackData
   = InteractionCallbackDataMessages InteractionCallbackMessages
   | InteractionCallbackDataAutocomplete InteractionCallbackAutocomplete
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 instance ToJSON InteractionCallbackData where
   toJSON (InteractionCallbackDataMessages icdm) = toJSON icdm
@@ -564,10 +564,10 @@ data InteractionCallbackMessages = InteractionCallbackMessages
     interactionCallbackMessagesEmbeds :: Maybe [Embed],
     interactionCallbackMessagesAllowedMentions :: Maybe AllowedMentions,
     interactionCallbackMessagesFlags :: Maybe InteractionCallbackDataFlags,
-    interactionCallbackMessagesComponents :: Maybe [Component],
+    interactionCallbackMessagesComponents :: Maybe [ComponentActionRow],
     interactionCallbackMessagesAttachments :: Maybe [Attachment]
   }
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 -- | A basic interaction response, sending back the given text. This is
 -- effectively a helper function.

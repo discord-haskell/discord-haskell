@@ -58,7 +58,7 @@ data Event =
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
   | UnknownEvent     T.Text Object
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 data EventInternalParse =
     InternalReady                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
@@ -96,7 +96,7 @@ data EventInternalParse =
   -- | InternalVoiceStateUpdate
   -- | InternalVoiceServerUpdate
   | InternalUnknownEvent     T.Text Object
-  deriving (Show, Read, Eq)
+  deriving (Show, Eq)
 
 data PartialApplication = PartialApplication
   { partialApplicationID :: ApplicationId

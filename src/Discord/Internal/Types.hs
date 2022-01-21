@@ -19,7 +19,7 @@ import Data.Aeson (Object)
 import Data.Maybe (fromMaybe)
 import Data.Time.Clock (UTCTime (..))
 import Discord.Internal.Types.Channel
-import Discord.Internal.Types.Components
+import Discord.Internal.Types.Components hiding (InternalComponentType (..))
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway

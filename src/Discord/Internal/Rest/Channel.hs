@@ -32,6 +32,7 @@ import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Discord.Internal.Types.Prelude (Internals(toInternal))
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
@@ -106,9 +107,9 @@ data MessageDetailedOpts = MessageDetailedOpts
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
-  , messageDetailedComponents               :: Maybe [Component]
+  , messageDetailedComponents               :: Maybe [ComponentActionRow]
   , messageDetailedStickerIds               :: Maybe [StickerId]
-  } deriving (Show, Read, Eq, Ord)
+  } deriving (Show, Eq, Ord)
 
 instance Default MessageDetailedOpts where
   def = MessageDetailedOpts { messageDetailedContent         = ""
@@ -311,7 +312,7 @@ channelJsonRequest c = case c of
                                     [ ("embed", toJSON . createEmbed <$> messageDetailedEmbed msgOpts)
                                     , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
                                     , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                    , ("components", toJSON . (filterOutIncorrectEmoji <$>) <$> messageDetailedComponents msgOpts)
+                                    , ("components", toJSON . (filterOutIncorrectEmoji . toInternal <$>) <$> messageDetailedComponents msgOpts)
                                     , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
                                     ] ]
           payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
