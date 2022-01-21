@@ -144,33 +144,33 @@ data InteractionDataComponent
 
 data InteractionDataApplicationCommand
   = InteractionDataApplicationCommandUser
-      { -- | Id of the invoked command
+      { -- | Id of the invoked command.
         interactionDataApplicationCommandId :: ApplicationCommandId,
-        -- | Name of the invoked command
+        -- | Name of the invoked command.
         interactionDataApplicationCommandName :: T.Text,
-        -- | The resolved data in the command
+        -- | The resolved data in the command.
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
-        -- | The id of the user that is the target
+        -- | The id of the user that is the target.
         interactionDataApplicationCommandTargetId :: UserId
       }
   | InteractionDataApplicationCommandMessage
-      { -- | Id of the invoked command
+      { -- | Id of the invoked command.
         interactionDataApplicationCommandId :: ApplicationCommandId,
-        -- | Name of the invoked command
+        -- | Name of the invoked command.
         interactionDataApplicationCommandName :: T.Text,
-        -- | The resolved data in the command
+        -- | The resolved data in the command.
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
-        -- | The id of the message that is the target
+        -- | The id of the message that is the target.
         interactionDataApplicationCommandTargetId :: MessageId
       }
   | InteractionDataApplicationCommandChatInput
-      { -- | Id of the invoked command
+      { -- | Id of the invoked command.
         interactionDataApplicationCommandId :: ApplicationCommandId,
-        -- | Name of the invoked command
+        -- | Name of the invoked command.
         interactionDataApplicationCommandName :: T.Text,
-        -- | The resolved data in the command
+        -- | The resolved data in the command.
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
-        -- | The options of the application command
+        -- | The options of the application command.
         interactionDataApplicationCommandOptions :: Maybe InteractionDataApplicationCommandOptions
       }
   deriving (Show, Read, Eq)
@@ -291,12 +291,8 @@ instance Internals Interaction InternalInteraction where
       process Nothing = Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId Nothing internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
       process (Just d) = fromInternal d >>= \d' -> Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (Just d') internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
 
--- Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (internalInteractionType == InteractionTypeApplicationCommandAutocomplete) (internalInteractionData >>= fromInternal) internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-
--- application command type -- this should be defined in the constructor!
 -- resolved data -- this should be formalised and integrated, instead of being
 --  left as values
--- options -- only present if type is subcommand or subcommand group
 
 -- | This is the data that is recieved when an interaction occurs.
 --
@@ -358,24 +354,24 @@ instance FromJSON InternalInteraction where
 --
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-interaction-data-structure
 data InternalInteractionData = InternalInteractionData
-  { -- | Application command only, id of the invoked command
+  { -- | Application command only, id of the invoked command.
     internalInteractionDataApplicationCommandId :: Maybe ApplicationCommandId,
-    -- | Application command only, name of the invoked command
+    -- | Application command only, name of the invoked command.
     internalInteractionDataApplicationCommandName :: Maybe T.Text,
-    -- | Application command only, the type of the invoked command
+    -- | Application command only, the type of the invoked command.
     internalInteractionDataApplicationCommandType :: Maybe ApplicationCommandType,
-    -- | Application command only, converted users, roles, channels
+    -- | Application command only, converted users, roles, channels.
     internalInteractionDataResolved :: Maybe ResolvedData,
-    -- | Application command only, params and values
+    -- | Application command only, params and values.
     internalInteractionDataOptions :: Maybe [InternalInteractionDataApplicationCommandOption],
-    -- | Component only, the unique id
+    -- | Component only, the unique id.
     internalInteractionDataCustomId :: Maybe T.Text,
-    -- | Component only, the type of the component
+    -- | Component only, the type of the component.
     internalInteractionDataComponentType :: Maybe ComponentType,
-    -- | Component only, the selected options if component is the select type
+    -- | Component only, the selected options if component is the select type.
     internalInteractionDataValues :: Maybe [T.Text],
     -- | This is the id of the user or message being targetted by a user command
-    -- or a message command
+    -- or a message command.
     internalInteractionDataTargetId :: Maybe Snowflake
   }
   deriving (Show, Read, Eq)
@@ -522,7 +518,7 @@ instance ToJSON InteractionResponse where
 data InteractionCallbackType
   = -- | Responds to a PING.
     InteractionCallbackTypePong
-  | -- | Respond with a message to the interaction
+  | -- | Respond with a message to the interaction.
     InteractionCallbackTypeChannelMessageWithSource
   | -- | Respond with a message to the interaction, after a delay. Sending this
     -- back means the interaction token lasts for 15 minutes.
