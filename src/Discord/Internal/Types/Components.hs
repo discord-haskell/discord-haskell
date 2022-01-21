@@ -5,8 +5,18 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Discord.Internal.Types.Components where
+module Discord.Internal.Types.Components
+  ( ComponentActionRow (..),
+    ComponentButton (..),
+    ComponentSelectMenu (..),
+    InternalComponentType (..),
+    Emoji (..),
+    validPartialEmoji,
+    filterOutIncorrectEmoji,
+  )
+where
 
 import Data.Aeson
 import Data.Data (Data)
@@ -34,10 +44,10 @@ data ComponentButton
         componentButtonLabel :: T.Text,
         componentButtonEmoji :: Maybe Emoji
       }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 data ButtonStyle = ButtonStylePrimary | ButtonStyleSecondary | ButtonStyleSuccess | ButtonStyleDanger
-  deriving (Show, Eq, Read)
+  deriving (Show, Eq, Ord, Read)
 
 buttonStyles :: [(ButtonStyle, InternalButtonStyle)]
 buttonStyles =
@@ -62,10 +72,20 @@ data ComponentSelectMenu = ComponentSelectMenu
     componentSelectMenuMinValues :: Maybe Integer,
     componentSelectMenuMaxValues :: Maybe Integer
   }
-  deriving (Show, Eq, Read)
+  deriving (Show, Eq, Ord, Read)
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
+
+instance FromJSON ComponentActionRow where
+  parseJSON v = do
+    iac <- parseJSON @InternalComponent v
+    case fromInternal iac of
+      Nothing -> fail "could not convert internal component"
+      Just v' -> return v'
+
+instance ToJSON ComponentActionRow where
+  toJSON v = toJSON @InternalComponent $ toInternal v
 
 validPartialEmoji :: Emoji -> Maybe Emoji
 validPartialEmoji Emoji {..} = do
@@ -73,62 +93,62 @@ validPartialEmoji Emoji {..} = do
   ean <- emojiAnimated
   return $ Emoji (Just eid) emojiName Nothing Nothing Nothing (Just ean)
 
-instance Internals ComponentActionRow Component where
-  toInternal (ComponentActionRowButton as) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just (toInternal' <$> as))
+instance Internals ComponentActionRow InternalComponent where
+  toInternal (ComponentActionRowButton as) = InternalComponent InternalComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just (toInternal' <$> as))
     where
-      toInternal' ComponentButtonUrl {..} = Component ComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just (R.renderUrl componentButtonUrl)) Nothing Nothing Nothing Nothing Nothing
-      toInternal' ComponentButton {..} = Component ComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
-  toInternal (ComponentActionRowSelectMenu ComponentSelectMenu {..}) = Component ComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [Component ComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
+      toInternal' ComponentButtonUrl {..} = InternalComponent InternalComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just (R.renderUrl componentButtonUrl)) Nothing Nothing Nothing Nothing Nothing
+      toInternal' ComponentButton {..} = InternalComponent InternalComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
+  toInternal (ComponentActionRowSelectMenu ComponentSelectMenu {..}) = InternalComponent InternalComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [InternalComponent InternalComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
 
-  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = (Just (Component {componentType = ComponentTypeSelectMenu, ..} : _))} = do
-    cid <- componentCustomId
-    cd <- componentDisabled
-    co <- componentOptions
-    return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid cd co componentPlaceholder componentMinValues componentMaxValues
-  fromInternal Component {componentType = ComponentTypeActionRow, componentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
+  fromInternal InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = (Just (InternalComponent {internalComponentType = InternalComponentTypeSelectMenu, ..} : _))} = do
+    cid <- internalComponentCustomId
+    cd <- internalComponentDisabled
+    co <- internalComponentOptions
+    return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid cd co internalComponentPlaceholder internalComponentMinValues internalComponentMaxValues
+  fromInternal InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
     where
-      fromInternal' Component {componentType = ComponentTypeButton, componentStyle = Just InternalButtonStyleLink, ..} = do
-        url <- R.https <$> componentUrl
-        label <- componentLabel
-        return $ ComponentButtonUrl url (fromMaybe False componentDisabled) label componentEmoji
-      fromInternal' Component {componentType = ComponentTypeButton, ..} = do
-        customId <- componentCustomId
-        label <- componentLabel
-        style <- componentStyle >>= fromInternal
-        return $ ComponentButton customId (fromMaybe False componentDisabled) style label componentEmoji
+      fromInternal' InternalComponent {internalComponentType = InternalComponentTypeButton, internalComponentStyle = Just InternalButtonStyleLink, ..} = do
+        url <- R.https <$> internalComponentUrl
+        label <- internalComponentLabel
+        return $ ComponentButtonUrl url (fromMaybe False internalComponentDisabled) label internalComponentEmoji
+      fromInternal' InternalComponent {internalComponentType = InternalComponentTypeButton, ..} = do
+        customId <- internalComponentCustomId
+        label <- internalComponentLabel
+        style <- internalComponentStyle >>= fromInternal
+        return $ ComponentButton customId (fromMaybe False internalComponentDisabled) style label internalComponentEmoji
       fromInternal' _ = Nothing
   fromInternal _ = Nothing
 
-data Component = Component
-  { componentType :: ComponentType,
+data InternalComponent = InternalComponent
+  { internalComponentType :: InternalComponentType,
     -- | Buttons and Select Menus only
-    componentCustomId :: Maybe T.Text,
+    internalComponentCustomId :: Maybe T.Text,
     -- | Buttons and Select Menus only
-    componentDisabled :: Maybe Bool,
+    internalComponentDisabled :: Maybe Bool,
     -- | Button only
-    componentStyle :: Maybe InternalButtonStyle,
+    internalComponentStyle :: Maybe InternalButtonStyle,
     -- | Button only
-    componentLabel :: Maybe T.Text,
+    internalComponentLabel :: Maybe T.Text,
     -- | Button only
-    componentEmoji :: Maybe Emoji,
+    internalComponentEmoji :: Maybe Emoji,
     -- | Button only, link buttons only
-    componentUrl :: Maybe T.Text,
+    internalComponentUrl :: Maybe T.Text,
     -- | Select Menus only, max 25
-    componentOptions :: Maybe [SelectOption],
+    internalComponentOptions :: Maybe [SelectOption],
     -- | Select Menus only, max 100 chars
-    componentPlaceholder :: Maybe T.Text,
+    internalComponentPlaceholder :: Maybe T.Text,
     -- | Select Menus only, min values to choose, default 1
-    componentMinValues :: Maybe Integer,
+    internalComponentMinValues :: Maybe Integer,
     -- | Select Menus only, max values to choose, default 1
-    componentMaxValues :: Maybe Integer,
+    internalComponentMaxValues :: Maybe Integer,
     -- | Action Rows only
-    componentComponents :: Maybe [Component]
+    internalComponentComponents :: Maybe [InternalComponent]
   }
   deriving (Show, Eq, Ord, Read)
 
-instance FromJSON Component where
-  parseJSON = withObject "Component" $ \o ->
-    Component <$> o .: "type"
+instance FromJSON InternalComponent where
+  parseJSON = withObject "InternalComponent" $ \o ->
+    InternalComponent <$> o .: "type"
       <*> o .:? "custom_id"
       <*> o .:? "disabled"
       <*> o .:? "style"
@@ -141,49 +161,49 @@ instance FromJSON Component where
       <*> o .:? "max_values"
       <*> o .:? "components"
 
-instance ToJSON Component where
-  toJSON Component {..} =
+instance ToJSON InternalComponent where
+  toJSON InternalComponent {..} =
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("type", toMaybeJSON componentType),
-              ("custom_id", toJSON <$> componentCustomId),
-              ("disabled", toJSON <$> componentDisabled),
-              ("style", toJSON <$> componentStyle),
-              ("label", toJSON <$> componentLabel),
-              ("emoji", toJSON <$> componentEmoji),
-              ("url", toJSON <$> componentUrl),
-              ("options", toJSON <$> componentOptions),
-              ("placeholder", toJSON <$> componentPlaceholder),
-              ("min_values", toJSON <$> componentMinValues),
-              ("max_values", toJSON <$> componentMaxValues),
-              ("components", toJSON <$> componentComponents)
+            [ ("type", toMaybeJSON internalComponentType),
+              ("custom_id", toJSON <$> internalComponentCustomId),
+              ("disabled", toJSON <$> internalComponentDisabled),
+              ("style", toJSON <$> internalComponentStyle),
+              ("label", toJSON <$> internalComponentLabel),
+              ("emoji", toJSON <$> internalComponentEmoji),
+              ("url", toJSON <$> internalComponentUrl),
+              ("options", toJSON <$> internalComponentOptions),
+              ("placeholder", toJSON <$> internalComponentPlaceholder),
+              ("min_values", toJSON <$> internalComponentMinValues),
+              ("max_values", toJSON <$> internalComponentMaxValues),
+              ("components", toJSON <$> internalComponentComponents)
             ]
       ]
 
 -- | The different types of components
-data ComponentType
+data InternalComponentType
   = -- | A container for other components
-    ComponentTypeActionRow
+    InternalComponentTypeActionRow
   | -- | A button
-    ComponentTypeButton
+    InternalComponentTypeButton
   | -- | A select menu for picking from choices
-    ComponentTypeSelectMenu
+    InternalComponentTypeSelectMenu
   deriving (Show, Read, Eq, Ord, Data)
 
-instance Enum ComponentType where
-  fromEnum ComponentTypeActionRow = 1
-  fromEnum ComponentTypeButton = 2
-  fromEnum ComponentTypeSelectMenu = 3
+instance Enum InternalComponentType where
+  fromEnum InternalComponentTypeActionRow = 1
+  fromEnum InternalComponentTypeButton = 2
+  fromEnum InternalComponentTypeSelectMenu = 3
   toEnum a = fromJust $ lookup a table
     where
-      table = makeTable ComponentTypeActionRow
+      table = makeTable InternalComponentTypeActionRow
 
-instance ToJSON ComponentType where
+instance ToJSON InternalComponentType where
   toJSON = toJSON . fromEnum
 
-instance FromJSON ComponentType where
-  parseJSON = withScientific "StickerFormatType" (return . toEnum . round)
+instance FromJSON InternalComponentType where
+  parseJSON = withScientific "InternalComponentType" (return . toEnum . round)
 
 data InternalButtonStyle
   = -- | Blurple button
@@ -289,8 +309,8 @@ instance ToJSON SelectOption where
             ]
       ]
 
-filterOutIncorrectEmoji :: Component -> Component
-filterOutIncorrectEmoji c@Component {componentType = ComponentTypeActionRow, componentComponents = (Just cs)} = c {componentComponents = Just (filterOutIncorrectEmoji <$> cs)}
-filterOutIncorrectEmoji c@Component {componentType = ComponentTypeSelectMenu, componentOptions = (Just os)} = c {componentOptions = Just ((\so -> so {selectOptionEmoji = selectOptionEmoji so >>= validPartialEmoji}) <$> os)}
-filterOutIncorrectEmoji c@Component {componentType = ComponentTypeButton, componentEmoji = (Just e)} = c {componentEmoji = validPartialEmoji e}
+filterOutIncorrectEmoji :: InternalComponent -> InternalComponent
+filterOutIncorrectEmoji c@InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = (Just cs)} = c {internalComponentComponents = Just (filterOutIncorrectEmoji <$> cs)}
+filterOutIncorrectEmoji c@InternalComponent {internalComponentType = InternalComponentTypeSelectMenu, internalComponentOptions = (Just os)} = c {internalComponentOptions = Just ((\so -> so {selectOptionEmoji = selectOptionEmoji so >>= validPartialEmoji}) <$> os)}
+filterOutIncorrectEmoji c@InternalComponent {internalComponentType = InternalComponentTypeButton, internalComponentEmoji = (Just e)} = c {internalComponentEmoji = validPartialEmoji e}
 filterOutIncorrectEmoji c = c

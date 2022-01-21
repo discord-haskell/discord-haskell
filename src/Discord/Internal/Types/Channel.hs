@@ -19,7 +19,7 @@ import Discord.Internal.Types.Embed
 import Data.Data (Data)
 import Data.Maybe (fromJust)
 import Data.Bits
-import Discord.Internal.Types.Components (Component, Emoji)
+import Discord.Internal.Types.Components (ComponentActionRow, Emoji)
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -299,9 +299,9 @@ data Message = Message
   , messageReferencedMessage  :: Maybe Message            -- ^ The full original message
   , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
-  , messageComponents         :: Maybe [Component]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
+  , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
   , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers 
-  } deriving (Show, Read, Eq, Ord)
+  } deriving (Show, Eq, Ord)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
