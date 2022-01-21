@@ -42,9 +42,9 @@ import Data.Maybe (fromJust, fromMaybe)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
-  ( ApplicationCommandOptionType (..),
+  ( ApplicationCommandOptionChoice,
+    ApplicationCommandOptionType (..),
     ApplicationCommandType (..),
-    InternalApplicationCommandOptionChoice,
   )
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (Component, ComponentType (..))
@@ -555,7 +555,7 @@ instance ToJSON InteractionCallbackData where
   toJSON (InteractionCallbackDataMessages icdm) = toJSON icdm
   toJSON (InteractionCallbackDataAutocomplete icda) = toJSON icda
 
-type InteractionCallbackAutocomplete = [InternalApplicationCommandOptionChoice]
+type InteractionCallbackAutocomplete = [ApplicationCommandOptionChoice]
 
 -- | A cut down message structure.
 data InteractionCallbackMessages = InteractionCallbackMessages

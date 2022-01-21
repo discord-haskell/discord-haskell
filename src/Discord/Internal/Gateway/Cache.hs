@@ -54,9 +54,6 @@ cacheLoop cacheHandle log = do
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  --InternalChannelCreate Channel
-  --InternalChannelUpdate Channel
-  --InternalChannelDelete Channel
   InternalGuildCreate guild info ->
     let newChans = map (setChanGuildID (guildId guild)) $ guildChannels info
         g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (cacheGuilds minfo)
