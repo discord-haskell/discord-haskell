@@ -51,49 +51,49 @@ import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, Guil
 -- | The structure for an application command.
 data ApplicationCommand
   = ApplicationCommandUser
-      { -- | The id of the application comman.
+      { -- | The id of the application command.
         applicationCommandId :: ApplicationCommandId,
-        -- | The id of the application the command comes fro.
+        -- | The id of the application the command comes from.
         applicationCommandApplicationId :: ApplicationId,
-        -- | The guild the application command is registered i.
+        -- | The guild the application command is registered in.
         applicationCommandGuildId :: Maybe GuildId,
-        -- | The name of the application comman.
+        -- | The name of the application command.
         applicationCommandName :: T.Text,
-        -- | Whether the command is enabled by default when the app is added to a guil.
+        -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Maybe Bool,
-        -- | Autoincrementing version identifier updated during substantial record change.
+        -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
   | ApplicationCommandMessage
-      { -- | The id of the application comman.
+      { -- | The id of the application command.
         applicationCommandId :: ApplicationCommandId,
-        -- | The id of the application the command comes fro.
+        -- | The id of the application the command comes from.
         applicationCommandApplicationId :: ApplicationId,
-        -- | The guild the application command is registered i.
+        -- | The guild the application command is registered in.
         applicationCommandGuildId :: Maybe GuildId,
-        -- | The name of the application comman.
+        -- | The name of the application command.
         applicationCommandName :: T.Text,
-        -- | Whether the command is enabled by default when the app is added to a guil.
+        -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Maybe Bool,
-        -- | Autoincrementing version identifier updated during substantial record change.
+        -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
   | ApplicationCommandChatInput
-      { -- | The id of the application comman.
+      { -- | The id of the application command.
         applicationCommandId :: ApplicationCommandId,
-        -- | The id of the application the command comes fro.
+        -- | The id of the application the command comes from.
         applicationCommandApplicationId :: ApplicationId,
-        -- | The guild the application command is registered i.
+        -- | The guild the application command is registered in.
         applicationCommandGuildId :: Maybe GuildId,
-        -- | The name of the application comman.
+        -- | The name of the application command.
         applicationCommandName :: T.Text,
-        -- | The description of the application comman.
+        -- | The description of the application command.
         applicationCommandDescription :: T.Text,
-        -- | The parameters for the comman.
+        -- | The parameters for the command.
         applicationCommandOptions :: Maybe ApplicationCommandOptions,
-        -- | Whether the command is enabled by default when the app is added to a guil.
+        -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Maybe Bool,
-        -- | Autoincrementing version identifier updated during substantial record change.
+        -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
   | ApplicationCommandUnknown InternalApplicationCommand
@@ -258,11 +258,11 @@ instance Internals ApplicationCommand InternalApplicationCommand where
 -- | What type of application command. Represents slash commands, right clicking
 -- a user, and right clicking a message respectively.
 data ApplicationCommandType
-  = -- | Slash command.
+  = -- | Slash commands.
     ApplicationCommandTypeChatInput
-  | -- | User command.
+  | -- | User commands.
     ApplicationCommandTypeUser
-  | -- | Message command.
+  | -- | Message commands.
     ApplicationCommandTypeMessage
   deriving (Show, Read, Data, Eq)
 
@@ -299,16 +299,16 @@ instance FromJSON ApplicationCommandType where
 data CreateApplicationCommand = CreateApplicationCommand
   { -- | The application command name (1-32 chars).
     createApplicationCommandName :: T.Text,
-    -- | The application command description (1-100 chars). Has to be empty fo.
+    -- | The application command description (1-100 chars). Has to be empty for
     -- non-slash commands.
     createApplicationCommandDescription :: T.Text,
-    -- | What options the application (max length 25). Has to be `Nothing` fo.
+    -- | What options the application (max length 25). Has to be `Nothing` for
     -- non-slash commands.
     createApplicationCommandOptions :: Maybe ApplicationCommandOptions,
-    -- | Whether the command is enabled by default when the application is adde.
+    -- | Whether the command is enabled by default when the application is added
     -- to a guild. Defaults to true if not present
     createApplicationCommandDefaultPermission :: Maybe Bool,
-    -- | What the type of the command is. If `Nothing`, defaults to slas.
+    -- | What the type of the command is. If `Nothing`, defaults to slash
     -- commands.
     createApplicationCommandType :: Maybe ApplicationCommandType
   }
@@ -403,9 +403,9 @@ data InternalApplicationCommand = InternalApplicationCommand
     internalApplicationCommandName :: T.Text,
     -- | Must be empty for USER and MESSAGE commands, otherwise 1-100 chars.
     internalApplicationCommandDescription :: T.Text,
-    -- | CHAT_INPUT only, parameters to comman.
+    -- | CHAT_INPUT only, parameters for the command.
     internalApplicationCommandOptions :: Maybe [InternalApplicationCommandOption],
-    -- | whether the command is enabled by default when the app is added to .
+    -- | Whether the command is enabled by default when the app is added to a
     -- guild. Defaults to true.
     internalApplicationCommandDefaultPermission :: Maybe Bool,
     internalApplicationCommandVersion :: Snowflake
@@ -435,26 +435,26 @@ instance FromJSON InternalApplicationCommand where
 data InternalApplicationCommandOption = InternalApplicationCommandOption
   { -- | What the type of this option is.
     internalApplicationCommandOptionType :: ApplicationCommandOptionType,
-    -- | The name of the option . 1-32 character.
+    -- | The name of the option. 1-32 characters. Has other restrictions.
     internalApplicationCommandOptionName :: T.Text,
-    -- | 1-100 character.
+    -- | 1-100 characters
     internalApplicationCommandOptionDescription :: T.Text,
     -- | Is the parameter required? default fals.
     internalApplicationCommandOptionRequired :: Maybe Bool,
-    -- | If specified, these are the only valid options to choose from. Typ.
+    -- | If specified, these are the only valid options to choose from. Type
     -- depends on optionType, and can only be specified for STRING, INTEGER or
     -- NUMBER types.
     internalApplicationCommandOptionChoices :: Maybe [InternalApplicationCommandOptionChoice],
-    -- | If the option type is a subcommand or subcommand group type, these ar.
+    -- | If the option type is a subcommand or subcommand group type, these are
     -- the parameters to the subcommand.
     internalApplicationCommandOptionOptions :: Maybe [InternalApplicationCommandOption],
     -- | If option is channel type, these are the only channel types allowed.
     internalApplicationCommandOptionChannelTypes :: Maybe [ApplicationCommandChannelType],
-    -- | If option is number type, minimum value for the numbe.
+    -- | If option is number type, minimum value for the number.
     internalApplicationCommandOptionMinVal :: Maybe Scientific,
-    -- | if option is number type, maximum value for the numbe.
+    -- | if option is number type, maximum value for the number.
     internalApplicationCommandOptionMaxVal :: Maybe Scientific,
-    -- | Enable auto complete interactions. may not be set to true if choices is present.
+    -- | Enable auto complete interactions. May not be set to true if choices is present.
     internalApplicationCommandOptionAutocomplete :: Maybe Bool
   }
   deriving (Show, Eq, Read)
@@ -500,15 +500,15 @@ instance FromJSON InternalApplicationCommandOption where
 --
 -- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
 data ApplicationCommandOptionType
-  = -- | A subcommand. It can take further options, excluding sub commands an.
+  = -- | A subcommand. It can take further options, excluding sub commands and
     -- sub command groups.
     ApplicationCommandOptionTypeSubcommand
-  | -- | A subcommand group. It can take further options, excluding sub comman.
+  | -- | A subcommand group. It can take further options, excluding sub command
     -- groups.
     ApplicationCommandOptionTypeSubcommandGroup
   | -- | Can typically be provided with default values.
     ApplicationCommandOptionTypeString
-  | -- | Can typically be provided with default values, and possibly wit.
+  | -- | Can typically be provided with default values, and possibly with
     -- minimum and maximum values.
     ApplicationCommandOptionTypeInteger
   | ApplicationCommandOptionTypeBoolean
@@ -518,7 +518,7 @@ data ApplicationCommandOptionType
   | ApplicationCommandOptionTypeRole
   | -- | Users and roles.
     ApplicationCommandOptionTypeMentionable
-  | -- | Can typically be provided with default values, and possibly wit.
+  | -- | Can typically be provided with default values, and possibly with
     -- minimum and maximum values. Represents a double.
     ApplicationCommandOptionTypeNumber
   deriving (Show, Read, Data, Eq)
@@ -631,13 +631,13 @@ instance FromJSON ApplicationCommandChannelType where
   parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
 
 data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions
-  { -- | The id of the comman.
+  { -- | The id of the command.
     guildApplicationCommandPermissionsId :: ApplicationCommandId,
-    -- | The id of the applicatio.
+    -- | The id of the application.
     guildApplicationCommandPermissionsApplicationId :: ApplicationId,
-    -- | The id of the guil.
+    -- | The id of the guild.
     guildApplicationCommandPermissionsGuildId :: GuildId,
-    -- | The permissions for the command in the guil.
+    -- | The permissions for the command in the guild.
     guildApplicationCommandPermissionsPermissions :: [ApplicationCommandPermissions]
   }
   deriving (Show, Eq, Ord, Read)
@@ -667,11 +667,11 @@ instance ToJSON GuildApplicationCommandPermissions where
       ]
 
 data ApplicationCommandPermissions = ApplicationCommandPermissions
-  { -- | The id of the role or use.
+  { -- | The id of the role or user.
     applicationCommandPermissionsId :: Snowflake,
-    -- | Choose either role or use.
+    -- | Choose either role or user.
     applicationCommandPermissionsType :: ApplicationCommandPermissionType,
-    -- | Whether to allow or no.
+    -- | Whether to allow or not.
     applicationCommandPermissionsPermission :: Bool
   }
   deriving (Show, Eq, Ord, Read)
