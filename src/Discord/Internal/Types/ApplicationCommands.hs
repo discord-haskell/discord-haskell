@@ -43,7 +43,7 @@ import Control.Applicative
 import Data.Aeson
 import Data.Data (Data)
 import Data.Default (Default (..))
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Internals (..), Snowflake, makeTable, toMaybeJSON)
@@ -178,9 +178,9 @@ data ApplicationCommandOptionValue
   deriving (Show, Eq, Read)
 
 instance Internals ApplicationCommandOptionValue InternalApplicationCommandOption where
-  toInternal ApplicationCommandOptionValueNumber {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeNumber applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueNumber <$>) <$>) <$> applicationCommandOptionValueNumberChoices) Nothing Nothing applicationCommandOptionValueNumberMinVal applicationCommandOptionValueNumberMaxVal applicationCommandOptionValueAutocomplete
-  toInternal ApplicationCommandOptionValueInteger {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeInteger applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueInteger <$>) <$>) <$> applicationCommandOptionValueIntegerChoices) Nothing Nothing (fromInteger <$> applicationCommandOptionValueIntegerMinVal) (fromInteger <$> applicationCommandOptionValueIntegerMaxVal) applicationCommandOptionValueAutocomplete
-  toInternal ApplicationCommandOptionValueString {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeInteger applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueString <$>) <$>) <$> applicationCommandOptionValueStringChoices) Nothing Nothing Nothing Nothing applicationCommandOptionValueAutocomplete
+  toInternal ApplicationCommandOptionValueNumber {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeNumber applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueNumber <$>) <$>) <$> applicationCommandOptionValueNumberChoices) Nothing Nothing (IntegerOrScientificScientific <$> applicationCommandOptionValueNumberMinVal) (IntegerOrScientificScientific <$> applicationCommandOptionValueNumberMaxVal) applicationCommandOptionValueAutocomplete
+  toInternal ApplicationCommandOptionValueInteger {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeInteger applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueInteger <$>) <$>) <$> applicationCommandOptionValueIntegerChoices) Nothing Nothing (IntegerOrScientificInteger <$> applicationCommandOptionValueIntegerMinVal) (IntegerOrScientificInteger <$> applicationCommandOptionValueIntegerMaxVal) applicationCommandOptionValueAutocomplete
+  toInternal ApplicationCommandOptionValueString {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeString applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired (((StringNumberValueString <$>) <$>) <$> applicationCommandOptionValueStringChoices) Nothing Nothing Nothing Nothing applicationCommandOptionValueAutocomplete
   toInternal ApplicationCommandOptionValueChannel {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeChannel applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired Nothing Nothing applicationCommandOptionValueChannelTypes Nothing Nothing Nothing
   toInternal ApplicationCommandOptionValueBoolean {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeBoolean applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired Nothing Nothing Nothing Nothing Nothing Nothing
   toInternal ApplicationCommandOptionValueUser {..} = InternalApplicationCommandOption ApplicationCommandOptionTypeUser applicationCommandOptionValueName applicationCommandOptionValueDescription applicationCommandOptionValueRequired Nothing Nothing Nothing Nothing Nothing Nothing
@@ -189,21 +189,27 @@ instance Internals ApplicationCommandOptionValue InternalApplicationCommandOptio
 
   fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeNumber, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
-    return $ ApplicationCommandOptionValueNumber internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) internalApplicationCommandOptionMinVal internalApplicationCommandOptionMaxVal internalApplicationCommandOptionAutocomplete
+    return $ ApplicationCommandOptionValueNumber internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) (extractBoundValue <$> internalApplicationCommandOptionMinVal) (extractBoundValue <$> internalApplicationCommandOptionMaxVal) internalApplicationCommandOptionAutocomplete
     where
       extractChoices (Choice s (StringNumberValueNumber n)) = Just (Choice s n)
+      extractChoices (Choice s (StringNumberValueInteger n)) = Just (Choice s (fromInteger n))
       extractChoices _ = Nothing
+      extractBoundValue (IntegerOrScientificInteger i) = fromInteger i
+      extractBoundValue (IntegerOrScientificScientific i) = i
       fromResult [] = Nothing
       fromResult is = Just is
   fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeInteger, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
-    return $ ApplicationCommandOptionValueInteger internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) (round <$> internalApplicationCommandOptionMinVal) (round <$> internalApplicationCommandOptionMaxVal) internalApplicationCommandOptionAutocomplete
+    minb <- maybe (Just Nothing) extractBoundValue internalApplicationCommandOptionMinVal
+    maxb <- maybe (Just Nothing) extractBoundValue internalApplicationCommandOptionMaxVal
+    return $ ApplicationCommandOptionValueInteger internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) minb maxb internalApplicationCommandOptionAutocomplete
     where
       extractChoices (Choice s (StringNumberValueInteger n)) = Just (Choice s n)
       extractChoices _ = Nothing
+      extractBoundValue (IntegerOrScientificInteger i) = Just $ Just i
+      extractBoundValue (IntegerOrScientificScientific _) = Nothing
       fromResult [] = Nothing
       fromResult is = Just is
-  -- note with the above: the bounds are rounded for simplicity but ideally they wouldn't be
   fromInternal InternalApplicationCommandOption {internalApplicationCommandOptionType = ApplicationCommandOptionTypeString, ..} = do
     cs <- maybe (Just []) (mapM extractChoices) internalApplicationCommandOptionChoices
     return $ ApplicationCommandOptionValueString internalApplicationCommandOptionName internalApplicationCommandOptionDescription internalApplicationCommandOptionRequired (fromResult cs) internalApplicationCommandOptionAutocomplete
@@ -250,7 +256,19 @@ instance Internals ApplicationCommand InternalApplicationCommand where
 
   fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeUser, ..} = Just $ ApplicationCommandUser internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeMessage, ..} = Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
-  fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
+  fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} =
+    ((internalApplicationCommandOptions <|> Just []) >>= fromInternal)
+      >>= \iOptions ->
+        Just $
+          ApplicationCommandChatInput
+            internalApplicationCommandId
+            internalApplicationCommandApplicationId
+            internalApplicationCommandGuildId
+            internalApplicationCommandName
+            internalApplicationCommandDescription
+            (Just iOptions)
+            internalApplicationCommandDefaultPermission
+            internalApplicationCommandVersion
   fromInternal a = fromInternal (a {internalApplicationCommandType = Just ApplicationCommandTypeChatInput})
 
 instance FromJSON ApplicationCommand where
@@ -456,9 +474,9 @@ data InternalApplicationCommandOption = InternalApplicationCommandOption
     -- | If option is channel type, these are the only channel types allowed.
     internalApplicationCommandOptionChannelTypes :: Maybe [ApplicationCommandChannelType],
     -- | If option is number type, minimum value for the number.
-    internalApplicationCommandOptionMinVal :: Maybe Scientific,
+    internalApplicationCommandOptionMinVal :: Maybe IntegerOrScientific,
     -- | if option is number type, maximum value for the number.
-    internalApplicationCommandOptionMaxVal :: Maybe Scientific,
+    internalApplicationCommandOptionMaxVal :: Maybe IntegerOrScientific,
     -- | Enable auto complete interactions. May not be set to true if choices is present.
     internalApplicationCommandOptionAutocomplete :: Maybe Bool
   }
@@ -548,6 +566,15 @@ instance ToJSON ApplicationCommandOptionType where
 
 instance FromJSON ApplicationCommandOptionType where
   parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
+
+data IntegerOrScientific = IntegerOrScientificInteger Integer | IntegerOrScientificScientific Scientific deriving (Show, Eq, Ord, Read)
+
+instance ToJSON IntegerOrScientific where
+  toJSON (IntegerOrScientificInteger i) = toJSON i
+  toJSON (IntegerOrScientificScientific i) = toJSON i
+
+instance FromJSON IntegerOrScientific where
+  parseJSON v = (IntegerOrScientificInteger <$> parseJSON v) <|> (IntegerOrScientificScientific <$> parseJSON v)
 
 -- | Utility data type to store strings or number types.
 data StringNumberValue = StringNumberValueString T.Text | StringNumberValueNumber Scientific | StringNumberValueInteger Integer
