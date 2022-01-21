@@ -99,11 +99,13 @@ data ApplicationCommand
   | ApplicationCommandUnknown InternalApplicationCommand
   deriving (Show, Eq, Read)
 
+-- | Either subcommands and groups, or values.
 data ApplicationCommandOptions
   = ApplicationCommandOptionsSubcommands [ApplicationCommandOptionSubcommandOrGroup]
   | ApplicationCommandOptionsValues [ApplicationCommandOptionValue]
   deriving (Show, Eq, Read)
 
+-- | Either a subcommand group or a subcommand.
 data ApplicationCommandOptionSubcommandOrGroup
   = ApplicationCommandOptionSubcommandGroup
       { applicationCommandOptionSubcommandGroupName :: T.Text,
@@ -113,6 +115,7 @@ data ApplicationCommandOptionSubcommandOrGroup
   | ApplicationCommandOptionSubcommandOrGroupSubcommand ApplicationCommandOptionSubcommand
   deriving (Show, Eq, Read)
 
+-- | Data for a single subcommand.
 data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
   { applicationCommandOptionSubcommandName :: T.Text,
     applicationCommandOptionSubcommandDescription :: T.Text,
@@ -120,6 +123,7 @@ data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
   }
   deriving (Show, Eq, Read)
 
+-- | Data for a single value.
 data ApplicationCommandOptionValue
   = ApplicationCommandOptionValueString
       { applicationCommandOptionValueName :: T.Text,
@@ -250,8 +254,6 @@ instance Internals ApplicationCommand InternalApplicationCommand where
   fromInternal InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeMessage, ..} = Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal a@InternalApplicationCommand {internalApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = Just $ fromMaybe (ApplicationCommandUnknown a) $ ((internalApplicationCommandOptions <|> Just []) >>= fromInternal) >>= \iOptions -> Just $ ApplicationCommandChatInput internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDescription (Just iOptions) internalApplicationCommandDefaultPermission internalApplicationCommandVersion
   fromInternal a = fromInternal (a {internalApplicationCommandType = Just ApplicationCommandTypeChatInput})
-
--- Just $ ApplicationCommandMessage internalApplicationCommandId internalApplicationCommandApplicationId internalApplicationCommandGuildId internalApplicationCommandName internalApplicationCommandDefaultPermission internalApplicationCommandVersion
 
 -- | What type of application command. Represents slash commands, right clicking
 -- a user, and right clicking a message respectively.

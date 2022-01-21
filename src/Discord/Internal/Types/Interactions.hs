@@ -199,7 +199,7 @@ data InteractionDataApplicationCommandOptionSubcommand = InteractionDataApplicat
   }
   deriving (Show, Read, Eq)
 
--- | Data for a single value
+-- | Data for a single value.
 data InteractionDataApplicationCommandOptionValue = InteractionDataApplicationCommandOptionValue
   { interactionDataApplicationCommandOptionValueName :: T.Text,
     interactionDataApplicationCommandOptionValueValue :: ApplicationCommandInteractionDataValue,
