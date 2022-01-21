@@ -10,7 +10,9 @@
 module Discord.Internal.Types.Components
   ( ComponentActionRow (..),
     ComponentButton (..),
+    ButtonStyle (..),
     ComponentSelectMenu (..),
+    SelectOption (..),
     InternalComponentType (..),
     Emoji (..),
     validPartialEmoji,
@@ -25,7 +27,6 @@ import qualified Data.Text as T
 import Data.Tuple (swap)
 import Discord.Internal.Types.Prelude (EmojiId, Internals (..), RoleId, makeTable, toMaybeJSON)
 import Discord.Internal.Types.User (User)
-import qualified Network.HTTP.Req as R
 
 -- | Component type for a button, split into URL button and not URL button.
 --
@@ -39,7 +40,9 @@ data ComponentButton
         componentButtonEmoji :: Maybe Emoji
       }
   | ComponentButtonUrl
-      { componentButtonUrl :: R.Url 'R.Https,
+      { -- | The url for the button. If this is not a valid url, everything will
+        -- break
+        componentButtonUrl :: T.Text,
         componentButtonDisabled :: Bool,
         componentButtonLabel :: T.Text,
         componentButtonEmoji :: Maybe Emoji
@@ -96,19 +99,18 @@ validPartialEmoji Emoji {..} = do
 instance Internals ComponentActionRow InternalComponent where
   toInternal (ComponentActionRowButton as) = InternalComponent InternalComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just (toInternal' <$> as))
     where
-      toInternal' ComponentButtonUrl {..} = InternalComponent InternalComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just (R.renderUrl componentButtonUrl)) Nothing Nothing Nothing Nothing Nothing
+      toInternal' ComponentButtonUrl {..} = InternalComponent InternalComponentTypeButton Nothing (Just componentButtonDisabled) (Just InternalButtonStyleLink) (Just componentButtonLabel) componentButtonEmoji (Just componentButtonUrl) Nothing Nothing Nothing Nothing Nothing
       toInternal' ComponentButton {..} = InternalComponent InternalComponentTypeButton (Just componentButtonCustomId) (Just componentButtonDisabled) (Just (toInternal componentButtonStyle)) (Just componentButtonLabel) componentButtonEmoji Nothing Nothing Nothing Nothing Nothing Nothing
   toInternal (ComponentActionRowSelectMenu ComponentSelectMenu {..}) = InternalComponent InternalComponentTypeActionRow Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing (Just [InternalComponent InternalComponentTypeSelectMenu (Just componentSelectMenuCustomId) (Just componentSelectMenuDisabled) Nothing Nothing Nothing Nothing (Just componentSelectMenuOptions) componentSelectMenuPlaceholder componentSelectMenuMinValues componentSelectMenuMaxValues Nothing])
 
-  fromInternal InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = (Just (InternalComponent {internalComponentType = InternalComponentTypeSelectMenu, ..} : _))} = do
+  fromInternal InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = (Just [InternalComponent {internalComponentType = InternalComponentTypeSelectMenu, ..}])} = do
     cid <- internalComponentCustomId
-    cd <- internalComponentDisabled
     co <- internalComponentOptions
-    return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid cd co internalComponentPlaceholder internalComponentMinValues internalComponentMaxValues
+    return $ ComponentActionRowSelectMenu $ ComponentSelectMenu cid (fromMaybe False internalComponentDisabled) co internalComponentPlaceholder internalComponentMinValues internalComponentMaxValues
   fromInternal InternalComponent {internalComponentType = InternalComponentTypeActionRow, internalComponentComponents = compComps} = compComps >>= mapM fromInternal' >>= Just . ComponentActionRowButton
     where
       fromInternal' InternalComponent {internalComponentType = InternalComponentTypeButton, internalComponentStyle = Just InternalButtonStyleLink, ..} = do
-        url <- R.https <$> internalComponentUrl
+        url <- internalComponentUrl
         label <- internalComponentLabel
         return $ ComponentButtonUrl url (fromMaybe False internalComponentDisabled) label internalComponentEmoji
       fromInternal' InternalComponent {internalComponentType = InternalComponentTypeButton, ..} = do

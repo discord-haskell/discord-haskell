@@ -5,14 +5,12 @@
 import Control.Monad (forM_, void, when)
 import Data.Char (isDigit)
 import Data.List (transpose)
-import Data.Maybe (fromJust, isNothing)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 import Discord
 import Discord.Interactions
 import qualified Discord.Requests as R
 import Discord.Types
-import qualified Network.HTTP.Req as RH
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 
@@ -152,24 +150,22 @@ newExampleSlashCommand =
 -- | An example slash command.
 exampleSlashCommand :: Maybe CreateApplicationCommand
 exampleSlashCommand =
-  ( createApplicationCommandChatInput
-      "test"
-      "here is a description"
-  )
+  createApplicationCommandChatInput
+    "test"
+    "here is a description"
     >>= \cac ->
       return $
         cac
           { createApplicationCommandOptions =
-              ( Just $
-                  ApplicationCommandOptionsValues
-                    [ ApplicationCommandOptionValueString
-                        "randominput"
-                        "I shall not"
-                        (Just True)
-                        (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
-                        Nothing
-                    ]
-              )
+              Just $
+                ApplicationCommandOptionsValues
+                  [ ApplicationCommandOptionValueString
+                      "randominput"
+                      "I shall not"
+                      (Just True)
+                      (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
+                      Nothing
+                  ]
           }
 
 exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
@@ -214,32 +210,28 @@ eventHandler event = case event of
             { R.messageDetailedContent = "An example of a message with buttons!",
               R.messageDetailedComponents =
                 Just
-                  [ toInternal
-                      ( ComponentActionRowButton
-                          [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (Emoji (Just 0) "🔥" Nothing Nothing Nothing (Just False))),
-                            ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
-                            ComponentButtonUrl
-                              (RH.https "github.com" RH./: "aquarial" RH./: "discord-haskell")
-                              False
-                              "Button 3"
-                              Nothing
+                  [ ComponentActionRowButton
+                      [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (Emoji (Just 0) "🔥" Nothing Nothing Nothing (Just False))),
+                        ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
+                        ComponentButtonUrl
+                          "https://github.com/aquarial/discord-haskell"
+                          False
+                          "Button 3"
+                          Nothing
+                      ],
+                    ComponentActionRowSelectMenu
+                      ( ComponentSelectMenu
+                          "action select menu"
+                          False
+                          [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
+                            SelectOption "Second option" "opt2" Nothing (Just (Emoji (Just 0) "😭" Nothing Nothing Nothing (Just False))) (Just True),
+                            SelectOption "third option" "opt3" Nothing Nothing Nothing,
+                            SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
+                            SelectOption "fifth option" "opt5" Nothing Nothing Nothing
                           ]
-                      ),
-                    toInternal
-                      ( ComponentActionRowSelectMenu
-                          ( ComponentSelectMenu
-                              "action select menu"
-                              False
-                              [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
-                                SelectOption "Second option" "opt2" Nothing (Just (Emoji (Just 0) "😭" Nothing Nothing Nothing (Just False))) (Just True),
-                                SelectOption "third option" "opt3" Nothing Nothing Nothing,
-                                SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
-                                SelectOption "fifth option" "opt5" Nothing Nothing Nothing
-                              ]
-                              (Just "this is a place holder")
-                              (Just 2)
-                              (Just 5)
-                          )
+                          (Just "this is a place holder")
+                          (Just 2)
+                          (Just 5)
                       )
                   ]
             }
@@ -330,27 +322,26 @@ processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents
   where
     player = T.last (messageContent m)
     newComp' = updateTicTacToe (Just (cid, '0' == player))
-    disableAll c@Component {componentType = ComponentTypeActionRow, componentComponents = Just cs, ..} = c {componentComponents = Just (disableAll <$> cs)}
-    disableAll c = c {componentDisabled = Just True}
+    disableAll (ComponentActionRowButton cs) = ComponentActionRowButton $ (\c -> c {componentButtonDisabled = True}) <$> cs
+    disableAll c = c
 processTicTacToe _ _ = [interactionCallbackMessagesBasic "Sorry, I couldn't understand that button."]
 
-checkTicTacToe :: [Component] -> Bool
+checkTicTacToe :: [ComponentActionRow] -> Bool
 checkTicTacToe xs = checkRows unwrapped || checkRows unwrappedT || checkRows [diagonal unwrapped, diagonal (reverse <$> unwrapped)]
   where
-    checkRows = any (\cbs -> all (\cb -> cb == head cbs && cb /= InternalButtonStyleSecondary) cbs)
-    unwrapped = (\Component {componentComponents = Just cbs} -> (\Component {componentStyle = Just style} -> style) <$> cbs) <$> xs
+    checkRows = any (\cbs -> all (\cb -> cb == head cbs && cb /= ButtonStyleSecondary) cbs)
+    unwrapped = (\(ComponentActionRowButton cbs) -> (\ComponentButton {componentButtonStyle = style} -> style) <$> cbs) <$> xs
     unwrappedT = transpose unwrapped
     diagonal [] = []
     diagonal ([] : _) = []
     diagonal (ys : yss) = head ys : diagonal (tail <$> yss)
 
-updateTicTacToe :: Maybe (T.Text, Bool) -> [Component] -> [Component]
-updateTicTacToe Nothing _ = (\y -> toInternal (ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 4])) <$> [0 .. 4]
+updateTicTacToe :: Maybe (T.Text, Bool) -> [ComponentActionRow] -> [ComponentActionRow]
+updateTicTacToe Nothing _ = (\y -> ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 4]) <$> [0 .. 4]
 updateTicTacToe (Just (tttxy, isFirst)) car
-  | isNothing car' || not (checkIsValid tttxy) = car
-  | otherwise = (\(ComponentActionRowButton cbs) -> toInternal $ ComponentActionRowButton (changeIf <$> cbs)) <$> fromJust car'
+  | not (checkIsValid tttxy) = car
+  | otherwise = (\(ComponentActionRowButton cbs) -> ComponentActionRowButton (changeIf <$> cbs)) <$> car
   where
-    car' = mapM fromInternal car :: Maybe [ComponentActionRow]
     checkIsValid tttxy' = T.length tttxy' == 6 && all isDigit [T.index tttxy' 4, T.index tttxy' 5]
     getxy tttxy' = (T.index tttxy' 4, T.index tttxy' 5)
     (style, symbol) = if isFirst then (ButtonStyleSuccess, "[X]") else (ButtonStyleDanger, "[O]")
