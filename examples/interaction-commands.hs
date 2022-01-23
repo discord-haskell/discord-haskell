@@ -313,8 +313,6 @@ eventHandler event = case event of
         )
   _ -> return ()
 
--- e -> trace ("uncaught:" ++ show e) $ return ()
-
 processTicTacToe :: InteractionDataComponent -> Message -> [InteractionCallbackMessages]
 processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents m of
   Nothing -> [interactionCallbackMessagesBasic "Sorry, I couldn't get the components on that message."]
