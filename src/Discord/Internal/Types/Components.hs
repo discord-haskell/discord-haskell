@@ -11,8 +11,11 @@ module Discord.Internal.Types.Components
   ( ComponentActionRow (..),
     ComponentButton (..),
     ButtonStyle (..),
+    mkButton,
     ComponentSelectMenu (..),
+    mkSelectMenu,
     SelectOption (..),
+    mkSelectOption,
     InternalComponentType (..),
     Emoji (..),
     validPartialEmoji,
@@ -33,21 +36,33 @@ import Discord.Internal.Types.User (User)
 -- Don't directly send button components - they need to be within an action row.
 data ComponentButton
   = ComponentButton
-      { componentButtonCustomId :: T.Text,
+      { -- | Dev indentifier
+        componentButtonCustomId :: T.Text,
+        -- | Whether the button is disabled
         componentButtonDisabled :: Bool,
+        -- | What is the style of the button
         componentButtonStyle :: ButtonStyle,
+        -- | What is the user-facing label of the button
         componentButtonLabel :: T.Text,
+        -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
   | ComponentButtonUrl
       { -- | The url for the button. If this is not a valid url, everything will
         -- break
         componentButtonUrl :: T.Text,
+        -- | Whether the button is disabled
         componentButtonDisabled :: Bool,
+        -- | What is the user-facing label of the button
         componentButtonLabel :: T.Text,
+        -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
   deriving (Show, Eq, Ord)
+
+-- | Takes the label and the custom id of the button that is to be generated.
+mkButton :: T.Text -> T.Text -> ComponentButton
+mkButton label customId = ComponentButton customId False ButtonStyleSecondary label Nothing
 
 data ButtonStyle = ButtonStylePrimary | ButtonStyleSecondary | ButtonStyleSuccess | ButtonStyleDanger
   deriving (Show, Eq, Ord, Read)
@@ -68,14 +83,25 @@ instance Internals ButtonStyle InternalButtonStyle where
 --
 -- Don't directly send select menus - they need to be within an action row.
 data ComponentSelectMenu = ComponentSelectMenu
-  { componentSelectMenuCustomId :: T.Text,
+  { -- | Dev identifier
+    componentSelectMenuCustomId :: T.Text,
+    -- | Whether the select menu is disabled
     componentSelectMenuDisabled :: Bool,
+    -- | What options are in this select menu (up to 25)
     componentSelectMenuOptions :: [SelectOption],
+    -- | Placeholder text if nothing is selected
     componentSelectMenuPlaceholder :: Maybe T.Text,
+    -- | Minimum number of values to select (def 1, min 0, max 25)
     componentSelectMenuMinValues :: Maybe Integer,
+    -- | Maximum number of values to select (def 1, max 25)
     componentSelectMenuMaxValues :: Maybe Integer
   }
   deriving (Show, Eq, Ord, Read)
+
+-- | Takes the custom id and the options of the select menu that is to be
+-- generated.
+mkSelectMenu :: T.Text -> [SelectOption] -> ComponentSelectMenu
+mkSelectMenu customId sos = ComponentSelectMenu customId False sos Nothing Nothing Nothing
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
   deriving (Show, Eq, Ord)
@@ -276,6 +302,7 @@ instance ToJSON Emoji where
             ]
       ]
 
+-- | A single option in a select menu.
 data SelectOption = SelectOption
   { -- | User facing option name
     selectOptionLabel :: T.Text,
@@ -289,6 +316,10 @@ data SelectOption = SelectOption
     selectOptionDefault :: Maybe Bool
   }
   deriving (Show, Eq, Ord, Read)
+
+-- | Make a select option from the given label and value.
+mkSelectOption :: T.Text -> T.Text -> SelectOption
+mkSelectOption label value = SelectOption label value Nothing Nothing Nothing
 
 instance FromJSON SelectOption where
   parseJSON = withObject "SelectOption" $ \o ->
