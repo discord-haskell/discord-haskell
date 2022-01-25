@@ -101,14 +101,13 @@ newExampleSlashCommand =
                             [ ApplicationCommandOptionValueString
                                 "onestringinput"
                                 "two options"
-                                (Just True)
-                                ( Just
+                                True
+                                ( Right
                                     [ Choice "green" "green",
                                       Choice "red" "red"
                                     ]
-                                )
-                                Nothing,
-                              ApplicationCommandOptionValueInteger "oneintinput" "choices galore" Nothing Nothing Nothing Nothing Nothing
+                                ),
+                              ApplicationCommandOptionValueInteger "oneintinput" "choices galore" False (Left False) Nothing Nothing
                             ]
                         ],
                       ApplicationCommandOptionSubcommandOrGroupSubcommand $
@@ -118,13 +117,12 @@ newExampleSlashCommand =
                           [ ApplicationCommandOptionValueString
                               "onestringinput"
                               "two options"
-                              (Just True)
-                              ( Just
+                              True
+                              ( Right
                                   [ Choice "yellow" "yellow",
                                     Choice "blue" "blue"
                                   ]
                               )
-                              Nothing
                           ],
                       ApplicationCommandOptionSubcommandOrGroupSubcommand $
                         ApplicationCommandOptionSubcommand
@@ -133,15 +131,14 @@ newExampleSlashCommand =
                           [ ApplicationCommandOptionValueBoolean
                               "trueorfalse"
                               "true or false"
-                              (Just True),
+                              True,
                             ApplicationCommandOptionValueNumber
                               "numbercomm"
                               "number option"
-                              Nothing
-                              Nothing
+                              False
+                              (Left True)
                               (Just 3.1415)
                               (Just 101)
-                              (Just True)
                           ]
                     ]
                 )
@@ -162,9 +159,8 @@ exampleSlashCommand =
                   [ ApplicationCommandOptionValueString
                       "randominput"
                       "I shall not"
-                      (Just True)
-                      (Just [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
-                      Nothing
+                      True
+                      (Right [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
                   ]
           }
 
