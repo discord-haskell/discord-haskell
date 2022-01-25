@@ -1,9 +1,11 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
 
-import Control.Monad (forM_, void, when)
+import Control.Monad (forM_, when)
 import Data.Char (isDigit)
+import Data.Functor ((<&>))
 import Data.List (transpose)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -21,7 +23,16 @@ main =
     else interactionCommandExample
 
 testserverid :: Snowflake
-testserverid = -1
+testserverid = 463428416008355872
+
+void :: DiscordHandler (Either RestCallErrorCode b) -> DiscordHandler ()
+void =
+  ( >>=
+      ( \case
+          Left e -> liftIO $ print e
+          Right _ -> return ()
+      )
+  )
 
 -- | Replies "pong" to every message that starts with "ping"
 interactionCommandExample :: IO ()
@@ -307,6 +318,13 @@ eventHandler event = case event of
                     }
               )
         )
+  InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentSelectMenu {interactionDataComponentValues = vs}, ..} ->
+    void
+      ( do
+          aid <- readCache <&> cacheApplication <&> partialApplicationID
+          _ <- restCall (R.CreateInteractionResponse interactionId interactionToken (InteractionResponse InteractionCallbackTypeDeferredChannelMessageWithSource Nothing))
+          restCall (R.CreateFollowupInteractionMessage aid interactionToken (interactionCallbackMessagesBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs)))
+      )
   _ -> return ()
 
 processTicTacToe :: InteractionDataComponent -> Message -> [InteractionCallbackMessages]
