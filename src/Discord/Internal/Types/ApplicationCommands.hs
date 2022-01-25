@@ -15,7 +15,7 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandOptionSubcommandOrGroup (..),
     ApplicationCommandOptionSubcommand (..),
     ApplicationCommandOptionValue (..),
-    InternalApplicationCommand (..),
+    -- InternalApplicationCommand (..),
     createApplicationCommandChatInput,
     createApplicationCommandUser,
     createApplicationCommandMessage,
@@ -27,7 +27,7 @@ module Discord.Internal.Types.ApplicationCommands
       ),
     EditApplicationCommand (..),
     ApplicationCommandType (..),
-    InternalApplicationCommandOption (..),
+    -- InternalApplicationCommandOption (..),
     ApplicationCommandOptionType (..),
     ApplicationCommandOptionChoice,
     Choice (..),
@@ -275,7 +275,7 @@ instance FromJSON ApplicationCommand where
   parseJSON v = do
     iac <- parseJSON @InternalApplicationCommand v
     case fromInternal iac of
-      Nothing -> fail "could not convert internal application command"
+      Nothing -> fail $ "could not convert internal application command. may be caused by malformed application command. delete application command " <> show (internalApplicationCommandId iac) <> "(guildid: " <> show (internalApplicationCommandGuildId iac) <> ") and try again."
       Just v' -> return v'
 
 -- | What type of application command. Represents slash commands, right clicking

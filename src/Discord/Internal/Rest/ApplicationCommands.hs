@@ -5,7 +5,7 @@
 
 module Discord.Internal.Rest.ApplicationCommands where
 
-import Data.Aeson (ToJSON (toJSON), Value)
+import Data.Aeson (Value)
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Discord.Internal.Types.ApplicationCommands

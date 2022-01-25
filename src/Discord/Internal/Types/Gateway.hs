@@ -80,7 +80,7 @@ instance Default GatewayIntent where
 compileGatewayIntent :: GatewayIntent -> Int
 compileGatewayIntent GatewayIntent{..} =
  sum $ [ if on then flag else 0
-       | (flag, on) <- [ (2 ^  0, gatewayIntentGuilds)
+       | (flag, on) <- [ (     1, gatewayIntentGuilds)
                        , (2 ^  1, gatewayIntentMembers)
                        , (2 ^  2, gatewayIntentBans)
                        , (2 ^  3, gatewayIntentEmojis)
@@ -169,7 +169,7 @@ instance FromJSON GatewayReceivable where
                ejson <- o .: "d"
                case ejson of
                  Object hm -> Dispatch <$> eventParse etype hm <*> o .: "s"
-                 _other -> Dispatch (InternalUnknownEvent ("Dispatch payload wasn't an object") o)
+                 _other -> Dispatch (InternalUnknownEvent "Dispatch payload wasn't an object" o)
                                   <$> o .: "s"
       1  -> HeartbeatRequest . fromMaybe 0 . readMaybe <$> o .: "d"
       7  -> pure Reconnect

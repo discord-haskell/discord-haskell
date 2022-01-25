@@ -253,7 +253,7 @@ eventHandler event = case event of
     case acs of
       Left r -> liftIO $ print r
       Right ls -> liftIO $ putStrLn $ "number of application commands total " ++ show (length ls)
-  InteractionCreate InteractionComponent {interactionDataComponent = Just cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
+  InteractionCreate InteractionComponent {interactionDataComponent = cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
     [r] ->
       void
         ( restCall
@@ -289,16 +289,16 @@ eventHandler event = case event of
           )
           rs
     _ -> return ()
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandUser {interactionDataApplicationCommandName = nm, interactionDataApplicationCommandTargetId = uid, ..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandUser {interactionDataApplicationCommandName = nm, interactionDataApplicationCommandTargetId = uid, ..}, ..} ->
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic $ "Command " <> nm <> T.pack (" selected user: " ++ show uid)))
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "test", interactionDataApplicationCommandOptions = Just d, ..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "test", interactionDataApplicationCommandOptions = Just d, ..}, ..} ->
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse d))
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = Just InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just d, ..}, ..} -> void $ restCall (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic (T.pack $ "oh boy, subcommands! welp, here's everything I got from that: " <> show d)))
-  InteractionCreate InteractionComponent {interactionDataComponent = Just InteractionDataComponentButton {..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just d, ..}, ..} -> void $ restCall (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic (T.pack $ "oh boy, subcommands! welp, here's everything I got from that: " <> show d)))
+  InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentButton {..}, ..} ->
     void $
       restCall
         ( R.CreateInteractionResponse interactionId interactionToken $

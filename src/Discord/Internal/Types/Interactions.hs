@@ -1,10 +1,13 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
@@ -15,12 +18,9 @@ module Discord.Internal.Types.Interactions
     InteractionDataApplicationCommandOptionSubcommand (..),
     InteractionDataApplicationCommandOptionValue (..),
     ApplicationCommandInteractionDataValue (..),
-    InternalInteraction (..),
     InteractionToken,
     InteractionType,
-    InternalInteractionData (..),
     ResolvedData (..),
-    InternalInteractionDataApplicationCommandOption (..),
     InteractionResponse (..),
     interactionResponseBasic,
     InteractionCallbackType (..),
@@ -38,7 +38,7 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
 import Data.Data (Data)
-import Data.Maybe (fromJust, fromMaybe)
+import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands
@@ -60,7 +60,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataComponent :: Maybe InteractionDataComponent,
+        interactionDataComponent :: InteractionDataComponent,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -92,7 +92,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataApplicationCommand :: Maybe InteractionDataApplicationCommand,
+        interactionDataApplicationCommand :: InteractionDataApplicationCommand,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -112,7 +112,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataApplicationCommand :: Maybe InteractionDataApplicationCommand,
+        interactionDataApplicationCommand :: InteractionDataApplicationCommand,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -126,7 +126,6 @@ data Interaction
         -- | What version of interaction is this (always 1).
         interactionVersion :: Int
       }
-  | InteractionUnknown InternalInteraction
   deriving (Show, Eq)
 
 data InteractionDataComponent
@@ -242,23 +241,25 @@ instance Internals InteractionDataApplicationCommandOptions [InternalInteraction
   toInternal (InteractionDataApplicationCommandOptionsSubcommands lst) = toInternal <$> lst
   toInternal (InteractionDataApplicationCommandOptionsValues lst) = toInternal <$> lst
 
-  fromInternal is = (InteractionDataApplicationCommandOptionsSubcommands <$> mapM fromInternal is) <|> (InteractionDataApplicationCommandOptionsValues <$> mapM fromInternal is)
+  fromInternal is = InteractionDataApplicationCommandOptionsSubcommands <$> mapM fromInternal is <|> InteractionDataApplicationCommandOptionsValues <$> mapM fromInternal is
 
 instance Internals InteractionDataApplicationCommand InternalInteractionData where
   toInternal InteractionDataApplicationCommandUser {..} = InternalInteractionData (Just interactionDataApplicationCommandId) (Just interactionDataApplicationCommandName) (Just ApplicationCommandTypeUser) interactionDataApplicationCommandResolvedData Nothing Nothing Nothing Nothing Nothing
   toInternal InteractionDataApplicationCommandMessage {..} = InternalInteractionData (Just interactionDataApplicationCommandId) (Just interactionDataApplicationCommandName) (Just ApplicationCommandTypeMessage) interactionDataApplicationCommandResolvedData Nothing Nothing Nothing Nothing Nothing
   toInternal InteractionDataApplicationCommandChatInput {..} = InternalInteractionData (Just interactionDataApplicationCommandId) (Just interactionDataApplicationCommandName) (Just ApplicationCommandTypeMessage) interactionDataApplicationCommandResolvedData (toInternal <$> interactionDataApplicationCommandOptions) Nothing Nothing Nothing Nothing
 
-  fromInternal InternalInteractionData {internalInteractionDataApplicationCommandType = Just ApplicationCommandTypeUser, ..} = do
-    aid <- internalInteractionDataApplicationCommandId
-    name <- internalInteractionDataApplicationCommandName
-    tid <- internalInteractionDataTargetId
-    return $ InteractionDataApplicationCommandUser aid name internalInteractionDataResolved tid
-  fromInternal InternalInteractionData {internalInteractionDataApplicationCommandType = Just ApplicationCommandTypeMessage, ..} = do
-    aid <- internalInteractionDataApplicationCommandId
-    name <- internalInteractionDataApplicationCommandName
-    tid <- internalInteractionDataTargetId
-    return $ InteractionDataApplicationCommandMessage aid name internalInteractionDataResolved tid
+  fromInternal InternalInteractionData {internalInteractionDataApplicationCommandType = Just ApplicationCommandTypeUser, ..} =
+    InteractionDataApplicationCommandUser
+      <$> internalInteractionDataApplicationCommandId
+      <*> internalInteractionDataApplicationCommandName
+      <*> return internalInteractionDataResolved
+      <*> internalInteractionDataTargetId
+  fromInternal InternalInteractionData {internalInteractionDataApplicationCommandType = Just ApplicationCommandTypeMessage, ..} =
+    InteractionDataApplicationCommandMessage
+      <$> internalInteractionDataApplicationCommandId
+      <*> internalInteractionDataApplicationCommandName
+      <*> return internalInteractionDataResolved
+      <*> internalInteractionDataTargetId
   fromInternal InternalInteractionData {internalInteractionDataApplicationCommandType = Just ApplicationCommandTypeChatInput, ..} = do
     aid <- internalInteractionDataApplicationCommandId
     name <- internalInteractionDataApplicationCommandName
@@ -275,21 +276,27 @@ instance Internals InteractionDataComponent InternalInteractionData where
 
 instance Internals Interaction InternalInteraction where
   toInternal InteractionPing {..} = InternalInteraction interactionId interactionApplicationId InteractionTypePing Nothing Nothing Nothing Nothing Nothing interactionToken interactionVersion Nothing
-  toInternal InteractionComponent {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeMessageComponent (toInternal <$> interactionDataComponent) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion (Just interactionMessage)
-  toInternal InteractionApplicationCommand {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommand (toInternal <$> interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
-  toInternal InteractionApplicationCommandAutocomplete {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommandAutocomplete (toInternal <$> interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
-  toInternal (InteractionUnknown i) = i
+  toInternal InteractionComponent {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeMessageComponent (Just $ toInternal interactionDataComponent) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion (Just interactionMessage)
+  toInternal InteractionApplicationCommand {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommand (Just $ toInternal interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
+  toInternal InteractionApplicationCommandAutocomplete {..} = InternalInteraction interactionId interactionApplicationId InteractionTypeApplicationCommandAutocomplete (Just $ toInternal interactionDataApplicationCommand) interactionGuildId interactionChannelId interactionMember interactionUser interactionToken interactionVersion Nothing
 
   fromInternal InternalInteraction {internalInteractionType = InteractionTypePing, ..} = Just $ InteractionPing internalInteractionId internalInteractionApplicationId internalInteractionToken internalInteractionVersion
-  fromInternal i@InternalInteraction {internalInteractionType = InteractionTypeMessageComponent, ..} = Just $ fromMaybe (InteractionUnknown i) $ internalInteractionMessage >>= Just . InteractionComponent internalInteractionId internalInteractionApplicationId (internalInteractionData >>= fromInternal) internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-  fromInternal i@InternalInteraction {internalInteractionType = InteractionTypeApplicationCommandAutocomplete, ..} = Just $ fromMaybe (InteractionUnknown i) $ process internalInteractionData
-    where
-      process Nothing = Just $ InteractionApplicationCommandAutocomplete internalInteractionId internalInteractionApplicationId Nothing internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-      process (Just d) = fromInternal d >>= \d' -> Just $ InteractionApplicationCommandAutocomplete internalInteractionId internalInteractionApplicationId (Just d') internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-  fromInternal i@InternalInteraction {internalInteractionType = InteractionTypeApplicationCommand, ..} = Just $ fromMaybe (InteractionUnknown i) $ process internalInteractionData
-    where
-      process Nothing = Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId Nothing internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
-      process (Just d) = fromInternal d >>= \d' -> Just $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId (Just d') internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+  fromInternal InternalInteraction {internalInteractionType = InteractionTypeMessageComponent, ..} = do
+    iData <- internalInteractionData >>= fromInternal
+    InteractionComponent internalInteractionId internalInteractionApplicationId iData internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion <$> internalInteractionMessage
+  fromInternal InternalInteraction {internalInteractionType = InteractionTypeApplicationCommandAutocomplete, ..} = do
+    iData <- internalInteractionData >>= fromInternal
+    return $ InteractionApplicationCommandAutocomplete internalInteractionId internalInteractionApplicationId iData internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+  fromInternal InternalInteraction {internalInteractionType = InteractionTypeApplicationCommand, ..} = do
+    iData <- internalInteractionData >>= fromInternal
+    return $ InteractionApplicationCommand internalInteractionId internalInteractionApplicationId iData internalInteractionGuildId internalInteractionChannelId internalInteractionMember internalInteractionUser internalInteractionToken internalInteractionVersion
+
+instance FromJSON Interaction where
+  parseJSON v = do
+    iac <- parseJSON @InternalInteraction v
+    case fromInternal iac of
+      Nothing -> fail "could not convert internal interaction."
+      Just v' -> return v'
 
 -- resolved data -- this should be formalised and integrated, instead of being
 --  left as values
