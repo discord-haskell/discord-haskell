@@ -15,7 +15,6 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandOptionSubcommandOrGroup (..),
     ApplicationCommandOptionSubcommand (..),
     ApplicationCommandOptionValue (..),
-    -- InternalApplicationCommand (..),
     createApplicationCommandChatInput,
     createApplicationCommandUser,
     createApplicationCommandMessage,
@@ -27,7 +26,6 @@ module Discord.Internal.Types.ApplicationCommands
       ),
     EditApplicationCommand (..),
     ApplicationCommandType (..),
-    -- InternalApplicationCommandOption (..),
     ApplicationCommandOptionType (..),
     ApplicationCommandOptionChoice,
     Choice (..),
@@ -387,7 +385,7 @@ createApplicationCommandMessage name
 data EditApplicationCommand = EditApplicationCommand
   { editApplicationCommandName :: Maybe T.Text,
     editApplicationCommandDescription :: Maybe T.Text,
-    editApplicationCommandOptions :: Maybe [InternalApplicationCommandOption],
+    editApplicationCommandOptions :: Maybe ApplicationCommandOptions,
     editApplicationCommandDefaultPermission :: Maybe Bool,
     editApplicationCommandType :: Maybe ApplicationCommandType
   }
@@ -402,7 +400,7 @@ instance ToJSON EditApplicationCommand where
         | (name, Just value) <-
             [ ("name", toJSON <$> editApplicationCommandName),
               ("description", toJSON <$> editApplicationCommandDescription),
-              ("options", toJSON <$> editApplicationCommandOptions),
+              ("options", toJSON . (toInternal @_ @[InternalApplicationCommandOption]) <$> editApplicationCommandOptions),
               ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
               ("type", toJSON <$> editApplicationCommandType)
             ]
