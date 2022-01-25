@@ -15,8 +15,7 @@ module Discord.Internal.Types
   )
 where
 
-import Data.Aeson (Object)
-import Data.Maybe (fromMaybe)
+import Data.Aeson (Object, ToJSON (toJSON))
 import Data.Time.Clock (UTCTime (..))
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Components hiding (InternalComponentType (..))
@@ -24,9 +23,7 @@ import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
-import Discord.Internal.Types.Interactions (Interaction (InteractionUnknown))
 import Discord.Internal.Types.Prelude hiding (Internals (..))
-import qualified Discord.Internal.Types.Prelude as TP
 import Discord.Internal.Types.User
 
 userFacingEvent :: EventInternalParse -> Event
@@ -62,5 +59,5 @@ userFacingEvent event = case event of
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
-  InternalInteractionCreate a -> InteractionCreate (fromMaybe (InteractionUnknown a) (TP.fromInternal a))
+  InternalInteractionCreate a -> InteractionCreate a
   InternalUnknownEvent a b -> UnknownEvent a b
