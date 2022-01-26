@@ -23,7 +23,7 @@ import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
-import Discord.Internal.Types.Prelude
+import Discord.Internal.Types.Prelude hiding (InternalDiscordType(..))
 import Discord.Internal.Types.User
 
 userFacingEvent :: EventInternalParse -> Event

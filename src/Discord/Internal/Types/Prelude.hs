@@ -83,8 +83,28 @@ epochTime = posixSecondsToUTCTime 0
 
 type ColorInteger = Integer
 
-makeTable :: (Data t, Enum t) => t -> [(Int, t)]
-makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataTypeConstrs $ dataTypeOf t)
+class Data a => InternalDiscordType a where
+  discordTypeStartValue :: a
+  fromDiscordType :: a -> Int
+  discordTypeTable :: [(Int, a)]
+  discordTypeTable = map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)
+    where 
+      makeTable :: Data a => a -> [a]
+      makeTable t = map fromConstr (dataTypeConstrs $ dataTypeOf t)
+
+  discordTypeParseJSON :: String -> Value -> Parser a
+  discordTypeParseJSON name =
+    withScientific
+      name
+      ( \i -> do
+          case maybeInt i >>= (`lookup` discordTypeTable) of
+            Nothing -> fail $ "could not parse type: " ++ show i
+            Just d -> return d
+      )
+    where
+      maybeInt i
+        | fromIntegral (round i) == i = Just $ round i
+        | otherwise = Nothing
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
