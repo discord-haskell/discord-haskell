@@ -108,7 +108,7 @@ newExampleSlashCommand =
                         "the sub command group"
                         [ ApplicationCommandOptionSubcommand
                             "frstsubcmd"
-                            "the first sub command"
+                            "the first sub sub command"
                             [ ApplicationCommandOptionValueString
                                 "onestringinput"
                                 "two options"
@@ -149,7 +149,34 @@ newExampleSlashCommand =
                               False
                               (Left True)
                               (Just 3.1415)
-                              (Just 101)
+                              (Just 101),
+                            ApplicationCommandOptionValueInteger
+                              "numbercomm2"
+                              "another number option"
+                              False
+                              (Right [Choice "one" 1, Choice "two" 2, Choice "minus 1" (-1)])
+                              (Just $ -1)
+                              (Just $ -2),
+                            ApplicationCommandOptionValueInteger
+                              "numbercomm3"
+                              "another another number option"
+                              False
+                              (Left True)
+                              (Just $ -50)
+                              (Just 50),
+                            ApplicationCommandOptionValueUser
+                              "user"
+                              "testing asking for a user"
+                              False,
+                            ApplicationCommandOptionValueChannel
+                              "channel"
+                              "testing asking for a channel"
+                              False
+                              (Just [ApplicationCommandChannelTypeGuildVoice]),
+                            ApplicationCommandOptionValueMentionable
+                              "mentionable"
+                              "testing asking for a mentionable"
+                              False
                           ]
                     ]
                 )
@@ -218,7 +245,7 @@ eventHandler event = case event of
               R.messageDetailedComponents =
                 Just
                   [ ComponentActionRowButton
-                      [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (Emoji (Just 0) "🔥" Nothing Nothing Nothing (Just False))),
+                      [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (mkEmoji "🔥")),
                         ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
                         ComponentButtonUrl
                           "https://github.com/aquarial/discord-haskell"
@@ -231,7 +258,7 @@ eventHandler event = case event of
                           "action select menu"
                           False
                           [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
-                            SelectOption "Second option" "opt2" Nothing (Just (Emoji (Just 0) "😭" Nothing Nothing Nothing (Just False))) (Just True),
+                            SelectOption "Second option" "opt2" Nothing (Just (mkEmoji "😭")) (Just True),
                             SelectOption "third option" "opt3" Nothing Nothing Nothing,
                             SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
                             SelectOption "fifth option" "opt5" Nothing Nothing Nothing
@@ -267,10 +294,7 @@ eventHandler event = case event of
             ( R.CreateInteractionResponse
                 interactionId
                 interactionToken
-                ( InteractionResponseUpdateMessage
-                    ( (r)
-                    )
-                )
+                (InteractionResponseUpdateMessage r)
             )
         )
     r : rs ->
@@ -279,10 +303,7 @@ eventHandler event = case event of
             R.CreateInteractionResponse
               interactionId
               interactionToken
-              ( InteractionResponseUpdateMessage
-                  ( (r)
-                  )
-              )
+              (InteractionResponseUpdateMessage r)
         )
         >> mapM_
           ( restCall
@@ -319,6 +340,7 @@ eventHandler event = case event of
           _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
           restCall (R.CreateFollowupInteractionMessage aid interactionToken (interactionResponseMessageBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs)))
       )
+  InteractionCreate InteractionApplicationCommandAutocomplete {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
   _ -> return ()
 
 processTicTacToe :: InteractionDataComponent -> Message -> [InteractionResponseMessage]

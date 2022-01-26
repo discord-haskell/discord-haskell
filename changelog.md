@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.12.0
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/96) breaking changes and fixes to application commands, interactions, and components, and updates elsewhere
+
 ## 1.11.0
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/88) did a LOT of work wrangling the discord API for interactions and commands!
