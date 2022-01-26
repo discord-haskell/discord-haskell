@@ -292,7 +292,6 @@ data Message = Message
   , messageWebhookId          :: Maybe WebhookId          -- ^ The webhook id of the webhook that made the message
   , messageType               :: MessageType              -- ^ What type of message is this.
   , messageActivity           :: Maybe MessageActivity    -- ^ sent with Rich Presence-related chat embeds
-  -- , messageApplication  :: Maybe ??? -- ^ a partial application object
   , messageApplicationId      :: Maybe ApplicationId      -- ^ if the message is a response to an Interaction, this is the id of the interaction's application
   , messageReference          :: Maybe MessageReference   -- ^ Reference IDs of the original message
   , messageFlags              :: Maybe MessageFlags       -- ^ Various message flags
