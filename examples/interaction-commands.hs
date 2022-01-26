@@ -23,7 +23,7 @@ main =
     else interactionCommandExample
 
 testserverid :: Snowflake
-testserverid = 463428416008355872
+testserverid = -1
 
 void :: DiscordHandler (Either RestCallErrorCode b) -> DiscordHandler ()
 void =
