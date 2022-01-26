@@ -676,11 +676,12 @@ instance FromJSON MessageFlags where
       table = makeTable MessageFlagCrossposted
       range = sum $ fst <$> table
 
+-- | This is sent on the message object when the message is a response to an Interaction without an existing message (i.e., any non-component interaction).
 data MessageInteraction = MessageInteraction
-  { messageInteractionId :: InteractionId
-  , messageInteractionType :: InteractionType
-  , messageInteractionName :: T.Text
-  , messageInteractionUser :: User
+  { messageInteractionId :: InteractionId -- ^ Id of the interaction
+  , messageInteractionType :: Integer -- ^ Type of the interaction (liekly always application command)
+  , messageInteractionName :: T.Text -- ^ Name of the interaction
+  , messageInteractionUser :: User -- ^ User who invoked the interaction
   } deriving (Show, Eq, Ord, Read)
 
 instance ToJSON MessageInteraction where
