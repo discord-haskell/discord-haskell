@@ -478,12 +478,6 @@ data InteractionResponse
   | -- | respond to an autocomplete interaction with suggested choices
     InteractionResponseAutocompleteResult InteractionResponseAutocomplete
 
--- data InteractionResponse = InteractionResponse
---   { interactionResponseType :: InteractionCallbackType,
---     interactionResponseData :: Maybe InteractionCallbackData
---   }
---   deriving (Show, Eq)
-
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
 interactionResponseBasic t = InteractionResponseChannelMessage (interactionResponseMessageBasic t)

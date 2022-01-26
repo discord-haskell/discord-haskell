@@ -7,7 +7,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
 
 module Discord.Internal.Types.ApplicationCommands
   ( ApplicationCommand (..),
@@ -31,7 +30,6 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandChannelType (..),
     GuildApplicationCommandPermissions (..),
     ApplicationCommandPermissions (..),
-    ApplicationCommandPermissionType (..),
   )
 where
 
@@ -686,11 +684,13 @@ instance ToJSON GuildApplicationCommandPermissions where
             ]
       ]
 
+-- | Application command permissions allow you to enable or disable commands for
+-- specific users or roles within a guild.
 data ApplicationCommandPermissions = ApplicationCommandPermissions
   { -- | The id of the role or user.
     applicationCommandPermissionsId :: Snowflake,
-    -- | Choose either role or user.
-    applicationCommandPermissionsType :: ApplicationCommandPermissionType,
+    -- | Choose either role (1) or user (2).
+    applicationCommandPermissionsType :: Integer,
     -- | Whether to allow or not.
     applicationCommandPermissionsPermission :: Bool
   }
@@ -718,20 +718,3 @@ instance ToJSON ApplicationCommandPermissions where
             ]
       ]
 
-data ApplicationCommandPermissionType
-  = ApplicationCommandPermissionTypeRole
-  | ApplicationCommandPermissionTypeUser
-  deriving (Show, Eq, Ord, Read, Data)
-
-instance Enum ApplicationCommandPermissionType where
-  fromEnum ApplicationCommandPermissionTypeRole = 1
-  fromEnum ApplicationCommandPermissionTypeUser = 2
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable ApplicationCommandPermissionTypeRole
-
-instance ToJSON ApplicationCommandPermissionType where
-  toJSON = toJSON . fromEnum
-
-instance FromJSON ApplicationCommandPermissionType where
-  parseJSON = withScientific "ApplicationCommandPermissionType" (return . toEnum . round)
