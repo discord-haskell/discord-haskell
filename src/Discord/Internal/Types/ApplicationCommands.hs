@@ -37,7 +37,7 @@ where
 
 import Control.Applicative
 import Data.Aeson
-import Data.Aeson.Types (Parser, Pair)
+import Data.Aeson.Types (Pair, Parser)
 import Data.Data (Data)
 import Data.Default (Default (..))
 import Data.Foldable (Foldable (toList))
@@ -159,16 +159,17 @@ instance FromJSON ApplicationCommandOptionSubcommandOrGroup where
                 <*> v .: "description"
                 <*> v .: "options"
             1 -> ApplicationCommandOptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
-            _ -> fail "expected subcommand or subcommand group, got other option"
+            _ -> fail "unexpected subcommand group type"
       )
 
 instance ToJSON ApplicationCommandOptionSubcommandOrGroup where
-  toJSON ApplicationCommandOptionSubcommandGroup {..} = object [
-      ("type", toJSON @Int 2),
-      ("name", toJSON applicationCommandOptionSubcommandGroupName),
-      ("description", toJSON applicationCommandOptionSubcommandGroupDescription),
-      ("options", toJSON applicationCommandOptionSubcommandGroupOptions)
-    ]
+  toJSON ApplicationCommandOptionSubcommandGroup {..} =
+    object
+      [ ("type", Number 2),
+        ("name", toJSON applicationCommandOptionSubcommandGroupName),
+        ("description", toJSON applicationCommandOptionSubcommandGroupDescription),
+        ("options", toJSON applicationCommandOptionSubcommandGroupOptions)
+      ]
   toJSON (ApplicationCommandOptionSubcommandOrGroupSubcommand a) = toJSON a
 
 -- | Data for a single subcommand.
@@ -191,15 +192,17 @@ instance FromJSON ApplicationCommandOptionSubcommand where
                 <$> v .: "name"
                 <*> v .: "description"
                 <*> v .: "options"
-            _ -> fail "expected subcommand or subcommand group, got other option"
+            _ -> fail "unexpected subcommand type"
       )
+
 instance ToJSON ApplicationCommandOptionSubcommand where
-  toJSON ApplicationCommandOptionSubcommand {..} = object [
-      ("type", toJSON @Int 1),
-      ("name", toJSON applicationCommandOptionSubcommandName),
-      ("description", toJSON applicationCommandOptionSubcommandDescription),
-      ("options", toJSON applicationCommandOptionSubcommandOptions)
-    ]
+  toJSON ApplicationCommandOptionSubcommand {..} =
+    object
+      [ ("type", Number 1),
+        ("name", toJSON applicationCommandOptionSubcommandName),
+        ("description", toJSON applicationCommandOptionSubcommandDescription),
+        ("options", toJSON applicationCommandOptionSubcommandOptions)
+      ]
 
 -- | Data for a single value.
 data ApplicationCommandOptionValue
@@ -283,44 +286,50 @@ instance FromJSON ApplicationCommandOptionValue where
             6 -> return $ ApplicationCommandOptionValueUser name desc required
             8 -> return $ ApplicationCommandOptionValueRole name desc required
             9 -> return $ ApplicationCommandOptionValueMentionable name desc required
-            _ -> fail "expected value, got unknown option"
+            _ -> fail "unknown application command option value type"
       )
+
 instance ToJSON ApplicationCommandOptionValue where
-  toJSON ApplicationCommandOptionValueString {..} =  object [
-      ("type", toJSON @Int 3),
-      ("name", toJSON applicationCommandOptionValueName),
-      ("description", toJSON applicationCommandOptionValueDescription),
-      ("required", toJSON applicationCommandOptionValueRequired),
-      choiceOrAutocompleteToJSON applicationCommandOptionValueStringChoices
-    ] 
-  toJSON ApplicationCommandOptionValueInteger {..} =  object [
-      ("type", toJSON @Int 4),
-      ("name", toJSON applicationCommandOptionValueName),
-      ("description", toJSON applicationCommandOptionValueDescription),
-      ("required", toJSON applicationCommandOptionValueRequired),
-      choiceOrAutocompleteToJSON applicationCommandOptionValueIntegerChoices
-    ] 
-  toJSON ApplicationCommandOptionValueNumber {..} =  object [
-      ("type", toJSON @Int 10),
-      ("name", toJSON applicationCommandOptionValueName),
-      ("description", toJSON applicationCommandOptionValueDescription),
-      ("required", toJSON applicationCommandOptionValueRequired),
-      choiceOrAutocompleteToJSON applicationCommandOptionValueNumberChoices
-    ] 
-  toJSON ApplicationCommandOptionValueChannel {..} =  object [
-      ("type", toJSON @Int 7),
-      ("name", toJSON applicationCommandOptionValueName),
-      ("description", toJSON applicationCommandOptionValueDescription),
-      ("required", toJSON applicationCommandOptionValueRequired),
-      ("channel_types", toJSON applicationCommandOptionValueChannelTypes)
-    ]
-  toJSON acov = object [
-      ("type", toJSON @Int (t acov) ),
-      ("name", toJSON $ applicationCommandOptionValueName acov),
-      ("description", toJSON $ applicationCommandOptionValueDescription acov),
-      ("required", toJSON $ applicationCommandOptionValueRequired acov)
-    ]
-    where 
+  toJSON ApplicationCommandOptionValueString {..} =
+    object
+      [ ("type", Number 3),
+        ("name", toJSON applicationCommandOptionValueName),
+        ("description", toJSON applicationCommandOptionValueDescription),
+        ("required", toJSON applicationCommandOptionValueRequired),
+        choiceOrAutocompleteToJSON applicationCommandOptionValueStringChoices
+      ]
+  toJSON ApplicationCommandOptionValueInteger {..} =
+    object
+      [ ("type", Number 4),
+        ("name", toJSON applicationCommandOptionValueName),
+        ("description", toJSON applicationCommandOptionValueDescription),
+        ("required", toJSON applicationCommandOptionValueRequired),
+        choiceOrAutocompleteToJSON applicationCommandOptionValueIntegerChoices
+      ]
+  toJSON ApplicationCommandOptionValueNumber {..} =
+    object
+      [ ("type", Number 10),
+        ("name", toJSON applicationCommandOptionValueName),
+        ("description", toJSON applicationCommandOptionValueDescription),
+        ("required", toJSON applicationCommandOptionValueRequired),
+        choiceOrAutocompleteToJSON applicationCommandOptionValueNumberChoices
+      ]
+  toJSON ApplicationCommandOptionValueChannel {..} =
+    object
+      [ ("type", Number 7),
+        ("name", toJSON applicationCommandOptionValueName),
+        ("description", toJSON applicationCommandOptionValueDescription),
+        ("required", toJSON applicationCommandOptionValueRequired),
+        ("channel_types", toJSON applicationCommandOptionValueChannelTypes)
+      ]
+  toJSON acov =
+    object
+      [ ("type", Number (t acov)),
+        ("name", toJSON $ applicationCommandOptionValueName acov),
+        ("description", toJSON $ applicationCommandOptionValueDescription acov),
+        ("required", toJSON $ applicationCommandOptionValueRequired acov)
+      ]
+    where
       t ApplicationCommandOptionValueBoolean {} = 5
       t ApplicationCommandOptionValueUser {} = 6
       t ApplicationCommandOptionValueRole {} = 8
@@ -531,16 +540,11 @@ instance {-# OVERLAPPING #-} (FromJSON a) => FromJSON (AutocompleteOrChoice a) w
   parseJSON =
     withObject
       "AutocompleteOrChoice"
-      ( \v -> do
-          choices <- v .:? "choices"
-          case choices of
-            (Just cs) -> return $ Right cs
-            Nothing -> Left <$> v .:? "autocomplete" .!= False
-      )
+      (\v -> (Right <$> v .: "choices") <|> (Left <$> v .:? "autocomplete" .!= False))
 
-choiceOrAutocompleteToJSON :: (ToJSON a) => AutocompleteOrChoice a -> Pair 
-choiceOrAutocompleteToJSON (Left b) = ("autocomplete",toJSON b)
-choiceOrAutocompleteToJSON (Right cs) = ("choices",toJSON cs)
+choiceOrAutocompleteToJSON :: (ToJSON a) => AutocompleteOrChoice a -> Pair
+choiceOrAutocompleteToJSON (Left b) = ("autocomplete", toJSON b)
+choiceOrAutocompleteToJSON (Right cs) = ("choices", toJSON cs)
 
 -- | The different channel types.
 --
