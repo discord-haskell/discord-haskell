@@ -14,9 +14,9 @@ import Network.HTTP.Req as R
 data InteractionResponseRequest a where
   CreateInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
   GetOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest Message
-  EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionCallbackMessages -> InteractionResponseRequest Message
+  EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseMessage -> InteractionResponseRequest Message
   DeleteOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest ()
-  CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionCallbackMessages -> InteractionResponseRequest Message
+  CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionResponseMessage -> InteractionResponseRequest Message
   GetFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
   EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
   DeleteFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
