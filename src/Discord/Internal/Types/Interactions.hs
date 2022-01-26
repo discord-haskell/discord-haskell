@@ -35,9 +35,7 @@ import Data.Bits (Bits (shift, (.|.)))
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.ApplicationCommands
-  ( Choice,
-  )
+import Discord.Internal.Types.ApplicationCommands (Choice)
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (ComponentActionRow)
 import Discord.Internal.Types.Embed (Embed)

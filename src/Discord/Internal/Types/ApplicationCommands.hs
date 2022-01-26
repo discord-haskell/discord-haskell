@@ -24,8 +24,7 @@ module Discord.Internal.Types.ApplicationCommands
         createApplicationCommandDefaultPermission
       ),
     EditApplicationCommand (..),
-    ApplicationCommandType (..),
-    ApplicationCommandOptionType (..),
+    defaultEditApplicationCommand,
     Choice (..),
     ApplicationCommandChannelType (..),
     GuildApplicationCommandPermissions (..),
@@ -36,12 +35,10 @@ where
 import Data.Aeson
 import Data.Aeson.Types (Pair, Parser)
 import Data.Data (Data)
-import Data.Default (Default (..))
 import Data.Foldable (Foldable (toList))
-import Data.Maybe (fromJust)
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Snowflake, makeTable, toMaybeJSON)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordType (..), Snowflake, discordTypeParseJSON, toMaybeJSON)
 
 -- | The structure for an application command.
 data ApplicationCommand
@@ -382,31 +379,6 @@ instance ToJSON ApplicationCommandOptionValue where
       t ApplicationCommandOptionValueMentionable {} = 9
       t _ = -1
 
--- | What type of application command. Represents slash commands, right clicking
--- a user, and right clicking a message respectively.
-data ApplicationCommandType
-  = -- | Slash commands.
-    ApplicationCommandTypeChatInput
-  | -- | User commands.
-    ApplicationCommandTypeUser
-  | -- | Message commands.
-    ApplicationCommandTypeMessage
-  deriving (Show, Read, Data, Eq)
-
-instance Enum ApplicationCommandType where
-  fromEnum ApplicationCommandTypeChatInput = 1
-  fromEnum ApplicationCommandTypeUser = 2
-  fromEnum ApplicationCommandTypeMessage = 3
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable ApplicationCommandTypeChatInput
-
-instance ToJSON ApplicationCommandType where
-  toJSON = toJSON . fromEnum
-
-instance FromJSON ApplicationCommandType where
-  parseJSON = withScientific "ApplicationCommandType" (return . toEnum . round)
-
 -- | Data type to be used when creating application commands. The specification
 -- is below.
 --
@@ -423,34 +395,64 @@ instance FromJSON ApplicationCommandType where
 -- of command nesting permitted.
 --
 -- https://discord.com/developers/docs/interactions/application-commands#create-global-application-command
-data CreateApplicationCommand = CreateApplicationCommand
-  { -- | The application command name (1-32 chars).
-    createApplicationCommandName :: T.Text,
-    -- | The application command description (1-100 chars). Has to be empty for
-    -- non-slash commands.
-    createApplicationCommandDescription :: T.Text,
-    -- | What options the application (max length 25). Has to be `Nothing` for
-    -- non-slash commands.
-    createApplicationCommandOptions :: Maybe ApplicationCommandOptions,
-    -- | Whether the command is enabled by default when the application is added
-    -- to a guild. Defaults to true if not present
-    createApplicationCommandDefaultPermission :: Maybe Bool,
-    -- | What the type of the command is. If `Nothing`, defaults to slash
-    -- commands.
-    createApplicationCommandType :: Maybe ApplicationCommandType
-  } 
+data CreateApplicationCommand
+  = CreateApplicationCommandChatInput
+      { -- | The application command name (1-32 chars).
+        createApplicationCommandName :: T.Text,
+        -- | The application command description (1-100 chars). Has to be empty for
+        -- non-slash commands.
+        createApplicationCommandDescription :: T.Text,
+        -- | What options the application (max length 25). Has to be `Nothing` for
+        -- non-slash commands.
+        createApplicationCommandOptions :: Maybe ApplicationCommandOptions,
+        -- | Whether the command is enabled by default when the application is added
+        -- to a guild.
+        createApplicationCommandDefaultPermission :: Bool
+      }
+  | CreateApplicationCommandUser
+      { -- | The application command name (1-32 chars).
+        createApplicationCommandName :: T.Text,
+        -- | Whether the command is enabled by default when the application is added
+        -- to a guild.
+        createApplicationCommandDefaultPermission :: Bool
+      }
+  | CreateApplicationCommandMessage
+      { -- | The application command name (1-32 chars).
+        createApplicationCommandName :: T.Text,
+        -- | Whether the command is enabled by default when the application is added
+        -- to a guild.
+        createApplicationCommandDefaultPermission :: Bool
+      }
   deriving (Show, Eq, Read)
 
 instance ToJSON CreateApplicationCommand where
-  toJSON CreateApplicationCommand {..} =
+  toJSON CreateApplicationCommandChatInput {..} =
     object
       [ (name, value)
         | (name, Just value) <-
             [ ("name", toMaybeJSON createApplicationCommandName),
               ("description", toMaybeJSON createApplicationCommandDescription),
               ("options", toJSON <$> createApplicationCommandOptions),
-              ("default_permission", toJSON <$> createApplicationCommandDefaultPermission),
-              ("type", toJSON <$> createApplicationCommandType)
+              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+              ("type", Just $ Number 1)
+            ]
+      ]
+  toJSON CreateApplicationCommandUser {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("name", toMaybeJSON createApplicationCommandName),
+              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+              ("type", Just $ Number 2)
+            ]
+      ]
+  toJSON CreateApplicationCommandMessage {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("name", toMaybeJSON createApplicationCommandName),
+              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+              ("type", Just $ Number 3)
             ]
       ]
 
@@ -466,21 +468,21 @@ nameIsValid isChatInput name = l >= 1 && l <= 32 && (isChatInput <= T.all (`elem
 -- than or equal to 100 characters.
 createApplicationCommandChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandChatInput name desc
-  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommand name desc Nothing Nothing (Just ApplicationCommandTypeChatInput)
+  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name desc Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
 createApplicationCommandUser :: T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandUser name
-  | nameIsValid False name = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeUser)
+  | nameIsValid False name = Just $ CreateApplicationCommandUser name True
   | otherwise = Nothing
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
 createApplicationCommandMessage :: T.Text -> Maybe CreateApplicationCommand
 createApplicationCommandMessage name
-  | nameIsValid False name = Just $ CreateApplicationCommand name "" Nothing Nothing (Just ApplicationCommandTypeMessage)
+  | nameIsValid False name = Just $ CreateApplicationCommandMessage name True
   | otherwise = Nothing
 
 -- | Data type to be used when editing application commands. The specification
@@ -488,19 +490,29 @@ createApplicationCommandMessage name
 -- parameters.
 --
 -- https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command
-data EditApplicationCommand = EditApplicationCommand
-  { editApplicationCommandName :: Maybe T.Text,
-    editApplicationCommandDescription :: Maybe T.Text,
-    editApplicationCommandOptions :: Maybe ApplicationCommandOptions,
-    editApplicationCommandDefaultPermission :: Maybe Bool,
-    editApplicationCommandType :: Maybe ApplicationCommandType
-  }
+data EditApplicationCommand
+  = EditApplicationCommandChatInput
+      { editApplicationCommandName :: Maybe T.Text,
+        editApplicationCommandDescription :: Maybe T.Text,
+        editApplicationCommandOptions :: Maybe ApplicationCommandOptions,
+        editApplicationCommandDefaultPermission :: Maybe Bool
+      }
+  | EditApplicationCommandUser
+      { editApplicationCommandName :: Maybe T.Text,
+        editApplicationCommandDefaultPermission :: Maybe Bool
+      }
+  | EditApplicationCommandMessage
+      { editApplicationCommandName :: Maybe T.Text,
+        editApplicationCommandDefaultPermission :: Maybe Bool
+      }
 
-instance Default EditApplicationCommand where
-  def = EditApplicationCommand Nothing Nothing Nothing Nothing Nothing
+defaultEditApplicationCommand :: Int -> EditApplicationCommand
+defaultEditApplicationCommand 2 = EditApplicationCommandUser Nothing Nothing
+defaultEditApplicationCommand 3 = EditApplicationCommandMessage Nothing Nothing
+defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothing Nothing Nothing
 
 instance ToJSON EditApplicationCommand where
-  toJSON EditApplicationCommand {..} =
+  toJSON EditApplicationCommandChatInput {..} =
     object
       [ (name, value)
         | (name, Just value) <-
@@ -508,58 +520,27 @@ instance ToJSON EditApplicationCommand where
               ("description", toJSON <$> editApplicationCommandDescription),
               ("options", toJSON <$> editApplicationCommandOptions),
               ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
-              ("type", toJSON <$> editApplicationCommandType)
+              ("type", Just $ Number 1)
             ]
       ]
-
--- | What type of command option. Can represent a wide variety of types, so
--- please check out the documentation below.
---
--- https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-type
-data ApplicationCommandOptionType
-  = -- | A subcommand. It can take further options, excluding sub commands and
-    -- sub command groups.
-    ApplicationCommandOptionTypeSubcommand
-  | -- | A subcommand group. It can take further options, excluding sub command
-    -- groups.
-    ApplicationCommandOptionTypeSubcommandGroup
-  | -- | Can typically be provided with default values.
-    ApplicationCommandOptionTypeString
-  | -- | Can typically be provided with default values, and possibly with
-    -- minimum and maximum values.
-    ApplicationCommandOptionTypeInteger
-  | ApplicationCommandOptionTypeBoolean
-  | ApplicationCommandOptionTypeUser
-  | -- | Can be limited in the types of the channel allowed.
-    ApplicationCommandOptionTypeChannel
-  | ApplicationCommandOptionTypeRole
-  | -- | Users and roles.
-    ApplicationCommandOptionTypeMentionable
-  | -- | Can typically be provided with default values, and possibly with
-    -- minimum and maximum values. Represents a double.
-    ApplicationCommandOptionTypeNumber
-  deriving (Show, Read, Data, Eq)
-
-instance Enum ApplicationCommandOptionType where
-  fromEnum ApplicationCommandOptionTypeSubcommand = 1
-  fromEnum ApplicationCommandOptionTypeSubcommandGroup = 2
-  fromEnum ApplicationCommandOptionTypeString = 3
-  fromEnum ApplicationCommandOptionTypeInteger = 4
-  fromEnum ApplicationCommandOptionTypeBoolean = 5
-  fromEnum ApplicationCommandOptionTypeUser = 6
-  fromEnum ApplicationCommandOptionTypeChannel = 7
-  fromEnum ApplicationCommandOptionTypeRole = 8
-  fromEnum ApplicationCommandOptionTypeMentionable = 9
-  fromEnum ApplicationCommandOptionTypeNumber = 10
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable ApplicationCommandOptionTypeSubcommand
-
-instance ToJSON ApplicationCommandOptionType where
-  toJSON = toJSON . fromEnum
-
-instance FromJSON ApplicationCommandOptionType where
-  parseJSON = withScientific "ApplicationCommandOptionType" (return . toEnum . round)
+  toJSON EditApplicationCommandUser {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("name", toJSON <$> editApplicationCommandName),
+              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+              ("type", Just $ Number 2)
+            ]
+      ]
+  toJSON EditApplicationCommandMessage {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("name", toJSON <$> editApplicationCommandName),
+              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+              ("type", Just $ Number 3)
+            ]
+      ]
 
 data Choice a = Choice {choiceName :: T.Text, choiceValue :: a}
   deriving (Show, Read, Eq)
@@ -626,27 +607,25 @@ data ApplicationCommandChannelType
     ApplicationCommandChannelTypeGuildStageVoice
   deriving (Show, Read, Data, Eq)
 
-instance Enum ApplicationCommandChannelType where
-  fromEnum ApplicationCommandChannelTypeGuildText = 0
-  fromEnum ApplicationCommandChannelTypeDM = 1
-  fromEnum ApplicationCommandChannelTypeGuildVoice = 2
-  fromEnum ApplicationCommandChannelTypeGroupDM = 3
-  fromEnum ApplicationCommandChannelTypeGuildCategory = 4
-  fromEnum ApplicationCommandChannelTypeGuildNews = 5
-  fromEnum ApplicationCommandChannelTypeGuildStore = 6
-  fromEnum ApplicationCommandChannelTypeGuildNewsThread = 10
-  fromEnum ApplicationCommandChannelTypeGuildPublicThread = 11
-  fromEnum ApplicationCommandChannelTypeGuildPrivateThread = 12
-  fromEnum ApplicationCommandChannelTypeGuildStageVoice = 13
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable ApplicationCommandChannelTypeGuildText
+instance InternalDiscordType ApplicationCommandChannelType where
+  discordTypeStartValue = ApplicationCommandChannelTypeGuildText
+  fromDiscordType ApplicationCommandChannelTypeGuildText = 0
+  fromDiscordType ApplicationCommandChannelTypeDM = 1
+  fromDiscordType ApplicationCommandChannelTypeGuildVoice = 2
+  fromDiscordType ApplicationCommandChannelTypeGroupDM = 3
+  fromDiscordType ApplicationCommandChannelTypeGuildCategory = 4
+  fromDiscordType ApplicationCommandChannelTypeGuildNews = 5
+  fromDiscordType ApplicationCommandChannelTypeGuildStore = 6
+  fromDiscordType ApplicationCommandChannelTypeGuildNewsThread = 10
+  fromDiscordType ApplicationCommandChannelTypeGuildPublicThread = 11
+  fromDiscordType ApplicationCommandChannelTypeGuildPrivateThread = 12
+  fromDiscordType ApplicationCommandChannelTypeGuildStageVoice = 13
 
 instance ToJSON ApplicationCommandChannelType where
-  toJSON = toJSON . fromEnum
+  toJSON = toJSON . fromDiscordType
 
 instance FromJSON ApplicationCommandChannelType where
-  parseJSON = withScientific "ApplicationCommandChannelType" (return . toEnum . round)
+  parseJSON = discordTypeParseJSON "ApplicationCommandChannelType"
 
 data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions
   { -- | The id of the command.
@@ -717,4 +696,3 @@ instance ToJSON ApplicationCommandPermissions where
               ("permission", toMaybeJSON applicationCommandPermissionsPermission)
             ]
       ]
-

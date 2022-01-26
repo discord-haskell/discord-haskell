@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
@@ -17,7 +18,6 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
 import Data.Data (Data)
-import Data.Maybe (fromJust)
 import Data.Bits
 import Discord.Internal.Types.Components (ComponentActionRow, Emoji)
 
@@ -449,19 +449,17 @@ data StickerFormatType =
   | StickerFormatTypeLOTTIE
   deriving (Show, Read, Eq, Ord, Data)
 
-instance Enum StickerFormatType where
-  fromEnum StickerFormatTypePNG = 1
-  fromEnum StickerFormatTypeAPNG = 2
-  fromEnum StickerFormatTypeLOTTIE = 3
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable StickerFormatTypePNG
+instance InternalDiscordType StickerFormatType where
+  discordTypeStartValue = StickerFormatTypePNG
+  fromDiscordType StickerFormatTypePNG = 1
+  fromDiscordType StickerFormatTypeAPNG = 2
+  fromDiscordType StickerFormatTypeLOTTIE = 3
 
 instance ToJSON StickerFormatType where
-  toJSON = toJSON . fromEnum
+  toJSON = toJSON . fromDiscordType
 
 instance FromJSON StickerFormatType where
-  parseJSON = withScientific "StickerFormatType" (return . toEnum . round)
+  parseJSON = discordTypeParseJSON "StickerFormatType" 
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -564,39 +562,37 @@ data MessageType
   | MessageTypeContextMenuCommand
   deriving (Show, Read, Data, Eq, Ord)
 
-instance Enum MessageType where
-  fromEnum MessageTypeDefault = 0
-  fromEnum MessageTypeRecipientAdd = 1
-  fromEnum MessageTypeRecipientRemove = 2
-  fromEnum MessageTypeCall = 3
-  fromEnum MessageTypeChannelNameChange = 4
-  fromEnum MessageTypeChannelIconChange = 5
-  fromEnum MessageTypeChannelPinnedMessage = 6
-  fromEnum MessageTypeGuildMemberJoin = 7
-  fromEnum MessageTypeUserPremiumGuildSubscription = 8
-  fromEnum MessageTypeUserPremiumGuildSubscriptionTier1 = 9
-  fromEnum MessageTypeUserPremiumGuildSubscriptionTier2 = 10
-  fromEnum MessageTypeUserPremiumGuildSubscriptionTier3 = 11
-  fromEnum MessageTypeChannelFollowAdd = 12
-  fromEnum MessageTypeGuildDiscoveryDisqualified = 14
-  fromEnum MessageTypeGuildDiscoveryRequalified = 15
-  fromEnum MessageTypeGuildDiscoveryGracePeriodInitialWarning = 16
-  fromEnum MessageTypeGuildDiscoveryGracePeriodFinalWarning = 17
-  fromEnum MessageTypeThreadCreated = 18
-  fromEnum MessageTypeReply = 19
-  fromEnum MessageTypeChatInputCommand = 20
-  fromEnum MessageTypeThreadStarterMessage = 21
-  fromEnum MessageTypeGuildInviteReminder = 22
-  fromEnum MessageTypeContextMenuCommand = 23
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable MessageTypeDefault
+instance InternalDiscordType MessageType where
+  discordTypeStartValue = MessageTypeDefault
+  fromDiscordType MessageTypeDefault = 0
+  fromDiscordType MessageTypeRecipientAdd = 1
+  fromDiscordType MessageTypeRecipientRemove = 2
+  fromDiscordType MessageTypeCall = 3
+  fromDiscordType MessageTypeChannelNameChange = 4
+  fromDiscordType MessageTypeChannelIconChange = 5
+  fromDiscordType MessageTypeChannelPinnedMessage = 6
+  fromDiscordType MessageTypeGuildMemberJoin = 7
+  fromDiscordType MessageTypeUserPremiumGuildSubscription = 8
+  fromDiscordType MessageTypeUserPremiumGuildSubscriptionTier1 = 9
+  fromDiscordType MessageTypeUserPremiumGuildSubscriptionTier2 = 10
+  fromDiscordType MessageTypeUserPremiumGuildSubscriptionTier3 = 11
+  fromDiscordType MessageTypeChannelFollowAdd = 12
+  fromDiscordType MessageTypeGuildDiscoveryDisqualified = 14
+  fromDiscordType MessageTypeGuildDiscoveryRequalified = 15
+  fromDiscordType MessageTypeGuildDiscoveryGracePeriodInitialWarning = 16
+  fromDiscordType MessageTypeGuildDiscoveryGracePeriodFinalWarning = 17
+  fromDiscordType MessageTypeThreadCreated = 18
+  fromDiscordType MessageTypeReply = 19
+  fromDiscordType MessageTypeChatInputCommand = 20
+  fromDiscordType MessageTypeThreadStarterMessage = 21
+  fromDiscordType MessageTypeGuildInviteReminder = 22
+  fromDiscordType MessageTypeContextMenuCommand = 23
 
 instance ToJSON MessageType where
-  toJSON = toJSON . fromEnum
+  toJSON = toJSON . fromDiscordType
 
 instance FromJSON MessageType where
-  parseJSON = withScientific "MessageType" (return . toEnum . round)
+  parseJSON = discordTypeParseJSON "MessageType" 
 
 data MessageActivity = MessageActivity
   { messageActivityType :: MessageActivityType
@@ -622,20 +618,18 @@ data MessageActivityType
   | MessageActivityTypeJoinRequest -- ^ Request to join a Rich Presence event
   deriving (Show, Read, Data, Eq, Ord)
 
-instance Enum MessageActivityType where
-  fromEnum MessageActivityTypeJoin = 1
-  fromEnum MessageActivityTypeSpectate = 2
-  fromEnum MessageActivityTypeListen = 3
-  fromEnum MessageActivityTypeJoinRequest = 4
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable MessageActivityTypeJoin
+instance InternalDiscordType MessageActivityType where
+  discordTypeStartValue = MessageActivityTypeJoin
+  fromDiscordType MessageActivityTypeJoin = 1
+  fromDiscordType MessageActivityTypeSpectate = 2
+  fromDiscordType MessageActivityTypeListen = 3
+  fromDiscordType MessageActivityTypeJoinRequest = 4
 
 instance ToJSON MessageActivityType where
-  toJSON = toJSON . fromEnum
+  toJSON = toJSON . fromDiscordType 
 
 instance FromJSON MessageActivityType where
-  parseJSON = withScientific "MessageActivityType" (return . toEnum . round)
+  parseJSON = discordTypeParseJSON "MessageActivityType"
 
 -- | Types of flags to attach to the message.
 data MessageFlag = 
@@ -652,29 +646,26 @@ data MessageFlag =
 newtype MessageFlags = MessageFlags [MessageFlag]
   deriving (Show, Read, Eq, Ord)
 
-instance Enum MessageFlag where
-  fromEnum MessageFlagCrossposted = 1 `shift` 0
-  fromEnum MessageFlagIsCrosspost = 1 `shift` 1
-  fromEnum MessageFlagSupressEmbeds = 1 `shift` 2
-  fromEnum MessageFlagSourceMessageDeleted = 1 `shift` 3
-  fromEnum MessageFlagUrgent = 1 `shift` 4
-  fromEnum MessageFlagHasThread = 1 `shift` 5
-  fromEnum MessageFlagEphemeral = 1 `shift` 6
-  fromEnum MessageFlagLoading = 1 `shift` 7
-  toEnum a = fromJust $ lookup a table
-    where
-      table = makeTable MessageFlagCrossposted
+instance InternalDiscordType MessageFlag where
+  discordTypeStartValue = MessageFlagCrossposted
+  fromDiscordType MessageFlagCrossposted = 1 `shift` 0
+  fromDiscordType MessageFlagIsCrosspost = 1 `shift` 1
+  fromDiscordType MessageFlagSupressEmbeds = 1 `shift` 2
+  fromDiscordType MessageFlagSourceMessageDeleted = 1 `shift` 3
+  fromDiscordType MessageFlagUrgent = 1 `shift` 4
+  fromDiscordType MessageFlagHasThread = 1 `shift` 5
+  fromDiscordType MessageFlagEphemeral = 1 `shift` 6
+  fromDiscordType MessageFlagLoading = 1 `shift` 7
 
 instance ToJSON MessageFlags where
-  toJSON (MessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+  toJSON (MessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromDiscordType <$> fs)
 
 -- TODO: maybe make this a type class or something - the ability to handle flags automatically would be Very Good.
 
 instance FromJSON MessageFlags where
-  parseJSON = withScientific "MessageFlags" (\s -> let i = round s in if i /= (i .&. range) then fail "could not get message flags" else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') table))
+  parseJSON = withScientific "MessageFlags" (\s -> let i = round s in if i /= (i .&. range) then fail "could not get message flags" else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable))
     where 
-      table = makeTable MessageFlagCrossposted
-      range = sum $ fst <$> table
+      range = sum $ fst <$> (discordTypeTable @MessageFlag)
 
 -- | This is sent on the message object when the message is a response to an Interaction without an existing message (i.e., any non-component interaction).
 data MessageInteraction = MessageInteraction
@@ -699,4 +690,3 @@ instance FromJSON MessageInteraction where
                        <*> o .: "type"
                        <*> o .: "name"
                        <*> o .: "user"
-
