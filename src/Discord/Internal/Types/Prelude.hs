@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
@@ -89,11 +88,3 @@ makeTable t = map (\cData -> let c = fromConstr cData in (fromEnum c, c)) (dataT
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
-
-class Internals a b where
-  toInternal :: a -> b
-  fromInternal :: b -> Maybe a
-
-instance Internals a a where
-  toInternal = id
-  fromInternal = Just

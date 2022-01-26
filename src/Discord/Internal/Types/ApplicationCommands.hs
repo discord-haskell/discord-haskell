@@ -35,7 +35,6 @@ module Discord.Internal.Types.ApplicationCommands
   )
 where
 
-import Control.Applicative
 import Data.Aeson
 import Data.Aeson.Types (Pair, Parser)
 import Data.Data (Data)
@@ -129,7 +128,18 @@ instance FromJSON ApplicationCommandOptions where
       "ApplicationCommandOptions"
       ( \a -> do
           let a' = toList a
-          (ApplicationCommandOptionsSubcommands <$> mapM parseJSON a') <|> (ApplicationCommandOptionsValues <$> mapM parseJSON a')
+          case a' of
+            [] -> return $ ApplicationCommandOptionsValues []
+            (v' : _) ->
+              withObject
+                "ApplicationCommandOptions item"
+                ( \v -> do
+                    t <- v .: "type" :: Parser Int
+                    if t == 1 || t == 2
+                      then ApplicationCommandOptionsSubcommands <$> mapM parseJSON a'
+                      else ApplicationCommandOptionsValues <$> mapM parseJSON a'
+                )
+                v'
       )
 
 instance ToJSON ApplicationCommandOptions where
@@ -139,8 +149,11 @@ instance ToJSON ApplicationCommandOptions where
 -- | Either a subcommand group or a subcommand.
 data ApplicationCommandOptionSubcommandOrGroup
   = ApplicationCommandOptionSubcommandGroup
-      { applicationCommandOptionSubcommandGroupName :: T.Text,
+      { -- | The name of the subcommand group
+        applicationCommandOptionSubcommandGroupName :: T.Text,
+        -- | The description of the subcommand group
         applicationCommandOptionSubcommandGroupDescription :: T.Text,
+        -- | The subcommands in this subcommand group
         applicationCommandOptionSubcommandGroupOptions :: [ApplicationCommandOptionSubcommand]
       }
   | ApplicationCommandOptionSubcommandOrGroupSubcommand ApplicationCommandOptionSubcommand
@@ -174,8 +187,11 @@ instance ToJSON ApplicationCommandOptionSubcommandOrGroup where
 
 -- | Data for a single subcommand.
 data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
-  { applicationCommandOptionSubcommandName :: T.Text,
+  { -- | The name of the subcommand
+    applicationCommandOptionSubcommandName :: T.Text,
+    -- | The description of the subcommand
     applicationCommandOptionSubcommandDescription :: T.Text,
+    -- | What options are there in this subcommand
     applicationCommandOptionSubcommandOptions :: [ApplicationCommandOptionValue]
   }
   deriving (Show, Eq, Read)
@@ -207,51 +223,83 @@ instance ToJSON ApplicationCommandOptionSubcommand where
 -- | Data for a single value.
 data ApplicationCommandOptionValue
   = ApplicationCommandOptionValueString
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool,
+        -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
         applicationCommandOptionValueStringChoices :: AutocompleteOrChoice T.Text
       }
   | ApplicationCommandOptionValueInteger
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool,
+        -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
         applicationCommandOptionValueIntegerChoices :: AutocompleteOrChoice Integer,
+        -- | The lower bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
         applicationCommandOptionValueIntegerMinVal :: Maybe Integer,
+        -- | The upper bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
         applicationCommandOptionValueIntegerMaxVal :: Maybe Integer
       }
   | ApplicationCommandOptionValueBoolean
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool
       }
   | ApplicationCommandOptionValueUser
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool
       }
   | ApplicationCommandOptionValueChannel
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool,
+        -- | What type of channel can be put in here
         applicationCommandOptionValueChannelTypes :: Maybe [ApplicationCommandChannelType]
       }
   | ApplicationCommandOptionValueRole
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool
       }
   | ApplicationCommandOptionValueMentionable
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool
       }
   | ApplicationCommandOptionValueNumber
-      { applicationCommandOptionValueName :: T.Text,
+      { -- | The name of the value
+        applicationCommandOptionValueName :: T.Text,
+        -- | The description of the value
         applicationCommandOptionValueDescription :: T.Text,
+        -- | Whether this option is required
         applicationCommandOptionValueRequired :: Bool,
+        -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
         applicationCommandOptionValueNumberChoices :: AutocompleteOrChoice Scientific,
+        -- | The lower bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
         applicationCommandOptionValueNumberMinVal :: Maybe Scientific,
+        -- | The upper bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
         applicationCommandOptionValueNumberMaxVal :: Maybe Scientific
       }
   deriving (Show, Eq, Read)
@@ -392,7 +440,7 @@ data CreateApplicationCommand = CreateApplicationCommand
     -- | What the type of the command is. If `Nothing`, defaults to slash
     -- commands.
     createApplicationCommandType :: Maybe ApplicationCommandType
-  }
+  } 
   deriving (Show, Eq, Read)
 
 instance ToJSON CreateApplicationCommand where
@@ -540,7 +588,12 @@ instance {-# OVERLAPPING #-} (FromJSON a) => FromJSON (AutocompleteOrChoice a) w
   parseJSON =
     withObject
       "AutocompleteOrChoice"
-      (\v -> (Right <$> v .: "choices") <|> (Left <$> v .:? "autocomplete" .!= False))
+      ( \v -> do
+          mcs <- v .:! "choices"
+          case mcs of
+            Nothing -> Left <$> v .:? "autocomplete" .!= False
+            Just cs -> return $ Right cs
+      )
 
 choiceOrAutocompleteToJSON :: (ToJSON a) => AutocompleteOrChoice a -> Pair
 choiceOrAutocompleteToJSON (Left b) = ("autocomplete", toJSON b)

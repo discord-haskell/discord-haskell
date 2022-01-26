@@ -18,12 +18,12 @@ where
 import Data.Aeson (Object, ToJSON (toJSON))
 import Data.Time.Clock (UTCTime (..))
 import Discord.Internal.Types.Channel
-import Discord.Internal.Types.Components hiding (InternalComponentType (..))
+import Discord.Internal.Types.Components
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
-import Discord.Internal.Types.Prelude hiding (Internals (..))
+import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
 
 userFacingEvent :: EventInternalParse -> Event

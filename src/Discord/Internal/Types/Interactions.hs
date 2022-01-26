@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -21,7 +20,7 @@ module Discord.Internal.Types.Interactions
     MemberOrUser (..),
     InteractionResponse (..),
     interactionResponseBasic,
-    InteractionResponseAutocomplete,
+    InteractionResponseAutocomplete (..),
     InteractionResponseMessage (..),
     interactionResponseMessageBasic,
     InteractionResponseMessageFlags (..),
@@ -42,7 +41,7 @@ import Discord.Internal.Types.ApplicationCommands
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (ComponentActionRow)
 import Discord.Internal.Types.Embed (Embed)
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, UserId)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
 import Discord.Internal.Types.User (GuildMember, User)
 
 -- | An interaction received from discord.
@@ -163,6 +162,16 @@ instance FromJSON Interaction where
                 <*> v .: "message"
                 <*> v .: "locale"
                 <*> return glocale
+            4 ->
+              InteractionApplicationCommandAutocomplete iid aid
+                <$> v .: "data"
+                <*> return gid
+                <*> return cid
+                <*> parseJSON (Object v)
+                <*> return tok
+                <*> return version
+                <*> v .: "locale"
+                <*> return glocale
             _ -> fail "unknown interaction type"
       )
 
@@ -270,7 +279,18 @@ instance FromJSON InteractionDataApplicationCommandOptions where
       "InteractionDataApplicationCommandOptions"
       ( \a -> do
           let a' = toList a
-          (InteractionDataApplicationCommandOptionsSubcommands <$> mapM parseJSON a') <|> (InteractionDataApplicationCommandOptionsValues <$> mapM parseJSON a')
+          case a' of
+            [] -> return $ InteractionDataApplicationCommandOptionsValues []
+            (v' : _) ->
+              withObject
+                "InteractionDataApplicationCommandOptions item"
+                ( \v -> do
+                    t <- v .: "type" :: Parser Int
+                    if t == 1 || t == 2
+                      then InteractionDataApplicationCommandOptionsSubcommands <$> mapM parseJSON a'
+                      else InteractionDataApplicationCommandOptionsValues <$> mapM parseJSON a'
+                )
+                v'
       )
 
 -- | Either a subcommand group or a subcommand.
@@ -326,18 +346,35 @@ instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
 data InteractionDataApplicationCommandOptionValue
   = InteractionDataApplicationCommandOptionValueString
       { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueStringValue :: T.Text,
-        interactionDataApplicationCommandOptionValueFocused :: Bool
+        interactionDataApplicationCommandOptionValueStringValue :: Either T.Text T.Text
       }
   | InteractionDataApplicationCommandOptionValueInteger
       { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueIntegerValue :: Integer,
-        interactionDataApplicationCommandOptionValueFocused :: Bool
+        interactionDataApplicationCommandOptionValueIntegerValue :: Either T.Text Integer
+      }
+  | InteractionDataApplicationCommandOptionValueBoolean
+      { interactionDataApplicationCommandOptionValueName :: T.Text,
+        interactionDataApplicationCommandOptionValueBooleanValue :: Bool
+      }
+  | InteractionDataApplicationCommandOptionValueUser
+      { interactionDataApplicationCommandOptionValueName :: T.Text,
+        interactionDataApplicationCommandOptionValueUserValue :: UserId
+      }
+  | InteractionDataApplicationCommandOptionValueChannel
+      { interactionDataApplicationCommandOptionValueName :: T.Text,
+        interactionDataApplicationCommandOptionValueChannelValue :: ChannelId
+      }
+  | InteractionDataApplicationCommandOptionValueRole
+      { interactionDataApplicationCommandOptionValueName :: T.Text,
+        interactionDataApplicationCommandOptionValueRoleValue :: RoleId
+      }
+  | InteractionDataApplicationCommandOptionValueMentionable
+      { interactionDataApplicationCommandOptionValueName :: T.Text,
+        interactionDataApplicationCommandOptionValueMentionableValue :: Snowflake
       }
   | InteractionDataApplicationCommandOptionValueNumber
       { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueNumberValue :: Scientific,
-        interactionDataApplicationCommandOptionValueFocused :: Bool
+        interactionDataApplicationCommandOptionValueNumberValue :: Either T.Text Scientific
       }
   deriving (Show, Read, Eq)
 
@@ -352,18 +389,34 @@ instance FromJSON InteractionDataApplicationCommandOptionValue where
           case t of
             3 ->
               InteractionDataApplicationCommandOptionValueString name
-                <$> v .: "value"
-                <*> return focused
+                <$> parseValue v focused
             4 ->
               InteractionDataApplicationCommandOptionValueInteger name
-                <$> v .: "value"
-                <*> return focused
+                <$> parseValue v focused
             10 ->
               InteractionDataApplicationCommandOptionValueNumber name
+                <$> parseValue v focused
+            5 ->
+              InteractionDataApplicationCommandOptionValueBoolean name
                 <$> v .: "value"
-                <*> return focused
-            _ -> fail "unexpected interaction data application command option value type"
+            6 ->
+              InteractionDataApplicationCommandOptionValueUser name
+                <$> v .: "value"
+            7 ->
+              InteractionDataApplicationCommandOptionValueChannel name
+                <$> v .: "value"
+            8 ->
+              InteractionDataApplicationCommandOptionValueRole name
+                <$> v .: "value"
+            9 ->
+              InteractionDataApplicationCommandOptionValueMentionable name
+                <$> v .: "value"
+            _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
       )
+
+parseValue :: (FromJSON a) => Object -> Bool -> Parser (Either T.Text a)
+parseValue o True = Left <$> o .: "value"
+parseValue o False = Right <$> o .: "value"
 
 -- resolved data -- this should be formalised and integrated, instead of being
 --  left as values
@@ -447,9 +500,9 @@ data InteractionResponseAutocomplete = InteractionResponseAutocompleteString [Ch
   deriving (Show, Eq)
 
 instance ToJSON InteractionResponseAutocomplete where
-  toJSON (InteractionResponseAutocompleteString cs) = toJSON cs
-  toJSON (InteractionResponseAutocompleteInteger cs) = toJSON cs
-  toJSON (InteractionResponseAutocompleteNumber cs) = toJSON cs
+  toJSON (InteractionResponseAutocompleteString cs) = object [("choices", toJSON cs)]
+  toJSON (InteractionResponseAutocompleteInteger cs) = object [("choices", toJSON cs)]
+  toJSON (InteractionResponseAutocompleteNumber cs) = object [("choices", toJSON cs)]
 
 -- | A cut down message structure.
 data InteractionResponseMessage = InteractionResponseMessage
