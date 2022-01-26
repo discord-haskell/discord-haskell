@@ -176,7 +176,7 @@ exampleSlashCommand =
           }
 
 exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
-exampleInteractionResponse (InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue {interactionDataApplicationCommandOptionValueValue = ApplicationCommandInteractionDataValueString s}]) =
+exampleInteractionResponse (InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValueString {interactionDataApplicationCommandOptionValueStringValue = s}]) =
   interactionResponseBasic (T.pack $ "Here's the reply! You chose: " ++ show s)
 exampleInteractionResponse _ =
   interactionResponseBasic
@@ -267,10 +267,8 @@ eventHandler event = case event of
             ( R.CreateInteractionResponse
                 interactionId
                 interactionToken
-                ( InteractionResponse
-                    InteractionCallbackTypeUpdateMessage
-                    ( Just
-                        (InteractionCallbackDataMessages r)
+                ( InteractionResponseUpdateMessage
+                    ( (r)
                     )
                 )
             )
@@ -281,10 +279,8 @@ eventHandler event = case event of
             R.CreateInteractionResponse
               interactionId
               interactionToken
-              ( InteractionResponse
-                  InteractionCallbackTypeUpdateMessage
-                  ( Just
-                      (InteractionCallbackDataMessages r)
+              ( InteractionResponseUpdateMessage
+                  ( (r)
                   )
               )
         )
@@ -309,42 +305,40 @@ eventHandler event = case event of
     void $
       restCall
         ( R.CreateInteractionResponse interactionId interactionToken $
-            InteractionResponse
-              InteractionCallbackTypeChannelMessageWithSource
-              ( Just . InteractionCallbackDataMessages $
-                  ( interactionCallbackMessagesBasic $ "You pressed the button " <> interactionDataComponentCustomId
-                  )
-                    { interactionCallbackMessagesFlags = Just (InteractionCallbackDataFlags [InteractionCallbackDataFlagEphermeral])
-                    }
+            InteractionResponseChannelMessage
+              ( ( interactionResponseMessageBasic $ "You pressed the button " <> interactionDataComponentCustomId
+                )
+                  { interactionResponseMessageFlags = Just (InteractionResponseMessageFlags [InteractionResponseMessageFlagEphermeral])
+                  }
               )
         )
   InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentSelectMenu {interactionDataComponentValues = vs}, ..} ->
     void
       ( do
           aid <- readCache <&> cacheApplication <&> partialApplicationID
-          _ <- restCall (R.CreateInteractionResponse interactionId interactionToken (InteractionResponse InteractionCallbackTypeDeferredChannelMessageWithSource Nothing))
-          restCall (R.CreateFollowupInteractionMessage aid interactionToken (interactionCallbackMessagesBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs)))
+          _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
+          restCall (R.CreateFollowupInteractionMessage aid interactionToken (interactionResponseMessageBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs)))
       )
   _ -> return ()
 
-processTicTacToe :: InteractionDataComponent -> Message -> [InteractionCallbackMessages]
+processTicTacToe :: InteractionDataComponent -> Message -> [InteractionResponseMessage]
 processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents m of
-  Nothing -> [interactionCallbackMessagesBasic "Sorry, I couldn't get the components on that message."]
+  Nothing -> [interactionResponseMessageBasic "Sorry, I couldn't get the components on that message."]
   (Just cs) ->
     let newComp = newComp' cs
-     in ( ( interactionCallbackMessagesBasic
+     in ( ( interactionResponseMessageBasic
               ("Some Tic Tac Toe! Player " <> (if '0' == T.last (messageContent m) then "1" else "0"))
           )
-            { interactionCallbackMessagesComponents = Just ((if checkTicTacToe newComp then (disableAll <$>) else id) newComp)
+            { interactionResponseMessageComponents = Just ((if checkTicTacToe newComp then (disableAll <$>) else id) newComp)
             }
         ) :
-          [interactionCallbackMessagesBasic ("Player " <> T.singleton player <> " has won!") | checkTicTacToe newComp]
+          [interactionResponseMessageBasic ("Player " <> T.singleton player <> " has won!") | checkTicTacToe newComp]
   where
     player = T.last (messageContent m)
     newComp' = updateTicTacToe (Just (cid, '0' == player))
     disableAll (ComponentActionRowButton cs) = ComponentActionRowButton $ (\c -> c {componentButtonDisabled = True}) <$> cs
     disableAll c = c
-processTicTacToe _ _ = [interactionCallbackMessagesBasic "Sorry, I couldn't understand that button."]
+processTicTacToe _ _ = [interactionResponseMessageBasic "Sorry, I couldn't understand that button."]
 
 checkTicTacToe :: [ComponentActionRow] -> Bool
 checkTicTacToe xs = checkRows unwrapped || checkRows unwrappedT || checkRows [diagonal unwrapped, diagonal (reverse <$> unwrapped)]
