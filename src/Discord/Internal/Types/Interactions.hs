@@ -335,7 +335,7 @@ instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
             1 ->
               InteractionDataApplicationCommandOptionSubcommand
                 <$> v .: "name"
-                <*> v .: "options"
+                <*> v .:? "options" .!= []
                 <*> v .:? "focused" .!= False
             _ -> fail "unexpected subcommand type"
       )
