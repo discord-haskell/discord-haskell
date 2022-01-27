@@ -4,6 +4,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 import Control.Monad (forM_, when)
+import qualified Data.ByteString as B
 import Data.Char (isDigit)
 import Data.Functor ((<&>))
 import Data.List (transpose)
@@ -209,6 +210,10 @@ exampleInteractionResponse _ =
   interactionResponseBasic
     "Something unexpected happened - the value was not what I expected!"
 
+getImage :: IO B.ByteString
+getImage = return "\137PNG\r\n\SUB\n\NUL\NUL\NUL\rIHDR\NUL\NUL\NUL\SOH\NUL\NUL\NUL\SOH\b\STX\NUL\NUL\NUL\144wS\222\NUL\NUL\NUL\SOHsRGB\NUL\174\206\FS\233\NUL\NUL\NUL\EOTgAMA\NUL\NUL\177\143\v\252a\ENQ\NUL\NUL\NUL\tpHYs\NUL\NUL\SO\195\NUL\NUL\SO\195\SOH\199o\168d\NUL\NUL\NUL\fIDAT\CANWc\248\239\180\t\NUL\EOT7\SOH\244\162\155\ENQ\235\NUL\NUL\NUL\NULIEND\174B`\130"
+  -- B.readFile "example.png"
+
 -- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
@@ -218,6 +223,7 @@ eventHandler event = case event of
 
     -- A very simple message.
     void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
+    exampleImage <- liftIO getImage
 
     -- A more complex message. Text-to-speech, does not mention everyone nor
     -- the user, and uses Discord native replies.
@@ -268,10 +274,18 @@ eventHandler event = case event of
                           (Just 5)
                       )
                   ],
-              R.messageDetailedEmbeds = Just [
-                def { createEmbedTitle = "Title", createEmbedDescription = "the description", createEmbedImage = Just (CreateEmbedImageUrl "https://media.discordapp.net/attachments/365969021083975681/936055590415921172/Warning.png"), createEmbedColor = Just DiscordColorLuminousVividPink },
-                def { createEmbedTitle = "a different Title", createEmbedDescription = "another desc" }
-              ]
+              R.messageDetailedEmbeds =
+                Just
+                  [ def
+                      { createEmbedTitle = "Title",
+                        createEmbedDescription = "the description",
+                        createEmbedAuthorName = "Author name is Required",
+                        createEmbedImage = Just (CreateEmbedImageUrl "https://media.discordapp.net/attachments/365969021083975681/936055590415921172/Warning.png"),
+                        createEmbedColor = Just DiscordColorLuminousVividPink,
+                        createEmbedAuthorIcon = Just (CreateEmbedImageUpload exampleImage)
+                      },
+                    def {createEmbedTitle = "a different Title", createEmbedDescription = "another desc"}
+                  ]
             }
         tictactoe :: R.MessageDetailedOpts
         tictactoe =
@@ -340,9 +354,27 @@ eventHandler event = case event of
   InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentSelectMenu {interactionDataComponentValues = vs}, ..} ->
     void
       ( do
+          exampleImage <- liftIO getImage
           aid <- readCache <&> cacheApplication <&> partialApplicationID
           _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
-          restCall (R.CreateFollowupInteractionMessage aid interactionToken (interactionResponseMessageBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs)))
+          restCall
+            ( R.CreateFollowupInteractionMessage
+                aid
+                interactionToken
+                (interactionResponseMessageBasic (T.pack $ "oh dear, select menu. thank you for waiting" <> show vs))
+                  { interactionResponseMessageEmbeds =
+                      Just
+                        [ def
+                            { createEmbedTitle = "Select menu title",
+                              createEmbedDescription = "Here is the select menu embed desc",
+                              createEmbedAuthorName = "someunknownentity",
+                              createEmbedImage = Just (CreateEmbedImageUrl "https://media.discordapp.net/attachments/365969021083975681/936055590415921172/Warning.png"),
+                              createEmbedColor = Just DiscordColorDiscordBlurple,
+                              createEmbedAuthorIcon = Just (CreateEmbedImageUpload exampleImage)
+                            }
+                        ]
+                  }
+            )
       )
   InteractionCreate InteractionApplicationCommandAutocomplete {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
   _ -> return ()

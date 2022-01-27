@@ -26,12 +26,13 @@ import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partBS, PartM)
+import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partBS)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Control.Monad (join)
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
@@ -246,16 +247,6 @@ cleanupEmoji emoji =
     (_, Just a) -> "custom:" <> a
     (_, Nothing) -> noAngles
 
-maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
-maybeEmbed = --maybe [] $ \embed -> ["embed" .= createEmbed embed]
-      let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
-          uploads CreateEmbed{..} = [(n,c) | (n, Just (CreateEmbedImageUpload c)) <-
-                                          [ ("author.png", createEmbedAuthorIcon)
-                                          , ("thumbnail.png", createEmbedThumbnail)
-                                          , ("image.png", createEmbedImage)
-                                          , ("footer.png", createEmbedFooterIcon) ]]
-      in maybe [] (map mkPart . uploads)
-
 channels :: R.Url 'R.Https
 channels = baseUrl /: "channels"
 
@@ -289,26 +280,31 @@ channelJsonRequest c = case c of
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-      let fileUpload = messageDetailedFile msgOpts
-          filePart = case fileUpload of
-            Nothing -> []
-            Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
-              $ RequestBodyBS $ snd f]
+    let fileUpload = messageDetailedFile msgOpts
+        filePart =
+          ( case fileUpload of
+              Nothing -> []
+              Just f ->
+                [ partFileRequestBody
+                    "file"
+                    (T.unpack $ fst f)
+                    (RequestBodyBS $ snd f)
+                ]
+          )
+            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
-          embedPart = maybeEmbed $ messageDetailedEmbed msgOpts
+        payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
+                                , "tts"     .= messageDetailedTTS msgOpts ] ++
+                                [ name .= value | (name, Just value) <-
+                                  [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                                  , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
+                                  , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
+                                  , ("components", toJSON <$> messageDetailedComponents msgOpts)
+                                  , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
+                                  ] ]
+        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
-          payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
-                                 , "tts"     .= messageDetailedTTS msgOpts ] ++
-                                 [ name .= value | (name, Just value) <-
-                                    [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                                    , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
-                                    , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                    , ("components", toJSON <$> messageDetailedComponents msgOpts)
-                                    , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
-                                    ] ]
-          payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
-
-          body = R.reqBodyMultipart (payloadPart : filePart ++ embedPart)
+        body = R.reqBodyMultipart (payloadPart : filePart)
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
@@ -330,7 +326,7 @@ channelJsonRequest c = case c of
 
   (GetReactions (chan, msgid) emoji (n, timing)) ->
       let e = cleanupEmoji emoji
-          n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+          n' = max 1 (min 100 n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
       in Get (channels // chan /: "messages" // msgid /: "reactions" /: e) options
 

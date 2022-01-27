@@ -19,6 +19,8 @@ import Text.Read (readMaybe)
 import Data.Maybe (fromMaybe)
 import Data.Char (toLower)
 import Data.Bits (Bits((.&.)))
+import Network.HTTP.Client.MultipartFormData (PartM, partFileRequestBody)
+import Network.HTTP.Client (RequestBody(RequestBodyBS))
 
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
@@ -29,7 +31,7 @@ createEmbed CreateEmbed{..} =
     embedImageToUrl :: T.Text -> CreateEmbedImage -> T.Text
     embedImageToUrl place cei = case cei of
                             CreateEmbedImageUrl t -> t
-                            CreateEmbedImageUpload _ -> "attachment://" <> place <> ".png"
+                            CreateEmbedImageUpload _ -> T.filter (/=' ') $ "attachment://" <> createEmbedTitle <> place <> ".png"
 
     embedAuthor = EmbedAuthor createEmbedAuthorName
                               (emptyMaybe createEmbedAuthorUrl)
@@ -420,3 +422,13 @@ instance FromJSON DiscordColor where
       maybeInt i
         | fromIntegral (round i) == i = Just $ round i
         | otherwise = Nothing
+
+maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
+maybeEmbed = 
+      let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
+          uploads CreateEmbed{..} = [(T.filter (/=' ') $ createEmbedTitle<>n,c) | (n, Just (CreateEmbedImageUpload c)) <-
+                                          [ ("author.png", createEmbedAuthorIcon)
+                                          , ("thumbnail.png", createEmbedThumbnail)
+                                          , ("image.png", createEmbedImage)
+                                          , ("footer.png", createEmbedFooterIcon) ]]
+      in maybe [] (map mkPart . uploads)
