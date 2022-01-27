@@ -17,12 +17,7 @@ module Discord.Internal.Types.ApplicationCommands
     createApplicationCommandChatInput,
     createApplicationCommandUser,
     createApplicationCommandMessage,
-    CreateApplicationCommand
-      ( createApplicationCommandName,
-        createApplicationCommandDescription,
-        createApplicationCommandOptions,
-        createApplicationCommandDefaultPermission
-      ),
+    CreateApplicationCommand (..),
     EditApplicationCommand (..),
     defaultEditApplicationCommand,
     Choice (..),
