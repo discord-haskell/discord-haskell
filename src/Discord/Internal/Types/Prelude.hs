@@ -19,7 +19,6 @@ import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
 import Text.Read (readMaybe)
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
-import Debug.Trace (trace)
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -92,7 +91,7 @@ class Data a => InternalDiscordType a where
   discordTypeTable =  map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)
     where 
       makeTable :: Data b => b -> [b]
-      makeTable t = trace (show (dataTypeConstrs $ dataTypeOf t)) map fromConstr (dataTypeConstrs $ dataTypeOf t)
+      makeTable t = map fromConstr (dataTypeConstrs $ dataTypeOf t)
 
   discordTypeParseJSON :: String -> Value -> Parser a
   discordTypeParseJSON name =
