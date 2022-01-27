@@ -38,7 +38,7 @@ import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands (Choice)
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (ComponentActionRow)
-import Discord.Internal.Types.Embed (Embed)
+import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
 import Discord.Internal.Types.User (GuildMember, User)
 
@@ -500,7 +500,7 @@ instance ToJSON InteractionResponseAutocomplete where
 data InteractionResponseMessage = InteractionResponseMessage
   { interactionResponseMessageTTS :: Maybe Bool,
     interactionResponseMessageContent :: Maybe T.Text,
-    interactionResponseMessageEmbeds :: Maybe [Embed],
+    interactionResponseMessageEmbeds :: Maybe [CreateEmbed],
     interactionResponseMessageAllowedMentions :: Maybe AllowedMentions,
     interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
     interactionResponseMessageComponents :: Maybe [ComponentActionRow],
@@ -520,7 +520,7 @@ instance ToJSON InteractionResponseMessage where
         | (name, Just value) <-
             [ ("tts", toJSON <$> interactionResponseMessageTTS),
               ("content", toJSON <$> interactionResponseMessageContent),
-              ("embeds", toJSON <$> interactionResponseMessageEmbeds),
+              ("embeds", toJSON . (createEmbed <$>) <$> interactionResponseMessageEmbeds),
               ("allowed_mentions", toJSON <$> interactionResponseMessageAllowedMentions),
               ("flags", toJSON <$> interactionResponseMessageFlags),
               ("components", toJSON <$> interactionResponseMessageComponents),

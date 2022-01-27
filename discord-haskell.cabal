@@ -45,6 +45,7 @@ executable interaction-commands
                      , text
                      , unliftio
                      , discord-haskell
+                     , bytestring
 
 library
   ghc-options:         -Wall

@@ -11,6 +11,13 @@ import Control.Exception.Safe (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+-- import qualified Data.ByteString as B
+-- import Network.HTTP.Req (ReqBodyMultipart)
+-- import qualified Data.ByteString.Lazy as BL
+-- import Data.Aeson
+-- import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
+-- import Network.HTTP.Client (RequestBody(RequestBodyBS))
+
 
 import qualified Network.HTTP.Req as R
 
@@ -62,3 +69,8 @@ instance R.MonadHttp RestIO where
   handleHttpException = liftIO . throwIO
   -- | Don't throw exceptions on http error codes like 404
   getHttpConfig = pure $ R.defaultHttpConfig { R.httpConfigCheckResponse = \_ _ _ -> Nothing }
+
+-- addAttachments :: ToJSON a => a -> [(T.Text ,B.ByteString)] -> RestIO ReqBodyMultipart
+-- addAttachments a attachments = R.reqBodyMultipart $ payloadPart: ((\(i, (nm, content)) -> partFileRequestBody ("file[" <> T.pack (show i) <> "]") (T.unpack nm) (RequestBodyBS content)) <$> zip [0..] attachments)
+--   where
+--     payloadPart = partBS "payload_json" $ BL.toStrict $ encode a
