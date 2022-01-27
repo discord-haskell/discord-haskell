@@ -267,7 +267,11 @@ eventHandler event = case event of
                           (Just 2)
                           (Just 5)
                       )
-                  ]
+                  ],
+              R.messageDetailedEmbeds = Just [
+                def { createEmbedTitle = "Title", createEmbedDescription = "the description", createEmbedImage = Just (CreateEmbedImageUrl "https://media.discordapp.net/attachments/365969021083975681/936055590415921172/Warning.png"), createEmbedColor = Just DiscordColorLuminousVividPink },
+                def { createEmbedTitle = "a different Title", createEmbedDescription = "another desc" }
+              ]
             }
         tictactoe :: R.MessageDetailedOpts
         tictactoe =
