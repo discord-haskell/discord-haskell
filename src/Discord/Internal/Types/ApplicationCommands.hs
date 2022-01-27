@@ -195,8 +195,8 @@ instance FromJSON ApplicationCommandOptionSubcommand where
           case t of
             1 ->
               ApplicationCommandOptionSubcommand
-                <$> v .:  "name"
-                <*> v .:  "description"
+                <$> v .: "name"
+                <*> v .: "description"
                 <*> v .:? "options" .!= []
             _ -> fail "unexpected subcommand type"
       )
