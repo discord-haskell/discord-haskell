@@ -54,7 +54,7 @@ createEmbed CreateEmbed{..} =
            , embedImage       = embedImage
            , embedFooter      = Just embedFooter
            , embedColor       = createEmbedColor
-           , embedTimestamp   = Nothing
+           , embedTimestamp   = createEmbedTimestamp
 
            -- can't set these
            , embedVideo       = Nothing
@@ -74,7 +74,7 @@ data CreateEmbed = CreateEmbed
   , createEmbedFooterText  :: T.Text
   , createEmbedFooterIcon  :: Maybe CreateEmbedImage
   , createEmbedColor       :: Maybe DiscordColor
---, createEmbedTimestamp   :: Maybe UTCTime
+  , createEmbedTimestamp   :: Maybe UTCTime
   } deriving (Show, Read, Eq, Ord)
 
 data CreateEmbedImage = CreateEmbedImageUrl T.Text
@@ -82,7 +82,7 @@ data CreateEmbedImage = CreateEmbedImageUrl T.Text
   deriving (Show, Read, Eq, Ord)
 
 instance Default CreateEmbed where
- def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing Nothing  -- Nothing
+ def = CreateEmbed "" "" Nothing "" "" Nothing "" [] Nothing "" Nothing Nothing Nothing
 
 -- | An embed attached to a message.
 data Embed = Embed
