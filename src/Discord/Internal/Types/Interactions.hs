@@ -261,7 +261,7 @@ instance FromJSON InteractionDataApplicationCommand where
                 <$> v .: "target_id"
             3 ->
               InteractionDataApplicationCommandMessage aci name rd
-                <$> v .: "values"
+                <$> v .: "target_id"
             _ -> fail "unknown interaction data component type"
       )
 
