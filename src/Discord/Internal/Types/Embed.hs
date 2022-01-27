@@ -329,7 +329,7 @@ hexToRGB hex = do
   b <- drop2 h >>= drop2 >>= toDec
   return (r, g, b)
   where
-    take2 [a, b] = Just [a, b]
+    take2 (a:b:_) = Just [a, b]
     take2 _ = Nothing
     drop2 (_ : _ : as) = Just as
     drop2 _ = Nothing
