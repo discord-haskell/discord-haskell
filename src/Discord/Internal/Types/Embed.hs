@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 
 -- | Data structures pertaining to Discord Embed
@@ -9,8 +10,15 @@ import Data.Time.Clock
 import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
+import Data.Functor ((<&>))
+import Control.Applicative (Alternative((<|>)))
 
-import Discord.Internal.Types.Prelude
+import Discord.Internal.Types.Prelude (InternalDiscordType(..))
+import Data.Data
+import Text.Read (readMaybe)
+import Data.Maybe (fromMaybe)
+import Data.Char (toLower)
+import Data.Bits (Bits((.&.)))
 
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
@@ -23,14 +31,14 @@ createEmbed CreateEmbed{..} =
                             CreateEmbedImageUrl t -> t
                             CreateEmbedImageUpload _ -> "attachment://" <> place <> ".png"
 
-    embedAuthor = EmbedAuthor (emptyMaybe createEmbedAuthorName)
+    embedAuthor = EmbedAuthor createEmbedAuthorName
                               (emptyMaybe createEmbedAuthorUrl)
                               (embedImageToUrl "author" <$> createEmbedAuthorIcon)
                               Nothing
-    embedImage = EmbedImage   (embedImageToUrl "image" <$> createEmbedImage)
-                              Nothing Nothing Nothing
-    embedThumbnail = EmbedThumbnail (embedImageToUrl "thumbnail" <$> createEmbedThumbnail)
-                              Nothing Nothing Nothing
+    embedImage = EmbedImage  <$> (embedImageToUrl "image" <$> createEmbedImage)
+                              <&> ($ Nothing) <&> ($ Nothing) <&> ($ Nothing)
+    embedThumbnail = EmbedThumbnail <$> (embedImageToUrl "thumbnail" <$> createEmbedThumbnail)
+                                    <&> ($ Nothing) <&> ($ Nothing) <&> ($ Nothing)
     embedFooter = EmbedFooter createEmbedFooterText
                               (embedImageToUrl "footer" <$> createEmbedFooterIcon)
                               Nothing
@@ -38,16 +46,15 @@ createEmbed CreateEmbed{..} =
   in Embed { embedAuthor      = Just embedAuthor
            , embedTitle       = emptyMaybe createEmbedTitle
            , embedUrl         = emptyMaybe createEmbedUrl
-           , embedThumbnail   = Just embedThumbnail
+           , embedThumbnail   = embedThumbnail
            , embedDescription = emptyMaybe createEmbedDescription
            , embedFields      = createEmbedFields
-           , embedImage       = Just embedImage
+           , embedImage       = embedImage
            , embedFooter      = Just embedFooter
            , embedColor       = createEmbedColor
            , embedTimestamp   = Nothing
 
            -- can't set these
-           , embedType        = Nothing
            , embedVideo       = Nothing
            , embedProvider    = Nothing
            }
@@ -64,7 +71,7 @@ data CreateEmbed = CreateEmbed
   , createEmbedImage       :: Maybe CreateEmbedImage
   , createEmbedFooterText  :: T.Text
   , createEmbedFooterIcon  :: Maybe CreateEmbedImage
-  , createEmbedColor       :: Maybe ColorInteger
+  , createEmbedColor       :: Maybe DiscordColor
 --, createEmbedTimestamp   :: Maybe UTCTime
   } deriving (Show, Read, Eq, Ord)
 
@@ -85,9 +92,8 @@ data Embed = Embed
   , embedFields      :: [EmbedField]     -- ^ Fields of the embed
   , embedImage       :: Maybe EmbedImage
   , embedFooter      :: Maybe EmbedFooter
-  , embedColor       :: Maybe ColorInteger    -- ^ The embed color
+  , embedColor       :: Maybe DiscordColor    -- ^ The embed color
   , embedTimestamp   :: Maybe UTCTime    -- ^ The time of the embed content
-  , embedType        :: Maybe T.Text     -- ^ Type of embed (Always "rich" for users)
   , embedVideo       :: Maybe EmbedVideo -- ^ Only present for "video" types
   , embedProvider    :: Maybe EmbedProvider -- ^ Only present for "video" types
   } deriving (Show, Read, Eq, Ord)
@@ -105,7 +111,6 @@ instance ToJSON Embed where
    , "footer"      .= embedFooter
    , "color"       .= embedColor
    , "timestamp"   .= embedTimestamp
-   , "type"        .= embedType
    , "video"       .= embedVideo
    , "provider"    .= embedProvider
     ]
@@ -122,13 +127,12 @@ instance FromJSON Embed where
           <*> o .:? "footer"
           <*> o .:? "color"
           <*> o .:? "timestamp"
-          <*> o .:? "type"
           <*> o .:? "video"
           <*> o .:? "provider"
 
 
 data EmbedThumbnail = EmbedThumbnail
-  { embedThumbnailUrl :: Maybe T.Text
+  { embedThumbnailUrl :: T.Text
   , embedThumbnailProxyUrl :: Maybe T.Text
   , embedThumbnailHeight :: Maybe Integer
   , embedThumbnailWidth :: Maybe Integer
@@ -144,32 +148,35 @@ instance ToJSON EmbedThumbnail where
 
 instance FromJSON EmbedThumbnail where
   parseJSON = withObject "thumbnail" $ \o ->
-    EmbedThumbnail <$> o .:? "url"
+    EmbedThumbnail <$> o .: "url"
                    <*> o .:? "proxy_url"
                    <*> o .:? "height"
                    <*> o .:? "width"
 
 data EmbedVideo = EmbedVideo
   { embedVideoUrl :: Maybe T.Text
+  , embedProxyUrl :: Maybe T.Text
   , embedVideoHeight :: Maybe Integer
   , embedVideoWidth :: Maybe Integer
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON EmbedVideo where
-  toJSON (EmbedVideo a b c) = object
+  toJSON (EmbedVideo a a' b c) = object
     [ "url" .= a
     , "height" .= b
     , "width" .= c
+    , "proxy_url" .= a'
     ]
 
 instance FromJSON EmbedVideo where
   parseJSON = withObject "video" $ \o ->
     EmbedVideo <$> o .:? "url"
+               <*> o .:? "proxy_url"
                <*> o .:? "height"
                <*> o .:? "width"
 
 data EmbedImage = EmbedImage
-  { embedImageUrl :: Maybe T.Text
+  { embedImageUrl :: T.Text
   , embedImageProxyUrl :: Maybe T.Text
   , embedImageHeight :: Maybe Integer
   , embedImageWidth :: Maybe Integer
@@ -185,7 +192,7 @@ instance ToJSON EmbedImage where
 
 instance FromJSON EmbedImage where
   parseJSON = withObject "image" $ \o ->
-    EmbedImage <$> o .:? "url"
+    EmbedImage <$> o .:  "url"
                <*> o .:? "proxy_url"
                <*> o .:? "height"
                <*> o .:? "width"
@@ -207,7 +214,7 @@ instance FromJSON EmbedProvider where
                   <*> o .:? "url"
 
 data EmbedAuthor = EmbedAuthor
-  { embedAuthorName :: Maybe T.Text
+  { embedAuthorName :: T.Text
   , embedAuthorUrl :: Maybe T.Text
   , embedAuthorIconUrl :: Maybe T.Text
   , embedAuthorProxyIconUrl :: Maybe T.Text
@@ -223,7 +230,7 @@ instance ToJSON EmbedAuthor where
 
 instance FromJSON EmbedAuthor where
   parseJSON = withObject "author" $ \o ->
-    EmbedAuthor <$> o .:? "name"
+    EmbedAuthor <$> o .:  "name"
                 <*> o .:? "url"
                 <*> o .:? "icon_url"
                 <*> o .:? "proxy_icon_url"
@@ -265,3 +272,151 @@ instance FromJSON EmbedField where
     EmbedField <$> o .:  "name"
                <*> o .:  "value"
                <*> o .:? "inline"
+
+-- | Color names
+-- Color is a bit of a mess on discord embeds.
+-- I've here stolen the pallet list from https://gist.github.com/thomasbnt/b6f455e2c7d743b796917fa3c205f812
+--
+-- All discord embed color stuff is credited to
+-- https://github.com/WarwickTabletop/tablebot/pull/34
+data DiscordColor
+  = DiscordColorRGB Integer Integer Integer
+  | DiscordColorDefault
+  | DiscordColorAqua
+  | DiscordColorDarkAqua
+  | DiscordColorGreen
+  | DiscordColorDarkGreen
+  | DiscordColorBlue
+  | DiscordColorDarkBlue
+  | DiscordColorPurple
+  | DiscordColorDarkPurple
+  | DiscordColorLuminousVividPink
+  | DiscordColorDarkVividPink
+  | DiscordColorGold
+  | DiscordColorDarkGold
+  | DiscordColorOrange
+  | DiscordColorDarkOrange
+  | DiscordColorRed
+  | DiscordColorDarkRed
+  | DiscordColorGray
+  | DiscordColorDarkGray
+  | DiscordColorDarkerGray
+  | DiscordColorLightGray
+  | DiscordColorNavy
+  | DiscordColorDarkNavy
+  | DiscordColorYellow
+  | DiscordColorDiscordWhite
+  | DiscordColorDiscordBlurple
+  | DiscordColorDiscordGrayple
+  | DiscordColorDiscordDarkButNotBlack
+  | DiscordColorDiscordNotQuiteBlack
+  | DiscordColorDiscordGreen
+  | DiscordColorDiscordYellow
+  | DiscordColorDiscordFuschia
+  | DiscordColorDiscordRed
+  | DiscordColorDiscordBlack
+  deriving (Show, Read, Eq, Ord, Data)
+
+-- | @hexToRGB@ attempts to convert a potential hex string into its decimal RGB
+-- components.
+hexToRGB :: String -> Maybe (Integer, Integer, Integer)
+hexToRGB hex = do
+  let h = map toLower hex
+  r <- take2 h >>= toDec
+  g <- drop2 h >>= take2 >>= toDec
+  b <- drop2 h >>= drop2 >>= toDec
+  return (r, g, b)
+  where
+    take2 [a, b] = Just [a, b]
+    take2 _ = Nothing
+    drop2 (_ : _ : as) = Just as
+    drop2 _ = Nothing
+    toDec :: String -> Maybe Integer
+    toDec [s, u] = do
+      a <- charToDec s
+      b <- charToDec u
+      return $ a * 16 + b
+    toDec _ = Nothing
+    charToDec :: Char -> Maybe Integer
+    charToDec 'a' = Just 10
+    charToDec 'b' = Just 11
+    charToDec 'c' = Just 12
+    charToDec 'd' = Just 13
+    charToDec 'e' = Just 14
+    charToDec 'f' = Just 15
+    charToDec c = readMaybe [c]
+
+-- | @hexToDiscordColor@ converts a potential hex string into a DiscordColor,
+-- evaluating to Default if it fails.
+hexToDiscordColor :: String -> DiscordColor
+hexToDiscordColor hex =
+  let (r, g, b) = fromMaybe (0, 0, 0) $ hexToRGB hex
+   in DiscordColorRGB r g b
+
+colorToInternal :: DiscordColor -> Integer
+-- colorToInternal (DiscordColor i) = i
+colorToInternal (DiscordColorRGB r g b) = (r * 256 + g) * 256 + b
+colorToInternal DiscordColorDefault = 0
+colorToInternal DiscordColorAqua = 1752220
+colorToInternal DiscordColorDarkAqua = 1146986
+colorToInternal DiscordColorGreen = 3066993
+colorToInternal DiscordColorDarkGreen = 2067276
+colorToInternal DiscordColorBlue = 3447003
+colorToInternal DiscordColorDarkBlue = 2123412
+colorToInternal DiscordColorPurple = 10181046
+colorToInternal DiscordColorDarkPurple = 7419530
+colorToInternal DiscordColorLuminousVividPink = 15277667
+colorToInternal DiscordColorDarkVividPink = 11342935
+colorToInternal DiscordColorGold = 15844367
+colorToInternal DiscordColorDarkGold = 12745742
+colorToInternal DiscordColorOrange = 15105570
+colorToInternal DiscordColorDarkOrange = 11027200
+colorToInternal DiscordColorRed = 15158332
+colorToInternal DiscordColorDarkRed = 10038562
+colorToInternal DiscordColorGray = 9807270
+colorToInternal DiscordColorDarkGray = 9936031
+colorToInternal DiscordColorDarkerGray = 8359053
+colorToInternal DiscordColorLightGray = 12370112
+colorToInternal DiscordColorNavy = 3426654
+colorToInternal DiscordColorDarkNavy = 2899536
+colorToInternal DiscordColorYellow = 16776960
+colorToInternal DiscordColorDiscordWhite = 16777215
+colorToInternal DiscordColorDiscordBlurple = 5793266
+colorToInternal DiscordColorDiscordGrayple = 10070709
+colorToInternal DiscordColorDiscordDarkButNotBlack = 2895667
+colorToInternal DiscordColorDiscordNotQuiteBlack = 2303786
+colorToInternal DiscordColorDiscordGreen = 5763719
+colorToInternal DiscordColorDiscordYellow = 16705372
+colorToInternal DiscordColorDiscordFuschia = 15418782
+colorToInternal DiscordColorDiscordRed = 15548997
+colorToInternal DiscordColorDiscordBlack = 16777215
+
+convertToRGB :: Integer -> DiscordColor
+convertToRGB i = DiscordColorRGB (div i (256 * 256) .&. 255) (div i 256 .&. 255) (i .&. 255)
+
+instance InternalDiscordType DiscordColor where
+  discordTypeStartValue = DiscordColorDefault
+  fromDiscordType = fromIntegral . colorToInternal
+  discordTypeTable = map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)
+    where
+      makeTable :: Data b => b -> [b]
+      makeTable t = map (fromConstrB (fromConstr (toConstr (0 :: Int)))) (dataTypeConstrs $ dataTypeOf t)
+
+instance ToJSON DiscordColor where
+  toJSON = toJSON . fromDiscordType
+
+instance FromJSON DiscordColor where
+  parseJSON =
+    withScientific
+      "DiscordColor"
+      ( \v ->
+          discordTypeParseJSON "DiscordColor" (Number v)
+            <|> ( case maybeInt v >>= Just . convertToRGB of
+                    Nothing -> fail $ "could not parse discord color: " ++ show v
+                    Just d -> return d
+                )
+      )
+    where
+      maybeInt i
+        | fromIntegral (round i) == i = Just $ round i
+        | otherwise = Nothing

@@ -145,7 +145,7 @@ instance ToJSON ComponentButton where
             ]
       ]
 
--- | Buttton colours.
+-- | Buttton colors.
 data ButtonStyle
   = -- | Blurple button
     ButtonStylePrimary

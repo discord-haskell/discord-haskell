@@ -51,8 +51,6 @@ data ChannelRequest a where
   GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
   CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
-  -- | Sends a message with an Embed to a channel.
-  CreateMessageEmbed      :: ChannelId -> T.Text -> CreateEmbed -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
   CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Sends a message with granular controls.
@@ -102,7 +100,7 @@ data ChannelRequest a where
 data MessageDetailedOpts = MessageDetailedOpts
   { messageDetailedContent                  :: T.Text
   , messageDetailedTTS                      :: Bool
-  , messageDetailedEmbed                    :: Maybe CreateEmbed
+  , messageDetailedEmbeds                    :: Maybe [CreateEmbed]
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
@@ -113,7 +111,7 @@ data MessageDetailedOpts = MessageDetailedOpts
 instance Default MessageDetailedOpts where
   def = MessageDetailedOpts { messageDetailedContent         = ""
                             , messageDetailedTTS             = False
-                            , messageDetailedEmbed           = Nothing
+                            , messageDetailedEmbeds          = Nothing
                             , messageDetailedFile            = Nothing
                             , messageDetailedAllowedMentions = Nothing
                             , messageDetailedReference       = Nothing
@@ -217,7 +215,6 @@ channelMajorRoute c = case c of
   (GetChannelMessages chan _) ->            "msg " <> show chan
   (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
   (CreateMessage chan _) ->                 "msg " <> show chan
-  (CreateMessageEmbed chan _ _) ->          "msg " <> show chan
   (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
   (CreateMessageDetailed chan _) ->         "msg " <> show chan
   (CreateReaction (chan, _) _) ->     "add_react " <> show chan
@@ -274,7 +271,7 @@ channelJsonRequest c = case c of
       Delete (channels // chan) mempty
 
   (GetChannelMessages chan (n,timing)) ->
-      let n' = if n < 1 then 1 else (if n > 100 then 100 else n)
+      let n' = max 1 (min 100 n)
           options = "limit" R.=: n' <> messageTimingToQuery timing
       in Get (channels // chan /: "messages") options
 
@@ -284,11 +281,6 @@ channelJsonRequest c = case c of
   (CreateMessage chan msg) ->
       let content = ["content" .= msg]
           body = pure $ R.ReqBodyJson $ object content
-      in Post (channels // chan /: "messages") body mempty
-
-  (CreateMessageEmbed chan msg embed) ->
-      let partJson = partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["content" .= msg, "embed" .= createEmbed embed]
-          body = R.reqBodyMultipart (partJson : maybeEmbed (Just embed))
       in Post (channels // chan /: "messages") body mempty
 
   (CreateMessageUploadFile chan fileName file) ->
@@ -308,7 +300,7 @@ channelJsonRequest c = case c of
           payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
                                  , "tts"     .= messageDetailedTTS msgOpts ] ++
                                  [ name .= value | (name, Just value) <-
-                                    [ ("embed", toJSON . createEmbed <$> messageDetailedEmbed msgOpts)
+                                    [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
                                     , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
                                     , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
                                     , ("components", toJSON <$> messageDetailedComponents msgOpts)
