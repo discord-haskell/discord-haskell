@@ -457,8 +457,6 @@ instance FromJSON ResolvedData where
             <*> v .:? "channels"
       )
 
--- | The application command payload for an i
-
 -- | The data to respond to an interaction with. Unless specified otherwise, you
 -- only have three seconds to reply to an interaction before a failure state is
 -- given.
