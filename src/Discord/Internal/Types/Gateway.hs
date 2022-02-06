@@ -30,7 +30,7 @@ data GatewayReceivable
   | Hello Integer
   | HeartbeatAck
   | ParseError T.Text
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 -- | Sent to gateway by our library
 data GatewaySendableInternal

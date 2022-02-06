@@ -96,7 +96,7 @@ data EventInternalParse =
   -- -- | InternalVoiceStateUpdate
   -- -- | InternalVoiceServerUpdate
   | InternalUnknownEvent     T.Text Object
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 data PartialApplication = PartialApplication
   { partialApplicationID :: ApplicationId
