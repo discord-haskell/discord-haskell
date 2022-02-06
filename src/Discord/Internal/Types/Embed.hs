@@ -37,10 +37,10 @@ createEmbed CreateEmbed{..} =
                               (emptyMaybe createEmbedAuthorUrl)
                               (embedImageToUrl "author" <$> createEmbedAuthorIcon)
                               Nothing
-    embedImage = EmbedImage  <$> (embedImageToUrl "image" <$> createEmbedImage)
-                              <&> ($ Nothing) <&> ($ Nothing) <&> ($ Nothing)
-    embedThumbnail = EmbedThumbnail <$> (embedImageToUrl "thumbnail" <$> createEmbedThumbnail)
-                                    <&> ($ Nothing) <&> ($ Nothing) <&> ($ Nothing)
+    embedImage = (embedImageToUrl "image" <$> createEmbedImage) <&>
+                  \image -> EmbedImage image Nothing Nothing Nothing
+    embedThumbnail = (embedImageToUrl "thumbnail" <$> createEmbedThumbnail) <&>
+                      \thumbnail -> EmbedThumbnail thumbnail Nothing Nothing Nothing
     embedFooter = EmbedFooter createEmbedFooterText
                               (embedImageToUrl "footer" <$> createEmbedFooterIcon)
                               Nothing
