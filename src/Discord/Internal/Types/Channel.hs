@@ -300,7 +300,7 @@ data Message = Message
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
   , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
   , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers 
-  } deriving (Show, Eq, Ord)
+  } deriving (Show, Eq, Ord, Read)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->

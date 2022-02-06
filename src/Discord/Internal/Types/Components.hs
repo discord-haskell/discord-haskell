@@ -29,7 +29,7 @@ import Discord.Internal.Types.Prelude (EmojiId, RoleId, toMaybeJSON)
 import Discord.Internal.Types.User (User)
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Read)
 
 instance FromJSON ComponentActionRow where
   parseJSON =
@@ -84,7 +84,7 @@ data ComponentButton
         -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Read)
 
 -- | Takes the label and the custom id of the button that is to be generated.
 mkButton :: T.Text -> T.Text -> ComponentButton

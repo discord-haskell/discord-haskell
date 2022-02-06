@@ -122,7 +122,7 @@ data Interaction
         -- | The invoking guild's preferred locale.
         interactionGuildLocale :: Maybe T.Text
       }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Read)
 
 instance FromJSON Interaction where
   parseJSON =
@@ -173,7 +173,7 @@ instance FromJSON Interaction where
             _ -> fail "unknown interaction type"
       )
 
-newtype MemberOrUser = MemberOrUser (Either GuildMember User) deriving (Show, Eq)
+newtype MemberOrUser = MemberOrUser (Either GuildMember User) deriving (Show, Eq, Read)
 
 instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
   parseJSON =
