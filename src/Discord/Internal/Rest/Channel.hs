@@ -303,6 +303,8 @@ channelJsonRequest c = case c of
             Just f  -> [partFileRequestBody "file" (T.unpack $ fst f)
               $ RequestBodyBS $ snd f]
 
+          embedPart = maybeEmbed $ messageDetailedEmbed msgOpts
+
           payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
                                  , "tts"     .= messageDetailedTTS msgOpts ] ++
                                  [ name .= value | (name, Just value) <-
@@ -314,7 +316,7 @@ channelJsonRequest c = case c of
                                     ] ]
           payloadPart = partBS "payload_json" $ BL.toStrict $ encode $ toJSON payloadData
 
-          body = R.reqBodyMultipart (payloadPart : filePart)
+          body = R.reqBodyMultipart (payloadPart : filePart ++ embedPart)
       in Post (channels // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
