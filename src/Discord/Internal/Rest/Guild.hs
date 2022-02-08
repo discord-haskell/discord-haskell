@@ -132,7 +132,7 @@ data GuildRequest a where
   -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
   SyncGuildIntegration     :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Returns the 'GuildWidget' object. Requires the 'MANAGE_GUILD' permission.
-  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget 
+  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget
   -- | Modify a 'GuildWidget' object for the guild. All attributes may be passed in with
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildWidget' object.

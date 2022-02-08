@@ -424,7 +424,7 @@ instance FromJSON DiscordColor where
         | otherwise = Nothing
 
 maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
-maybeEmbed = 
+maybeEmbed =
       let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
           uploads CreateEmbed{..} = [(T.filter (/=' ') $ createEmbedTitle<>n,c) | (n, Just (CreateEmbedImageUpload c)) <-
                                           [ ("author.png", createEmbedAuthorIcon)

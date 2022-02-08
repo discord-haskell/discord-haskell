@@ -44,7 +44,7 @@ writeRestCall c req = do
   r <- readMVar m
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
-    (Right (Left er)) -> Left (RestCallInternalNoParse er (case r of 
+    (Right (Left er)) -> Left (RestCallInternalNoParse er (case r of
       Right x -> x
       Left _ -> ""))
     Left e -> Left e

@@ -67,7 +67,7 @@ type RoleId = Snowflake
 type IntegrationId = Snowflake
 type WebhookId = Snowflake
 type ParentId = Snowflake
-type ApplicationId = Snowflake 
+type ApplicationId = Snowflake
 type ApplicationCommandId = Snowflake
 type InteractionId = Snowflake
 type InteractionToken = T.Text
@@ -89,7 +89,7 @@ class Data a => InternalDiscordType a where
   fromDiscordType :: a -> Int
   discordTypeTable :: [(Int, a)]
   discordTypeTable =  map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)
-    where 
+    where
       makeTable :: Data b => b -> [b]
       makeTable t = map fromConstr (dataTypeConstrs $ dataTypeOf t)
 

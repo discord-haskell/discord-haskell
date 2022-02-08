@@ -119,7 +119,7 @@ data Role =
       , roleColor   :: ColorInteger              -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
       , rolePos     :: Integer                   -- ^ Position of this role
-      , rolePerms   :: T.Text                   -- ^ Permission bit set
+      , rolePerms   :: T.Text                    -- ^ Permission bit set
       , roleManaged :: Bool                      -- ^ Whether this role is managed by an integration
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
     } deriving (Show, Read, Eq, Ord)

@@ -299,7 +299,7 @@ data Message = Message
   , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
   , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
-  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers 
+  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
   } deriving (Show, Eq, Ord, Read)
 
 instance FromJSON Message where
@@ -458,7 +458,7 @@ instance ToJSON StickerFormatType where
   toJSON = toJSON . fromDiscordType
 
 instance FromJSON StickerFormatType where
-  parseJSON = discordTypeParseJSON "StickerFormatType" 
+  parseJSON = discordTypeParseJSON "StickerFormatType"
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -536,9 +536,9 @@ instance Default MessageReference where
 
 
 data MessageType
-  = MessageTypeDefault 
-  | MessageTypeRecipientAdd 
-  | MessageTypeRecipientRemove 
+  = MessageTypeDefault
+  | MessageTypeRecipientAdd
+  | MessageTypeRecipientRemove
   | MessageTypeCall
   | MessageTypeChannelNameChange
   | MessageTypeChannelIconChange
@@ -591,7 +591,7 @@ instance ToJSON MessageType where
   toJSON = toJSON . fromDiscordType
 
 instance FromJSON MessageType where
-  parseJSON = discordTypeParseJSON "MessageType" 
+  parseJSON = discordTypeParseJSON "MessageType"
 
 data MessageActivity = MessageActivity
   { messageActivityType :: MessageActivityType
@@ -625,13 +625,13 @@ instance InternalDiscordType MessageActivityType where
   fromDiscordType MessageActivityTypeJoinRequest = 4
 
 instance ToJSON MessageActivityType where
-  toJSON = toJSON . fromDiscordType 
+  toJSON = toJSON . fromDiscordType
 
 instance FromJSON MessageActivityType where
   parseJSON = discordTypeParseJSON "MessageActivityType"
 
 -- | Types of flags to attach to the message.
-data MessageFlag = 
+data MessageFlag =
     MessageFlagCrossposted
   | MessageFlagIsCrosspost
   | MessageFlagSupressEmbeds
