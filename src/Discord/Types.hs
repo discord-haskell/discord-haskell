@@ -7,7 +7,7 @@ import Discord.Internal.Types hiding
     ( GatewaySendableInternal(..)
     , GatewayReceivable(..)
     , EventInternalParse(..)
-    , InternalDiscordType(..)
+    , InternalDiscordEnum(..)
 
     , colorToInternal
     , convertToRGB

@@ -448,7 +448,7 @@ data StickerFormatType =
   | StickerFormatTypeLOTTIE
   deriving (Show, Read, Eq, Ord, Data)
 
-instance InternalDiscordType StickerFormatType where
+instance InternalDiscordEnum StickerFormatType where
   discordTypeStartValue = StickerFormatTypePNG
   fromDiscordType StickerFormatTypePNG = 1
   fromDiscordType StickerFormatTypeAPNG = 2
@@ -561,7 +561,7 @@ data MessageType
   | MessageTypeContextMenuCommand
   deriving (Show, Read, Data, Eq, Ord)
 
-instance InternalDiscordType MessageType where
+instance InternalDiscordEnum MessageType where
   discordTypeStartValue = MessageTypeDefault
   fromDiscordType MessageTypeDefault = 0
   fromDiscordType MessageTypeRecipientAdd = 1
@@ -617,7 +617,7 @@ data MessageActivityType
   | MessageActivityTypeJoinRequest -- ^ Request to join a Rich Presence event
   deriving (Show, Read, Data, Eq, Ord)
 
-instance InternalDiscordType MessageActivityType where
+instance InternalDiscordEnum MessageActivityType where
   discordTypeStartValue = MessageActivityTypeJoin
   fromDiscordType MessageActivityTypeJoin = 1
   fromDiscordType MessageActivityTypeSpectate = 2
@@ -645,7 +645,7 @@ data MessageFlag =
 newtype MessageFlags = MessageFlags [MessageFlag]
   deriving (Show, Read, Eq, Ord)
 
-instance InternalDiscordType MessageFlag where
+instance InternalDiscordEnum MessageFlag where
   discordTypeStartValue = MessageFlagCrossposted
   fromDiscordType MessageFlagCrossposted = 1 `shift` 0
   fromDiscordType MessageFlagIsCrosspost = 1 `shift` 1

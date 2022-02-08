@@ -13,7 +13,7 @@ import Control.Applicative (Alternative((<|>)))
 import Data.Bits (Bits((.&.)))
 
 
-import Discord.Internal.Types.Prelude (InternalDiscordType(..))
+import Discord.Internal.Types.Prelude (InternalDiscordEnum(..))
 
 -- | Color names
 -- Color is a bit of a mess on discord embeds.
@@ -136,7 +136,7 @@ colorToInternal DiscordColorDiscordBlack = 16777215
 convertToRGB :: Integer -> DiscordColor
 convertToRGB i = DiscordColorRGB (div i (256 * 256) .&. 255) (div i 256 .&. 255) (i .&. 255)
 
-instance InternalDiscordType DiscordColor where
+instance InternalDiscordEnum DiscordColor where
   discordTypeStartValue = DiscordColorDefault
   fromDiscordType = fromIntegral . colorToInternal
   discordTypeTable = map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)

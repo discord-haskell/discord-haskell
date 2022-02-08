@@ -33,7 +33,7 @@ import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordType (..), Snowflake, discordTypeParseJSON, toMaybeJSON)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, toMaybeJSON)
 
 -- | The structure for an application command.
 data ApplicationCommand
@@ -602,7 +602,7 @@ data ApplicationCommandChannelType
     ApplicationCommandChannelTypeGuildStageVoice
   deriving (Show, Read, Data, Eq)
 
-instance InternalDiscordType ApplicationCommandChannelType where
+instance InternalDiscordEnum ApplicationCommandChannelType where
   discordTypeStartValue = ApplicationCommandChannelTypeGuildText
   fromDiscordType ApplicationCommandChannelTypeGuildText = 0
   fromDiscordType ApplicationCommandChannelTypeDM = 1

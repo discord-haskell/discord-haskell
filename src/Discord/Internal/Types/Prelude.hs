@@ -82,7 +82,21 @@ snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
-class Data a => InternalDiscordType a where
+{-
+
+InternalDiscordEnum is a hack-y typeclass, but it's the best solution overall.
+The best we can do is prevent the end-user from seeing this.
+
+typeclass Bounded (minBound + maxBound) could replace discordTypeStartValue, but
+it can't derive instances for types like DiscordColor, which have simple sum types involved.
+
+typeclass Enum (toEnum + fromEnum) requires defining both A->Int and Int->A.
+If we handle both at once (with an inline map), it's no longer typesafe.
+
+External packages exist, but bloat our dependencies
+
+-}
+class Data a => InternalDiscordEnum a where
   discordTypeStartValue :: a
   fromDiscordType :: a -> Int
   discordTypeTable :: [(Int, a)]
