@@ -662,9 +662,12 @@ instance ToJSON MessageFlags where
 -- TODO: maybe make this a type class or something - the ability to handle flags automatically would be Very Good.
 
 instance FromJSON MessageFlags where
-  parseJSON = withScientific "MessageFlags" (\s -> let i = round s in if i /= (i .&. range) then fail "could not get message flags" else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable))
-    where 
-      range = sum $ fst <$> (discordTypeTable @MessageFlag)
+  parseJSON = withScientific "MessageFlags" $ \s ->
+      let i = round s
+          range = sum $ fst <$> (discordTypeTable @MessageFlag)
+      in if i /= (i .&. range)
+         then fail "could not get message flags"
+         else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable)
 
 -- | This is sent on the message object when the message is a response to an Interaction without an existing message (i.e., any non-component interaction).
 data MessageInteraction = MessageInteraction
