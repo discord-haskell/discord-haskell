@@ -82,8 +82,6 @@ snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
-type ColorInteger = Integer
-
 class Data a => InternalDiscordType a where
   discordTypeStartValue :: a
   fromDiscordType :: a -> Int
