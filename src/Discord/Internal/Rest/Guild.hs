@@ -132,7 +132,7 @@ data GuildRequest a where
   -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
   SyncGuildIntegration     :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Returns the 'GuildWidget' object. Requires the 'MANAGE_GUILD' permission.
-  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget 
+  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget
   -- | Modify a 'GuildWidget' object for the guild. All attributes may be passed in with
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildWidget' object.
@@ -174,7 +174,7 @@ instance ToJSON CreateGuildBanOpts where
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   { modifyGuildRoleOptsName            :: Maybe T.Text
   , modifyGuildRoleOptsPermissions     :: Maybe T.Text
-  , modifyGuildRoleOptsColor           :: Maybe ColorInteger
+  , modifyGuildRoleOptsColor           :: Maybe DiscordColor
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
   } deriving (Show, Read, Eq, Ord)

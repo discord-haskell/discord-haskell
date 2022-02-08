@@ -81,6 +81,7 @@ library
                      , Discord.Internal.Types.Guild
                      , Discord.Internal.Types.User
                      , Discord.Internal.Types.Embed
+                     , Discord.Internal.Types.Color
                      , Discord.Internal.Types.ApplicationCommands
                      , Discord.Internal.Types.Interactions
                      , Discord.Internal.Types.Components

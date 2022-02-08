@@ -1,8 +1,8 @@
--- | Provides types and encoding/decoding code. Types should be identical to those provided
---   in the Discord API documentation.
+-- | Re-export ALL the internal type modules. Hiding is in Discord.Types
 module Discord.Internal.Types
   ( module Discord.Internal.Types.Prelude,
     module Discord.Internal.Types.Channel,
+    module Discord.Internal.Types.Color,
     module Discord.Internal.Types.Events,
     module Discord.Internal.Types.Gateway,
     module Discord.Internal.Types.Guild,
@@ -18,12 +18,13 @@ where
 import Data.Aeson (Object, ToJSON (toJSON))
 import Data.Time.Clock (UTCTime (..))
 import Discord.Internal.Types.Channel
+import Discord.Internal.Types.Color
 import Discord.Internal.Types.Components
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
-import Discord.Internal.Types.Prelude hiding (InternalDiscordType(..))
+import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
 
 userFacingEvent :: EventInternalParse -> Event

@@ -67,7 +67,7 @@ type RoleId = Snowflake
 type IntegrationId = Snowflake
 type WebhookId = Snowflake
 type ParentId = Snowflake
-type ApplicationId = Snowflake 
+type ApplicationId = Snowflake
 type ApplicationCommandId = Snowflake
 type InteractionId = Snowflake
 type InteractionToken = T.Text
@@ -82,14 +82,24 @@ snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
 epochTime :: UTCTime
 epochTime = posixSecondsToUTCTime 0
 
-type ColorInteger = Integer
+-- | InternalDiscordEnum is a hack-y typeclass, but it's the best solution
+-- overall.
+--
+-- The best we can do is prevent the end-user from seeing this.
 
-class Data a => InternalDiscordType a where
+-- typeclass Bounded (minBound + maxBound) could replace discordTypeStartValue, but
+-- it can't derive instances for types like DiscordColor, which have simple sum types involved.
+
+-- typeclass Enum (toEnum + fromEnum) requires defining both A->Int and Int->A.
+-- If we handle both at once (with an inline map), it's no longer typesafe.
+
+-- External packages exist, but bloat our dependencies
+class Data a => InternalDiscordEnum a where
   discordTypeStartValue :: a
   fromDiscordType :: a -> Int
   discordTypeTable :: [(Int, a)]
   discordTypeTable =  map (\d -> (fromDiscordType d, d)) (makeTable discordTypeStartValue)
-    where 
+    where
       makeTable :: Data b => b -> [b]
       makeTable t = map fromConstr (dataTypeConstrs $ dataTypeOf t)
 

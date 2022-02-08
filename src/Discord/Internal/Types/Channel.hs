@@ -299,7 +299,7 @@ data Message = Message
   , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
   , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
-  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers 
+  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
   } deriving (Show, Eq, Ord, Read)
 
 instance FromJSON Message where
@@ -448,7 +448,7 @@ data StickerFormatType =
   | StickerFormatTypeLOTTIE
   deriving (Show, Read, Eq, Ord, Data)
 
-instance InternalDiscordType StickerFormatType where
+instance InternalDiscordEnum StickerFormatType where
   discordTypeStartValue = StickerFormatTypePNG
   fromDiscordType StickerFormatTypePNG = 1
   fromDiscordType StickerFormatTypeAPNG = 2
@@ -458,7 +458,7 @@ instance ToJSON StickerFormatType where
   toJSON = toJSON . fromDiscordType
 
 instance FromJSON StickerFormatType where
-  parseJSON = discordTypeParseJSON "StickerFormatType" 
+  parseJSON = discordTypeParseJSON "StickerFormatType"
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -536,9 +536,9 @@ instance Default MessageReference where
 
 
 data MessageType
-  = MessageTypeDefault 
-  | MessageTypeRecipientAdd 
-  | MessageTypeRecipientRemove 
+  = MessageTypeDefault
+  | MessageTypeRecipientAdd
+  | MessageTypeRecipientRemove
   | MessageTypeCall
   | MessageTypeChannelNameChange
   | MessageTypeChannelIconChange
@@ -561,7 +561,7 @@ data MessageType
   | MessageTypeContextMenuCommand
   deriving (Show, Read, Data, Eq, Ord)
 
-instance InternalDiscordType MessageType where
+instance InternalDiscordEnum MessageType where
   discordTypeStartValue = MessageTypeDefault
   fromDiscordType MessageTypeDefault = 0
   fromDiscordType MessageTypeRecipientAdd = 1
@@ -591,7 +591,7 @@ instance ToJSON MessageType where
   toJSON = toJSON . fromDiscordType
 
 instance FromJSON MessageType where
-  parseJSON = discordTypeParseJSON "MessageType" 
+  parseJSON = discordTypeParseJSON "MessageType"
 
 data MessageActivity = MessageActivity
   { messageActivityType :: MessageActivityType
@@ -617,7 +617,7 @@ data MessageActivityType
   | MessageActivityTypeJoinRequest -- ^ Request to join a Rich Presence event
   deriving (Show, Read, Data, Eq, Ord)
 
-instance InternalDiscordType MessageActivityType where
+instance InternalDiscordEnum MessageActivityType where
   discordTypeStartValue = MessageActivityTypeJoin
   fromDiscordType MessageActivityTypeJoin = 1
   fromDiscordType MessageActivityTypeSpectate = 2
@@ -625,13 +625,13 @@ instance InternalDiscordType MessageActivityType where
   fromDiscordType MessageActivityTypeJoinRequest = 4
 
 instance ToJSON MessageActivityType where
-  toJSON = toJSON . fromDiscordType 
+  toJSON = toJSON . fromDiscordType
 
 instance FromJSON MessageActivityType where
   parseJSON = discordTypeParseJSON "MessageActivityType"
 
 -- | Types of flags to attach to the message.
-data MessageFlag = 
+data MessageFlag =
     MessageFlagCrossposted
   | MessageFlagIsCrosspost
   | MessageFlagSupressEmbeds
@@ -645,7 +645,7 @@ data MessageFlag =
 newtype MessageFlags = MessageFlags [MessageFlag]
   deriving (Show, Read, Eq, Ord)
 
-instance InternalDiscordType MessageFlag where
+instance InternalDiscordEnum MessageFlag where
   discordTypeStartValue = MessageFlagCrossposted
   fromDiscordType MessageFlagCrossposted = 1 `shift` 0
   fromDiscordType MessageFlagIsCrosspost = 1 `shift` 1
@@ -662,9 +662,12 @@ instance ToJSON MessageFlags where
 -- TODO: maybe make this a type class or something - the ability to handle flags automatically would be Very Good.
 
 instance FromJSON MessageFlags where
-  parseJSON = withScientific "MessageFlags" (\s -> let i = round s in if i /= (i .&. range) then fail "could not get message flags" else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable))
-    where 
-      range = sum $ fst <$> (discordTypeTable @MessageFlag)
+  parseJSON = withScientific "MessageFlags" $ \s ->
+      let i = round s
+          range = sum $ fst <$> (discordTypeTable @MessageFlag)
+      in if i /= (i .&. range)
+         then fail "could not get message flags"
+         else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable)
 
 -- | This is sent on the message object when the message is a response to an Interaction without an existing message (i.e., any non-component interaction).
 data MessageInteraction = MessageInteraction
