@@ -20,6 +20,7 @@ import Text.Read (readMaybe)
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Events
+import Discord.Internal.Types.Guild (Activity (..))
 
 -- | Sent by gateway
 data GatewayReceivable
@@ -127,25 +128,6 @@ data UpdateStatusOpts = UpdateStatusOpts
                       }
   deriving (Show, Read, Eq, Ord)
 
-data Activity = Activity
-              { activityName :: T.Text
-              , activityType :: ActivityType
-              , activityUrl :: Maybe T.Text
-              }
-  deriving (Show, Read, Eq, Ord)
-
-data ActivityType = ActivityTypeGame
-                  | ActivityTypeStreaming
-                  | ActivityTypeListening
-                  | ActivityTypeCompeting
-  deriving (Show, Read, Eq, Ord)
-
-activityTypeId :: ActivityType -> Int
-activityTypeId a = case a of ActivityTypeGame -> 0
-                             ActivityTypeStreaming -> 1
-                             ActivityTypeListening -> 2
-                             ActivityTypeCompeting -> 5
-
 data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusDoNotDisturb
                       | UpdateStatusAwayFromKeyboard
@@ -228,7 +210,7 @@ instance ToJSON GatewaySendable where
       , "status" .= statusString status
       , "game" .= (game <&> \a -> object [
                                 "name" .= activityName a
-                              , "type" .= activityTypeId (activityType a)
+                              , "type" .= fromDiscordType (activityType a)
                               , "url" .= activityUrl a
                               ])
       ]
