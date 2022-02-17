@@ -24,6 +24,7 @@ import Network.WebSockets (ConnectionException(..), Connection,
                            receiveData, sendTextData, sendClose)
 
 import Discord.Internal.Types
+import Discord.Internal.Rest.Prelude (apiVersion)
 
 
 data GatewayHandle = GatewayHandle
@@ -102,7 +103,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
       LoopClosed -> pure Nothing
 
   startconnectionpls :: GatewaySendableInternal -> IO LoopState
-  startconnectionpls first = runSecureClient "gateway.discord.gg" 443 "/?v=8&encoding=json" $ \conn -> do
+  startconnectionpls first = runSecureClient "gateway.discord.gg" 443 ("/?v=" <> T.unpack apiVersion <>"&encoding=json") $ \conn -> do
                       msg <- getPayload conn log
                       case msg of
                         Right (Hello interval) -> do

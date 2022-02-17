@@ -23,79 +23,85 @@ import Discord.Internal.Types.Components (Emoji)
 
 -- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
 data Event =
-    Ready                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
-  | Resumed                 [T.Text]
-  | ChannelCreate           Channel
-  | ChannelUpdate           Channel
-  | ChannelDelete           Channel
-  | ChannelPinsUpdate       ChannelId (Maybe UTCTime)
-  | GuildCreate             Guild
-  | GuildUpdate             Guild
-  | GuildDelete             GuildUnavailable
-  | GuildBanAdd             GuildId User
-  | GuildBanRemove          GuildId User
-  | GuildEmojiUpdate        GuildId [Emoji]
-  | GuildIntegrationsUpdate GuildId
-  | GuildMemberAdd          GuildId GuildMember
-  | GuildMemberRemove       GuildId User
-  | GuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
-  | GuildMemberChunk        GuildId [GuildMember]
-  | GuildRoleCreate         GuildId Role
-  | GuildRoleUpdate         GuildId Role
-  | GuildRoleDelete         GuildId RoleId
-  | MessageCreate           Message
-  | MessageUpdate           ChannelId MessageId
-  | MessageDelete           ChannelId MessageId
-  | MessageDeleteBulk       ChannelId [MessageId]
-  | MessageReactionAdd      ReactionInfo
-  | MessageReactionRemove   ReactionInfo
-  | MessageReactionRemoveAll ChannelId MessageId
+    Ready                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+  | Resumed                    [T.Text]
+  | ChannelCreate              Channel
+  | ChannelUpdate              Channel
+  | ChannelDelete              Channel
+  | ThreadCreate               Channel
+  | ThreadUpdate               Channel
+  -- | ThreadDelete               Channel
+  | ChannelPinsUpdate          ChannelId (Maybe UTCTime)
+  | GuildCreate                Guild
+  | GuildUpdate                Guild
+  | GuildDelete                GuildUnavailable
+  | GuildBanAdd                GuildId User
+  | GuildBanRemove             GuildId User
+  | GuildEmojiUpdate           GuildId [Emoji]
+  | GuildIntegrationsUpdate    GuildId
+  | GuildMemberAdd             GuildId GuildMember
+  | GuildMemberRemove          GuildId User
+  | GuildMemberUpdate          GuildId [RoleId] User (Maybe T.Text)
+  | GuildMemberChunk           GuildId [GuildMember]
+  | GuildRoleCreate            GuildId Role
+  | GuildRoleUpdate            GuildId Role
+  | GuildRoleDelete            GuildId RoleId
+  | MessageCreate              Message
+  | MessageUpdate              ChannelId MessageId
+  | MessageDelete              ChannelId MessageId
+  | MessageDeleteBulk          ChannelId [MessageId]
+  | MessageReactionAdd         ReactionInfo
+  | MessageReactionRemove      ReactionInfo
+  | MessageReactionRemoveAll   ChannelId MessageId
   | MessageReactionRemoveEmoji ReactionRemoveInfo
-  | PresenceUpdate          PresenceInfo
-  | TypingStart             TypingInfo
-  | UserUpdate              User
-  | InteractionCreate       Interaction
+  | PresenceUpdate             PresenceInfo
+  | TypingStart                TypingInfo
+  | UserUpdate                 User
+  | InteractionCreate          Interaction
   -- | VoiceStateUpdate
   -- | VoiceServerUpdate
-  | UnknownEvent     T.Text Object
+  | UnknownEvent               T.Text Object
   deriving (Show, Eq)
 
 data EventInternalParse =
-    InternalReady                   Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
-  | InternalResumed                 [T.Text]
-  | InternalChannelCreate           Channel
-  | InternalChannelUpdate           Channel
-  | InternalChannelDelete           Channel
-  | InternalChannelPinsUpdate       ChannelId (Maybe UTCTime)
-  | InternalGuildCreate             Guild
-  | InternalGuildUpdate             Guild
-  | InternalGuildDelete             GuildUnavailable
-  | InternalGuildBanAdd             GuildId User
-  | InternalGuildBanRemove          GuildId User
-  | InternalGuildEmojiUpdate        GuildId [Emoji]
-  | InternalGuildIntegrationsUpdate GuildId
-  | InternalGuildMemberAdd          GuildId GuildMember
-  | InternalGuildMemberRemove       GuildId User
-  | InternalGuildMemberUpdate       GuildId [RoleId] User (Maybe T.Text)
-  | InternalGuildMemberChunk        GuildId [GuildMember]
-  | InternalGuildRoleCreate         GuildId Role
-  | InternalGuildRoleUpdate         GuildId Role
-  | InternalGuildRoleDelete         GuildId RoleId
-  | InternalMessageCreate           Message
-  | InternalMessageUpdate           ChannelId MessageId
-  | InternalMessageDelete           ChannelId MessageId
-  | InternalMessageDeleteBulk       ChannelId [MessageId]
-  | InternalMessageReactionAdd      ReactionInfo
-  | InternalMessageReactionRemove   ReactionInfo
-  | InternalMessageReactionRemoveAll ChannelId MessageId
+    InternalReady                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+  | InternalResumed                    [T.Text]
+  | InternalChannelCreate              Channel
+  | InternalChannelUpdate              Channel
+  | InternalChannelDelete              Channel
+  | InternalThreadCreate               Channel
+  | InternalThreadUpdate               Channel
+  -- | ThreadDelete               Channel
+  | InternalChannelPinsUpdate          ChannelId (Maybe UTCTime)
+  | InternalGuildCreate                Guild
+  | InternalGuildUpdate                Guild
+  | InternalGuildDelete                GuildUnavailable
+  | InternalGuildBanAdd                GuildId User
+  | InternalGuildBanRemove             GuildId User
+  | InternalGuildEmojiUpdate           GuildId [Emoji]
+  | InternalGuildIntegrationsUpdate    GuildId
+  | InternalGuildMemberAdd             GuildId GuildMember
+  | InternalGuildMemberRemove          GuildId User
+  | InternalGuildMemberUpdate          GuildId [RoleId] User (Maybe T.Text)
+  | InternalGuildMemberChunk           GuildId [GuildMember]
+  | InternalGuildRoleCreate            GuildId Role
+  | InternalGuildRoleUpdate            GuildId Role
+  | InternalGuildRoleDelete            GuildId RoleId
+  | InternalMessageCreate              Message
+  | InternalMessageUpdate              ChannelId MessageId
+  | InternalMessageDelete              ChannelId MessageId
+  | InternalMessageDeleteBulk          ChannelId [MessageId]
+  | InternalMessageReactionAdd         ReactionInfo
+  | InternalMessageReactionRemove      ReactionInfo
+  | InternalMessageReactionRemoveAll   ChannelId MessageId
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
-  | InternalPresenceUpdate          PresenceInfo
-  | InternalTypingStart             TypingInfo
-  | InternalUserUpdate              User
-  | InternalInteractionCreate       Interaction
+  | InternalPresenceUpdate             PresenceInfo
+  | InternalTypingStart                TypingInfo
+  | InternalUserUpdate                 User
+  | InternalInteractionCreate          Interaction
   -- -- | InternalVoiceStateUpdate
   -- -- | InternalVoiceServerUpdate
-  | InternalUnknownEvent     T.Text Object
+  | InternalUnknownEvent               T.Text Object
   deriving (Show, Eq, Read)
 
 data PartialApplication = PartialApplication
@@ -171,6 +177,8 @@ eventParse t o = case t of
     "CHANNEL_CREATE"            -> InternalChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> InternalChannelUpdate             <$> reparse o
     "CHANNEL_DELETE"            -> InternalChannelDelete             <$> reparse o
+    "THREAD_CREATE"             -> InternalThreadCreate              <$> reparse o
+    "THREAD_UPDATE"             -> InternalThreadUpdate              <$> reparse o
     "CHANNEL_PINS_UPDATE"       -> do id <- o .: "channel_id"
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
