@@ -35,7 +35,7 @@ userFacingEvent event = case event of
   InternalChannelUpdate a -> ChannelUpdate a
   InternalChannelDelete a -> ChannelDelete a
   InternalChannelPinsUpdate a b -> ChannelPinsUpdate a b
-  InternalGuildCreate a b -> GuildCreate a b
+  InternalGuildCreate a -> GuildCreate a
   InternalGuildUpdate a -> GuildUpdate a
   InternalGuildDelete a -> GuildDelete a
   InternalGuildBanAdd a b -> GuildBanAdd a b

@@ -15,7 +15,7 @@ import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
-import Discord.Internal.Types.Guild (Role, GuildInfo, GuildUnavailable, Guild)
+import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Components (Emoji)
@@ -29,7 +29,7 @@ data Event =
   | ChannelUpdate           Channel
   | ChannelDelete           Channel
   | ChannelPinsUpdate       ChannelId (Maybe UTCTime)
-  | GuildCreate             Guild GuildInfo
+  | GuildCreate             Guild
   | GuildUpdate             Guild
   | GuildDelete             GuildUnavailable
   | GuildBanAdd             GuildId User
@@ -67,7 +67,7 @@ data EventInternalParse =
   | InternalChannelUpdate           Channel
   | InternalChannelDelete           Channel
   | InternalChannelPinsUpdate       ChannelId (Maybe UTCTime)
-  | InternalGuildCreate             Guild GuildInfo
+  | InternalGuildCreate             Guild
   | InternalGuildUpdate             Guild
   | InternalGuildDelete             GuildUnavailable
   | InternalGuildBanAdd             GuildId User
@@ -136,22 +136,6 @@ instance FromJSON ReactionRemoveInfo where
                        <*> o .:  "message_id"
                        <*> o .:  "emoji"
 
-data PresenceInfo = PresenceInfo
-  { presenceUserId  :: UserId
-  , presenceRoles   :: [RoleId]
-  -- , presenceGame :: Maybe Activity
-  , presenceGuildId :: GuildId
-  , presenceStatus  :: T.Text
-  } deriving (Show, Read, Eq, Ord)
-
-instance FromJSON PresenceInfo where
-  parseJSON = withObject "PresenceInfo" $ \o ->
-    PresenceInfo <$> (o .: "user" >>= (.: "id"))
-                 <*> o .: "roles"
-              -- <*> o .: "game"
-                 <*> o .: "guild_id"
-                 <*> o .: "status"
-
 data TypingInfo = TypingInfo
   { typingUserId    :: UserId
   , typingChannelId :: ChannelId
@@ -191,7 +175,7 @@ eventParse t o = case t of
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
                                       pure (InternalChannelPinsUpdate id utc)
-    "GUILD_CREATE"              -> InternalGuildCreate               <$> reparse o <*> reparse o
+    "GUILD_CREATE"              -> InternalGuildCreate               <$> reparse o
     "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"

@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Types relating to Discord Guilds (servers)
 module Discord.Internal.Types.Guild where
@@ -11,9 +11,10 @@ import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
-import Discord.Internal.Types.Channel (Channel)
+import Discord.Internal.Types.Channel (Channel, StickerItem)
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Components (Emoji)
+import Data.Data (Data)
 
 
 
@@ -22,25 +23,57 @@ import Discord.Internal.Types.Components (Emoji)
 --
 -- https://discord.com/developers/docs/resources/guild#guild-object
 data Guild = Guild
-      { guildId                  :: GuildId       -- ^ Gulid id
-      , guildName                :: T.Text          -- ^ Guild name (2 - 100 chars)
-      , guildIcon                :: Maybe T.Text    -- ^ Icon hash
-      , guildSplash              :: Maybe T.Text    -- ^ Splash hash
-      , guildOwnerId             :: UserId       -- ^ Guild owner id
-      , guildPermissions         :: Maybe T.Text
-      , guildRegion              :: Maybe T.Text    -- ^ Guild voice region
-      , guildAfkId               :: Maybe ChannelId -- ^ Id of afk channel
-      , guildAfkTimeout          :: Integer         -- ^ Afk timeout in seconds
-      , guildWidgetEnabled       :: Maybe Bool      -- ^ Id of embedded channel
-      , guildWidgetChannelId     :: Maybe ChannelId -- ^ Id of embedded channel
-      , guildVerificationLevel   :: Integer         -- ^ Level of verification
-      , guildNotification        :: Integer         -- ^ Level of default notifications
-      , guildExplicitFilterLevel :: Integer
-      , guildRoles               :: [Role]           -- ^ Array of 'Role' objects
-      , guildEmojis              :: [Emoji]          -- ^ Array of 'Emoji' objects
-      , guildFeatures            :: [T.Text]
-      , guildMultiFactAuth       :: !Integer
-      , guildApplicationId       :: Maybe Snowflake
+      { guildId                   :: GuildId              -- ^ Gulid id
+      , guildName                 :: T.Text               -- ^ Guild name (2 - 100 chars)
+      , guildIcon                 :: Maybe T.Text         -- ^ Icon hash
+      , guildIconHash             :: Maybe T.Text         -- ^ Icon hash, when returned in template object
+      , guildSplash               :: Maybe T.Text         -- ^ Splash hash
+      , guildDiscoverySplash      :: Maybe T.Text         -- ^ Discovery splash hash
+      , guildOwner                :: Maybe Bool           -- ^ True is user is the owner of the guild
+      , guildOwnerId              :: UserId               -- ^ Guild owner id
+      , guildPermissions          :: Maybe T.Text         -- ^ Total permissions for the user in the guild
+      , guildAfkId                :: Maybe ChannelId      -- ^ Id of afk channel
+      , guildAfkTimeout           :: Integer              -- ^ Afk timeout in seconds
+      , guildWidgetEnabled        :: Maybe Bool           -- ^ Id of embedded channel
+      , guildWidgetChannelId      :: Maybe ChannelId      -- ^ Id of embedded channel
+      , guildVerificationLevel    :: Integer              -- ^ Level of verification
+      , guildNotification         :: Integer              -- ^ Level of default notifications
+      , guildExplicitFilterLevel  :: Integer              -- ^ Whose media gets scanned
+      , guildRoles                :: [Role]               -- ^ Array of 'Role' objects
+      , guildEmojis               :: [Emoji]              -- ^ Array of 'Emoji' objects
+      , guildFeatures             :: [T.Text]             -- ^ Array of guild feature strings
+      , guildMultiFactAuth        :: !Integer             -- ^ MFA level for the guild
+      , guildApplicationId        :: Maybe ApplicationId  -- ^ Application id of the guild if bot created
+      , guildSystemChannelId      :: Maybe ChannelId      -- ^ Channel where guild notices such as welcome messages and boost events
+      , guildSystemChannelFlags   :: Integer              -- ^ Flags on the system channel
+      , guildRulesChannelId       :: Maybe ChannelId      -- ^ Id of channel with rules/guidelines
+      , guildJoinedAt             :: Maybe UTCTime        -- ^ When this guild was joined at
+      , guildLarge                :: Maybe Bool           -- ^ True if this guild is considered large
+      , guildUnavailable          :: Maybe Bool           -- ^ True if the guild is unavailable due to outage
+      , guildMemberCount          :: Maybe Integer        -- ^ Total number of members in the guild
+      -- voice_states
+      , guildMembers              :: Maybe [GuildMember]  -- ^ Users in the guild
+      , guildChannels             :: Maybe [Channel]      -- ^ Channels in the guild
+      , guildThreads              :: Maybe [Channel]      -- ^ All active threads in the guild that the current user has permission to view
+      , guildPresences            :: Maybe [PresenceInfo] -- ^ Presences of the members in the guild
+      , guildMaxPresences         :: Maybe Integer        -- ^ Maximum number of prescences in the guild
+      , guildMaxMembers           :: Maybe Integer        -- ^ Maximum number of members in the guild
+      , guildVanityURL            :: Maybe T.Text         -- ^ Vanity url code for the guild
+      , guildDescription          :: Maybe T.Text         -- ^ Description of a commmunity guild
+      , guildBanner               :: Maybe T.Text         -- ^ Banner hash
+      , guildPremiumTier          :: Integer              -- ^ Premium tier (boost level)
+      , guildSubscriptionCount    :: Maybe Integer        -- ^ Number of boosts the guild has
+      , guildPreferredLocale      :: T.Text               -- ^ Preferred locale of a community server
+      , guildPublicUpdatesChannel :: Maybe ChannelId      -- ^ Id of channel where admins and mods get updates
+      , guildMaxVideoUsers        :: Maybe Integer        -- ^ Maximum number of users in video channel
+      , guildApproxMemberCount    :: Maybe Integer        -- ^ Approximate number of members in the guild
+      , guildApproxPresenceCount  :: Maybe Integer        -- ^ Approximate number of non-offline members in the guild
+      -- welcome_screen
+      , guildNSFWLevel            :: Integer              -- ^ Guild NSFW level
+      -- stage_instances
+      , guildStickers             :: Maybe [StickerItem]  -- ^ Custom guild stickers
+      -- guild_scheduled_events
+      , guildPremiumBar           :: Bool                 -- ^ Whether the guild has the boost progress bar enabled
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Guild where
@@ -48,10 +81,12 @@ instance FromJSON Guild where
     Guild <$> o .:  "id"
           <*> o .:  "name"
           <*> o .:? "icon"
+          <*> o .:? "icon_hash"
           <*> o .:? "splash"
+          <*> o .:? "discovery_splash"
+          <*> o .:? "owner"
           <*> o .:  "owner_id"
           <*> o .:? "permissions"
-          <*> o .:? "region"
           <*> o .:? "afk_channel_id"
           <*> o .:  "afk_timeout"
           <*> o .:? "widget_enabled"
@@ -64,8 +99,37 @@ instance FromJSON Guild where
           <*> o .:  "features"
           <*> o .:  "mfa_level"
           <*> o .:? "application_id"
+          <*> o .:? "system_channel_id"
+          <*> o .:  "system_channel_flags"
+          <*> o .:? "rules_channel_id"
+          <*> o .:? "joined_at"
+          <*> o .:? "large"
+          <*> o .:? "unavailable"
+          <*> o .:? "member_count"
+          -- voice_states
+          <*> o .:? "members"
+          <*> o .:? "channels"
+          <*> o .:? "threads"
+          <*> o .:? "presences"
+          <*> o .:? "max_presences"
+          <*> o .:? "max_members"
+          <*> o .:? "vanity_url_code"
+          <*> o .:? "description"
+          <*> o .:? "banner"
+          <*> o .:  "premium_tier"
+          <*> o .:? "premium_subscription_count"
+          <*> o .:  "preferred_locale"
+          <*> o .:? "public_updates_channel_id"
+          <*> o .:? "max_video_channel_users"
+          <*> o .:? "approximate_member_count"
+          <*> o .:? "approximate_presence_count"
+          -- welcome_screen
+          <*> o .: "nsfw_level"
+          -- stage_instances
+          <*> o .:? "stickers"
+          <*> o .: "premium_progress_bar_enabled"
 
-data GuildUnavailable = GuildUnavailable
+newtype GuildUnavailable = GuildUnavailable
       { idOnceAvailable :: GuildId
       } deriving (Show, Read, Eq, Ord)
 
@@ -73,24 +137,46 @@ instance FromJSON GuildUnavailable where
   parseJSON = withObject "GuildUnavailable" $ \o ->
        GuildUnavailable <$> o .: "id"
 
-data GuildInfo = GuildInfo
-      { guildJoinedAt    :: UTCTime
-      , guildLarge       :: Bool
-      , guildMemberCount :: Integer
-   -- , guildVoiceStates :: [VoiceState]  -- (without guildid) todo have to add voice state data type
-      , guildMembers     :: [GuildMember]
-      , guildChannels    :: [Channel]     -- ^ Channels in the guild (sent in GuildCreate)
-   -- , guildPresences   :: [Presence]
-      } deriving (Show, Read, Eq, Ord)
+data PresenceInfo = PresenceInfo
+  { presenceUserId     :: UserId
+  -- , presenceRoles   :: [RoleId]
+  , presenceActivities :: Maybe [Activity]
+  , presenceGuildId    :: GuildId
+  , presenceStatus     :: T.Text
+  } deriving (Show, Read, Eq, Ord)
 
-instance FromJSON GuildInfo where
-  parseJSON = withObject "GuildInfo" $ \o ->
-    GuildInfo <$> o .: "joined_at"
-              <*> o .: "large"
-              <*> o .: "member_count"
-           -- <*> o .: "voice_states"
-              <*> o .: "members"
-              <*> o .: "channels"
+instance FromJSON PresenceInfo where
+  parseJSON = withObject "PresenceInfo" $ \o ->
+    PresenceInfo <$> (o .: "user" >>= (.: "id"))
+                 <*> o .: "activities"
+                 <*> o .: "guild_id"
+                 <*> o .: "status"
+
+data Activity = Activity
+              { activityName :: T.Text
+              , activityType :: ActivityType
+              , activityUrl :: Maybe T.Text
+              }
+  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON Activity where
+  parseJSON = withObject "Activity" $ \o ->
+    Activity <$> o .: "name"
+             <*> ((o .: "type") >>= discordTypeParseJSON "ActivityType" )
+             <*> o .:? "url"
+
+data ActivityType = ActivityTypeGame
+                  | ActivityTypeStreaming
+                  | ActivityTypeListening
+                  | ActivityTypeCompeting
+  deriving (Show, Read, Eq, Ord, Data)
+
+instance InternalDiscordEnum ActivityType where
+  discordTypeStartValue = ActivityTypeGame
+  fromDiscordType ActivityTypeGame = 0
+  fromDiscordType ActivityTypeStreaming = 1
+  fromDiscordType ActivityTypeListening = 2
+  fromDiscordType ActivityTypeCompeting = 5
 
 data PartialGuild = PartialGuild
       { partialGuildId          :: GuildId

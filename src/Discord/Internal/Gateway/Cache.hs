@@ -16,7 +16,7 @@ import Discord.Internal.Gateway.EventLoop
 data Cache = Cache
      { cacheCurrentUser :: User
      , cacheDMChannels :: M.Map ChannelId Channel
-     , cacheGuilds :: M.Map GuildId (Guild, GuildInfo)
+     , cacheGuilds :: M.Map GuildId Guild
      , cacheChannels :: M.Map ChannelId Channel
      , cacheApplication :: PartialApplication
      } deriving (Show)
@@ -54,10 +54,10 @@ cacheLoop cacheHandle log = do
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  InternalGuildCreate guild info ->
-    let newChans = map (setChanGuildID (guildId guild)) $ guildChannels info
-        g = M.insert (guildId guild) (guild, info { guildChannels = newChans }) (cacheGuilds minfo)
-        c = M.unionWith (\a _ -> a)
+  InternalGuildCreate guild ->
+    let newChans = maybe [] (map (setChanGuildID (guildId guild))) (guildChannels guild)
+        g = M.insert (guildId guild) (guild { guildChannels = Just newChans }) (cacheGuilds minfo)
+        c = M.unionWith const
                         (M.fromList [ (channelId ch, ch) | ch <- newChans ])
                         (cacheChannels minfo)
     in minfo { cacheGuilds = g, cacheChannels = c }
