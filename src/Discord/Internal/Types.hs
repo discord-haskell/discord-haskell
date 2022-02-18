@@ -38,6 +38,7 @@ userFacingEvent event = case event of
   InternalThreadUpdate a -> ThreadUpdate a
   InternalThreadDelete a -> ThreadDelete a
   InternalThreadListSync a -> ThreadListSync a
+  InternalThreadMembersUpdate a -> ThreadMembersUpdate a
   InternalChannelPinsUpdate a b -> ChannelPinsUpdate a b
   InternalGuildCreate a -> GuildCreate a
   InternalGuildUpdate a -> GuildUpdate a

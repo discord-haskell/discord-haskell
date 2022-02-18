@@ -19,7 +19,7 @@ import Discord.Internal.Types
 
 -- | The api version to use.
 apiVersion :: T.Text
-apiVersion = "9"
+apiVersion = "10"
 
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https

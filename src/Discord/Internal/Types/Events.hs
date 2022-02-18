@@ -32,6 +32,7 @@ data Event =
   | ThreadUpdate               Channel
   | ThreadDelete               Channel
   | ThreadListSync             ThreadListSyncFields 
+  | ThreadMembersUpdate        ThreadMembersUpdateFields 
   | ChannelPinsUpdate          ChannelId (Maybe UTCTime)
   | GuildCreate                Guild
   | GuildUpdate                Guild
@@ -74,6 +75,7 @@ data EventInternalParse =
   | InternalThreadUpdate               Channel
   | InternalThreadDelete               Channel
   | InternalThreadListSync             ThreadListSyncFields 
+  | InternalThreadMembersUpdate        ThreadMembersUpdateFields 
   | InternalChannelPinsUpdate          ChannelId (Maybe UTCTime)
   | InternalGuildCreate                Guild
   | InternalGuildUpdate                Guild
@@ -183,6 +185,7 @@ eventParse t o = case t of
     "THREAD_UPDATE"             -> InternalThreadUpdate              <$> reparse o
     "THREAD_DELETE"             -> InternalThreadDelete              <$> reparse o
     "THREAD_LIST_SYNC"          -> InternalThreadListSync            <$> reparse o
+    "THREAD_MEMBERS_UPDATE"     -> InternalThreadMembersUpdate       <$> reparse o
     "CHANNEL_PINS_UPDATE"       -> do id <- o .: "channel_id"
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
