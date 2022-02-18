@@ -29,7 +29,7 @@ import Discord.Internal.Types.Prelude (EmojiId, RoleId, toMaybeJSON)
 import Discord.Internal.Types.User (User)
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ComponentActionRow where
   parseJSON =
@@ -84,7 +84,7 @@ data ComponentButton
         -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Takes the label and the custom id of the button that is to be generated.
 mkButton :: T.Text -> T.Text -> ComponentButton
@@ -155,7 +155,7 @@ data ButtonStyle
     ButtonStyleSuccess
   | -- | Red button
     ButtonStyleDanger
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ButtonStyle where
   parseJSON =
@@ -192,7 +192,7 @@ data ComponentSelectMenu = ComponentSelectMenu
     -- | Maximum number of values to select (def 1, max 25)
     componentSelectMenuMaxValues :: Maybe Integer
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Takes the custom id and the options of the select menu that is to be
 -- generated.
@@ -246,7 +246,7 @@ data SelectOption = SelectOption
     -- | Use this value by default
     selectOptionDefault :: Maybe Bool
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Make a select option from the given label and value.
 mkSelectOption :: T.Text -> T.Text -> SelectOption
