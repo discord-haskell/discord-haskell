@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Types relating to Discord Guilds (servers)
@@ -8,13 +9,14 @@ import Data.Time.Clock
 
 import Data.Aeson
 import qualified Data.Text as T
+import Data.Data (Data)
+import Data.Default (Default(..))
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.Channel (Channel, StickerItem)
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Components (Emoji)
-import Data.Data (Data)
 
 
 
@@ -141,34 +143,95 @@ data PresenceInfo = PresenceInfo
   { presenceUserId     :: UserId
   -- , presenceRoles   :: [RoleId]
   , presenceActivities :: Maybe [Activity]
-  , presenceGuildId    :: GuildId
+  , presenceGuildId    :: Maybe GuildId
   , presenceStatus     :: T.Text
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
     PresenceInfo <$> (o .: "user" >>= (.: "id"))
-                 <*> o .: "activities"
-                 <*> o .: "guild_id"
-                 <*> o .: "status"
+                 <*> o .:  "activities"
+                 <*> o .:? "guild_id"
+                 <*> o .:  "status"
 
-data Activity = Activity
-              { activityName :: T.Text
-              , activityType :: ActivityType
-              , activityUrl :: Maybe T.Text
-              }
+data Activity = 
+    Activity
+    { activityName :: T.Text
+    , activityType :: ActivityType
+    , activityUrl :: Maybe T.Text
+    , activityCreatedAt :: Integer -- ^ unix time in milliseconds
+    , activityTimeStamps :: Maybe ActivityTimestamps
+    , activityApplicationId :: Maybe ApplicationId
+    , activityDetails :: Maybe T.Text 
+    , activityState :: Maybe T.Text 
+    , activityEmoji :: Maybe Emoji
+    , activityParty :: Maybe ActivityParty
+    -- assets
+    -- secrets
+    , activityInstance :: Maybe Bool
+    , activityFlags :: Maybe Integer
+    , activityButtons :: Maybe [ActivityButton]
+    }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON Activity where
-  parseJSON = withObject "Activity" $ \o ->
-    Activity <$> o .: "name"
-             <*> ((o .: "type") >>= discordTypeParseJSON "ActivityType" )
-             <*> o .:? "url"
+instance Default Activity where
+  def = Activity "discord-haskell" ActivityTypeGame Nothing 0 Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-data ActivityType = ActivityTypeGame
-                  | ActivityTypeStreaming
-                  | ActivityTypeListening
-                  | ActivityTypeCompeting
+instance FromJSON Activity where
+  parseJSON = withObject "Activity" $ \o -> do
+    Activity <$> o .:  "name"
+             <*> o .:  "type"
+             <*> o .:? "url"
+             <*> o .:  "created_at"
+             <*> o .:? "timestamps"
+             <*> o .:? "application_id"
+             <*> o .:? "details"
+             <*> o .:? "state"
+             <*> o .:? "emoji"
+             <*> o .:? "party"
+             -- assets
+             -- secrets
+             <*> o .:? "instance"
+             <*> o .:? "flags"
+             <*> o .:? "buttons"
+
+data ActivityTimestamps = ActivityTimestamps
+  { activityTimestampsStart :: Maybe Integer -- ^ unix time in milliseconds
+  , activityTimestampsEnd :: Maybe Integer -- ^ unix time in milliseconds
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ActivityTimestamps where
+  parseJSON = withObject "ActivityTimestamps" $ \o ->
+    ActivityTimestamps <$> o .:? "start"
+                       <*> o .:? "end"
+
+data ActivityParty = ActivityParty
+  { activityPartyId :: Maybe T.Text
+  , activityPartySize :: Maybe (Integer, Integer)
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ActivityParty where
+  parseJSON = withObject "ActivityParty" $ \o ->
+    ActivityParty <$> o .:? "id"
+                  <*> o .:? "size"
+
+data ActivityButton = ActivityButton
+  { activityButtonLabel :: T.Text
+  , activityButtonUrl :: T.Text
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ActivityButton where
+  parseJSON = withObject "ActivityButton" $ \o ->
+    ActivityButton <$> o .: "label"
+                   <*> o .: "url"
+
+data ActivityType = 
+    ActivityTypeGame
+  | ActivityTypeStreaming
+  | ActivityTypeListening
+  | ActivityTypeWatching
+  | ActivityTypeCustom
+  | ActivityTypeCompeting
   deriving (Show, Read, Eq, Ord, Data)
 
 instance InternalDiscordEnum ActivityType where
@@ -176,7 +239,12 @@ instance InternalDiscordEnum ActivityType where
   fromDiscordType ActivityTypeGame = 0
   fromDiscordType ActivityTypeStreaming = 1
   fromDiscordType ActivityTypeListening = 2
+  fromDiscordType ActivityTypeWatching = 3
+  fromDiscordType ActivityTypeCustom = 4
   fromDiscordType ActivityTypeCompeting = 5
+
+instance FromJSON ActivityType where
+  parseJSON = discordTypeParseJSON "ActivityType"
 
 data PartialGuild = PartialGuild
       { partialGuildId          :: GuildId
