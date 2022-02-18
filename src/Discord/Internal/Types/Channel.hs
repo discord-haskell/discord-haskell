@@ -409,7 +409,7 @@ data ThreadListSyncFields = ThreadListSyncFields
   , threadListSyncFieldsChannelIds :: Maybe [ChannelId]
   , threadListSyncFieldsThreads :: [Channel]
   , threadListSyncFieldsThreadMembers :: [ThreadMember]
-  } deriving (Show, Eq, Read, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ThreadListSyncFields where
   parseJSON = withObject "ThreadListSyncFields" $ \o ->
@@ -424,7 +424,7 @@ data ThreadMembersUpdateFields = ThreadMembersUpdateFields
   , threadMembersUpdateFieldsMemberCount :: Integer
   , threadMembersUpdateFieldsAddedMembers :: Maybe [ThreadMember]
   , threadMembersUpdateFieldsRemovedMembers :: Maybe [UserId]
-  } deriving (Show, Eq, Read, Ord)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ThreadMembersUpdateFields where
   parseJSON = withObject "ThreadMembersUpdateFields" $ \o ->
@@ -471,7 +471,7 @@ data Message = Message
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
   , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
   , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
-  } deriving (Show, Eq, Ord, Read)
+  } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
   parseJSON = withObject "Message" $ \o ->
@@ -846,7 +846,7 @@ data MessageInteraction = MessageInteraction
   , messageInteractionType :: Integer -- ^ Type of the interaction (liekly always application command)
   , messageInteractionName :: T.Text -- ^ Name of the interaction
   , messageInteractionUser :: User -- ^ User who invoked the interaction
-  } deriving (Show, Eq, Ord, Read)
+  } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON MessageInteraction where
   toJSON MessageInteraction{..} = object [(name,value) | (name, Just value) <-

@@ -632,7 +632,7 @@ data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions
     -- | The permissions for the command in the guild.
     guildApplicationCommandPermissionsPermissions :: [ApplicationCommandPermissions]
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildApplicationCommandPermissions where
   parseJSON =
@@ -668,7 +668,7 @@ data ApplicationCommandPermissions = ApplicationCommandPermissions
     -- | Whether to allow or not.
     applicationCommandPermissionsPermission :: Bool
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ApplicationCommandPermissions where
   parseJSON =

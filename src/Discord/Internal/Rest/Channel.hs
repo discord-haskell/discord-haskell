@@ -107,7 +107,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , messageDetailedReference                :: Maybe MessageReference
   , messageDetailedComponents               :: Maybe [ComponentActionRow]
   , messageDetailedStickerIds               :: Maybe [StickerId]
-  } deriving (Show, Eq, Ord, Read)
+  } deriving (Show, Read, Eq, Ord)
 
 instance Default MessageDetailedOpts where
   def = MessageDetailedOpts { messageDetailedContent         = ""
