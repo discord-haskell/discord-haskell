@@ -97,8 +97,8 @@ data Channel
   | ChannelNewsThread
       { channelId          :: ChannelId   -- ^ The id of the thread
       , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelName        :: T.Text      -- ^ The name of the channel (2 - 1000 characters).
-      , channelUserRateLimit :: Integer   -- ^ Seconds before a user can speak again
+      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
@@ -108,8 +108,8 @@ data Channel
   | ChannelPublicThread
       { channelId          :: ChannelId   -- ^ The id of the thread
       , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelName        :: T.Text      -- ^ The name of the channel (2 - 1000 characters).
-      , channelUserRateLimit :: Integer   -- ^ Seconds before a user can speak again
+      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
@@ -119,8 +119,8 @@ data Channel
   | ChannelPrivateThread
       { channelId          :: ChannelId   -- ^ The id of the thread
       , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelName        :: T.Text      -- ^ The name of the channel (2 - 1000 characters).
-      , channelUserRateLimit :: Integer   -- ^ Seconds before a user can speak again
+      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
@@ -190,24 +190,24 @@ instance FromJSON Channel where
                          <*> o .:? "parent_id"
       10 -> ChannelNewsThread <$> o.: "id"
                               <*> o .:? "guild_id" .!= 0
-                              <*> o .:  "name"
-                              <*> o .:  "rate_limit_per_user"
+                              <*> o .:? "name"
+                              <*> o .:? "rate_limit_per_user"
                               <*> o .:? "last_message_id"
                               <*> o .:? "parent_id"
                               <*> o .:? "thread_metadata"
                               <*> o .:? "member"
       11 -> ChannelPublicThread <$> o.: "id"
                                 <*> o .:? "guild_id" .!= 0
-                                <*> o .:  "name"
-                                <*> o .:  "rate_limit_per_user"
+                                <*> o .:? "name"
+                                <*> o .:? "rate_limit_per_user"
                                 <*> o .:? "last_message_id"
                                 <*> o .:? "parent_id"
                                 <*> o .:? "thread_metadata"
                                 <*> o .:? "member"
       12 -> ChannelPrivateThread <$> o.: "id"
                                  <*> o .:? "guild_id" .!= 0
-                                 <*> o .:  "name"
-                                 <*> o .:  "rate_limit_per_user"
+                                 <*> o .:? "name"
+                                 <*> o .:? "rate_limit_per_user"
                                  <*> o .:? "last_message_id"
                                  <*> o .:? "parent_id"
                                  <*> o .:? "thread_metadata"
@@ -285,8 +285,8 @@ instance ToJSON Channel where
   toJSON ChannelNewsThread{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
+              , ("name",  toJSON <$> channelThreadName)
+              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
               , ("thread_metadata", toJSON <$> channelThreadMetadata)
@@ -295,8 +295,8 @@ instance ToJSON Channel where
   toJSON ChannelPublicThread{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
+              , ("name",  toJSON <$> channelThreadName)
+              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
               , ("thread_metadata", toJSON <$> channelThreadMetadata)
@@ -305,8 +305,8 @@ instance ToJSON Channel where
   toJSON ChannelPrivateThread{..} = object [(name,value) | (name, Just value) <-
               [ ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
+              , ("name",  toJSON <$> channelThreadName)
+              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
               , ("thread_metadata", toJSON <$> channelThreadMetadata)
@@ -414,9 +414,25 @@ data ThreadListSyncFields = ThreadListSyncFields
 instance FromJSON ThreadListSyncFields where
   parseJSON = withObject "ThreadListSyncFields" $ \o ->
     ThreadListSyncFields <$> o .: "guild_id"
-                   <*> o .:? "channel_ids"
-                   <*> o .:  "threads"
-                   <*> o .:  "members"
+                         <*> o .:? "channel_ids"
+                         <*> o .:  "threads"
+                         <*> o .:  "members"
+
+data ThreadMembersUpdateFields = ThreadMembersUpdateFields 
+  { threadMembersUpdateFieldsThreadId :: ChannelId
+  , threadMembersUpdateFieldsGuildId :: GuildId
+  , threadMembersUpdateFieldsMemberCount :: Integer
+  , threadMembersUpdateFieldsAddedMembers :: Maybe [ThreadMember]
+  , threadMembersUpdateFieldsRemovedMembers :: Maybe [UserId]
+  } deriving (Show, Eq, Read, Ord)
+
+instance FromJSON ThreadMembersUpdateFields where
+  parseJSON = withObject "ThreadMembersUpdateFields" $ \o ->
+    ThreadMembersUpdateFields <$> o .:  "id"
+                              <*> o .:  "guild_id"
+                              <*> o .:  "member_count"
+                              <*> o .:? "added_members"
+                              <*> o .:? "removed_member_ids"
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
