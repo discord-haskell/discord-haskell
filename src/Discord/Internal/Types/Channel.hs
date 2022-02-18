@@ -102,7 +102,7 @@ data Channel
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
-      , channelThreadMetadata :: ThreadMetadata -- ^ Metadata about this thread
+      , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
       }
   | ChannelPublicThread
@@ -113,7 +113,7 @@ data Channel
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
-      , channelThreadMetadata :: ThreadMetadata -- ^ Metadata about this thread
+      , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
       }
   | ChannelPrivateThread
@@ -124,7 +124,7 @@ data Channel
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
-      , channelThreadMetadata :: ThreadMetadata -- ^ Metadata about this thread
+      , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
       }
   | ChannelUnknownType
@@ -194,7 +194,7 @@ instance FromJSON Channel where
                               <*> o .:  "rate_limit_per_user"
                               <*> o .:? "last_message_id"
                               <*> o .:? "parent_id"
-                              <*> o .:  "thread_metadata"
+                              <*> o .:? "thread_metadata"
                               <*> o .:? "member"
       11 -> ChannelPublicThread <$> o.: "id"
                                 <*> o .:? "guild_id" .!= 0
@@ -202,7 +202,7 @@ instance FromJSON Channel where
                                 <*> o .:  "rate_limit_per_user"
                                 <*> o .:? "last_message_id"
                                 <*> o .:? "parent_id"
-                                <*> o .:  "thread_metadata"
+                                <*> o .:? "thread_metadata"
                                 <*> o .:? "member"
       12 -> ChannelPrivateThread <$> o.: "id"
                                  <*> o .:? "guild_id" .!= 0
@@ -210,7 +210,7 @@ instance FromJSON Channel where
                                  <*> o .:  "rate_limit_per_user"
                                  <*> o .:? "last_message_id"
                                  <*> o .:? "parent_id"
-                                 <*> o .:  "thread_metadata"
+                                 <*> o .:? "thread_metadata"
                                  <*> o .:? "member"
       13 ->
         ChannelStage <$> o .:  "id"
@@ -289,7 +289,7 @@ instance ToJSON Channel where
               , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> pure channelThreadMetadata)
+              , ("thread_metadata", toJSON <$> channelThreadMetadata)
               , ("member", toJSON <$> channelThreadMember)
               ] ]
   toJSON ChannelPublicThread{..} = object [(name,value) | (name, Just value) <-
@@ -299,7 +299,7 @@ instance ToJSON Channel where
               , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> pure channelThreadMetadata)
+              , ("thread_metadata", toJSON <$> channelThreadMetadata)
               , ("member", toJSON <$> channelThreadMember)
               ] ]
   toJSON ChannelPrivateThread{..} = object [(name,value) | (name, Just value) <-
@@ -309,7 +309,7 @@ instance ToJSON Channel where
               , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> pure channelThreadMetadata)
+              , ("thread_metadata", toJSON <$> channelThreadMetadata)
               , ("member", toJSON <$> channelThreadMember)
               ] ]
   toJSON ChannelUnknownType{..} = object [(name,value) | (name, Just value) <-
@@ -320,11 +320,14 @@ instance ToJSON Channel where
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
 channelIsInGuild c = case c of
-        ChannelGuildCategory{..} -> True
-        ChannelText{..} -> True
-        ChannelVoice{..}  -> True
-        ChannelNews{..}  -> True
-        ChannelStorePage{..}  -> True
+        ChannelGuildCategory{} -> True
+        ChannelText{} -> True
+        ChannelVoice{} -> True
+        ChannelNews{} -> True
+        ChannelStorePage{} -> True
+        ChannelNewsThread{} -> True
+        ChannelPublicThread{} -> True
+        ChannelPrivateThread{} -> True
         _ -> False
 
 -- | Permission overwrites for a channel.
@@ -400,6 +403,20 @@ instance ToJSON ThreadMember where
               , ("join_timestamp", toJSON <$> pure threadMemberJoinTime)
               , ("flags", toJSON <$> pure threadMemberFlags)
               ] ]
+
+data ThreadListSyncFields = ThreadListSyncFields 
+  { threadListSyncFieldsGuildId :: GuildId
+  , threadListSyncFieldsChannelIds :: Maybe [ChannelId]
+  , threadListSyncFieldsThreads :: [Channel]
+  , threadListSyncFieldsThreadMembers :: [ThreadMember]
+  } deriving (Show, Eq, Read, Ord)
+
+instance FromJSON ThreadListSyncFields where
+  parseJSON = withObject "ThreadListSyncFields" $ \o ->
+    ThreadListSyncFields <$> o .: "guild_id"
+                   <*> o .:? "channel_ids"
+                   <*> o .:  "threads"
+                   <*> o .:  "members"
 
 -- | Represents information about a message in a Discord channel.
 data Message = Message
