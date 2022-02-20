@@ -15,6 +15,8 @@ module Discord.Internal.Types.Components
     mkSelectMenu,
     SelectOption (..),
     mkSelectOption,
+    ComponentTextInput (..),
+    mkComponentTextInput,
     Emoji (..),
     mkEmoji,
   )
@@ -36,21 +38,25 @@ instance FromJSON ComponentActionRow where
     withObject
       "ComponentActionRow"
       ( \cs -> do
-          a <- cs .: "components" :: Parser Array
-          let a' = toList a
-          case a' of
-            [] -> return $ ComponentActionRowButton []
-            (c : _) ->
-              withObject
-                "ComponentActionRow item"
-                ( \v -> do
-                    t <- v .: "type" :: Parser Int
-                    case t of
-                      2 -> ComponentActionRowButton <$> mapM parseJSON a'
-                      3 -> ComponentActionRowSelectMenu <$> parseJSON c
-                      _ -> fail $ "unknown component type: " ++ show t
-                )
-                c
+          t <- cs .: "type" :: Parser Int
+          case t of
+            1 -> do
+              a <- cs .: "components" :: Parser Array
+              let a' = toList a
+              case a' of
+                [] -> return $ ComponentActionRowButton []
+                (c : _) ->
+                  withObject
+                    "ComponentActionRow item"
+                    ( \v -> do
+                        t' <- v .: "type" :: Parser Int
+                        case t' of
+                          2 -> ComponentActionRowButton <$> mapM parseJSON a'
+                          3 -> ComponentActionRowSelectMenu <$> parseJSON c
+                          _ -> fail $ "unknown component type: " ++ show t
+                    )
+                    c
+            _ -> fail $ "expected action row type (1), got: " ++ show t
       )
 
 instance ToJSON ComponentActionRow where
@@ -309,6 +315,24 @@ instance ToJSON ComponentTextInput where
               ("placeholder", toMaybeJSON componentTextInputPlaceholder)
             ]
       ]
+
+instance FromJSON ComponentTextInput where
+  parseJSON = withObject "ComponentTextInput" $ \o -> do
+    t <- o .: "type" :: Parser Int
+    case t of
+      4 ->
+        ComponentTextInput <$> o .: "custom_id"
+          <*> fmap (== (2 :: Int)) (o .:? "style" .!= 1)
+          <*> o .:? "label" .!= ""
+          <*> o .:? "min_length"
+          <*> o .:? "max_length"
+          <*> o .:? "required" .!= False
+          <*> o .:? "value" .!= ""
+          <*> o .:? "placeholder" .!= ""
+      _ -> fail "expected text input, found other type of component"
+
+mkComponentTextInput :: T.Text -> T.Text -> ComponentTextInput
+mkComponentTextInput cid label = ComponentTextInput cid False label Nothing Nothing True "" ""
 
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
