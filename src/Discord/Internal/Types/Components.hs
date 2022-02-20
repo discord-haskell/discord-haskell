@@ -273,6 +273,43 @@ instance ToJSON SelectOption where
             ]
       ]
 
+data ComponentTextInput = ComponentTextInput
+  { -- | Dev identifier
+    componentTextInputCustomId :: T.Text,
+    -- | What style to use (short or paragraph)
+    componentTextInputIsParagraph :: Bool,
+    -- | The label for this component
+    componentTextInputLabel :: T.Text,
+    -- | The minimum input length for a text input (0-4000)
+    componentTextInputMinLength :: Maybe Integer,
+    -- | The maximum input length for a text input (1-4000)
+    componentTextInputMaxLength :: Maybe Integer,
+    -- | Whether this component is required to be filled
+    componentTextInputRequired :: Bool,
+    -- | The prefilled value for this component (max 4000)
+    componentTextInputValue :: T.Text,
+    -- | Placeholder text if empty (max 4000)
+    componentTextInputPlaceholder :: T.Text
+  }
+  deriving (Show, Read, Eq, Ord)
+
+instance ToJSON ComponentTextInput where
+  toJSON ComponentTextInput {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("type", Just $ Number 4),
+              ("custom_id", toMaybeJSON componentTextInputCustomId),
+              ("style", toMaybeJSON (1 + fromEnum componentTextInputIsParagraph)),
+              ("label", toMaybeJSON componentTextInputLabel),
+              ("min_length", toJSON <$> componentTextInputMinLength),
+              ("max_length", toJSON <$> componentTextInputMaxLength),
+              ("required", toMaybeJSON componentTextInputRequired),
+              ("value", toMaybeJSON componentTextInputValue),
+              ("placeholder", toMaybeJSON componentTextInputPlaceholder)
+            ]
+      ]
+
 -- | Represents an emoticon (emoji)
 data Emoji = Emoji
   { -- | The emoji id
