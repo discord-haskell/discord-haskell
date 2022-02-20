@@ -538,7 +538,7 @@ instance ToJSON EditApplicationCommand where
       ]
 
 data Choice a = Choice {choiceName :: T.Text, choiceValue :: a}
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance Functor Choice where
   fmap f (Choice s a) = Choice s (f a)

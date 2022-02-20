@@ -24,7 +24,7 @@ main =
     else interactionCommandExample
 
 testserverid :: Snowflake
-testserverid = -1
+testserverid = 463428416008355872
 
 void :: DiscordHandler (Either RestCallErrorCode b) -> DiscordHandler ()
 void =
@@ -48,7 +48,8 @@ interactionCommandExample = do
           discordOnStart = startHandler,
           discordOnEnd = liftIO $ putStrLn "Ended",
           discordOnEvent = eventHandler,
-          discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
+          discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn "",
+          discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses = True}
         }
   TIO.putStrLn t
 
@@ -56,13 +57,10 @@ interactionCommandExample = do
 --     Use place to execute commands you know you want to complete
 startHandler :: DiscordHandler ()
 startHandler = do
-  -- Right partialGuilds <- restCall R.GetCurrentUserGuilds
-
   let activity =
-        Activity
+        def
           { activityName = "ping-pong",
-            activityType = ActivityTypeGame,
-            activityUrl = Nothing
+            activityType = ActivityTypeGame
           }
   let opts =
         UpdateStatusOpts
@@ -212,7 +210,7 @@ exampleInteractionResponse _ =
 
 getImage :: IO B.ByteString
 getImage = return "\137PNG\r\n\SUB\n\NUL\NUL\NUL\rIHDR\NUL\NUL\NUL\SOH\NUL\NUL\NUL\SOH\b\STX\NUL\NUL\NUL\144wS\222\NUL\NUL\NUL\SOHsRGB\NUL\174\206\FS\233\NUL\NUL\NUL\EOTgAMA\NUL\NUL\177\143\v\252a\ENQ\NUL\NUL\NUL\tpHYs\NUL\NUL\SO\195\NUL\NUL\SO\195\SOH\199o\168d\NUL\NUL\NUL\fIDAT\CANWc\248\239\180\t\NUL\EOT7\SOH\244\162\155\ENQ\235\NUL\NUL\NUL\NULIEND\174B`\130"
-  -- B.readFile "example.png"
+
 
 -- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: Event -> DiscordHandler ()
@@ -299,7 +297,7 @@ eventHandler event = case event of
     vs <-
       mapM
         (maybe (return (Left $ RestCallErrorCode 0 "" "")) (restCall . R.CreateGuildApplicationCommand i testserverid))
-        [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand]
+        [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand, createApplicationCommandChatInput "modal" "modal test"]
     liftIO (putStrLn $ "number of application commands added " ++ show (length vs))
     acs <- restCall (R.GetGuildApplicationCommands i testserverid)
     case acs of
@@ -377,6 +375,21 @@ eventHandler event = case event of
             )
       )
   InteractionCreate InteractionApplicationCommandAutocomplete {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
+  InteractionCreate i@InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "modal"}} ->
+    void $
+      restCall
+        ( R.CreateInteractionResponse
+            (interactionId i)
+            (interactionToken i)
+            ( InteractionResponseModal
+                ( InteractionResponseModalData
+                    "customidmodal"
+                    "modal title"
+                    [mkComponentTextInput "textcid" "textlabel"]
+                )
+            )
+        )
+  InteractionCreate i@InteractionModalSubmit {interactionDataModal = idm} -> void $ restCall (R.CreateInteractionResponse (interactionId i) (interactionToken i) (interactionResponseBasic (T.pack (show idm))))
   _ -> return ()
 
 processTicTacToe :: InteractionDataComponent -> Message -> [InteractionResponseMessage]

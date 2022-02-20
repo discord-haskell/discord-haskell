@@ -25,10 +25,12 @@ module Discord.Internal.Types.Interactions
     interactionResponseMessageBasic,
     InteractionResponseMessageFlags (..),
     InteractionResponseMessageFlag (..),
+    InteractionResponseModalData (..),
   )
 where
 
 import Control.Applicative (Alternative ((<|>)))
+import Control.Monad (join)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
@@ -37,7 +39,7 @@ import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands (Choice)
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
-import Discord.Internal.Types.Components (ComponentActionRow)
+import Discord.Internal.Types.Components (ComponentActionRow, ComponentTextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
 import Discord.Internal.Types.User (GuildMember, User)
@@ -122,7 +124,29 @@ data Interaction
         -- | The invoking guild's preferred locale.
         interactionGuildLocale :: Maybe T.Text
       }
-  deriving (Show, Eq, Read)
+  | InteractionModalSubmit
+      { -- | The id of this interaction.
+        interactionId :: InteractionId,
+        -- | The id of the application that this interaction belongs to.
+        interactionApplicationId :: ApplicationId,
+        -- | The data for this interaction.
+        interactionDataModal :: InteractionDataModal,
+        -- | What guild this interaction comes from.
+        interactionGuildId :: Maybe GuildId,
+        -- | What channel this interaction comes from.
+        interactionChannelId :: Maybe ChannelId,
+        -- | What user/member this interaction comes from.
+        interactionUser :: MemberOrUser,
+        -- | The unique token that represents this interaction.
+        interactionToken :: InteractionToken,
+        -- | What version of interaction is this (always 1).
+        interactionVersion :: Int,
+        -- | The invoking user's preferred locale.
+        interactionLocale :: T.Text,
+        -- | The invoking guild's preferred locale.
+        interactionGuildLocale :: Maybe T.Text
+      }
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Interaction where
   parseJSON =
@@ -170,10 +194,21 @@ instance FromJSON Interaction where
                 <*> return version
                 <*> v .: "locale"
                 <*> return glocale
+            5 ->
+              InteractionModalSubmit iid aid
+                <$> v .: "data"
+                <*> return gid
+                <*> return cid
+                <*> parseJSON (Object v)
+                <*> return tok
+                <*> return version
+                <*> v .: "locale"
+                <*> return glocale
             _ -> fail "unknown interaction type"
       )
 
-newtype MemberOrUser = MemberOrUser (Either GuildMember User) deriving (Show, Eq, Read)
+newtype MemberOrUser = MemberOrUser (Either GuildMember User)
+  deriving (Show, Read, Eq, Ord)
 
 instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
   parseJSON =
@@ -193,7 +228,7 @@ data InteractionDataComponent
         -- | Values for the select menu.
         interactionDataComponentValues :: [T.Text]
       }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataComponent where
   parseJSON =
@@ -241,7 +276,7 @@ data InteractionDataApplicationCommand
         -- | The options of the application command.
         interactionDataApplicationCommandOptions :: Maybe InteractionDataApplicationCommandOptions
       }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommand where
   parseJSON =
@@ -269,7 +304,7 @@ instance FromJSON InteractionDataApplicationCommand where
 data InteractionDataApplicationCommandOptions
   = InteractionDataApplicationCommandOptionsSubcommands [InteractionDataApplicationCommandOptionSubcommandOrGroup]
   | InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue]
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptions where
   parseJSON =
@@ -299,7 +334,7 @@ data InteractionDataApplicationCommandOptionSubcommandOrGroup
         interactionDataApplicationCommandOptionSubcommandGroupFocused :: Bool
       }
   | InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand InteractionDataApplicationCommandOptionSubcommand
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionSubcommandOrGroup where
   parseJSON =
@@ -323,7 +358,7 @@ data InteractionDataApplicationCommandOptionSubcommand = InteractionDataApplicat
     interactionDataApplicationCommandOptionSubcommandOptions :: [InteractionDataApplicationCommandOptionValue],
     interactionDataApplicationCommandOptionSubcommandFocused :: Bool
   }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
   parseJSON =
@@ -374,7 +409,7 @@ data InteractionDataApplicationCommandOptionValue
       { interactionDataApplicationCommandOptionValueName :: T.Text,
         interactionDataApplicationCommandOptionValueNumberValue :: Either T.Text Scientific
       }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON InteractionDataApplicationCommandOptionValue where
   parseJSON =
@@ -412,6 +447,30 @@ instance FromJSON InteractionDataApplicationCommandOptionValue where
             _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
       )
 
+data InteractionDataModal = InteractionDataModal
+  { -- | The unique id of the component (up to 100 characters).
+    interactionDataModalCustomId :: T.Text,
+    -- | Components from the modal.
+    interactionDataModalComponents :: [ComponentTextInput]
+  }
+  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON InteractionDataModal where
+  parseJSON =
+    withObject
+      "InteractionDataModal"
+      ( \v ->
+          InteractionDataModal <$> v .: "custom_id"
+            <*> ((v .: "components") >>= (join <$>) . mapM getTextInput)
+      )
+    where
+      getTextInput :: Value -> Parser [ComponentTextInput]
+      getTextInput = withObject "InteractionDataModal.TextInput" $ \o -> do
+        t <- o .: "type" :: Parser Int
+        case t of
+          1 -> o .: "components"
+          _ -> fail $ "expected action row type (1), got: " ++ show t
+
 parseValue :: (FromJSON a) => Object -> Bool -> Parser (Either T.Text a)
 parseValue o True = Left <$> o .: "value"
 parseValue o False = Right <$> o .: "value"
@@ -429,9 +488,11 @@ data ResolvedData = ResolvedData
   { resolvedDataUsers :: Maybe Value,
     resolvedDataMembers :: Maybe Value,
     resolvedDataRoles :: Maybe Value,
-    resolvedDataChannels :: Maybe Value
+    resolvedDataChannels :: Maybe Value,
+    resolvedDataMessages :: Maybe Value,
+    resolvedDataAttachments :: Maybe Value
   }
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ResolvedData where
   toJSON ResolvedData {..} =
@@ -441,7 +502,9 @@ instance ToJSON ResolvedData where
             [ ("users", resolvedDataUsers),
               ("members", resolvedDataMembers),
               ("roles", resolvedDataRoles),
-              ("channels", resolvedDataChannels)
+              ("channels", resolvedDataChannels),
+              ("messages", resolvedDataMessages),
+              ("attachments", resolvedDataAttachments)
             ]
       ]
 
@@ -455,6 +518,8 @@ instance FromJSON ResolvedData where
             <*> v .:? "members"
             <*> v .:? "roles"
             <*> v .:? "channels"
+            <*> v .:? "messages"
+            <*> v .:? "attachments"
       )
 
 -- | The data to respond to an interaction with. Unless specified otherwise, you
@@ -473,6 +538,9 @@ data InteractionResponse
     InteractionResponseUpdateMessage InteractionResponseMessage
   | -- | respond to an autocomplete interaction with suggested choices
     InteractionResponseAutocompleteResult InteractionResponseAutocomplete
+  | -- | respond with a popup modal
+    InteractionResponseModal InteractionResponseModalData
+  deriving (Show, Read, Eq, Ord)
 
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
@@ -485,9 +553,10 @@ instance ToJSON InteractionResponse where
   toJSON (InteractionResponseChannelMessage ms) = object [("type", Number 4), ("data", toJSON ms)]
   toJSON (InteractionResponseUpdateMessage ms) = object [("type", Number 7), ("data", toJSON ms)]
   toJSON (InteractionResponseAutocompleteResult ms) = object [("type", Number 8), ("data", toJSON ms)]
+  toJSON (InteractionResponseModal ms) = object [("type", Number 9), ("data", toJSON ms)]
 
 data InteractionResponseAutocomplete = InteractionResponseAutocompleteString [Choice T.Text] | InteractionResponseAutocompleteInteger [Choice Integer] | InteractionResponseAutocompleteNumber [Choice Scientific]
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance ToJSON InteractionResponseAutocomplete where
   toJSON (InteractionResponseAutocompleteString cs) = object [("choices", toJSON cs)]
@@ -504,7 +573,7 @@ data InteractionResponseMessage = InteractionResponseMessage
     interactionResponseMessageComponents :: Maybe [ComponentActionRow],
     interactionResponseMessageAttachments :: Maybe [Attachment]
   }
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 -- | A basic interaction response, sending back the given text. This is
 -- effectively a helper function.
@@ -531,10 +600,10 @@ instance ToJSON InteractionResponseMessage where
 -- Currently the only flag is EPHERMERAL, which means only the user can see the
 -- message.
 data InteractionResponseMessageFlag = InteractionResponseMessageFlagEphermeral
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 newtype InteractionResponseMessageFlags = InteractionResponseMessageFlags [InteractionResponseMessageFlag]
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Ord)
 
 instance Enum InteractionResponseMessageFlag where
   fromEnum InteractionResponseMessageFlagEphermeral = 1 `shift` 6
@@ -544,3 +613,18 @@ instance Enum InteractionResponseMessageFlag where
 
 instance ToJSON InteractionResponseMessageFlags where
   toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+
+data InteractionResponseModalData = InteractionResponseModalData
+  { interactionResponseModalCustomId :: T.Text,
+    interactionResponseModalTitle :: T.Text,
+    interactionResponseModalComponents :: [ComponentTextInput]
+  }
+  deriving (Show, Read, Eq, Ord)
+
+instance ToJSON InteractionResponseModalData where
+  toJSON InteractionResponseModalData {..} =
+    object
+      [ ("custom_id", toJSON interactionResponseModalCustomId),
+        ("title", toJSON interactionResponseModalTitle),
+        ("components", toJSON $ map (\ti -> object [("type", Number 1), ("components", toJSON [ti])]) interactionResponseModalComponents)
+      ]
