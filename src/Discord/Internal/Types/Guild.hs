@@ -154,23 +154,29 @@ instance FromJSON PresenceInfo where
                  <*> o .:? "guild_id"
                  <*> o .:  "status"
 
+-- | Object for a single activity
+--
+-- https://discord.com/developers/docs/topics/gateway#activity-object
+--
+-- When setting a bot's activity, only the name, url, and type are sent - and
+-- it seems that not many types are permitted either.
 data Activity = 
-    Activity
-    { activityName :: T.Text
-    , activityType :: ActivityType
-    , activityUrl :: Maybe T.Text
+  Activity
+    { activityName :: T.Text -- ^ Name of activity
+    , activityType :: ActivityType -- ^ Type of activity
+    , activityUrl :: Maybe T.Text -- ^ URL of the activity (only verified when streaming)
     , activityCreatedAt :: Integer -- ^ unix time in milliseconds
-    , activityTimeStamps :: Maybe ActivityTimestamps
-    , activityApplicationId :: Maybe ApplicationId
-    , activityDetails :: Maybe T.Text 
-    , activityState :: Maybe T.Text 
-    , activityEmoji :: Maybe Emoji
-    , activityParty :: Maybe ActivityParty
+    , activityTimeStamps :: Maybe ActivityTimestamps -- ^ Start and end times
+    , activityApplicationId :: Maybe ApplicationId -- ^ Application of the activity
+    , activityDetails :: Maybe T.Text -- ^ Details of Activity
+    , activityState :: Maybe T.Text -- ^ State of the user's party
+    , activityEmoji :: Maybe Emoji -- ^ Simplified emoji object
+    , activityParty :: Maybe ActivityParty -- ^ Info for the current player's party
     -- assets
     -- secrets
-    , activityInstance :: Maybe Bool
-    , activityFlags :: Maybe Integer
-    , activityButtons :: Maybe [ActivityButton]
+    , activityInstance :: Maybe Bool -- ^ Whether or not the activity is an instanced game session
+    , activityFlags :: Maybe Integer -- ^ The flags https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
+    , activityButtons :: Maybe [ActivityButton] -- ^ Custom buttons shown in Rich Presence
     }
   deriving (Show, Read, Eq, Ord)
 
@@ -225,6 +231,8 @@ instance FromJSON ActivityButton where
     ActivityButton <$> o .: "label"
                    <*> o .: "url"
 
+-- | To see what these look like, go to here: 
+-- https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
 data ActivityType = 
     ActivityTypeGame
   | ActivityTypeStreaming

@@ -16,6 +16,9 @@ module Discord.Internal.Rest.Channel
   , ChannelPermissionsOpts(..)
   , GroupDMAddRecipientOpts(..)
   , ChannelPermissionsOptsType(..)
+  , StartThreadOpts(..)
+  , StartThreadNoMessageOpts(..)
+  , ListThreads(..)
   ) where
 
 
@@ -41,60 +44,91 @@ instance Request (ChannelRequest a) where
 -- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data ChannelRequest a where
   -- | Gets a channel by its id.
-  GetChannel              :: ChannelId -> ChannelRequest Channel
+  GetChannel                :: ChannelId -> ChannelRequest Channel
   -- | Edits channels options.
-  ModifyChannel           :: ChannelId -> ModifyChannelOpts -> ChannelRequest Channel
+  ModifyChannel             :: ChannelId -> ModifyChannelOpts -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
-  DeleteChannel           :: ChannelId -> ChannelRequest Channel
+  DeleteChannel             :: ChannelId -> ChannelRequest Channel
   -- | Gets a messages from a channel with limit of 100 per request.
-  GetChannelMessages      :: ChannelId -> (Int, MessageTiming) -> ChannelRequest [Message]
+  GetChannelMessages        :: ChannelId -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
-  GetChannelMessage       :: (ChannelId, MessageId) -> ChannelRequest Message
+  GetChannelMessage         :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
-  CreateMessage           :: ChannelId -> T.Text -> ChannelRequest Message
+  CreateMessage             :: ChannelId -> T.Text -> ChannelRequest Message
   -- | Sends a message with a file to a channel.
-  CreateMessageUploadFile :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
+  CreateMessageUploadFile   :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Sends a message with granular controls.
-  CreateMessageDetailed   :: ChannelId -> MessageDetailedOpts -> ChannelRequest Message
+  CreateMessageDetailed     :: ChannelId -> MessageDetailedOpts -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
-  CreateReaction          :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
+  CreateReaction            :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction this bot added
-  DeleteOwnReaction       :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
+  DeleteOwnReaction         :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | Remove a Reaction someone else added
-  DeleteUserReaction      :: (ChannelId, MessageId) -> UserId -> T.Text -> ChannelRequest ()
+  DeleteUserReaction        :: (ChannelId, MessageId) -> UserId -> T.Text -> ChannelRequest ()
   -- | Deletes all reactions of a single emoji on a message
-  DeleteSingleReaction    :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
+  DeleteSingleReaction      :: (ChannelId, MessageId) -> T.Text -> ChannelRequest ()
   -- | List of users that reacted with this emoji
-  GetReactions            :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest [User]
+  GetReactions              :: (ChannelId, MessageId) -> T.Text -> (Int, ReactionTiming) -> ChannelRequest [User]
   -- | Delete all reactions on a message
-  DeleteAllReactions      :: (ChannelId, MessageId) -> ChannelRequest ()
+  DeleteAllReactions        :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
-  EditMessage             :: (ChannelId, MessageId) -> T.Text -> Maybe CreateEmbed
-                                                    -> ChannelRequest Message
+  EditMessage               :: (ChannelId, MessageId) -> T.Text -> Maybe CreateEmbed
+                                                      -> ChannelRequest Message
   -- | Deletes a message.
-  DeleteMessage           :: (ChannelId, MessageId) -> ChannelRequest ()
+  DeleteMessage             :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Deletes a group of messages.
-  BulkDeleteMessage       :: (ChannelId, [MessageId]) -> ChannelRequest ()
+  BulkDeleteMessage         :: (ChannelId, [MessageId]) -> ChannelRequest ()
   -- | Edits a permission overrides for a channel.
-  EditChannelPermissions  :: ChannelId -> OverwriteId -> ChannelPermissionsOpts -> ChannelRequest ()
+  EditChannelPermissions    :: ChannelId -> OverwriteId -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
-  GetChannelInvites       :: ChannelId -> ChannelRequest Object
+  GetChannelInvites         :: ChannelId -> ChannelRequest Object
   -- | Creates an instant invite to a channel.
-  CreateChannelInvite     :: ChannelId -> ChannelInviteOpts -> ChannelRequest Invite
+  CreateChannelInvite       :: ChannelId -> ChannelInviteOpts -> ChannelRequest Invite
   -- | Deletes a permission override from a channel.
-  DeleteChannelPermission :: ChannelId -> OverwriteId -> ChannelRequest ()
+  DeleteChannelPermission   :: ChannelId -> OverwriteId -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
-  TriggerTypingIndicator  :: ChannelId -> ChannelRequest ()
+  TriggerTypingIndicator    :: ChannelId -> ChannelRequest ()
   -- | Gets all pinned messages of a channel.
-  GetPinnedMessages       :: ChannelId -> ChannelRequest [Message]
+  GetPinnedMessages         :: ChannelId -> ChannelRequest [Message]
   -- | Pins a message.
-  AddPinnedMessage        :: (ChannelId, MessageId) -> ChannelRequest ()
+  AddPinnedMessage          :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Unpins a message.
-  DeletePinnedMessage     :: (ChannelId, MessageId) -> ChannelRequest ()
+  DeletePinnedMessage       :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Adds a recipient to a Group DM using their access token
-  GroupDMAddRecipient     :: ChannelId -> GroupDMAddRecipientOpts -> ChannelRequest ()
+  GroupDMAddRecipient       :: ChannelId -> GroupDMAddRecipientOpts -> ChannelRequest ()
   -- | Removes a recipient from a Group DM
-  GroupDMRemoveRecipient  :: ChannelId -> UserId -> ChannelRequest ()
+  GroupDMRemoveRecipient    :: ChannelId -> UserId -> ChannelRequest ()
+  -- | Start a thread from a message
+  StartThreadFromMessage    :: ChannelId -> MessageId -> StartThreadOpts -> ChannelRequest Channel
+  -- | Start a thread without a message
+  StartThreadNoMessage      :: ChannelId -> StartThreadNoMessageOpts -> ChannelRequest Channel
+  -- | Join a thread
+  JoinThread                :: ChannelId -> ChannelRequest ()
+  -- | Add a thread member
+  AddThreadMember           :: ChannelId -> UserId -> ChannelRequest ()
+  -- | Leave a thread
+  LeaveThread               :: ChannelId -> ChannelRequest ()
+  -- | Remove a thread member
+  RemoveThreadMember        :: ChannelId -> UserId -> ChannelRequest ()
+  -- | Get a thread member
+  GetThreadMember           :: ChannelId -> UserId -> ChannelRequest ThreadMember
+  -- | List the thread members
+  ListThreadMembers         :: ChannelId -> ChannelRequest [ThreadMember]
+  -- | List public archived threads in the given channel. Optionally before a 
+  -- given time, and optional maximum number of threads. Returns the threads, 
+  -- thread members,  and whether there are more to collect.
+  -- Requires the READ_MESSAGE_HISTORY permission.
+  ListPublicArchivedThreads :: ChannelId -> (Maybe UTCTime, Maybe Integer) -> ChannelRequest ListThreads
+  -- | List private archived threads in the given channel. Optionally before a 
+  -- given time, and optional maximum number of threads. Returns the threads, 
+  -- thread members, and whether there are more to collect.
+  -- Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
+  ListPrivateArchivedThreads :: ChannelId -> (Maybe UTCTime, Maybe Integer) -> ChannelRequest ListThreads
+  -- | List joined private archived threads in the given channel. Optionally 
+  -- before a  given time, and optional maximum number of threads. Returns the 
+  -- threads, thread members, and whether there are more to collect.
+  -- Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
+  ListJoinedPrivateArchivedThreads :: ChannelId -> (Maybe UTCTime, Maybe Integer) -> ChannelRequest ListThreads
 
 
 -- | Data constructor for CreateMessageDetailed requests.
@@ -208,35 +242,95 @@ data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
   , groupDMAddRecipientGDMJoinAccessToken :: T.Text
   } deriving (Show, Read, Eq, Ord)
 
+data StartThreadOpts = StartThreadOpts 
+  { startThreadName :: T.Text
+  , startThreadAutoArchive :: Maybe Integer -- ^ can be one of 60, 1440, 4320, 10080
+  , startThreadRateLimit :: Maybe Integer
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON StartThreadOpts where
+  toJSON StartThreadOpts{..} = object [ (name, value) | (name, Just value) <- 
+      [ ("name", toJSON <$> pure startThreadName)
+      , ("auto_archive_duration", toJSON <$> startThreadAutoArchive)
+      , ("rate_limit_per_user", toJSON <$> startThreadRateLimit)
+      ]
+    ]
+
+data StartThreadNoMessageOpts = StartThreadNoMessageOpts
+  { startThreadNoMessageBaseOpts :: StartThreadOpts
+  , startThreadNoMessageType :: Integer -- ^ 10, 11, or 12 (https://discord.com/developers/docs/resources/channel#channel-object-channel-types)
+  , startThreadNoMessageInvitable :: Maybe Bool
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON StartThreadNoMessageOpts where
+  toJSON StartThreadNoMessageOpts{..} = object [ (name, value) | (name, Just value) <- 
+      [ ("name", toJSON <$> pure (startThreadName startThreadNoMessageBaseOpts))
+      , ("auto_archive_duration", toJSON <$> (startThreadAutoArchive startThreadNoMessageBaseOpts))
+      , ("rate_limit_per_user", toJSON <$> (startThreadRateLimit startThreadNoMessageBaseOpts))
+      , ("type", toJSON <$> pure startThreadNoMessageType)
+      , ("invitable", toJSON <$> startThreadNoMessageInvitable)
+      ]
+    ]
+
+data ListThreads = ListThreads 
+  { listThreadsThreads :: [Channel]
+  , listThreadsMembers :: [ThreadMember]
+  , listThreadsHasMore :: Bool -- ^ whether there is more data to retrieve
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON ListThreads where
+  toJSON ListThreads{..} = object 
+    [ ("threads", toJSON listThreadsThreads)
+    , ("members", toJSON listThreadsMembers)
+    , ("has_more", toJSON listThreadsHasMore)
+    ]
+
+instance FromJSON ListThreads where
+  parseJSON = withObject "ListThreads" $ \o ->
+    ListThreads <$> o .: "threads"
+                <*> o .: "members"
+                <*> o .: "has_more"
+
 channelMajorRoute :: ChannelRequest a -> String
 channelMajorRoute c = case c of
-  (GetChannel chan) ->                 "get_chan " <> show chan
-  (ModifyChannel chan _) ->            "mod_chan " <> show chan
-  (DeleteChannel chan) ->              "mod_chan " <> show chan
-  (GetChannelMessages chan _) ->            "msg " <> show chan
-  (GetChannelMessage (chan, _)) ->      "get_msg " <> show chan
-  (CreateMessage chan _) ->                 "msg " <> show chan
-  (CreateMessageUploadFile chan _ _) ->     "msg " <> show chan
-  (CreateMessageDetailed chan _) ->         "msg " <> show chan
-  (CreateReaction (chan, _) _) ->     "add_react " <> show chan
-  (DeleteOwnReaction (chan, _) _) ->      "react " <> show chan
-  (DeleteUserReaction (chan, _) _ _) ->   "react " <> show chan
-  (DeleteSingleReaction (chan, _) _) ->   "react " <> show chan
-  (GetReactions (chan, _) _ _) ->         "react " <> show chan
-  (DeleteAllReactions (chan, _)) ->       "react " <> show chan
-  (EditMessage (chan, _) _ _) ->        "get_msg " <> show chan
-  (DeleteMessage (chan, _)) ->          "get_msg " <> show chan
-  (BulkDeleteMessage (chan, _)) ->     "del_msgs " <> show chan
-  (EditChannelPermissions chan _ _) ->    "perms " <> show chan
-  (GetChannelInvites chan) ->           "invites " <> show chan
-  (CreateChannelInvite chan _) ->       "invites " <> show chan
-  (DeleteChannelPermission chan _) ->     "perms " <> show chan
-  (TriggerTypingIndicator chan) ->          "tti " <> show chan
-  (GetPinnedMessages chan) ->              "pins " <> show chan
-  (AddPinnedMessage (chan, _)) ->           "pin " <> show chan
-  (DeletePinnedMessage (chan, _)) ->        "pin " <> show chan
-  (GroupDMAddRecipient chan _) ->       "groupdm " <> show chan
-  (GroupDMRemoveRecipient chan _) ->    "groupdm " <> show chan
+  (GetChannel chan) ->                       "get_chan " <> show chan
+  (ModifyChannel chan _) ->                  "mod_chan " <> show chan
+  (DeleteChannel chan) ->                    "mod_chan " <> show chan
+  (GetChannelMessages chan _) ->                  "msg " <> show chan
+  (GetChannelMessage (chan, _)) ->            "get_msg " <> show chan
+  (CreateMessage chan _) ->                       "msg " <> show chan
+  (CreateMessageUploadFile chan _ _) ->           "msg " <> show chan
+  (CreateMessageDetailed chan _) ->               "msg " <> show chan
+  (CreateReaction (chan, _) _) ->           "add_react " <> show chan
+  (DeleteOwnReaction (chan, _) _) ->            "react " <> show chan
+  (DeleteUserReaction (chan, _) _ _) ->         "react " <> show chan
+  (DeleteSingleReaction (chan, _) _) ->         "react " <> show chan
+  (GetReactions (chan, _) _ _) ->               "react " <> show chan
+  (DeleteAllReactions (chan, _)) ->             "react " <> show chan
+  (EditMessage (chan, _) _ _) ->              "get_msg " <> show chan
+  (DeleteMessage (chan, _)) ->                "get_msg " <> show chan
+  (BulkDeleteMessage (chan, _)) ->           "del_msgs " <> show chan
+  (EditChannelPermissions chan _ _) ->          "perms " <> show chan
+  (GetChannelInvites chan) ->                 "invites " <> show chan
+  (CreateChannelInvite chan _) ->             "invites " <> show chan
+  (DeleteChannelPermission chan _) ->           "perms " <> show chan
+  (TriggerTypingIndicator chan) ->                "tti " <> show chan
+  (GetPinnedMessages chan) ->                    "pins " <> show chan
+  (AddPinnedMessage (chan, _)) ->                 "pin " <> show chan
+  (DeletePinnedMessage (chan, _)) ->              "pin " <> show chan
+  (GroupDMAddRecipient chan _) ->             "groupdm " <> show chan
+  (GroupDMRemoveRecipient chan _) ->          "groupdm " <> show chan
+  (StartThreadFromMessage chan _ _) ->         "thread " <> show chan
+  (StartThreadNoMessage chan _) ->           "thread " <> show chan
+  (JoinThread chan) ->                         "thread " <> show chan
+  (AddThreadMember chan _) ->                  "thread " <> show chan
+  (LeaveThread chan) ->                        "thread " <> show chan
+  (RemoveThreadMember chan _) ->               "thread " <> show chan
+  (GetThreadMember chan _) ->                  "thread " <> show chan
+  (ListThreadMembers chan) ->                  "thread " <> show chan
+  (ListPublicArchivedThreads chan _) ->        "thread " <> show chan
+  (ListPrivateArchivedThreads chan _) ->       "thread " <> show chan
+  (ListJoinedPrivateArchivedThreads chan _) -> "thread " <> show chan
 
 cleanupEmoji :: T.Text -> T.Text
 cleanupEmoji emoji =
@@ -380,3 +474,48 @@ channelJsonRequest c = case c of
   (GroupDMRemoveRecipient chan userid) ->
       Delete (channels // chan // chan /: "recipients" // userid) mempty
 
+  (StartThreadFromMessage chan mid sto) ->
+      Post (channels // chan /: "messages" // mid /: "threads")
+           (pure $ R.ReqBodyJson $ toJSON sto)
+           mempty
+
+  (StartThreadNoMessage chan sto) ->
+      Post (channels // chan /: "messages" /: "threads")
+           (pure $ R.ReqBodyJson $ toJSON sto)
+           mempty
+
+  (JoinThread chan) ->
+      Put (channels // chan /: "thread-members" /: "@me")
+          R.NoReqBody mempty
+
+  (AddThreadMember chan uid) ->
+      Put (channels // chan /: "thread-members" // uid)
+          R.NoReqBody mempty
+
+  (LeaveThread chan) ->
+      Delete (channels // chan /: "thread-members" /: "@me")
+          mempty
+
+  (RemoveThreadMember chan uid) ->
+      Delete (channels // chan /: "thread-members" // uid)
+          mempty
+
+  (GetThreadMember chan uid) ->
+      Get (channels // chan /: "thread-members" // uid)
+          mempty
+
+  (ListThreadMembers chan) ->
+      Get (channels // chan /: "thread-members")
+          mempty
+
+  (ListPublicArchivedThreads chan (time, lim)) ->
+      Get (channels // chan /: "threads" /: "archived" /: "public")
+          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+
+  (ListPrivateArchivedThreads chan (time, lim)) ->
+      Get (channels // chan /: "threads" /: "archived" /: "private")
+          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+
+  (ListJoinedPrivateArchivedThreads chan (time, lim)) ->
+      Get (channels // chan /: "users" /: "@me" /: "threads" /: "archived" /: "private")
+          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
