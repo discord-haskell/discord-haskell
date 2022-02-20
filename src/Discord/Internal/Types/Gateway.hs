@@ -58,6 +58,7 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentDirectMessageChanges :: Bool
   , gatewayIntentDirectMessageReactions :: Bool
   , gatewayIntentDirectMessageTyping :: Bool
+  , gatewayIntentMessageContent :: Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance Default GatewayIntent where
@@ -76,6 +77,7 @@ instance Default GatewayIntent where
                       , gatewayIntentDirectMessageChanges   = True
                       , gatewayIntentDirectMessageReactions = True
                       , gatewayIntentDirectMessageTyping    = True
+                      , gatewayIntentMessageContent         = True
                       }
 
 compileGatewayIntent :: GatewayIntent -> Int
@@ -96,6 +98,7 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^ 12, gatewayIntentDirectMessageChanges)
                        , (2 ^ 13, gatewayIntentDirectMessageReactions)
                        , (2 ^ 14, gatewayIntentDirectMessageTyping)
+                       , (2 ^ 15, gatewayIntentMessageContent)
                        ]
        ]
 
