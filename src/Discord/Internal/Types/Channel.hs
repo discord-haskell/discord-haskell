@@ -423,44 +423,6 @@ instance ToJSON MessageReaction where
       , ("emoji", toJSON <$> pure messageReactionEmoji)
       ]]
 
--- TODO: expand stickers and have full objects
-data StickerItem = StickerItem
-  { stickerItemId :: StickerId
-  , stickerItemName :: T.Text
-  , stickerItemFormatType :: StickerFormatType
-  }  deriving (Show, Read, Eq, Ord)
-
-instance FromJSON StickerItem where
-  parseJSON = withObject "StickerItem" $ \o ->
-    StickerItem <$> o .: "id"
-                <*> o .: "name"
-                <*> o .: "format_type"
-
-instance ToJSON StickerItem where
-  toJSON StickerItem{..} = object [(name, value) | (name, Just value) <-
-      [ ("id",          toJSON <$> pure stickerItemId)
-      , ("name",        toJSON <$> pure stickerItemName)
-      , ("format_type", toJSON <$> pure stickerItemFormatType)
-      ]]
-
-data StickerFormatType =
-    StickerFormatTypePNG
-  | StickerFormatTypeAPNG
-  | StickerFormatTypeLOTTIE
-  deriving (Show, Read, Eq, Ord, Data)
-
-instance InternalDiscordEnum StickerFormatType where
-  discordTypeStartValue = StickerFormatTypePNG
-  fromDiscordType StickerFormatTypePNG = 1
-  fromDiscordType StickerFormatTypeAPNG = 2
-  fromDiscordType StickerFormatTypeLOTTIE = 3
-
-instance ToJSON StickerFormatType where
-  toJSON = toJSON . fromDiscordType
-
-instance FromJSON StickerFormatType where
-  parseJSON = discordTypeParseJSON "StickerFormatType"
-
 -- | Represents an attached to a message file.
 data Attachment = Attachment
   { attachmentId       :: AttachmentId     -- ^ Attachment id
