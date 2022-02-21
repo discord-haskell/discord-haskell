@@ -13,7 +13,7 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.Channel (Channel)
 import Discord.Internal.Types.User (User, GuildMember)
-import Discord.Internal.Types.Components (Emoji)
+import Discord.Internal.Types.Emoji (Emoji)
 
 
 

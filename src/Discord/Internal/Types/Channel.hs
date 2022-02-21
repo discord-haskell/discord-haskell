@@ -13,13 +13,14 @@ import Data.Default (Default, def)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
+import Data.Bits
+import Data.Data (Data)
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
-import Data.Data (Data)
-import Data.Bits
-import Discord.Internal.Types.Components (ComponentActionRow, Emoji)
+import Discord.Internal.Types.Components (ComponentActionRow)
+import Discord.Internal.Types.Emoji
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel

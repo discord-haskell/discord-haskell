@@ -85,6 +85,7 @@ library
                      , Discord.Internal.Types.Interactions
                      , Discord.Internal.Types.Components
                      , Discord.Internal.Types.Color
+                     , Discord.Internal.Types.Emoji
   build-depends:
                        base >= 4 && <5
                      , aeson
