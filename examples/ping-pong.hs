@@ -36,6 +36,7 @@ pingpongExample = do
                           , discordOnEnd = liftIO $ putStrLn "Ended"
                           , discordOnEvent = eventHandler
                           , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
+                          , discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses =True}
                           }
 
   -- only reached on an unrecoverable error
@@ -46,10 +47,9 @@ pingpongExample = do
 --     Use place to execute commands you know you want to complete
 startHandler :: DiscordHandler ()
 startHandler = do
-  let activity = Activity { activityName = "ping-pong"
-                          , activityType = ActivityTypeGame
-                          , activityUrl = Nothing
-                          }
+  let activity = def { activityName = "ping-pong"
+                     , activityType = ActivityTypeGame
+                     }
   let opts = UpdateStatusOpts { updateStatusOptsSince = Nothing
                               , updateStatusOptsGame = Just activity
                               , updateStatusOptsNewStatus = UpdateStatusOnline

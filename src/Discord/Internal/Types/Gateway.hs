@@ -20,6 +20,7 @@ import Text.Read (readMaybe)
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Events
+import Discord.Internal.Types.Guild (Activity (..))
 
 -- | Sent by gateway
 data GatewayReceivable
@@ -57,6 +58,7 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentDirectMessageChanges :: Bool
   , gatewayIntentDirectMessageReactions :: Bool
   , gatewayIntentDirectMessageTyping :: Bool
+  , gatewayIntentMessageContent :: Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance Default GatewayIntent where
@@ -75,6 +77,7 @@ instance Default GatewayIntent where
                       , gatewayIntentDirectMessageChanges   = True
                       , gatewayIntentDirectMessageReactions = True
                       , gatewayIntentDirectMessageTyping    = True
+                      , gatewayIntentMessageContent         = True
                       }
 
 compileGatewayIntent :: GatewayIntent -> Int
@@ -95,6 +98,7 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^ 12, gatewayIntentDirectMessageChanges)
                        , (2 ^ 13, gatewayIntentDirectMessageReactions)
                        , (2 ^ 14, gatewayIntentDirectMessageTyping)
+                       , (2 ^ 15, gatewayIntentMessageContent)
                        ]
        ]
 
@@ -126,25 +130,6 @@ data UpdateStatusOpts = UpdateStatusOpts
                       , updateStatusOptsAFK :: Bool
                       }
   deriving (Show, Read, Eq, Ord)
-
-data Activity = Activity
-              { activityName :: T.Text
-              , activityType :: ActivityType
-              , activityUrl :: Maybe T.Text
-              }
-  deriving (Show, Read, Eq, Ord)
-
-data ActivityType = ActivityTypeGame
-                  | ActivityTypeStreaming
-                  | ActivityTypeListening
-                  | ActivityTypeCompeting
-  deriving (Show, Read, Eq, Ord)
-
-activityTypeId :: ActivityType -> Int
-activityTypeId a = case a of ActivityTypeGame -> 0
-                             ActivityTypeStreaming -> 1
-                             ActivityTypeListening -> 2
-                             ActivityTypeCompeting -> 5
 
 data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusDoNotDisturb
@@ -228,7 +213,7 @@ instance ToJSON GatewaySendable where
       , "status" .= statusString status
       , "game" .= (game <&> \a -> object [
                                 "name" .= activityName a
-                              , "type" .= activityTypeId (activityType a)
+                              , "type" .= fromDiscordType (activityType a)
                               , "url" .= activityUrl a
                               ])
       ]

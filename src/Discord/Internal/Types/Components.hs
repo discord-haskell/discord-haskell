@@ -15,6 +15,8 @@ module Discord.Internal.Types.Components
     mkSelectMenu,
     SelectOption (..),
     mkSelectOption,
+    ComponentTextInput (..),
+    mkComponentTextInput,
   )
 where
 
@@ -27,28 +29,32 @@ import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.Prelude (toMaybeJSON)
 
 data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ComponentActionRow where
   parseJSON =
     withObject
       "ComponentActionRow"
       ( \cs -> do
-          a <- cs .: "components" :: Parser Array
-          let a' = toList a
-          case a' of
-            [] -> return $ ComponentActionRowButton []
-            (c : _) ->
-              withObject
-                "ComponentActionRow item"
-                ( \v -> do
-                    t <- v .: "type" :: Parser Int
-                    case t of
-                      2 -> ComponentActionRowButton <$> mapM parseJSON a'
-                      3 -> ComponentActionRowSelectMenu <$> parseJSON c
-                      _ -> fail $ "unknown component type: " ++ show t
-                )
-                c
+          t <- cs .: "type" :: Parser Int
+          case t of
+            1 -> do
+              a <- cs .: "components" :: Parser Array
+              let a' = toList a
+              case a' of
+                [] -> return $ ComponentActionRowButton []
+                (c : _) ->
+                  withObject
+                    "ComponentActionRow item"
+                    ( \v -> do
+                        t' <- v .: "type" :: Parser Int
+                        case t' of
+                          2 -> ComponentActionRowButton <$> mapM parseJSON a'
+                          3 -> ComponentActionRowSelectMenu <$> parseJSON c
+                          _ -> fail $ "unknown component type: " ++ show t
+                    )
+                    c
+            _ -> fail $ "expected action row type (1), got: " ++ show t
       )
 
 instance ToJSON ComponentActionRow where
@@ -82,7 +88,7 @@ data ComponentButton
         -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Takes the label and the custom id of the button that is to be generated.
 mkButton :: T.Text -> T.Text -> ComponentButton
@@ -153,7 +159,7 @@ data ButtonStyle
     ButtonStyleSuccess
   | -- | Red button
     ButtonStyleDanger
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ButtonStyle where
   parseJSON =
@@ -190,7 +196,7 @@ data ComponentSelectMenu = ComponentSelectMenu
     -- | Maximum number of values to select (def 1, max 25)
     componentSelectMenuMaxValues :: Maybe Integer
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Takes the custom id and the options of the select menu that is to be
 -- generated.
@@ -244,7 +250,7 @@ data SelectOption = SelectOption
     -- | Use this value by default
     selectOptionDefault :: Maybe Bool
   }
-  deriving (Show, Eq, Ord, Read)
+  deriving (Show, Read, Eq, Ord)
 
 -- | Make a select option from the given label and value.
 mkSelectOption :: T.Text -> T.Text -> SelectOption
@@ -270,3 +276,58 @@ instance ToJSON SelectOption where
               ("default", toJSON <$> selectOptionDefault)
             ]
       ]
+
+data ComponentTextInput = ComponentTextInput
+  { -- | Dev identifier
+    componentTextInputCustomId :: T.Text,
+    -- | What style to use (short or paragraph)
+    componentTextInputIsParagraph :: Bool,
+    -- | The label for this component
+    componentTextInputLabel :: T.Text,
+    -- | The minimum input length for a text input (0-4000)
+    componentTextInputMinLength :: Maybe Integer,
+    -- | The maximum input length for a text input (1-4000)
+    componentTextInputMaxLength :: Maybe Integer,
+    -- | Whether this component is required to be filled
+    componentTextInputRequired :: Bool,
+    -- | The prefilled value for this component (max 4000)
+    componentTextInputValue :: T.Text,
+    -- | Placeholder text if empty (max 4000)
+    componentTextInputPlaceholder :: T.Text
+  }
+  deriving (Show, Read, Eq, Ord)
+
+instance ToJSON ComponentTextInput where
+  toJSON ComponentTextInput {..} =
+    object
+      [ (name, value)
+        | (name, Just value) <-
+            [ ("type", Just $ Number 4),
+              ("custom_id", toMaybeJSON componentTextInputCustomId),
+              ("style", toMaybeJSON (1 + fromEnum componentTextInputIsParagraph)),
+              ("label", toMaybeJSON componentTextInputLabel),
+              ("min_length", toJSON <$> componentTextInputMinLength),
+              ("max_length", toJSON <$> componentTextInputMaxLength),
+              ("required", toMaybeJSON componentTextInputRequired),
+              ("value", toMaybeJSON componentTextInputValue),
+              ("placeholder", toMaybeJSON componentTextInputPlaceholder)
+            ]
+      ]
+
+instance FromJSON ComponentTextInput where
+  parseJSON = withObject "ComponentTextInput" $ \o -> do
+    t <- o .: "type" :: Parser Int
+    case t of
+      4 ->
+        ComponentTextInput <$> o .: "custom_id"
+          <*> fmap (== (2 :: Int)) (o .:? "style" .!= 1)
+          <*> o .:? "label" .!= ""
+          <*> o .:? "min_length"
+          <*> o .:? "max_length"
+          <*> o .:? "required" .!= False
+          <*> o .:? "value" .!= ""
+          <*> o .:? "placeholder" .!= ""
+      _ -> fail "expected text input, found other type of component"
+
+mkComponentTextInput :: T.Text -> T.Text -> ComponentTextInput
+mkComponentTextInput cid label = ComponentTextInput cid False label Nothing Nothing True "" ""

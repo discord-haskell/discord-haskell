@@ -17,10 +17,14 @@ import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Types
 
+-- | The api version to use.
+apiVersion :: T.Text
+apiVersion = "10"
+
 -- | The base url (Req) for API requests
 baseUrl :: R.Url 'R.Https
-baseUrl = R.https "discord.com" R./: "api" R./: apiVersion
-  where apiVersion = "v8"
+baseUrl = R.https "discord.com" R./: "api" R./: apiVersion'
+  where apiVersion' = "v" <> apiVersion
 
 -- | Discord requires HTTP headers for authentication.
 authHeader :: Auth -> R.Option 'R.Https
