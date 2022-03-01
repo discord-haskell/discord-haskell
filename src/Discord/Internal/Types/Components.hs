@@ -75,7 +75,7 @@ data ComponentButton
         -- | What is the style of the button
         componentButtonStyle :: ButtonStyle,
         -- | What is the user-facing label of the button
-        componentButtonLabel :: T.Text,
+        componentButtonLabel :: Maybe T.Text,
         -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
@@ -86,7 +86,7 @@ data ComponentButton
         -- | Whether the button is disabled
         componentButtonDisabled :: Bool,
         -- | What is the user-facing label of the button
-        componentButtonLabel :: T.Text,
+        componentButtonLabel :: Maybe T.Text,
         -- | What emoji is displayed on the button
         componentButtonEmoji :: Maybe Emoji
       }
@@ -94,7 +94,7 @@ data ComponentButton
 
 -- | Takes the label and the custom id of the button that is to be generated.
 mkButton :: T.Text -> T.Text -> ComponentButton
-mkButton label customId = ComponentButton customId False ButtonStyleSecondary label Nothing
+mkButton label customId = ComponentButton customId False ButtonStyleSecondary (Just label) Nothing
 
 instance FromJSON ComponentButton where
   parseJSON =
@@ -105,7 +105,7 @@ instance FromJSON ComponentButton where
           case t of
             2 -> do
               disabled <- v .:? "disabled" .!= False
-              label <- v .: "label"
+              label <- v .:? "label"
               partialEmoji <- v .:? "emoji"
               style <- v .: "style" :: Parser Scientific
               case style of
@@ -132,7 +132,7 @@ instance ToJSON ComponentButton where
         | (name, Just value) <-
             [ ("type", Just $ Number 2),
               ("style", Just $ Number 5),
-              ("label", toMaybeJSON componentButtonLabel),
+              ("label", toJSON <$> componentButtonLabel),
               ("disabled", toMaybeJSON componentButtonDisabled),
               ("url", toMaybeJSON componentButtonUrl),
               ("emoji", toJSON <$> componentButtonEmoji)
@@ -144,7 +144,7 @@ instance ToJSON ComponentButton where
         | (name, Just value) <-
             [ ("type", Just $ Number 2),
               ("style", Just $ toJSON componentButtonStyle),
-              ("label", toMaybeJSON componentButtonLabel),
+              ("label", toJSON <$> componentButtonLabel),
               ("disabled", toMaybeJSON componentButtonDisabled),
               ("custom_id", toMaybeJSON componentButtonCustomId),
               ("emoji", toJSON <$> componentButtonEmoji)
