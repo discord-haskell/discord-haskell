@@ -6,9 +6,12 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.12.1
+
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/103) Add threads, switch api to V10, Update Guild data fields
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/104) Add model interaction and components
+
 ## 1.12.0
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/96) breaking changes and fixes to application commands, interactions, and components, and updates elsewhere
