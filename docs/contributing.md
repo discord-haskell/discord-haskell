@@ -3,7 +3,7 @@
 
 The library tries to hide as much detail from the user as reasonable. Lean towards making the library code uglier than the user code. The library does not meet this standard yet, but ideals make hypocrits of us all.
 
-A user should not have to import Code and Data-structures from `Discord.Intern.*`. 
+A user should not have to import anything from `Discord.Internal.*` (although they can futz with the internals if they want to)
 
 #### Formatting
 
