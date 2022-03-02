@@ -54,10 +54,40 @@ instance ToJSON Emoji where
             ]
       ]
 
--- TODO: expand stickers and have full objects
+-- | A full sticker object
+data Sticker = Sticker
+  { -- | The sticker's id.
+    stickerId :: StickerId,
+    -- | For standard stickers, the id of the pack.
+    stickerPackId :: Maybe Snowflake,
+    -- | The sticker's name.
+    stickerName :: T.Text,
+    -- | The sticker's description.
+    stickerDescription :: Maybe T.Text,
+    -- | Autocomplete/suggestion tags for the sticker (max 200 characters total).
+    stickerTags :: [T.Text],
+    -- | Whether the sticker is standard or guild type.
+    stickerIsStandardType :: Bool,
+    -- | The sticker's format type.
+    stickerFormatType :: StickerFormatType,
+    -- | Whether this guild sticker can be used.
+    stickerAvailable :: Maybe Bool,
+    -- | What guild owns this sticker.
+    stickerGuildId :: Maybe GuildId,
+    -- | What user uploaded the guild sticker.
+    stickerUser :: Maybe User,
+    -- | A standard sticker's sort order in its pack.
+    stickerSortValue :: Maybe Integer
+  }
+  deriving (Show, Read, Eq, Ord)
+
+-- | A simplified sticker object.
 data StickerItem = StickerItem
-  { stickerItemId :: StickerId,
+  { -- | The sticker's id.
+    stickerItemId :: StickerId,
+    -- | The sticker's name.
     stickerItemName :: T.Text,
+    -- | The sticker's format type.
     stickerItemFormatType :: StickerFormatType
   }
   deriving (Show, Read, Eq, Ord)
