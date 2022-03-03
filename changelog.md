@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/107) `EditMessage` takes full `MessageDetailedOpts`
+
 ## 1.12.1
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/103) Add threads, switch api to V10, Update Guild data fields
