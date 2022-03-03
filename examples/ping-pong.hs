@@ -71,7 +71,8 @@ eventHandler event = case event of
         threadDelay (2 * 10 ^ (6 :: Int))
 
         -- A very simple message.
-        void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
+        Right m' <- restCall (R.CreateMessage (messageChannelId m) "Pong")
+        void $ restCall (R.EditMessage (messageChannelId m, messageId m') (def {R.messageDetailedContent=messageContent m' <> "!"}))
 
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
