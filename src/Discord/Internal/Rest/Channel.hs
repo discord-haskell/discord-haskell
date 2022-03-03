@@ -55,8 +55,6 @@ data ChannelRequest a where
   GetChannelMessage         :: (ChannelId, MessageId) -> ChannelRequest Message
   -- | Sends a message to a channel.
   CreateMessage             :: ChannelId -> T.Text -> ChannelRequest Message
-  -- | Sends a message with a file to a channel.
-  CreateMessageUploadFile   :: ChannelId -> T.Text -> B.ByteString -> ChannelRequest Message
   -- | Sends a message with granular controls.
   CreateMessageDetailed     :: ChannelId -> MessageDetailedOpts -> ChannelRequest Message
   -- | Add an emoji reaction to a message. ID must be present for custom emoji
@@ -72,7 +70,7 @@ data ChannelRequest a where
   -- | Delete all reactions on a message
   DeleteAllReactions        :: (ChannelId, MessageId) -> ChannelRequest ()
   -- | Edits a message content.
-  EditMessage               :: (ChannelId, MessageId) -> T.Text -> Maybe CreateEmbed
+  EditMessage               :: (ChannelId, MessageId) -> MessageDetailedOpts
                                                       -> ChannelRequest Message
   -- | Deletes a message.
   DeleteMessage             :: (ChannelId, MessageId) -> ChannelRequest ()
@@ -135,7 +133,7 @@ data ChannelRequest a where
 data MessageDetailedOpts = MessageDetailedOpts
   { messageDetailedContent                  :: T.Text
   , messageDetailedTTS                      :: Bool
-  , messageDetailedEmbeds                    :: Maybe [CreateEmbed]
+  , messageDetailedEmbeds                   :: Maybe [CreateEmbed]
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
@@ -203,7 +201,15 @@ data ModifyChannelOpts = ModifyChannelOpts
   , modifyChannelUserRateLimit        :: Maybe Integer
   , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
   , modifyChannelParentId             :: Maybe ChannelId
+  , modifyChannelDefaultAutoArchive   :: Maybe Integer
+  , modifyChannelThreadArchived       :: Maybe Bool
+  , modifyChannelThreadAutoArchive    :: Maybe Integer
+  , modifyChannelThreadLocked         :: Maybe Bool
+  , modifyChannelThreadInvitiable     :: Maybe Bool
   } deriving (Show, Read, Eq, Ord)
+
+instance Default ModifyChannelOpts where
+  def = ModifyChannelOpts Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ModifyChannelOpts where
   toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
@@ -214,7 +220,12 @@ instance ToJSON ModifyChannelOpts where
                 ("bitrate",    toJSON <$> modifyChannelBitrate),
                 ("user_limit", toJSON <$> modifyChannelUserRateLimit),
                 ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
-                ("parent_id",  toJSON <$> modifyChannelParentId) ] ]
+                ("parent_id",  toJSON <$> modifyChannelParentId),
+                ("default_auto_archive_duration",  toJSON <$> modifyChannelDefaultAutoArchive),
+                ("archived",  toJSON <$> modifyChannelThreadArchived),
+                ("auto_archive_duration",  toJSON <$> modifyChannelThreadAutoArchive),
+                ("locked",  toJSON <$> modifyChannelThreadLocked),
+                ("invitable",  toJSON <$> modifyChannelThreadInvitiable) ] ]
 
 data ChannelPermissionsOpts = ChannelPermissionsOpts
   { channelPermissionsOptsAllow :: Integer
@@ -299,7 +310,6 @@ channelMajorRoute c = case c of
   (GetChannelMessages chan _) ->                  "msg " <> show chan
   (GetChannelMessage (chan, _)) ->            "get_msg " <> show chan
   (CreateMessage chan _) ->                       "msg " <> show chan
-  (CreateMessageUploadFile chan _ _) ->           "msg " <> show chan
   (CreateMessageDetailed chan _) ->               "msg " <> show chan
   (CreateReaction (chan, _) _) ->           "add_react " <> show chan
   (DeleteOwnReaction (chan, _) _) ->            "react " <> show chan
@@ -307,7 +317,7 @@ channelMajorRoute c = case c of
   (DeleteSingleReaction (chan, _) _) ->         "react " <> show chan
   (GetReactions (chan, _) _ _) ->               "react " <> show chan
   (DeleteAllReactions (chan, _)) ->             "react " <> show chan
-  (EditMessage (chan, _) _ _) ->              "get_msg " <> show chan
+  (EditMessage (chan, _) _) ->                "get_msg " <> show chan
   (DeleteMessage (chan, _)) ->                "get_msg " <> show chan
   (BulkDeleteMessage (chan, _)) ->           "del_msgs " <> show chan
   (EditChannelPermissions chan _ _) ->          "perms " <> show chan
@@ -368,11 +378,6 @@ channelJsonRequest c = case c of
           body = pure $ R.ReqBodyJson $ object content
       in Post (channels // chan /: "messages") body mempty
 
-  (CreateMessageUploadFile chan fileName file) ->
-      let part = partFileRequestBody "file" (T.unpack fileName) $ RequestBodyBS file
-          body = R.reqBodyMultipart [part]
-      in Post (channels // chan /: "messages") body mempty
-
   (CreateMessageDetailed chan msgOpts) ->
     let fileUpload = messageDetailedFile msgOpts
         filePart =
@@ -427,11 +432,33 @@ channelJsonRequest c = case c of
   (DeleteAllReactions (chan, msgid)) ->
       Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
 
-  (EditMessage (chan, msg) new embed) ->
-      let partJson = toJSON $ object $ ["content" .= new] ++ case embed of
-                                                               Just e -> ["embed" .= createEmbed e]
-                                                               Nothing -> []
-          body = pure (R.ReqBodyJson partJson)
+  -- copied from CreateMessageDetailed, should be outsourced to function probably
+  (EditMessage (chan, msg) msgOpts) ->      
+    let fileUpload = messageDetailedFile msgOpts
+        filePart =
+          ( case fileUpload of
+              Nothing -> []
+              Just f ->
+                [ partFileRequestBody
+                    "file"
+                    (T.unpack $ fst f)
+                    (RequestBodyBS $ snd f)
+                ]
+          )
+            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+
+        payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
+                                , "tts"     .= messageDetailedTTS msgOpts ] ++
+                                [ name .= value | (name, Just value) <-
+                                  [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                                  , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
+                                  , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
+                                  , ("components", toJSON <$> messageDetailedComponents msgOpts)
+                                  , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
+                                  ] ]
+        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
+
+        body = R.reqBodyMultipart (payloadPart : filePart)
       in Patch (channels // chan /: "messages" // msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
