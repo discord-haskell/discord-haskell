@@ -6,7 +6,11 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/107) `EditMessage` takes full `MessageDetailedOpts`
+## 1.12.2
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/107) `EditMessage` takes full `MessageDetailedOpts` (instead of Embed)
+
+Removed `CreateMessageUploadFile` (use `CreateMessageDetailed { MessageDetailedOpts { messageDetailedFile } }`)
 
 ## 1.12.1
 
