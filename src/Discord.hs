@@ -140,7 +140,7 @@ restCall r = do h <- ask
                         let formaterr = T.pack ("restcall - parse exception [" <> err <> "]"
                                               <> " while handling" <> show dat)
                         writeChan (discordHandleLog h) formaterr
-                        pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
+                        pure (Left (RestCallErrorCode 400 "Library Parse Exception" formaterr))
 
 -- | Send a user GatewaySendable
 sendCommand :: GatewaySendable -> DiscordHandler ()
