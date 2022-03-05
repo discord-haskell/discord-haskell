@@ -152,7 +152,8 @@ runEventLoop thehandle sendablesData log = do loop
       Right (Reconnect)      -> pure LoopReconnect
       Right (InvalidSession retry) -> pure $ if retry then LoopReconnect else LoopStart
       Right (HeartbeatAck)   -> loop
-      Right (ParseError _e) -> loop
+      Right (ParseError _e) ->  -- getPayload logs the parse error. nothing to do here
+                                loop
 
       Left (CloseRequest code str) -> case code of
           -- see Discord and MDN documentation on gateway close event codes
@@ -197,7 +198,7 @@ getPayload conn log = try $ do
   msg' <- receiveData conn
   case eitherDecode msg' of
     Right msg -> pure msg
-    Left  err -> do writeChan log ("gateway - received parse Error - " <> T.pack err
+    Left  err -> do writeChan log ("gateway - received exception [" <> T.pack err <> "]"
                                       <> " while decoding " <> TE.decodeUtf8 (BL.toStrict msg'))
                     pure (ParseError (T.pack err))
 

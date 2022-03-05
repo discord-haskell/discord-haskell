@@ -137,7 +137,8 @@ restCall r = do h <- ask
                       Left (RestCallInternalHttpException _) ->
                         threadDelay (10 * 10^(6 :: Int)) >> restCall r
                       Left (RestCallInternalNoParse err dat) -> do
-                        let formaterr = T.pack ("Parse Exception " <> err <> " for " <> show dat)
+                        let formaterr = T.pack ("restcall - parse exception [" <> err <> "]"
+                                              <> " while handling" <> show dat)
                         writeChan (discordHandleLog h) formaterr
                         pure (Left (RestCallErrorCode 400 "Library Stopped Working" formaterr))
 
