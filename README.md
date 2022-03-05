@@ -55,6 +55,8 @@ isPing = ("ping" `isPrefixOf`) . toLower . messageContent
 
 ### [contributing](./docs/contributing.md)
 
+### [intents](./docs/intents.md)
+
 ### [applicationcommands](./docs/applicationcommands.md)
 
 ### [components](./docs/components.md)
