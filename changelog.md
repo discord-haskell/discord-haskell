@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.12.4
+
+Library won't crash if something fails to parse. Errors are printed to the log
+
 ## 1.12.3
 
 Add another CreateMessage flag option, stop crashing on unknown flags.

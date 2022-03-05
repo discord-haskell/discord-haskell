@@ -1,16 +1,6 @@
 
 ### TODO
 
-#### Error handling
-
-Lots of issues about parsing errors. [#102](https://github.com/aquarial/discord-haskell/issues/102) [#78](https://github.com/aquarial/discord-haskell/issues/78) [#85](https://github.com/aquarial/discord-haskell/issues/85)
-
-These are the best way to learn that the data types are out of date (or not flexible enough to parse discord types). However it is inconvenient that this crashes their bot completely until it is fixed.
-
-Should the library be more resilient to failure? It puts pressure on users to update to the latest version and for the library to get a new version out quickly. Both have good and bad implications.
-
-Maybe add a field to `RunDiscordOpts` called `[discordOnError :: Text -> IO ()]` which is called so the user can print errors as they happen without crashing their bot.
-
 #### Cache
 
 Cache is a TODO at the moment.
@@ -22,7 +12,6 @@ https://github.com/aquarial/discord-haskell/issues/44 wants to access the roles 
 https://github.com/aquarial/discord-haskell/issues/89 asks that a user can put their own data in the cache and access it.
 
 #### Higher level bot interface? easier to add state and stuff
-
 
 https://github.com/aquarial/discord-haskell/blob/master/examples/state-counter.hs
 
