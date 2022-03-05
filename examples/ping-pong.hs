@@ -33,7 +33,7 @@ pingpongExample = do
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
   err <- runDiscord $ def { discordToken = tok
                           , discordOnStart = startHandler
-                          , discordOnEnd = liftIO $ putStrLn "Ended"
+                          , discordOnEnd = liftIO $ threadDelay (round (0.4 * 10^6)) >>  putStrLn "Ended"
                           , discordOnEvent = eventHandler
                           , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
                           , discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses =True}
@@ -47,6 +47,8 @@ pingpongExample = do
 --     Use place to execute commands you know you want to complete
 startHandler :: DiscordHandler ()
 startHandler = do
+  liftIO $ putStrLn "Started ping-pong bot"
+
   let activity = def { activityName = "ping-pong"
                      , activityType = ActivityTypeGame
                      }
