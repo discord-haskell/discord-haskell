@@ -152,9 +152,8 @@ runEventLoop thehandle sendablesData log = do loop
       Right (Reconnect)      -> pure LoopReconnect
       Right (InvalidSession retry) -> pure $ if retry then LoopReconnect else LoopStart
       Right (HeartbeatAck)   -> loop
-      Right (ParseError e) -> do writeChan eventChan (Left (GatewayExceptionEventParseError e
-                                                             "Normal event loop"))
-                                 pure LoopClosed
+      Right (ParseError _e) -> loop
+
       Left (CloseRequest code str) -> case code of
           -- see Discord and MDN documentation on gateway close event codes
           -- https://discord.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
