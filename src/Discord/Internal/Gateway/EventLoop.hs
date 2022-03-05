@@ -168,9 +168,10 @@ runEventLoop thehandle sendablesData log = do loop
                            "Use the discord app manager to authorize by following: " <>
                            "https://github.com/aquarial/discord-haskell/issues/76"))
                      pure LoopClosed
-          _ -> do writeChan eventChan (Left (GatewayExceptionConnection (CloseRequest code str)
-                                              "Unknown close code. Closing connection. Consider opening an issue with discord-haskell"))
-                  pure LoopClosed
+          _ -> do writeChan log ("gateway - unknown websocket close code " <> T.pack (show code)
+                                  <> " [" <> TE.decodeUtf8 (BL.toStrict str) <> "]. Consider opening an issue "
+                                  <> "https://github.com/aquarial/discord-haskell/issues")
+                  pure LoopStart
       Left _ -> pure LoopReconnect
 
 
