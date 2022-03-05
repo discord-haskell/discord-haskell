@@ -811,6 +811,7 @@ data MessageFlag =
   | MessageFlagHasThread
   | MessageFlagEphemeral
   | MessageFlagLoading
+  | MessageFlagFailedToMentionRollesInThread
   deriving (Show, Read, Eq, Data, Ord)
 
 newtype MessageFlags = MessageFlags [MessageFlag]
@@ -826,6 +827,7 @@ instance InternalDiscordEnum MessageFlag where
   fromDiscordType MessageFlagHasThread = 1 `shift` 5
   fromDiscordType MessageFlagEphemeral = 1 `shift` 6
   fromDiscordType MessageFlagLoading = 1 `shift` 7
+  fromDiscordType MessageFlagFailedToMentionRollesInThread = 1 `shift` 8
 
 instance ToJSON MessageFlags where
   toJSON (MessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromDiscordType <$> fs)
@@ -835,10 +837,10 @@ instance ToJSON MessageFlags where
 instance FromJSON MessageFlags where
   parseJSON = withScientific "MessageFlags" $ \s ->
       let i = round s
-          range = sum $ fst <$> (discordTypeTable @MessageFlag)
-      in if i /= (i .&. range)
-         then fail "could not get message flags"
-         else return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable)
+          -- TODO check to see that we know about all the flags
+          -- if i /= (i .&. range)
+          -- range = sum $ fst <$> (discordTypeTable @MessageFlag)
+      in return $ MessageFlags (snd <$> filter (\(i',_) -> i .&. i' == i') discordTypeTable)
 
 -- | This is sent on the message object when the message is a response to an Interaction without an existing message (i.e., any non-component interaction).
 data MessageInteraction = MessageInteraction
