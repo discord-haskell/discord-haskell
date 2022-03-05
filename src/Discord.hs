@@ -105,6 +105,7 @@ runDiscordLoop handle opts = do
                           (readChan (gatewayHandleEvents (discordHandleGateway handle)))
              case next of
                Left err -> libError err
+               Right (Left err) -> libError (T.pack (show err))
                Right (Right event) -> do
                  let userEvent = userFacingEvent event
                  let action = if discordForkThreadForEvents opts then void . forkIO
@@ -112,10 +113,10 @@ runDiscordLoop handle opts = do
                  action $ do me <- liftIO . runReaderT (try $ discordOnEvent opts userEvent) $ handle
                              case me of
                                Left (e :: SomeException) -> writeChan (discordHandleLog handle)
-                                         ("discord-haskell stopped on an exception:\n\n" <> T.pack (show e))
+                                         ("eventhandler - crashed on [" <> T.pack (show userEvent) <> "] "
+                                          <> "          with error: "  <> T.pack (show e))
                                Right _ -> pure ()
                  loop
-               Right (Left err) -> libError (T.pack (show err))
 
 
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
