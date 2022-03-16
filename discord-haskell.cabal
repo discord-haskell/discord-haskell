@@ -103,7 +103,6 @@ library
                      , text
                      , time
                      , unordered-containers
-                     , vector
                      , websockets
                      , wuss
                      , mtl
