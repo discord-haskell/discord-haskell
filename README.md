@@ -33,7 +33,7 @@ pingpongExample = do
 
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
-    MessageCreate m -> when (isPing m && (not (fromBot m)) $ do
+    MessageCreate m -> when (isPing m && (not (fromBot m))) $ do
         void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
         threadDelay (2 * 10^6)
         void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
