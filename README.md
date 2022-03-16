@@ -5,6 +5,17 @@ Build that discord bot in Haskell! Also checkout the
 [calamity haskell library](https://github.com/nitros12/calamity)
 for a more advanced interface.
 
+
+#### Documentation
+
+#### [[installing](./docs/installing.md)] [[debugging](./docs/debugging.md)] [[creating-bot](./docs/creating-bot.md)]
+
+#### [[design](./docs/design.md)] [[contributing](./docs/contributing.md)] [[todo](./docs/todo.md)]
+
+#### [[app-commands](./docs/applicationcommands.md)] [[components](./docs/components.md)] [[cache](./docs/cache.md)] [[embeds](./docs/embeds.md)] [[emoji](./docs/emoji.md)] [[intents](./docs/intents.md)] [[voice](./docs/voice.md)]
+
+#### Example
+
 This is an example bot that replies "pong" to messages that start with "ping". Checkout the [other examples](./examples/) for things like state management.
 
 ```haskell
@@ -45,32 +56,6 @@ fromBot = userIsBot . messageAuthor
 isPing :: Message -> Bool
 isPing = ("ping" `isPrefixOf`) . toLower . messageContent
 ```
-
-### Documentation
-
-### [installing](./docs/installing.md)
-
-### [debugging](./docs/debugging.md)
-
-### [design](./docs/design.md)
-
-### [todo](./docs/todo.md)
-
-### [contributing](./docs/contributing.md)
-
-### [intents](./docs/intents.md)
-
-### [applicationcommands](./docs/applicationcommands.md)
-
-### [components](./docs/components.md)
-
-### [cache](./docs/cache.md)
-
-### [embeds](./docs/embeds.md)
-
-### [emoji](./docs/emoji.md)
-
-### [voice](./docs/voice.md)
 
 #### Discord Server
 
