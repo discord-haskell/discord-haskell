@@ -13,13 +13,14 @@ import Data.Default (Default, def)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
+import Data.Bits
+import Data.Data (Data)
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
-import Data.Data (Data)
-import Data.Bits
-import Discord.Internal.Types.Components (ComponentActionRow, Emoji)
+import Discord.Internal.Types.Components (ComponentActionRow)
+import Discord.Internal.Types.Emoji
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -592,44 +593,6 @@ instance ToJSON MessageReaction where
       , ("me",    toJSON <$> pure messageReactionMeIncluded)
       , ("emoji", toJSON <$> pure messageReactionEmoji)
       ]]
-
--- TODO: expand stickers and have full objects
-data StickerItem = StickerItem
-  { stickerItemId :: StickerId
-  , stickerItemName :: T.Text
-  , stickerItemFormatType :: StickerFormatType
-  }  deriving (Show, Read, Eq, Ord)
-
-instance FromJSON StickerItem where
-  parseJSON = withObject "StickerItem" $ \o ->
-    StickerItem <$> o .: "id"
-                <*> o .: "name"
-                <*> o .: "format_type"
-
-instance ToJSON StickerItem where
-  toJSON StickerItem{..} = object [(name, value) | (name, Just value) <-
-      [ ("id",          toJSON <$> pure stickerItemId)
-      , ("name",        toJSON <$> pure stickerItemName)
-      , ("format_type", toJSON <$> pure stickerItemFormatType)
-      ]]
-
-data StickerFormatType =
-    StickerFormatTypePNG
-  | StickerFormatTypeAPNG
-  | StickerFormatTypeLOTTIE
-  deriving (Show, Read, Eq, Ord, Data)
-
-instance InternalDiscordEnum StickerFormatType where
-  discordTypeStartValue = StickerFormatTypePNG
-  fromDiscordType StickerFormatTypePNG = 1
-  fromDiscordType StickerFormatTypeAPNG = 2
-  fromDiscordType StickerFormatTypeLOTTIE = 3
-
-instance ToJSON StickerFormatType where
-  toJSON = toJSON . fromDiscordType
-
-instance FromJSON StickerFormatType where
-  parseJSON = discordTypeParseJSON "StickerFormatType"
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment

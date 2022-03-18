@@ -9,6 +9,7 @@ module Discord.Internal.Types
     module Discord.Internal.Types.User,
     module Discord.Internal.Types.Embed,
     module Discord.Internal.Types.Components,
+    module Discord.Internal.Types.Emoji,
     module Data.Aeson,
     module Data.Time.Clock,
     userFacingEvent,
@@ -21,6 +22,7 @@ import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Color
 import Discord.Internal.Types.Components
 import Discord.Internal.Types.Embed
+import Discord.Internal.Types.Emoji
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Gateway
 import Discord.Internal.Types.Guild
