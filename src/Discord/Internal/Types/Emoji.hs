@@ -6,6 +6,7 @@ module Discord.Internal.Types.Emoji where
 
 import Data.Aeson
 import Data.Data
+import Data.Functor ((<&>))
 import Data.Text as T
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
@@ -54,12 +55,41 @@ instance ToJSON Emoji where
             ]
       ]
 
+-- | Represents a pack of standard stickers.
+data StickerPack = StickerPack
+  { -- | The id of the sticker pack
+    stickerPackId :: Snowflake,
+    -- | The stickers in the pack
+    stickerPackStickers :: [Sticker],
+    -- | The name of the sticker pack
+    stickerPackName :: T.Text,
+    -- | ID of the pack's SKU
+    stickerPackSKUId :: Snowflake,
+    -- | If of the sticker which is shown as the pack's icon
+    stickerPackCoverStickerId :: Maybe StickerId,
+    -- | The description of the sticker pack
+    stickerPackDescription :: T.Text,
+    -- | Id of the sticker pack's banner image
+    stickerPackBannerAssetId :: Maybe Snowflake
+  }
+  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON StickerPack where
+  parseJSON = withObject "StickerPack" $ \o ->
+    StickerPack <$> o .: "id"
+      <*> o .: "stickers"
+      <*> o .: "name"
+      <*> o .: "sku_id"
+      <*> o .:? "cover_sticker_id"
+      <*> o .: "description"
+      <*> o .:? "banner_asset_id"
+
 -- | A full sticker object
 data Sticker = Sticker
   { -- | The sticker's id.
     stickerId :: StickerId,
     -- | For standard stickers, the id of the pack.
-    stickerPackId :: Maybe Snowflake,
+    stickerStickerPackId :: Maybe Snowflake,
     -- | The sticker's name.
     stickerName :: T.Text,
     -- | The sticker's description.
@@ -81,6 +111,20 @@ data Sticker = Sticker
   }
   deriving (Show, Read, Eq, Ord)
 
+instance FromJSON Sticker where
+  parseJSON = withObject "Sticker" $ \o ->
+    Sticker <$> o .: "id"
+      <*> o .:? "pack_id"
+      <*> o .:  "name"
+      <*> o .:? "description"
+      <*> ((o .: "tags") <&> T.splitOn "\n")
+      <*> ((o .: "type") <&> (== (1 :: Int)))
+      <*> o .: "format_type"
+      <*> o .:? "available"
+      <*> o .:? "guild_id"
+      <*> o .:? "user"
+      <*> o .:? "sort_value"
+
 -- | A simplified sticker object.
 data StickerItem = StickerItem
   { -- | The sticker's id.
@@ -101,12 +145,9 @@ instance FromJSON StickerItem where
 instance ToJSON StickerItem where
   toJSON StickerItem {..} =
     object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("id", toJSON <$> pure stickerItemId),
-              ("name", toJSON <$> pure stickerItemName),
-              ("format_type", toJSON <$> pure stickerItemFormatType)
-            ]
+      [ ("id", toJSON stickerItemId),
+        ("name", toJSON stickerItemName),
+        ("format_type", toJSON stickerItemFormatType)
       ]
 
 data StickerFormatType
