@@ -86,6 +86,7 @@ library
                      , Discord.Internal.Types.Components
                      , Discord.Internal.Types.Color
                      , Discord.Internal.Types.Emoji
+                     , Discord.Internal.Types.ScheduledEvents
   build-depends:
                        base >= 4 && <5
                      , aeson
