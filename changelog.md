@@ -6,6 +6,10 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/110) Add stickers API
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/110) Add ModifyGuildMember 'timeout' option
+
 ## 1.12.4
 
 Library won't crash if something fails to parse. Errors are printed to the log
