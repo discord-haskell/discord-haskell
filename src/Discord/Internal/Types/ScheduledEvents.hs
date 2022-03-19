@@ -25,6 +25,8 @@ import           Discord.Internal.Types.Prelude ( ChannelId
                                                   , discordTypeStartValue
                                                   , fromDiscordType
                                                   )
+                                                , ScheduledEventEntityId
+                                                , ScheduledEventId
                                                 , Snowflake
                                                 , UserId
                                                 , toMaybeJSON
@@ -32,9 +34,6 @@ import           Discord.Internal.Types.Prelude ( ChannelId
 import           Discord.Internal.Types.User    ( User )
 
 
-type ScheduledEventId = Snowflake
-
-type ScheduledEventEntityId = Snowflake
 
 -- | The ScheduledEvent data structure
 data ScheduledEvent
