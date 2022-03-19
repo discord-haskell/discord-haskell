@@ -26,6 +26,7 @@ import qualified Data.Text as T
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Data.Default (Default(..))
 
 instance Request (GuildRequest a) where
   majorRoute = guildMajorRoute
@@ -64,7 +65,7 @@ data GuildRequest a where
   AddGuildMember           :: GuildId -> UserId -> AddGuildMemberOpts
                                       -> GuildRequest ()
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
-  ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest ()
+  ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest GuildMember
   -- | Modify the nickname of the current user
   ModifyCurrentUserNick    :: GuildId -> T.Text -> GuildRequest ()
   -- | Add a member to a guild role. Requires 'MANAGE_ROLES' permission.
@@ -209,7 +210,11 @@ data ModifyGuildMemberOpts = ModifyGuildMemberOpts
   , modifyGuildMemberOptsIsMuted       :: Maybe Bool
   , modifyGuildMemberOptsIsDeafened    :: Maybe Bool
   , modifyGuildMemberOptsMoveToChannel :: Maybe ChannelId
+  , modifyGuildMemberOptsTimeoutUntil  :: Maybe (Maybe UTCTime) -- ^ If `Just Nothing`, the timeout will be removed.
   } deriving (Show, Read, Eq, Ord)
+
+instance Default ModifyGuildMemberOpts where
+  def = ModifyGuildMemberOpts Nothing Nothing Nothing Nothing Nothing Nothing 
 
 instance ToJSON ModifyGuildMemberOpts where
   toJSON ModifyGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
@@ -217,7 +222,9 @@ instance ToJSON ModifyGuildMemberOpts where
                                    ("roles", toJSON <$> modifyGuildMemberOptsRoles ),
                                    ("mute",  toJSON <$> modifyGuildMemberOptsIsMuted ),
                                    ("deaf",  toJSON <$> modifyGuildMemberOptsIsDeafened ),
-                                   ("channel_id", toJSON <$> modifyGuildMemberOptsMoveToChannel)]]
+                                   ("channel_id", toJSON <$> modifyGuildMemberOptsMoveToChannel),
+                                   ("communication_disabled_until", toJSON <$> modifyGuildMemberOptsTimeoutUntil)]]
+
 data CreateGuildChannelOpts
   = CreateGuildChannelOptsText {
     createGuildChannelOptsTopic :: Maybe T.Text
