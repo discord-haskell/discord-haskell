@@ -6,16 +6,18 @@
 module Discord.Internal.Types.ScheduledEvents where
 
 import           Data.Aeson                     ( (.:)
+                                                , (.:!)
                                                 , (.:?)
                                                 , (.=)
                                                 , FromJSON(parseJSON)
                                                 , ToJSON(toJSON)
-                                                , Value(Number)
+                                                , Value(Null, Number)
                                                 , object
                                                 , withObject
                                                 )
 import           Data.Aeson.Types               ( Parser )
 import           Data.Data                      ( Data )
+import           Data.Maybe                     ( isNothing )
 import qualified Data.Text                     as T
 import           Data.Time                      ( UTCTime )
 import           Discord.Internal.Types.Prelude ( ChannelId
@@ -389,4 +391,135 @@ instance FromJSON CreateScheduledEventData where
                                                  csedesc
                                                  cseimg
         _ -> error "unreachable"
+    )
+
+
+-- | The type of ScheduledEvent, used in 'ModifyScheduledEventData'
+data ScheduledEventType
+  = ScheduledEventTypeStage
+  | ScheduledEventTypeVoice
+  | ScheduledEventTypeExternal
+  deriving (Show, Read, Ord, Eq, Data)
+
+instance InternalDiscordEnum ScheduledEventType where
+  discordTypeStartValue = ScheduledEventTypeStage
+  fromDiscordType ScheduledEventTypeStage    = 1
+  fromDiscordType ScheduledEventTypeVoice    = 2
+  fromDiscordType ScheduledEventTypeExternal = 3
+
+instance FromJSON ScheduledEventType where
+  parseJSON = discordTypeParseJSON "ScheduledEventType"
+
+instance ToJSON ScheduledEventType where
+  toJSON = toJSON . fromDiscordType
+
+-- | Data required to issue a Modify Scheduled Event request
+-- This isnt fully type-safe, and can allow for boggus requests but I don't
+-- know of any sane solution to this
+data ModifyScheduledEventData = ModifyScheduledEventData
+  { modifyScheduledEventDataChannelId    :: Maybe (Maybe ChannelId)
+  , modifyScheduledEventDataLocation     :: Maybe (Maybe T.Text)
+  , modifyScheduledEventDataName         :: Maybe T.Text
+  , modifyScheduledEventDataPrivacyLevel :: Maybe ScheduledEventPrivacyLevel
+  , modifyScheduledEventDataStartTime    :: Maybe UTCTime
+  , modifyScheduledEventDataEndTime      :: Maybe UTCTime
+  , modifyScheduledEventDataDescription  :: Maybe (Maybe T.Text)
+  , modifyScheduledEventDataType         :: Maybe ScheduledEventType
+  , modifyScheduledEventDataStatus       :: Maybe ScheduledEventStatus
+   -- | FIXME: Proper image type
+  , modifyScheduledEventDataImage        :: Maybe T.Text
+  }
+
+instance ToJSON ModifyScheduledEventData where
+  toJSON ModifyScheduledEventData {..} = object
+    [ (name, value)
+    | (name, Just value) <-
+      [ ("channel_id"          , cid)
+      , ("entity_metadata"     , loc)
+      , ("name", toJSON <$> modifyScheduledEventDataName)
+      , ("scheduled_start_time", toJSON <$> modifyScheduledEventDataStartTime)
+      , ("scheduled_end_time", toJSON <$> modifyScheduledEventDataEndTime)
+      , ("description"         , desc)
+      , ("entity_type", toJSON <$> modifyScheduledEventDataType)
+      , ("status", toJSON <$> modifyScheduledEventDataStatus)
+      , ("image", toJSON <$> modifyScheduledEventDataImage)
+      ]
+    ]
+   where
+    cid = if isNothing modifyScheduledEventDataChannelId
+      then Nothing
+      else
+        let Just cid' = modifyScheduledEventDataChannelId
+        in  if isNothing cid'
+              then Just Null
+              else let Just cid'' = cid' in Just $ toJSON cid''
+    loc = if isNothing modifyScheduledEventDataLocation
+      then Nothing
+      else
+        let Just loc' = modifyScheduledEventDataLocation
+        in  if isNothing loc'
+              then Just Null
+              else
+                let Just loc'' = loc'
+                in  Just $ object [("location", toJSON loc'')]
+    desc = if isNothing modifyScheduledEventDataDescription
+      then Nothing
+      else
+        let Just desc' = modifyScheduledEventDataDescription
+        in  if isNothing desc'
+              then Just Null
+              else let Just desc'' = desc' in Just $ toJSON desc''
+
+instance FromJSON ModifyScheduledEventData where
+  parseJSON = withObject
+    "ModifyScheduledEventData"
+    (\v -> do
+      -- The trivial fields
+      msename  <- v .:? "name"
+      msest    <- v .:? "scheduled_start_time"
+      mseet    <- v .:? "scheduled_end_time"
+      msetype  <- v .:? "entity_type"
+      msepl    <- v .:? "privacy_level"
+      msestat  <- v .:? "status"
+      mseimg   <- v .:? "image" -- FIXME: Image Type
+
+      -- The not so trivial ones
+      msecid'  <- v .:! "channel_id"
+      mseloc'  <- v .:! "entity_metadata"
+      msedesc' <- v .:! "description"
+
+      -- Extract the values
+      msecid   <- case msecid' of
+        Nothing   -> return Nothing
+        Just Null -> return $ Just Nothing
+        Just x    -> do
+          x' <- parseJSON x
+          return $ Just x'
+
+      mseloc <- case mseloc' of
+        Nothing   -> return Nothing
+        Just Null -> return $ Just Nothing
+        Just x    -> do
+          x' <- withObject "entity_metadata" (.: "location") x
+          return $ Just x'
+
+      msedesc <- case msedesc' of
+        Nothing   -> return Nothing
+        Just Null -> return $ Just Nothing
+        Just x    -> do
+          x' <- parseJSON x
+          return $ Just x'
+
+      return $ ModifyScheduledEventData
+        { modifyScheduledEventDataChannelId    = msecid
+        , modifyScheduledEventDataLocation     = mseloc
+        , modifyScheduledEventDataName         = msename
+        , modifyScheduledEventDataPrivacyLevel = msepl
+        , modifyScheduledEventDataStartTime    = msest
+        , modifyScheduledEventDataEndTime      = mseet
+        , modifyScheduledEventDataDescription  = msedesc
+        , modifyScheduledEventDataType         = msetype
+        , modifyScheduledEventDataStatus       = msestat
+        , modifyScheduledEventDataImage        = mseimg
+        }
     )
