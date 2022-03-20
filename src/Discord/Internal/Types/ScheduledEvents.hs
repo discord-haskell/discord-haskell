@@ -11,12 +11,15 @@ import           Data.Aeson                     ( (.:)
                                                 , (.=)
                                                 , FromJSON(parseJSON)
                                                 , ToJSON(toJSON)
-                                                , Value(Null, Number)
+                                                , Value(Null, Number, String)
                                                 , object
                                                 , withObject
+                                                , withText
                                                 )
 import           Data.Aeson.Types               ( Parser )
+import qualified Data.ByteString               as B
 import           Data.Data                      ( Data )
+import           Data.Default                   ( Default(def) )
 import           Data.Maybe                     ( isNothing )
 import qualified Data.Text                     as T
 import           Data.Time                      ( UTCTime )
@@ -52,8 +55,7 @@ data ScheduledEvent
       , scheduledEventStageEntityId :: Maybe ScheduledEventEntityId
       , scheduledEventStageCreator :: Maybe User
       , scheduledEventStageUserCount :: Maybe Integer
-        -- | FIXME: that's a compatible type, but idealy that's something we want a dedicated type for
-      , scheduledEventStageImage :: Maybe T.Text
+      , scheduledEventStageImage :: Maybe ScheduledEventImageHash
       }
   | ScheduledEventVoice
       { scheduledEventVoiceId :: ScheduledEventId
@@ -69,8 +71,7 @@ data ScheduledEvent
       , scheduledEventVoiceEntityId :: Maybe ScheduledEventEntityId
       , scheduledEventVoiceCreator :: Maybe User
       , scheduledEventVoiceUserCount :: Maybe Integer
-        -- | FIXME: that's a compatible type, but idealy that's something we want a dedicated type for
-      , scheduledEventVoiceImage :: Maybe T.Text
+      , scheduledEventVoiceImage :: Maybe ScheduledEventImageHash
       }
   | ScheduledEventExternal
       { scheduledEventExternalId :: ScheduledEventId
@@ -86,8 +87,7 @@ data ScheduledEvent
       , scheduledEventExternalEntityId :: Maybe ScheduledEventEntityId
       , scheduledEventExternalCreator :: Maybe User
       , scheduledEventExternalUserCount :: Maybe Integer
-        -- | FIXME: that's a compatible type, but idealy that's something we want a dedicated type for
-      , scheduledEventExternalImage :: Maybe T.Text
+      , scheduledEventExternalImage :: Maybe ScheduledEventImageHash
       }
 
 instance ToJSON ScheduledEvent where
@@ -261,6 +261,39 @@ instance ToJSON ScheduledEventStatus where
 instance FromJSON ScheduledEventStatus where
   parseJSON = discordTypeParseJSON "ScheduledEventStatus"
 
+-- | The hash of the cover image of a ScheduledEvent
+type ScheduledEventImageHash = T.Text
+
+-- | The type of images that can be uploaded
+data CreateScheduledEventImageUploadType
+  = CreateScheduledEventImageUploadTypeJPG
+  | CreateScheduledEventImageUploadTypePNG
+  | CreateScheduledEventImageUploadTypeGIF
+  deriving (Show, Read, Eq, Ord)
+
+-- | The required information to add a cover image to a Scheduled Event
+data CreateScheduledEventImage
+  = CreateScheduledEventImageURL T.Text
+  | CreateScheduledEventImageUpload CreateScheduledEventImageUploadType B.ByteString
+  deriving (Show, Read, Eq, Ord)
+
+instance ToJSON CreateScheduledEventImage where
+  toJSON (CreateScheduledEventImageURL u) = String u
+  toJSON (CreateScheduledEventImageUpload typ bs) =
+    String
+      $  "data:"
+      <> (case typ of
+           CreateScheduledEventImageUploadTypeJPG -> "image/jpeg"
+           CreateScheduledEventImageUploadTypePNG -> "image/png"
+           CreateScheduledEventImageUploadTypeGIF -> "image/gif"
+         )
+      <> ";base64,"
+      <> bs
+
+instance FromJSON CreateScheduledEventImage where
+  parseJSON =
+    withText "CreateScheduledEventImage" (return . CreateScheduledEventImageURL)
+
 -- | Data required to create a Scheduled Event
 data CreateScheduledEventData
   = CreateScheduledEventDataStage
@@ -270,8 +303,7 @@ data CreateScheduledEventData
       , createScheduleEventDataStageStartTime :: UTCTime
       , createScheduleEventDataStageEndTime :: Maybe UTCTime
       , createScheduleEventDataStageDescription :: Maybe T.Text
-        -- | FIXME: Get appropriate type for the image data
-      , createScheduleEventDataStageImage :: Maybe T.Text
+      , createScheduleEventDataStageImage :: Maybe CreateScheduledEventImage
       }
   | CreateScheduledEventDataVoice
       { createScheduleEventDataVoiceChannelId :: ChannelId
@@ -280,8 +312,7 @@ data CreateScheduledEventData
       , createScheduleEventDataVoiceStartTime :: UTCTime
       , createScheduleEventDataVoiceEndTime :: Maybe UTCTime
       , createScheduleEventDataVoiceDescription :: Maybe T.Text
-        -- | FIXME: Get appropriate type for the image data
-      , createScheduleEventDataVoiceImage :: Maybe T.Text
+      , createScheduleEventDataVoiceImage :: Maybe CreateScheduledEventImage
       }
   | CreateScheduledEventDataExternal
       { createScheduleEventDataExternalLocation :: T.Text
@@ -290,8 +321,7 @@ data CreateScheduledEventData
       , createScheduleEventDataExternalStartTime :: UTCTime
       , createScheduleEventDataExternalEndTime :: UTCTime
       , createScheduleEventDataExternalDescription :: Maybe T.Text
-        -- | FIXME: Get appropriate type for the image data
-      , createScheduleEventDataExternalImage :: Maybe T.Text
+      , createScheduleEventDataExternalImage :: Maybe CreateScheduledEventImage
       }
 
 instance ToJSON CreateScheduledEventData where
@@ -426,9 +456,20 @@ data ModifyScheduledEventData = ModifyScheduledEventData
   , modifyScheduledEventDataDescription  :: Maybe (Maybe T.Text)
   , modifyScheduledEventDataType         :: Maybe ScheduledEventType
   , modifyScheduledEventDataStatus       :: Maybe ScheduledEventStatus
-   -- | FIXME: Proper image type
-  , modifyScheduledEventDataImage        :: Maybe T.Text
+  , modifyScheduledEventDataImage        :: Maybe CreateScheduledEventImage
   }
+
+instance Default ModifyScheduledEventData where
+  def = ModifyScheduledEventData Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
+                                 Nothing
 
 instance ToJSON ModifyScheduledEventData where
   toJSON ModifyScheduledEventData {..} = object
@@ -481,7 +522,7 @@ instance FromJSON ModifyScheduledEventData where
       msetype  <- v .:? "entity_type"
       msepl    <- v .:? "privacy_level"
       msestat  <- v .:? "status"
-      mseimg   <- v .:? "image" -- FIXME: Image Type
+      mseimg   <- v .:? "image"
 
       -- The not so trivial ones
       msecid'  <- v .:! "channel_id"
