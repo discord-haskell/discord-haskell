@@ -121,6 +121,7 @@ data GuildMember = GuildMember
       , memberMute     :: Bool -- ^ Whether the user is muted
       , memberPending     :: Bool -- ^ Whether the user has passed the guild's membership screening
       , memberPermissions     :: Maybe T.Text -- ^ total permissions of the member
+      , memberTimeoutEnd :: Maybe UTCTime -- ^ when the user's timeout will expire and they can communicate again
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildMember where
@@ -135,6 +136,7 @@ instance FromJSON GuildMember where
                 <*> o .:  "mute"
                 <*> o .:? "pending" .!= False
                 <*> o .:? "permissions"
+                <*> o .:? "communication_disabled_until"
 
 instance ToJSON GuildMember where
   toJSON GuildMember {..} = object [(name, value) | (name, Just value) <-
@@ -148,4 +150,5 @@ instance ToJSON GuildMember where
       , ("mute",      toJSON <$> pure memberMute)
       , ("pending",      toJSON <$> pure memberPending)
       , ("permissions",    toJSON <$>      memberPermissions)
+      , ("communication_disabled_until",    toJSON <$>      memberTimeoutEnd)
       ] ]
