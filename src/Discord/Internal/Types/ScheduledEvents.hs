@@ -36,7 +36,9 @@ import           Discord.Internal.Types.Prelude ( ChannelId
                                                 , UserId
                                                 , toMaybeJSON
                                                 )
-import           Discord.Internal.Types.User    ( User )
+import           Discord.Internal.Types.User    ( GuildMember
+                                                , User
+                                                )
 
 
 
@@ -564,4 +566,21 @@ instance FromJSON ModifyScheduledEventData where
         , modifyScheduledEventDataStatus       = msestat
         , modifyScheduledEventDataImage        = mseimg
         }
+    )
+
+-- | An User that subscribed to a Scheduled Event
+data ScheduledEventUser = ScheduledEventUser
+  { scheduledEventUserEvent       :: ScheduledEventId
+  , scheduledEventUserUser        :: User
+  , scheduledEventUserGuildMember :: Maybe GuildMember
+  }
+
+instance FromJSON ScheduledEventUser where
+  parseJSON = withObject
+    "ScheduledEventUser"
+    (\v -> do
+      seue <- v .: "guild_scheduled_event_id"
+      seuu <- v .: "user"
+      seum <- v .:? "member"
+      return $ ScheduledEventUser seue seuu seum
     )
