@@ -21,7 +21,7 @@ This is an example bot that replies "pong" to messages that start with "ping". C
 ```haskell
 {-# LANGUAGE OverloadedStrings #-}  -- allows "string literals" to be Text
 import           Control.Monad (when, void)
-import           UnliftIO.Concurrent
+import           Control.Concurrent (threadDelay)
 import           Data.Text (isPrefixOf, toLower, Text)
 import qualified Data.Text.IO as TIO
 
@@ -42,12 +42,12 @@ pingpongExample = do
     -- userFacingError is an unrecoverable error
     -- put normal 'cleanup' code in discordOnEnd (see examples)
 
-eventHandler :: Event -> DiscordHandler ()
-eventHandler event = case event of
+eventHandler :: DiscordHandle -> Event -> IO ()
+eventHandler handle event = case event of
     MessageCreate m -> when (isPing m && not (fromBot m)) $ do
-        void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
+        void $ restCall handle (R.CreateReaction (messageChannelId m, messageId m) "eyes")
         threadDelay (2 * 10^6)
-        void $ restCall (R.CreateMessage (messageChannelId m) "Pong!")
+        void $ restCall handle (R.CreateMessage (messageChannelId m) "Pong!")
     _ -> return ()
 
 fromBot :: Message -> Bool

@@ -1,16 +1,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
-import Control.Monad (when, void, forever)
-import Control.Concurrent (forkIO, killThread)
+import Control.Monad (when, void)
+import Control.Exception (try, IOException)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import UnliftIO (liftIO, try, IOException)
+
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
 import Discord
 import Discord.Types
+import Discord.Handle (discordHandleLog)
 import qualified Discord.Requests as R
 
 data State = State { pingCount :: Integer }
@@ -21,44 +22,40 @@ stateExample :: IO ()
 stateExample = do
   tok <- TIO.readFile "./examples/auth-token.secret"
 
-  -- eventHandler is called concurrently, need to sync stdout
-  printQueue <- newChan :: IO (Chan T.Text)
-  threadId <- forkIO $ forever $ readChan printQueue >>= TIO.putStrLn
-
   -- try to read previous state, otherwise use 0
   state :: MVar (State) <- do
         mfile <- try $ read . T.unpack <$> TIO.readFile "./cachedState"
         s <- case mfile of
             Right file -> do
-                    writeChan printQueue "loaded state from file"
+                    TIO.putStrLn "loaded state from file"
                     pure file
             Left (_ :: IOException) -> do
-                    writeChan printQueue "created new state"
+                    TIO.putStrLn "created new state"
                     pure $ State { pingCount = 0 }
         newMVar s
 
+  TIO.putStrLn "starting ping loop"
   t <- runDiscord $ def { discordToken = tok
-                        , discordOnStart = liftIO $ writeChan printQueue "starting ping loop"
-                        , discordOnEvent = eventHandler state printQueue
-                        , discordOnEnd = do killThread threadId
-                                            --
-                                            s <- readMVar state
+                        , discordOnEvent = eventHandler state
+                        , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
+
+                        -- normal cleanup in discordOnEnd
+                        , discordOnEnd = do s <- readMVar state
                                             TIO.writeFile "./cachedState" (T.pack (show s))
                         }
   TIO.putStrLn t
 
 
-eventHandler :: MVar State -> Chan T.Text -> Event -> DiscordHandler ()
-eventHandler state printQueue event = case event of
+eventHandler :: MVar State -> DiscordHandle -> Event -> IO ()
+eventHandler state handle event = case event of
   -- respond to message, and modify state
   MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-    liftIO $ writeChan printQueue "got a ping!"
+    writeChan (discordHandleLog handle) "got a ping!"
 
-    s <- liftIO $ takeMVar state
+    s <- takeMVar state
+    putMVar state $ State { pingCount = pingCount s + 1 }
 
-    void $ restCall (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
-
-    liftIO $ putMVar state $ State { pingCount = pingCount s + 1 }
+    void $ restCall handle (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
 
   _ -> pure ()
 

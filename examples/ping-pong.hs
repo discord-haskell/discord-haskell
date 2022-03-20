@@ -7,7 +7,7 @@ import qualified Data.Text.IO as TIO
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 
-import Discord
+import DiscordMonadTransformerLibrary
 import Discord.Types
 import qualified Discord.Requests as R
 

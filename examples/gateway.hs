@@ -1,13 +1,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import Control.Monad (forever)
-import Control.Concurrent (forkIO, killThread)
 import UnliftIO (liftIO)
-import Control.Concurrent.Chan
+import UnliftIO.Concurrent
 import qualified Data.Text.IO as TIO
 
-import Discord
 import Discord.Types
+import DiscordMonadTransformerLibrary
 
 -- | Prints every event as it happens
 gatewayExample :: IO ()

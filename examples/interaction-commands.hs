@@ -10,7 +10,7 @@ import Data.Functor ((<&>))
 import Data.List (transpose)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Discord
+import DiscordMonadTransformerLibrary
 import Discord.Interactions
 import qualified Discord.Requests as R
 import Discord.Types
