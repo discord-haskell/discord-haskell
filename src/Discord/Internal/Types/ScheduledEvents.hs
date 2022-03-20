@@ -22,6 +22,7 @@ import           Data.Data                      ( Data )
 import           Data.Default                   ( Default(def) )
 import           Data.Maybe                     ( isNothing )
 import qualified Data.Text                     as T
+import qualified Data.Text.Encoding            as T
 import           Data.Time                      ( UTCTime )
 import           Discord.Internal.Types.Prelude ( ChannelId
                                                 , GuildId
@@ -288,7 +289,7 @@ instance ToJSON CreateScheduledEventImage where
            CreateScheduledEventImageUploadTypeGIF -> "image/gif"
          )
       <> ";base64,"
-      <> bs
+      <> T.decodeUtf8 bs
 
 instance FromJSON CreateScheduledEventImage where
   parseJSON =
