@@ -1,6 +1,20 @@
 
 ### TODO
 
+
+#### Handle eventHandler backpressure
+
+What happens when discord sends more events than the user can handle? 
+
+Each event forks a new thread at the moment we get it. What happens when the library receives 1000 events very quickly, how many threads do we spawn?
+
+#### Ensure ratelimiting is minimal
+
+discord/reest/http.hs implements ratelimiting https://discord.com/developers/docs/topics/rate-limits
+
+Print out all the headers as we get them and ensure the library is actually sending requests as fast as possible.
+
+
 #### Cache
 
 Cache is a TODO at the moment.
