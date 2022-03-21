@@ -70,6 +70,8 @@ type ParentId = Snowflake
 type ApplicationId = Snowflake
 type ApplicationCommandId = Snowflake
 type InteractionId = Snowflake
+type ScheduledEventId = Snowflake
+type ScheduledEventEntityId = Snowflake
 type InteractionToken = T.Text
 type Shard = (Int, Int)
 
