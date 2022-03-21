@@ -20,7 +20,6 @@ import           Data.Aeson.Types               ( Parser )
 import qualified Data.ByteString               as B
 import           Data.Data                      ( Data )
 import           Data.Default                   ( Default(def) )
-import           Data.Maybe                     ( isNothing )
 import qualified Data.Text                     as T
 import qualified Data.Text.Encoding            as T
 import           Data.Time                      ( UTCTime )
@@ -478,41 +477,22 @@ instance ToJSON ModifyScheduledEventData where
   toJSON ModifyScheduledEventData {..} = object
     [ (name, value)
     | (name, Just value) <-
-      [ ("channel_id"          , cid)
+      [ ("channel_id", toJSON <$> modifyScheduledEventDataChannelId)
       , ("entity_metadata"     , loc)
       , ("name", toJSON <$> modifyScheduledEventDataName)
       , ("scheduled_start_time", toJSON <$> modifyScheduledEventDataStartTime)
       , ("scheduled_end_time", toJSON <$> modifyScheduledEventDataEndTime)
-      , ("description"         , desc)
+      , ("description", toJSON <$> modifyScheduledEventDataDescription)
       , ("entity_type", toJSON <$> modifyScheduledEventDataType)
       , ("status", toJSON <$> modifyScheduledEventDataStatus)
       , ("image", toJSON <$> modifyScheduledEventDataImage)
       ]
     ]
    where
-    cid = if isNothing modifyScheduledEventDataChannelId
-      then Nothing
-      else
-        let Just cid' = modifyScheduledEventDataChannelId
-        in  if isNothing cid'
-              then Just Null
-              else let Just cid'' = cid' in Just $ toJSON cid''
-    loc = if isNothing modifyScheduledEventDataLocation
-      then Nothing
-      else
-        let Just loc' = modifyScheduledEventDataLocation
-        in  if isNothing loc'
-              then Just Null
-              else
-                let Just loc'' = loc'
-                in  Just $ object [("location", toJSON loc'')]
-    desc = if isNothing modifyScheduledEventDataDescription
-      then Nothing
-      else
-        let Just desc' = modifyScheduledEventDataDescription
-        in  if isNothing desc'
-              then Just Null
-              else let Just desc'' = desc' in Just $ toJSON desc''
+    loc = case modifyScheduledEventDataLocation of
+      Nothing      -> Nothing
+      Just Nothing -> Just Null
+      Just loc'    -> Just $ object [("location", toJSON loc')]
 
 instance FromJSON ModifyScheduledEventData where
   parseJSON = withObject
@@ -578,9 +558,9 @@ data ScheduledEventUser = ScheduledEventUser
 instance FromJSON ScheduledEventUser where
   parseJSON = withObject
     "ScheduledEventUser"
-    (\v -> do
-      seue <- v .: "guild_scheduled_event_id"
-      seuu <- v .: "user"
-      seum <- v .:? "member"
-      return $ ScheduledEventUser seue seuu seum
+    (\v ->
+      ScheduledEventUser
+        <$> v .:  "guild_scheduled_event_id"
+        <*> v .:  "user"
+        <*> v .:? "member"
     )

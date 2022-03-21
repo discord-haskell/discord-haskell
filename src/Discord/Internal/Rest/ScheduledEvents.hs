@@ -56,8 +56,7 @@ data ScheduledEventRequest a where
                          -> ScheduledEventRequest [ScheduledEventUser]
 
 sevEndpoint :: GuildId -> R.Url 'R.Https
-sevEndpoint gid =
-    let guilds = baseUrl /: "guilds" in guilds // gid /: "scheduled-events"
+sevEndpoint gid = baseUrl /: "guilds" // gid /: "scheduled-events"
 
 instance Request (ScheduledEventRequest a) where
     majorRoute = const "scheduledEvent"
