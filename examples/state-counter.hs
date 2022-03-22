@@ -53,9 +53,10 @@ eventHandler state handle event = case event of
     writeChan (discordHandleLog handle) "got a ping!"
 
     s <- takeMVar state
-    putMVar state $ State { pingCount = pingCount s + 1 }
 
     void $ restCall handle (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
+
+    putMVar state $ State { pingCount = pingCount s + 1 }
 
   _ -> pure ()
 
