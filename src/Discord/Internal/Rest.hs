@@ -8,6 +8,7 @@ module Discord.Internal.Rest
   ( module Discord.Internal.Types
   , RestChanHandle(..)
   , Request(..)
+  , RestCallErrorCode(..)
   , writeRestCall
   , startRestThread
   , RestCallInternalException(..)
@@ -24,6 +25,9 @@ import qualified Data.Text as T
 
 import Discord.Internal.Types
 import Discord.Internal.Rest.HTTP
+
+data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
+  deriving (Show, Read, Eq, Ord)
 
 data RestChanHandle = RestChanHandle
       { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))

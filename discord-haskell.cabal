@@ -58,6 +58,7 @@ library
                      , Discord.Handle
                      , Discord.Interactions
                      , Discord.Requests
+                     , Discord.Monad
                      , Discord.Internal.Gateway
                      , Discord.Internal.Gateway.Cache
                      , Discord.Internal.Gateway.EventLoop

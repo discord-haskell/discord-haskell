@@ -1,9 +1,11 @@
 module Discord.Handle
   ( DiscordHandle(..)
+  , DiscordHandler
   , HandleThreadId(..)
   ) where
 
 import Control.Concurrent (ThreadId, Chan, MVar)
+import Control.Monad.Reader (ReaderT)
 import qualified Data.Text as T
 
 import Discord.Internal.Rest (RestChanHandle(..))
@@ -23,3 +25,5 @@ data DiscordHandle = DiscordHandle
   , discordHandleLog :: Chan T.Text
   , discordHandleLibraryError :: MVar T.Text
   }
+
+type DiscordHandler = ReaderT DiscordHandle IO
