@@ -16,6 +16,7 @@ module Discord
   , RestCallErrorCode(..)
   , RunDiscordOpts(..)
   , FromJSON
+  , Request
   , def
   ) where
 
@@ -123,7 +124,7 @@ data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
   deriving (Show, Read, Eq, Ord)
 
 -- | Execute one http request and get a response
-restCall :: (FromJSON a, Request (r a)) => r a -> DiscordHandler (Either RestCallErrorCode a)
+restCall :: (Request (r a), FromJSON a) => r a -> DiscordHandler (Either RestCallErrorCode a)
 restCall r = do h <- ask
                 empty <- isEmptyMVar (discordHandleLibraryError h)
                 if not empty

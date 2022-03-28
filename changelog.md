@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+Improve `restCall` type error messages https://github.com/aquarial/discord-haskell/issues/102
+
 ## 1.12.5
 
 [Annwan](https://github.com/aquarial/discord-haskell/pull/109) Add `ScheduledEvent` rest API
