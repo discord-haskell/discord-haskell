@@ -2,10 +2,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
 import Control.Monad (when, void, forever)
-import Control.Concurrent (forkIO, killThread)
-import Control.Concurrent.Chan
-import Control.Concurrent.MVar
-import UnliftIO (liftIO, try, IOException)
+import UnliftIO (try, IOException) -- liftIO
+import UnliftIO.MVar
+import UnliftIO.Chan
+import UnliftIO.Concurrent (forkIO, killThread)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -38,7 +38,7 @@ stateExample = do
         newMVar s
 
   t <- runDiscord $ def { discordToken = tok
-                        , discordOnStart = liftIO $ writeChan printQueue "starting ping loop"
+                        , discordOnStart = writeChan printQueue "starting ping loop"
                         , discordOnEvent = eventHandler state printQueue
                         , discordOnEnd = do killThread threadId
                                             --
@@ -52,13 +52,13 @@ eventHandler :: MVar State -> Chan T.Text -> Event -> DiscordHandler ()
 eventHandler state printQueue event = case event of
   -- respond to message, and modify state
   MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-    liftIO $ writeChan printQueue "got a ping!"
+    writeChan printQueue "got a ping!"
 
-    s <- liftIO $ takeMVar state
+    s <- takeMVar state
 
     void $ restCall (R.CreateMessage (messageChannelId m) (T.pack ("Pong #" <> show (pingCount s))))
 
-    liftIO $ putMVar state $ State { pingCount = pingCount s + 1 }
+    putMVar state $ State { pingCount = pingCount s + 1 }
 
   _ -> pure ()
 
