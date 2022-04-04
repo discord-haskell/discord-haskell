@@ -2,9 +2,7 @@
 
 ```haskell
 ~> :info runDiscord
-runDiscord :: RunDiscordOpts -> IO T.Text
-
-{- The text is a user facing error. Please print it / mail it / read it -}
+runDiscord :: RunDiscordOpts -> IO T.Text {- Text is user facing error. Print it -}
 
 ~> :info RunDiscordOpts
 data RunDiscordOpts = RunDiscordOpts
@@ -17,7 +15,7 @@ data RunDiscordOpts = RunDiscordOpts
     }
 
 ~> :info DiscordHandler
-type DiscordHandler = ReaderT DiscordHandle IO :: * -> *
+type DiscordHandler = ReaderT DiscordHandle IO
 
 {- ReaderT for access to the Handle -}
 

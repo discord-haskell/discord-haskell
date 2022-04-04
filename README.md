@@ -10,9 +10,9 @@ for a more advanced interface.
 
 #### [[installing](./docs/installing.md)] [[debugging](./docs/debugging.md)] [[creating-bot](./docs/creating-bot.md)]
 
-#### [[design](./docs/design.md)] [[contributing](./docs/contributing.md)] [[todo](./docs/todo.md)]
-
 #### [[app-commands](./docs/applicationcommands.md)] [[components](./docs/components.md)] [[cache](./docs/cache.md)] [[embeds](./docs/embeds.md)] [[emoji](./docs/emoji.md)] [[intents](./docs/intents.md)] [[voice](./docs/voice.md)]
+
+#### [[design](./docs/design.md)] [[contributing](./docs/contributing.md)] [[todo](./docs/todo.md)]
 
 #### Example
 
