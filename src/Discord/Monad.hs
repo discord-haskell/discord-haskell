@@ -2,16 +2,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 
 module Discord.Monad
   ( MonadDiscord (..),
     EnvRunDiscordOpts (..),
     RunDiscordOpts,
     runDiscord,
+    runDiscordM,
   )
 where
 
@@ -26,7 +23,7 @@ import Discord.Handle
 import Discord.Internal.Gateway
 import Discord.Internal.Rest
 import Discord.Requests
-import UnliftIO (IOException, SomeException, finally, race, try, MonadUnliftIO)
+import UnliftIO (IOException, MonadUnliftIO, SomeException, finally, race, try)
 import UnliftIO.Concurrent
 import Prelude hiding (log)
 
@@ -36,13 +33,19 @@ class MonadUnliftIO m => MonadDiscord m where
   readCache :: m Cache
   stopDiscord :: m ()
 
-instance MonadDiscord DiscordHandler where
+instance {-# OVERLAPPING #-} MonadDiscord DiscordHandler where
   restCall = restCall'
   sendCommand = sendCommand'
   readCache = readCache'
   stopDiscord = stopDiscord'
 
 instance MonadDiscord m => MonadDiscord (IdentityT m) where
+  restCall = lift . restCall
+  sendCommand = lift . sendCommand
+  readCache = lift readCache
+  stopDiscord = lift stopDiscord
+
+instance MonadDiscord m => MonadDiscord (ReaderT r m) where
   restCall = lift . restCall
   sendCommand = lift . sendCommand
   readCache = lift readCache
@@ -76,17 +79,17 @@ restCall' r = do
 -- | Send a user GatewaySendable
 sendCommand' :: GatewaySendable -> DiscordHandler ()
 sendCommand' e = do
-  h <- ask
-  writeChan (gatewayHandleUserSendables (discordHandleGateway h)) e
+  dhg <- asks discordHandleGateway
+  writeChan (gatewayHandleUserSendables dhg) e
   case e of
-    UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
+    UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus dhg) (Just opts)
     _ -> pure ()
 
 -- | Access the current state of the gateway cache
 readCache' :: DiscordHandler Cache
 readCache' = do
-  h <- ask
-  merr <- readMVar (cacheHandleCache (discordHandleCache h))
+  cache <- asks discordHandleCache
+  merr <- readMVar (cacheHandleCache cache)
   case merr of
     Left (c, _) -> pure c
     Right c -> pure c
@@ -105,11 +108,15 @@ stopDiscord' = do
       HandleThreadIdCache a -> a
       HandleThreadIdLogger a -> a
 
+-- | Run a discord bot from the given options.
 runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord = runDiscordM id
 
-
-runDiscordM :: MonadDiscord m => (forall a. m a -> DiscordHandler a) ->EnvRunDiscordOpts m -> IO T.Text
+-- | Run a discord bot from the given options, as well as a way to unlift the
+-- MonadDiscord given.
+--
+-- Gets the handle for `runDiscordLoopM`.
+runDiscordM :: MonadDiscord m => (forall a. m a -> DiscordHandler a) -> EnvRunDiscordOpts m -> IO T.Text
 runDiscordM unlift opts = do
   log <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
@@ -138,7 +145,9 @@ runDiscordM unlift opts = do
     (runDiscordLoopM unlift handle opts)
     (discordOnEnd opts >> runReaderT stopDiscord handle)
 
-runDiscordLoopM :: forall m. MonadDiscord m => (forall a. m a -> DiscordHandler a) -> DiscordHandle ->  EnvRunDiscordOpts m -> IO T.Text
+-- | Run a discord bot from the given options, as well as a way to unlift the
+-- MonadDiscord given.
+runDiscordLoopM :: forall m. MonadDiscord m => (forall a. m a -> DiscordHandler a) -> DiscordHandle -> EnvRunDiscordOpts m -> IO T.Text
 runDiscordLoopM unlift handle opts = do
   resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
   case resp of
@@ -150,17 +159,17 @@ runDiscordLoopM unlift handle opts = do
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
     _ -> flip runReaderT handle . unlift $ do
-        me <- try $ discordOnStart opts
-        case me of
-          Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
-          Right _ -> loop
+      me <- try $ discordOnStart opts
+      case me of
+        Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
+        Right _ -> loop
   where
     libError :: MonadIO n => T.Text -> n T.Text
     libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
     loop :: m T.Text
     loop = do
-      next <- liftIO $
+      next <-
         race
           (readMVar (discordHandleLibraryError handle))
           (readChan (gatewayHandleEvents (discordHandleGateway handle)))
@@ -199,32 +208,16 @@ data EnvRunDiscordOpts m = RunDiscordOpts
 type RunDiscordOpts = EnvRunDiscordOpts DiscordHandler
 
 instance Default (EnvRunDiscordOpts m) where
-  def = RunDiscordOpts
-    { discordToken = "",
-      discordOnStart = pure (),
-      discordOnEnd = pure (),
-      discordOnEvent = \_ -> pure (),
-      discordOnLog = \_ -> pure (),
-      discordForkThreadForEvents = True,
-      discordGatewayIntent = def
-    }
-
-
--- mkRunDiscordOpts :: MonadDiscord m => (forall a. m a -> DiscordHandler a) -> EnvRunDiscordOpts m
--- mkRunDiscordOpts runAction =
---   RunDiscordOpts
---     { discordToken = "",
---       discordOnStart = pure (),
---       discordOnEnd = pure (),
---       discordOnEvent = \_ -> pure (),
---       discordOnLog = \_ -> pure (),
---       discordForkThreadForEvents = True,
---       discordGatewayIntent = def,
---       discordRunAction = runAction
---     }
-
--- instance Default RunDiscordOpts where
---   def = mkRunDiscordOpts id
+  def =
+    RunDiscordOpts
+      { discordToken = "",
+        discordOnStart = pure (),
+        discordOnEnd = pure (),
+        discordOnEvent = \_ -> pure (),
+        discordOnLog = \_ -> pure (),
+        discordForkThreadForEvents = True,
+        discordGatewayIntent = def
+      }
 
 startLogger :: (T.Text -> IO ()) -> Chan T.Text -> IO ThreadId
 startLogger handle logC = forkIO $
