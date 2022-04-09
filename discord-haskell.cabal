@@ -111,3 +111,4 @@ library
                      , mtl
                      , unliftio
                      , scientific
+                     , exceptions
