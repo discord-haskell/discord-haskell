@@ -46,6 +46,9 @@ executable monaddiscord-ping-pong
                      , unliftio
                      , discord-haskell
                      , data-default
+                     , aeson
+                     , mtl
+                     , time
 
 -- executable interaction-commands
 --   main-is:             examples/interaction-commands.hs

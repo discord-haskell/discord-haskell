@@ -36,7 +36,7 @@ class Monad m => MonadDiscord m where
   sendCommand :: GatewaySendable -> m ()
   readCache :: m Cache
   stopDiscord :: m ()
-  getEvent :: m (Either T.Text (Either GatewayException EventInternalParse))
+  getEvent :: m (Either T.Text (Either GatewayException Event))
 
 instance {-# OVERLAPPING #-} MonadDiscord DiscordHandler where
   restCall = D.restCall
@@ -45,7 +45,7 @@ instance {-# OVERLAPPING #-} MonadDiscord DiscordHandler where
   stopDiscord = D.stopDiscord
   getEvent = do
     handle <- ask
-    race
+    fmap (fmap userFacingEvent) <$> race
       (readMVar (discordHandleLibraryError handle))
       (readChan (gatewayHandleEvents (discordHandleGateway handle)))
 
@@ -149,18 +149,17 @@ runDiscordLoopM handle opts = do
         Left err -> libError err
         Right (Left err) -> libError (T.pack (show err))
         Right (Right event) -> do
-          let userEvent = userFacingEvent event
           let action =
                 if discordForkThreadForEvents opts
                   then void . forkIO
                   else id
           action $ do
-            me <- try $ discordOnEvent opts userEvent
+            me <- try $ discordOnEvent opts event
             case me of
               Left (e :: SomeException) ->
                 writeChan
                   (discordHandleLog handle)
-                  ( "eventhandler - crashed on [" <> T.pack (show userEvent) <> "] "
+                  ( "eventhandler - crashed on [" <> T.pack (show event) <> "] "
                       <> "          with error: "
                       <> T.pack (show e)
                   )
@@ -201,7 +200,7 @@ instance forall m l. (MonadDiscord m, Monad l) => Default (EnvRunDiscordOpts m l
 -- This doesn't use any IO, which means it likely shouldn't be used to run a
 -- real discord bot. The function given lifts the logging monad to the
 -- monad stack that the bot will run in.
-runDiscordMPure :: forall m l. (MonadDiscord m, MonadMask m, Monad l) => (forall a. l a -> m a) -> EnvRunDiscordOpts m l -> m T.Text
+runDiscordMPure :: forall m l. (MonadDiscord m, Monad l) => (forall a. l a -> m a) -> EnvRunDiscordOpts m l -> m T.Text
 runDiscordMPure liftLog opts = do
   discordOnStart opts
   loop
@@ -215,14 +214,13 @@ runDiscordMPure liftLog opts = do
         Left err -> doLog err
         Right (Left err) -> doLog (T.pack (show err))
         Right (Right event) -> do
-          let userEvent = userFacingEvent event
-          me <- try $ discordOnEvent opts userEvent
-          _ <- case me of
-            Left (e :: SomeException) ->
-              doLog
-                ( "eventhandler - crashed on [" <> T.pack (show userEvent) <> "] "
-                    <> "          with error: "
-                    <> T.pack (show e)
-                )
-            Right _ -> pure ""
+          discordOnEvent opts event
+          -- _ <- case me of
+          --   Left (e :: SomeException) ->
+          --     doLog
+          --       ( "eventhandler - crashed on [" <> T.pack (show userEvent) <> "] "
+          --           <> "          with error: "
+          --           <> T.pack (show e)
+          --       )
+          --   Right _ -> pure ""
           loop
