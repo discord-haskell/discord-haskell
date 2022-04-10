@@ -223,7 +223,8 @@ instance FromJSON Channel where
 
 instance ToJSON Channel where
   toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 0))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
@@ -235,7 +236,8 @@ instance ToJSON Channel where
               , ("parent_id",  toJSON <$> pure channelParentId)
               ] ]
   toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 5))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
@@ -243,9 +245,11 @@ instance ToJSON Channel where
               , ("nsfw", toJSON <$> pure channelNSFW)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
+
               ] ]
   toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 6))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("nsfw", toJSON <$> pure channelNSFW)
@@ -253,12 +257,14 @@ instance ToJSON Channel where
               , ("permission_overwrites",   toJSON <$> pure channelPermissions)
               ] ]
   toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 1))
+              , ("id",     toJSON <$> pure channelId)
               , ("recipients",   toJSON <$> pure channelRecipients)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               ] ]
   toJSON ChannelVoice{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 2))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> pure channelName)
               , ("position",   toJSON <$> pure channelPosition)
@@ -268,23 +274,27 @@ instance ToJSON Channel where
               , ("user_limit",  toJSON <$> pure channelUserLimit)
               ] ]
   toJSON ChannelGroupDM{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 3))
+              , ("id",     toJSON <$> pure channelId)
               , ("recipients",   toJSON <$> pure channelRecipients)
               , ("last_message_id",  toJSON <$> channelLastMessage)
               ] ]
   toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 4))
+              , ("id",     toJSON <$> pure channelId)
               , ("name", toJSON <$> pure channelName)
               , ("guild_id", toJSON <$> pure channelGuild)
               ] ]
   toJSON ChannelStage{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 13))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("channel_id", toJSON <$> pure channelStageId)
               , ("topic", toJSON <$> pure channelStageTopic)
               ] ]
   toJSON ChannelNewsThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 10))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> channelThreadName)
               , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
@@ -294,7 +304,8 @@ instance ToJSON Channel where
               , ("member", toJSON <$> channelThreadMember)
               ] ]
   toJSON ChannelPublicThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 11))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> channelThreadName)
               , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
@@ -304,7 +315,8 @@ instance ToJSON Channel where
               , ("member", toJSON <$> channelThreadMember)
               ] ]
   toJSON ChannelPrivateThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
+              [ ("type", Just (Number 12))
+              , ("id",     toJSON <$> pure channelId)
               , ("guild_id", toJSON <$> pure channelGuild)
               , ("name",  toJSON <$> channelThreadName)
               , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
