@@ -24,8 +24,19 @@ source-repository head
   type:                git
   location:            https://github.com/aquarial/discord-haskell.git
 
-executable ping-pong
-  main-is:             examples/ping-pong.hs
+-- executable ping-pong
+--   main-is:             examples/ping-pong.hs
+--   default-language:    Haskell2010
+--   ghc-options:         -Wall
+--                        -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+--                        -threaded
+--   build-depends:       base
+--                      , text
+--                      , unliftio
+--                      , discord-haskell
+
+executable monaddiscord-ping-pong
+  main-is:             examples/monaddiscord-ping-pong.hs
   default-language:    Haskell2010
   ghc-options:         -Wall
                        -fno-warn-type-defaults -fno-warn-unused-record-wildcards
@@ -34,6 +45,7 @@ executable ping-pong
                      , text
                      , unliftio
                      , discord-haskell
+                     , data-default
 
 -- executable interaction-commands
 --   main-is:             examples/interaction-commands.hs

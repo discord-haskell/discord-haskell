@@ -198,7 +198,8 @@ instance forall m l. (MonadDiscord m, Monad l) => Default (EnvRunDiscordOpts m l
 
 -- | Run a pure version of the discord bot.
 --
--- This doesn't use any IO. The function given lifts the logging monad to the
+-- This doesn't use any IO, which means it likely shouldn't be used to run a
+-- real discord bot. The function given lifts the logging monad to the
 -- monad stack that the bot will run in.
 runDiscordMPure :: forall m l. (MonadDiscord m, MonadMask m, Monad l) => (forall a. l a -> m a) -> EnvRunDiscordOpts m l -> m T.Text
 runDiscordMPure liftLog opts = do
