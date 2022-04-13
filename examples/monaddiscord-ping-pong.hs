@@ -7,7 +7,6 @@ import qualified Data.Text.IO as TIO
 
 import UnliftIO.Concurrent
 
--- import Discord
 import Discord.Monad
 import Discord.Types
 import qualified Discord.Requests as R
@@ -126,41 +125,55 @@ isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageContent
 -- opaque than I realised.
 
 data Store = Store
- { cache :: Cache
- , events :: [Either T.Text (Either GatewayException Event)]
- , restCalls :: [(JsonRequest, String, (T.Text, Maybe T.Text))]
- , commands :: [GatewaySendable]
- , storeLog :: [T.Text]
- }
+  { cache :: Cache, -- ^ cache to peek into
+    events :: [Either T.Text (Either GatewayException Event)], -- ^ events to receive
+    restCalls :: [(JsonRequest, String, Either RestCallErrorCode String)], -- ^ what's been sent and then received
+    requestResponses :: [(Value, String)], -- ^ what the responses will be, in order
+    commands :: [GatewaySendable], -- ^ commands that were sent
+    storeLog :: [T.Text] -- ^ stuff that was logged
+  }
 
 instance Show Store where
-  show (Store c e r cs l) = "Store " ++ show c ++ " " ++ show e ++ " "++ show ((\(_,_,a) -> a) <$> r) ++" " ++ show cs ++ " " ++ show l
+  show (Store c e r rr cs l) = "Store " ++ show c ++ " " ++ show e ++ " " ++ show ((\(_, b, a) -> (b, a)) <$> r) ++ " " ++ show rr ++ " " ++ show cs ++ " " ++ show l
 
 instance Default Store where
-  def = Store { cache = Cache emptyUser mempty mempty mempty (PartialApplication 101 0)
-              , events = []
-              , restCalls = []
-              , commands = []
-              , storeLog = []
-  }
+  def =
+    Store
+      { cache = Cache emptyUser mempty mempty mempty (PartialApplication 101 0),
+        events = [],
+        restCalls = [],
+        requestResponses = [],
+        commands = [],
+        storeLog = []
+      }
 
 type PureDiscord = State Store
 
 instance {-# OVERLAPPING #-} MonadDiscord PureDiscord where
   restCall r = do
-    let (v, ret) = case fakeTheRequest r of
-                    (Left e, t) -> ((t, Just e), Left (RestCallErrorCode (-1) e e))
-                    (Right a,t) -> ((t,Nothing), Right a)
-    modify (\s -> s { restCalls = (jsonRequest r, majorRoute r, v) : restCalls s })
+    rr <- gets requestResponses
+    let (v, ret, xs) = case rr of
+          [] -> ("ran out of responses", convResult $ fromJSON Null, [])
+          ((v', s) : xs') -> (s, convResult $ fromJSON v', xs')
+    modify
+      ( \s ->
+          s
+            { restCalls = (jsonRequest r, majorRoute r, v <$ ret) : restCalls s,
+              requestResponses = xs
+            }
+      )
     return ret
-  sendCommand gs = modify (\s -> s { commands = gs : commands s })
+    where
+      convResult (Success a) = Right a
+      convResult (Error e) = Left $ RestCallErrorCode (-1) "parse error" (T.pack e)
+  sendCommand gs = modify (\s -> s {commands = gs : commands s})
   readCache = gets cache
   getEvent = do
     s <- gets events
     case s of
       [] -> return (Left "no events")
-      (x:xs) -> modify (\s' -> s' { events = xs }) >> return x
-  stopDiscord = modify (\s -> s { events = [] })
+      (x : xs) -> modify (\s' -> s' {events = xs}) >> return x
+  stopDiscord = modify (\s -> s {events = []})
 
 emptyUser :: User
 emptyUser = User 0 "" Nothing Nothing False False Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
@@ -168,28 +181,29 @@ emptyUser = User 0 "" Nothing Nothing False False Nothing Nothing Nothing Nothin
 emptyMessage :: Message
 emptyMessage = Message 0 0 Nothing emptyUser Nothing "" (UTCTime (ModifiedJulianDay 0) 0) Nothing False False [] [] [] [] [] Nothing False Nothing MessageTypeDefault Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
-fakeTheRequest :: (FromJSON a) => Request (r a) => r a -> (Either T.Text a, T.Text)
-fakeTheRequest r = conv $ case majorRoute r of
-  "msg 0" -> toJSON' (emptyMessage {messageContent = "Hi there"})
-  "guild_chan 0" -> toJSON' [ChannelText 0 0 "channel one" 0 [] 0 False "" Nothing Nothing]
-  t -> (Null, T.pack t)
-  where
-    toJSON' :: (ToJSON a, Show a) => a -> (Value, T.Text)
-    toJSON' a = (toJSON a, T.pack $ show a)
-    conv :: FromJSON a => (Value, T.Text) -> (Either T.Text a, T.Text)
-    conv (Null,t) = (Left ("not implemented:" <> t) , "")
-    conv (v, t) = case fromJSON v of
-      Error e -> (Left (T.pack e), t)
-      Success a -> (Right a, t)
-
+-- old way to fake, not very effective
+-- fakeTheRequest :: (FromJSON a) => Request (r a) => r a -> (Either T.Text a, T.Text)
+-- fakeTheRequest r = conv $ case majorRoute r of
+--   "msg 0" -> toJSON' (emptyMessage {messageContent = "Hi there"})
+--   "guild_chan 0" -> toJSON' [ChannelText 0 0 "channel one" 0 [] 0 False "" Nothing Nothing]
+--   t -> (Null, T.pack t)
+--   where
+--     toJSON' :: (ToJSON a, Show a) => a -> (Value, T.Text)
+--     toJSON' a = (toJSON a, T.pack $ show a)
+--     conv :: FromJSON a => (Value, T.Text) -> (Either T.Text a, T.Text)
+--     conv (Null,t) = (Left ("not implemented:" <> t) , "")
+--     conv (v, t) = case fromJSON v of
+--       Error e -> (Left (T.pack e), t)
+--       Success a -> (Right a, t)
 
 pureRunDiscordOpts :: EnvRunDiscordOpts PureDiscord PureDiscord
-pureRunDiscordOpts = (def :: EnvRunDiscordOpts PureDiscord PureDiscord)
- { discordOnLog = \t -> modify (\s' -> s' { storeLog = t : storeLog s' })
- , discordOnStart = startHandler
- , discordOnEvent = eventHandler
- , discordOnEnd = modify (\s' -> s' { storeLog = "Ended" : storeLog s' })
- }
+pureRunDiscordOpts =
+  (def :: EnvRunDiscordOpts PureDiscord PureDiscord)
+    { discordOnLog = \t -> modify (\s' -> s' {storeLog = t : storeLog s'}),
+      discordOnStart = startHandler,
+      discordOnEvent = eventHandler,
+      discordOnEnd = modify (\s' -> s' {storeLog = "Ended" : storeLog s'})
+    }
 
 runPurePingPong :: Store -> (T.Text, Store)
 runPurePingPong s = runIdentity $ flip runStateT s $ runDiscordMPure id pureRunDiscordOpts
@@ -198,6 +212,17 @@ performPurePingPong :: (T.Text, Store)
 performPurePingPong =
   runPurePingPong store
   where
-    store = def {
-      events = [Right (Right (MessageCreate (emptyMessage {messageContent = "ping"})))]
-    }
+    mkResponsePair :: (Show a, ToJSON a) => a -> (Value, String)
+    mkResponsePair a = (toJSON a, show a)
+    store =
+      def
+        { events = [Right (Right (MessageCreate (emptyMessage {messageContent = "ping"})))],
+          requestResponses =
+            [ mkResponsePair [ChannelText 0 0 "channel one" 0 [] 0 False "" Nothing Nothing],
+              mkResponsePair (emptyMessage {messageContent = "Hello! I will reply to pings with pongs"}),
+              mkResponsePair (),
+              mkResponsePair (emptyMessage {messageContent = "Pong"}),
+              mkResponsePair (emptyMessage {messageContent = "Pong!"}),
+              mkResponsePair (emptyMessage {messageContent = "Here's a more complex message, but doesn't ping @everyone!", messageTts = True, messageEveryone = False, messageReferencedMessage = Just emptyMessage {messageContent = "you got me, this is fake"}})
+            ]
+        }
