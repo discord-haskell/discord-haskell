@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 
 -- | Types relating to Discord Guilds (servers)
 module Discord.Internal.Types.Guild where
@@ -26,56 +27,56 @@ import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 -- https://discord.com/developers/docs/resources/guild#guild-object
 data Guild = Guild
       { guildId                   :: GuildId              -- ^ Gulid id
-      , guildName                 :: T.Text               -- ^ Guild name (2 - 100 chars)
-      , guildIcon                 :: Maybe T.Text         -- ^ Icon hash
-      , guildIconHash             :: Maybe T.Text         -- ^ Icon hash, when returned in template object
-      , guildSplash               :: Maybe T.Text         -- ^ Splash hash
-      , guildDiscoverySplash      :: Maybe T.Text         -- ^ Discovery splash hash
-      , guildOwner                :: Maybe Bool           -- ^ True is user is the owner of the guild
-      , guildOwnerId              :: UserId               -- ^ Guild owner id
-      , guildPermissions          :: Maybe T.Text         -- ^ Total permissions for the user in the guild
-      , guildAfkId                :: Maybe ChannelId      -- ^ Id of afk channel
-      , guildAfkTimeout           :: Integer              -- ^ Afk timeout in seconds
-      , guildWidgetEnabled        :: Maybe Bool           -- ^ Id of embedded channel
-      , guildWidgetChannelId      :: Maybe ChannelId      -- ^ Id of embedded channel
-      , guildVerificationLevel    :: Integer              -- ^ Level of verification
-      , guildNotification         :: Integer              -- ^ Level of default notifications
-      , guildExplicitFilterLevel  :: Integer              -- ^ Whose media gets scanned
-      , guildRoles                :: [Role]               -- ^ Array of 'Role' objects
-      , guildEmojis               :: [Emoji]              -- ^ Array of 'Emoji' objects
-      , guildFeatures             :: [T.Text]             -- ^ Array of guild feature strings
-      , guildMultiFactAuth        :: !Integer             -- ^ MFA level for the guild
-      , guildApplicationId        :: Maybe ApplicationId  -- ^ Application id of the guild if bot created
-      , guildSystemChannelId      :: Maybe ChannelId      -- ^ Channel where guild notices such as welcome messages and boost events
-      , guildSystemChannelFlags   :: Integer              -- ^ Flags on the system channel
-      , guildRulesChannelId       :: Maybe ChannelId      -- ^ Id of channel with rules/guidelines
-      , guildJoinedAt             :: Maybe UTCTime        -- ^ When this guild was joined at
-      , guildLarge                :: Maybe Bool           -- ^ True if this guild is considered large
-      , guildUnavailable          :: Maybe Bool           -- ^ True if the guild is unavailable due to outage
-      , guildMemberCount          :: Maybe Integer        -- ^ Total number of members in the guild
+      , name                 :: T.Text               -- ^ Guild name (2 - 100 chars)
+      , icon                 :: Maybe T.Text         -- ^ Icon hash
+      , iconHash             :: Maybe T.Text         -- ^ Icon hash, when returned in template object
+      , splash               :: Maybe T.Text         -- ^ Splash hash
+      , discoverySplash      :: Maybe T.Text         -- ^ Discovery splash hash
+      , owner                :: Maybe Bool           -- ^ True is user is the owner of the guild
+      , ownerId              :: UserId               -- ^ Guild owner id
+      , permissions          :: Maybe T.Text         -- ^ Total permissions for the user in the guild
+      , afkId                :: Maybe ChannelId      -- ^ Id of afk channel
+      , afkTimeout           :: Integer              -- ^ Afk timeout in seconds
+      , widgetEnabled        :: Maybe Bool           -- ^ Id of embedded channel
+      , widgetChannelId      :: Maybe ChannelId      -- ^ Id of embedded channel
+      , verificationLevel    :: Integer              -- ^ Level of verification
+      , notification         :: Integer              -- ^ Level of default notifications
+      , explicitFilterLevel  :: Integer              -- ^ Whose media gets scanned
+      , roles                :: [Role]               -- ^ Array of 'Role' objects
+      , emojis               :: [Emoji]              -- ^ Array of 'Emoji' objects
+      , features             :: [T.Text]             -- ^ Array of guild feature strings
+      , multiFactAuth        :: !Integer             -- ^ MFA level for the guild
+      , applicationId        :: Maybe ApplicationId  -- ^ Application id of the guild if bot created
+      , systemChannelId      :: Maybe ChannelId      -- ^ Channel where guild notices such as welcome messages and boost events
+      , systemChannelFlags   :: Integer              -- ^ Flags on the system channel
+      , rulesChannelId       :: Maybe ChannelId      -- ^ Id of channel with rules/guidelines
+      , joinedAt             :: Maybe UTCTime        -- ^ When this guild was joined at
+      , large                :: Maybe Bool           -- ^ True if this guild is considered large
+      , unavailable          :: Maybe Bool           -- ^ True if the guild is unavailable due to outage
+      , memberCount          :: Maybe Integer        -- ^ Total number of members in the guild
       -- voice_states
-      , guildMembers              :: Maybe [GuildMember]  -- ^ Users in the guild
-      , guildChannels             :: Maybe [Channel]      -- ^ Channels in the guild
-      , guildThreads              :: Maybe [Channel]      -- ^ All active threads in the guild that the current user has permission to view
-      , guildPresences            :: Maybe [PresenceInfo] -- ^ Presences of the members in the guild
-      , guildMaxPresences         :: Maybe Integer        -- ^ Maximum number of prescences in the guild
-      , guildMaxMembers           :: Maybe Integer        -- ^ Maximum number of members in the guild
-      , guildVanityURL            :: Maybe T.Text         -- ^ Vanity url code for the guild
-      , guildDescription          :: Maybe T.Text         -- ^ Description of a commmunity guild
-      , guildBanner               :: Maybe T.Text         -- ^ Banner hash
-      , guildPremiumTier          :: Integer              -- ^ Premium tier (boost level)
-      , guildSubscriptionCount    :: Maybe Integer        -- ^ Number of boosts the guild has
-      , guildPreferredLocale      :: T.Text               -- ^ Preferred locale of a community server
-      , guildPublicUpdatesChannel :: Maybe ChannelId      -- ^ Id of channel where admins and mods get updates
-      , guildMaxVideoUsers        :: Maybe Integer        -- ^ Maximum number of users in video channel
-      , guildApproxMemberCount    :: Maybe Integer        -- ^ Approximate number of members in the guild
-      , guildApproxPresenceCount  :: Maybe Integer        -- ^ Approximate number of non-offline members in the guild
+      , members              :: Maybe [GuildMember]  -- ^ Users in the guild
+      , channels             :: Maybe [Channel]      -- ^ Channels in the guild
+      , threads              :: Maybe [Channel]      -- ^ All active threads in the guild that the current user has permission to view
+      , presences            :: Maybe [PresenceInfo] -- ^ Presences of the members in the guild
+      , maxPresences         :: Maybe Integer        -- ^ Maximum number of prescences in the guild
+      , maxMembers           :: Maybe Integer        -- ^ Maximum number of members in the guild
+      , vanityURL            :: Maybe T.Text         -- ^ Vanity url code for the guild
+      , description          :: Maybe T.Text         -- ^ Description of a commmunity guild
+      , banner               :: Maybe T.Text         -- ^ Banner hash
+      , premiumTier          :: Integer              -- ^ Premium tier (boost level)
+      , subscriptionCount    :: Maybe Integer        -- ^ Number of boosts the guild has
+      , preferredLocale      :: T.Text               -- ^ Preferred locale of a community server
+      , publicUpdatesChannel :: Maybe ChannelId      -- ^ Id of channel where admins and mods get updates
+      , maxVideoUsers        :: Maybe Integer        -- ^ Maximum number of users in video channel
+      , approxMemberCount    :: Maybe Integer        -- ^ Approximate number of members in the guild
+      , approxPresenceCount  :: Maybe Integer        -- ^ Approximate number of non-offline members in the guild
       -- welcome_screen
-      , guildNSFWLevel            :: Integer              -- ^ Guild NSFW level
+      , nsfwLevel            :: Integer              -- ^ Guild NSFW level
       -- stage_instances
-      , guildStickers             :: Maybe [StickerItem]  -- ^ Custom guild stickers
-      -- guild_scheduled_events
-      , guildPremiumBar           :: Bool                 -- ^ Whether the guild has the boost progress bar enabled
+      , stickers             :: Maybe [StickerItem]  -- ^ Custom guild stickers
+      -- _scheduled_events
+      , premiumBar           :: Bool                 -- ^ Whether the guild has the boost progress bar enabled
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Guild where
@@ -319,8 +320,8 @@ instance FromJSON VoiceRegion where
 
 -- | Info about a Ban
 data GuildBan = GuildBan
-      { guildBanReason  :: T.Text
-      , guildBanUser    :: User
+      { banReason  :: T.Text
+      , banUser    :: User
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildBan where

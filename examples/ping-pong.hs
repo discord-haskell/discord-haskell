@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
+{-# LANGUAGE OverloadedRecordDot #-}
 
 import Control.Monad (when, forM_, void)
 import qualified Data.Text as T
@@ -49,11 +50,11 @@ startHandler :: DiscordHandler ()
 startHandler = do
   liftIO $ putStrLn "Started ping-pong bot"
 
-  let activity = def { activityName = "ping-pong"
+  let activity' = def { activityName = "ping-pong"
                      , activityType = ActivityTypeGame
                      }
   let opts = UpdateStatusOpts { updateStatusOptsSince = Nothing
-                              , updateStatusOptsGame = Just activity
+                              , updateStatusOptsGame = Just activity'
                               , updateStatusOptsNewStatus = UpdateStatusOnline
                               , updateStatusOptsAFK = False
                               }
@@ -61,7 +62,7 @@ startHandler = do
 
   Right chans <- restCall $ R.GetGuildChannels testserverid
   forM_ (take 1 (filter isTextChannel chans))
-        (\channel -> restCall $ R.CreateMessage (channelId channel)
+        (\channel -> restCall $ R.CreateMessage (channel.channelId)
                         "Hello! I will reply to pings with pongs")
 
 
@@ -69,12 +70,12 @@ startHandler = do
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of
       MessageCreate m -> when (not (fromBot m) && isPing m) $ do
-        void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
+        void $ restCall (R.CreateReaction (m.channelId, messageId m) "eyes")
         threadDelay (2 * 10 ^ (6 :: Int))
 
         -- A very simple message.
-        Right m' <- restCall (R.CreateMessage (messageChannelId m) "Pong")
-        void $ restCall (R.EditMessage (messageChannelId m, messageId m') (def {R.messageDetailedContent=messageContent m' <> "!"}))
+        Right m' <- restCall (R.CreateMessage m.channelId "Pong")
+        void $ restCall (R.EditMessage (m.channelId, messageId m') (def {R.messageDetailedContent=content m' <> "!"}))
 
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
@@ -89,7 +90,7 @@ eventHandler event = case event of
                        , R.messageDetailedReference = Just $
                           def { referenceMessageId = Just $ messageId m }
                        }
-        void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
+        void $ restCall (R.CreateMessageDetailed (m.channelId) opts)
       _ -> return ()
 
 isTextChannel :: Channel -> Bool
@@ -97,7 +98,7 @@ isTextChannel (ChannelText {}) = True
 isTextChannel _ = False
 
 fromBot :: Message -> Bool
-fromBot = userIsBot . messageAuthor
+fromBot = userIsBot . author
 
 isPing :: Message -> Bool
-isPing = ("ping" `T.isPrefixOf`) . T.toLower . messageContent
+isPing = ("ping" `T.isPrefixOf`) . T.toLower . content

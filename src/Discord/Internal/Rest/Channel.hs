@@ -351,32 +351,32 @@ cleanupEmoji emoji =
     (_, Just a) -> "custom:" <> a
     (_, Nothing) -> noAngles
 
-channels :: R.Url 'R.Https
-channels = baseUrl /: "channels"
+channels' :: R.Url 'R.Https
+channels' = baseUrl /: "channels"
 
 channelJsonRequest :: ChannelRequest r -> JsonRequest
 channelJsonRequest c = case c of
   (GetChannel chan) ->
-      Get (channels // chan) mempty
+      Get (channels' // chan) mempty
 
   (ModifyChannel chan patch) ->
-      Patch (channels // chan) (pure (R.ReqBodyJson patch)) mempty
+      Patch (channels' // chan) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannel chan) ->
-      Delete (channels // chan) mempty
+      Delete (channels' // chan) mempty
 
   (GetChannelMessages chan (n,timing)) ->
       let n' = max 1 (min 100 n)
           options = "limit" R.=: n' <> messageTimingToQuery timing
-      in Get (channels // chan /: "messages") options
+      in Get (channels' // chan /: "messages") options
 
   (GetChannelMessage (chan, msg)) ->
-      Get (channels // chan /: "messages" // msg) mempty
+      Get (channels' // chan /: "messages" // msg) mempty
 
   (CreateMessage chan msg) ->
       let content = ["content" .= msg]
           body = pure $ R.ReqBodyJson $ object content
-      in Post (channels // chan /: "messages") body mempty
+      in Post (channels' // chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
     let fileUpload = messageDetailedFile msgOpts
@@ -404,33 +404,33 @@ channelJsonRequest c = case c of
         payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
         body = R.reqBodyMultipart (payloadPart : filePart)
-      in Post (channels // chan /: "messages") body mempty
+      in Post (channels' // chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
       let e = cleanupEmoji emoji
-      in Put (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" )
+      in Put (channels' // chan /: "messages" // msgid /: "reactions" /: e /: "@me" )
              R.NoReqBody mempty
 
   (DeleteOwnReaction (chan, msgid) emoji) ->
       let e = cleanupEmoji emoji
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e /: "@me" ) mempty
+      in Delete (channels' // chan /: "messages" // msgid /: "reactions" /: e /: "@me" ) mempty
 
   (DeleteUserReaction (chan, msgid) uID emoji) ->
       let e = cleanupEmoji emoji
-      in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e // uID ) mempty
+      in Delete (channels' // chan /: "messages" // msgid /: "reactions" /: e // uID ) mempty
 
   (DeleteSingleReaction (chan, msgid) emoji) ->
     let e = cleanupEmoji emoji
-    in Delete (channels // chan /: "messages" // msgid /: "reactions" /: e) mempty
+    in Delete (channels' // chan /: "messages" // msgid /: "reactions" /: e) mempty
 
   (GetReactions (chan, msgid) emoji (n, timing)) ->
       let e = cleanupEmoji emoji
           n' = max 1 (min 100 n)
           options = "limit" R.=: n' <> reactionTimingToQuery timing
-      in Get (channels // chan /: "messages" // msgid /: "reactions" /: e) options
+      in Get (channels' // chan /: "messages" // msgid /: "reactions" /: e) options
 
   (DeleteAllReactions (chan, msgid)) ->
-      Delete (channels // chan /: "messages" // msgid /: "reactions" ) mempty
+      Delete (channels' // chan /: "messages" // msgid /: "reactions" ) mempty
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->      
@@ -459,90 +459,90 @@ channelJsonRequest c = case c of
         payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
         body = R.reqBodyMultipart (payloadPart : filePart)
-      in Patch (channels // chan /: "messages" // msg) body mempty
+      in Patch (channels' // chan /: "messages" // msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
-      Delete (channels // chan /: "messages" // msg) mempty
+      Delete (channels' // chan /: "messages" // msg) mempty
 
   (BulkDeleteMessage (chan, msgs)) ->
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
-      in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
+      in Post (channels' // chan /: "messages" /: "bulk-delete") body mempty
 
   (EditChannelPermissions chan perm patch) ->
-      Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+      Put (channels' // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
 
   (GetChannelInvites chan) ->
-      Get (channels // chan /: "invites") mempty
+      Get (channels' // chan /: "invites") mempty
 
   (CreateChannelInvite chan patch) ->
-      Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+      Post (channels' // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteChannelPermission chan perm) ->
-      Delete (channels // chan /: "permissions" // perm) mempty
+      Delete (channels' // chan /: "permissions" // perm) mempty
 
   (TriggerTypingIndicator chan) ->
-      Post (channels // chan /: "typing") (pure R.NoReqBody) mempty
+      Post (channels' // chan /: "typing") (pure R.NoReqBody) mempty
 
   (GetPinnedMessages chan) ->
-      Get (channels // chan /: "pins") mempty
+      Get (channels' // chan /: "pins") mempty
 
   (AddPinnedMessage (chan, msg)) ->
-      Put (channels // chan /: "pins" // msg) R.NoReqBody mempty
+      Put (channels' // chan /: "pins" // msg) R.NoReqBody mempty
 
   (DeletePinnedMessage (chan, msg)) ->
-      Delete (channels // chan /: "pins" // msg) mempty
+      Delete (channels' // chan /: "pins" // msg) mempty
 
   (GroupDMAddRecipient chan (GroupDMAddRecipientOpts uid nick tok)) ->
-      Put (channels // chan // chan /: "recipients" // uid)
+      Put (channels' // chan // chan /: "recipients" // uid)
           (R.ReqBodyJson (object [ ("access_token", toJSON tok)
                                  , ("nick", toJSON nick)]))
           mempty
 
   (GroupDMRemoveRecipient chan userid) ->
-      Delete (channels // chan // chan /: "recipients" // userid) mempty
+      Delete (channels' // chan // chan /: "recipients" // userid) mempty
 
   (StartThreadFromMessage chan mid sto) ->
-      Post (channels // chan /: "messages" // mid /: "threads")
+      Post (channels' // chan /: "messages" // mid /: "threads")
            (pure $ R.ReqBodyJson $ toJSON sto)
            mempty
 
   (StartThreadNoMessage chan sto) ->
-      Post (channels // chan /: "messages" /: "threads")
+      Post (channels' // chan /: "messages" /: "threads")
            (pure $ R.ReqBodyJson $ toJSON sto)
            mempty
 
   (JoinThread chan) ->
-      Put (channels // chan /: "thread-members" /: "@me")
+      Put (channels' // chan /: "thread-members" /: "@me")
           R.NoReqBody mempty
 
   (AddThreadMember chan uid) ->
-      Put (channels // chan /: "thread-members" // uid)
+      Put (channels' // chan /: "thread-members" // uid)
           R.NoReqBody mempty
 
   (LeaveThread chan) ->
-      Delete (channels // chan /: "thread-members" /: "@me")
+      Delete (channels' // chan /: "thread-members" /: "@me")
           mempty
 
   (RemoveThreadMember chan uid) ->
-      Delete (channels // chan /: "thread-members" // uid)
+      Delete (channels' // chan /: "thread-members" // uid)
           mempty
 
   (GetThreadMember chan uid) ->
-      Get (channels // chan /: "thread-members" // uid)
+      Get (channels' // chan /: "thread-members" // uid)
           mempty
 
   (ListThreadMembers chan) ->
-      Get (channels // chan /: "thread-members")
+      Get (channels' // chan /: "thread-members")
           mempty
 
   (ListPublicArchivedThreads chan (time, lim)) ->
-      Get (channels // chan /: "threads" /: "archived" /: "public")
+      Get (channels' // chan /: "threads" /: "archived" /: "public")
           (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
 
   (ListPrivateArchivedThreads chan (time, lim)) ->
-      Get (channels // chan /: "threads" /: "archived" /: "private")
+      Get (channels' // chan /: "threads" /: "archived" /: "private")
           (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
 
   (ListJoinedPrivateArchivedThreads chan (time, lim)) ->
-      Get (channels // chan /: "users" /: "@me" /: "threads" /: "archived" /: "private")
+      Get (channels' // chan /: "users" /: "@me" /: "threads" /: "archived" /: "private")
           (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)

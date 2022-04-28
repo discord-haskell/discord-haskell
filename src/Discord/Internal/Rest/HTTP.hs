@@ -42,26 +42,26 @@ restLoop auth urls log = loop M.empty
   where
   loop ratelocker = do
     threadDelay (40 * 1000)
-    (route, request, thread) <- readChan urls
+    (route, request, thread') <- readChan urls
     curtime <- getPOSIXTime
     case compareRate ratelocker route curtime of
-      Locked -> do writeChan urls (route, request, thread)
+      Locked -> do writeChan urls (route, request, thread')
                    loop ratelocker
       Available -> do let action = compileRequest auth request
                       reqIO <- try $ restIOtoIO (tryRequest log action)
                       case reqIO :: Either R.HttpException (RequestResponse, Timeout) of
                         Left e -> do
                           writeChan log ("rest - http exception " <> T.pack (show e))
-                          putMVar thread (Left (RestCallInternalHttpException e))
+                          putMVar thread' (Left (RestCallInternalHttpException e))
                           loop ratelocker
                         Right (resp, retry) -> do
                           case resp of
                             -- decode "[]" == () for expected empty calls
-                            ResponseByteString "" -> putMVar thread (Right "[]")
-                            ResponseByteString bs -> putMVar thread (Right bs)
+                            ResponseByteString "" -> putMVar thread' (Right "[]")
+                            ResponseByteString bs -> putMVar thread' (Right bs)
                             ResponseErrorCode e s b ->
-                              putMVar thread (Left (RestCallInternalErrorCode e s b))
-                            ResponseTryAgain -> writeChan urls (route, request, thread)
+                              putMVar thread' (Left (RestCallInternalErrorCode e s b))
+                            ResponseTryAgain -> writeChan urls (route, request, thread')
                           case retry of
                             GlobalWait i -> do
                                 writeChan log ("rest - GLOBAL WAIT LIMIT: "

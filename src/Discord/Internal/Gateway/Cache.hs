@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 -- | Query info about connected Guilds and Channels
 module Discord.Internal.Gateway.Cache where
@@ -30,9 +31,9 @@ cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
-        Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
-          let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp))
+        Right (InternalReady _ user' dmChannels _unavailableGuilds _ _ pApp) -> do
+          let dmChans = M.fromList (zip (map (\c -> c.channelId) dmChannels) dmChannels)
+          putMVar cache (Right (Cache user' dmChans M.empty M.empty pApp))
           loop
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
@@ -55,10 +56,10 @@ cacheLoop cacheHandle log = do
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
   InternalGuildCreate guild ->
-    let newChans = maybe [] (map (setChanGuildID (guildId guild))) (guildChannels guild)
-        g = M.insert (guildId guild) (guild { guildChannels = Just newChans }) (cacheGuilds minfo)
+    let newChans = maybe [] (map (setChanGuildId (guild.guildId))) (channels guild)
+        g = M.insert (guild.guildId) (guild { channels = Just newChans }) (cacheGuilds minfo)
         c = M.unionWith const
-                        (M.fromList [ (channelId ch, ch) | ch <- newChans ])
+                        (M.fromList [ (ch.channelId, ch) | ch <- newChans ])
                         (cacheChannels minfo)
     in minfo { cacheGuilds = g, cacheChannels = c }
   --InternalGuildUpdate guild -> do
@@ -72,8 +73,3 @@ adjustCache minfo event = case event of
   --  putMVar cache m2
   InternalReady _ _ _ _ _ _ pa -> minfo { cacheApplication = pa }
   _ -> minfo
-
-setChanGuildID :: GuildId -> Channel -> Channel
-setChanGuildID s c = if channelIsInGuild c
-                     then c { channelGuild = s }
-                     else c

@@ -123,3 +123,10 @@ class Data a => InternalDiscordEnum a where
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
+
+objectFromMaybesList :: [(Key, Maybe Value)] -> Value
+objectFromMaybesList xs =
+  object
+    [ (name, value)
+      | (name, Just value) <- xs
+    ]    

@@ -1,7 +1,7 @@
 cabal-version:       2.0
 name:                discord-haskell
 -- library version is also noted at src/Discord/Rest/Prelude.hs
-version:             1.12.5
+version:             1.13.0
 description:         Functions and data types to write discord bots.
                      Official discord docs <https://discord.com/developers/docs/reference>.
                      .
@@ -88,7 +88,7 @@ library
                      , Discord.Internal.Types.Emoji
                      , Discord.Internal.Types.ScheduledEvents
   build-depends:
-                       base >= 4 && <5
+                       base
                      , aeson
                      , async
                      , bytestring

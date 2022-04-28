@@ -1,3 +1,5 @@
+{-# LANGUAGE DuplicateRecordFields #-}
+
 -- | Re-export ALL the internal type modules. Hiding is in Discord.Types
 module Discord.Internal.Types
   ( module Discord.Internal.Types.Prelude,
