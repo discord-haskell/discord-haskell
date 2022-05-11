@@ -9,12 +9,12 @@
 
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
-    InteractionDataComponent (..),
-    InteractionDataApplicationCommand (..),
-    InteractionDataApplicationCommandOptions (..),
-    InteractionDataApplicationCommandOptionSubcommandOrGroup (..),
-    InteractionDataApplicationCommandOptionSubcommand (..),
-    InteractionDataApplicationCommandOptionValue (..),
+    ComponentData (..),
+    ApplicationCommandData (..),
+    OptionsData (..),
+    OptionDataSubcommandOrGroup (..),
+    OptionDataSubcommand (..),
+    OptionDataValue (..),
     InteractionToken,
     ResolvedData (..),
     MemberOrUser (..),
@@ -35,11 +35,10 @@ import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
 import Data.Foldable (Foldable (toList))
-import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.ApplicationCommands (Choice)
+import Discord.Internal.Types.ApplicationCommands (Choice, Number)
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
-import Discord.Internal.Types.Components (ComponentActionRow, ComponentTextInput)
+import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
 import Discord.Internal.Types.User (GuildMember, User)
@@ -52,7 +51,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataComponent :: InteractionDataComponent,
+        componentData :: ComponentData,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -86,7 +85,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataApplicationCommand :: InteractionDataApplicationCommand,
+        applicationCommandData :: ApplicationCommandData,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -108,7 +107,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataApplicationCommand :: InteractionDataApplicationCommand,
+        applicationCommandData :: ApplicationCommandData,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -130,7 +129,7 @@ data Interaction
         -- | The id of the application that this interaction belongs to.
         interactionApplicationId :: ApplicationId,
         -- | The data for this interaction.
-        interactionDataModal :: InteractionDataModal,
+        modalData :: ModalData,
         -- | What guild this interaction comes from.
         interactionGuildId :: Maybe GuildId,
         -- | What channel this interaction comes from.
@@ -217,71 +216,71 @@ instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
       ( \v -> MemberOrUser <$> ((Left <$> v .: "member") <|> (Right <$> v .: "user"))
       )
 
-data InteractionDataComponent
-  = InteractionDataComponentButton
+data ComponentData
+  = ButtonData
       { -- | The unique id of the component (up to 100 characters).
-        interactionDataComponentCustomId :: T.Text
+        componentDataCustomId :: T.Text
       }
-  | InteractionDataComponentSelectMenu
+  | SelectMenuData
       { -- | The unique id of the component (up to 100 characters).
-        interactionDataComponentCustomId :: T.Text,
+        componentDataCustomId :: T.Text,
         -- | Values for the select menu.
-        interactionDataComponentValues :: [T.Text]
+        componentDataValues :: [T.Text]
       }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataComponent where
+instance FromJSON ComponentData where
   parseJSON =
     withObject
-      "InteractionDataComponent"
+      "ComponentData"
       ( \v -> do
           cid <- v .: "custom_id"
           t <- v .: "component_type" :: Parser Int
           case t of
-            2 -> return $ InteractionDataComponentButton cid
+            2 -> return $ ButtonData cid
             3 ->
-              InteractionDataComponentSelectMenu cid
+              SelectMenuData cid
                 <$> v .: "values"
             _ -> fail "unknown interaction data component type"
       )
 
-data InteractionDataApplicationCommand
-  = InteractionDataApplicationCommandUser
+data ApplicationCommandData
+  = ApplicationCommandDataUser
       { -- | Id of the invoked command.
-        interactionDataApplicationCommandId :: ApplicationCommandId,
+        applicationCommandDataId :: ApplicationCommandId,
         -- | Name of the invoked command.
-        interactionDataApplicationCommandName :: T.Text,
+        applicationCommandDataName :: T.Text,
         -- | The resolved data in the command.
-        interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
+        resolvedData :: Maybe ResolvedData,
         -- | The id of the user that is the target.
-        interactionDataApplicationCommandTargetUserId :: UserId
+        applicationCommandDataTargetUserId :: UserId
       }
-  | InteractionDataApplicationCommandMessage
+  | ApplicationCommandDataMessage
       { -- | Id of the invoked command.
-        interactionDataApplicationCommandId :: ApplicationCommandId,
+        applicationCommandDataId :: ApplicationCommandId,
         -- | Name of the invoked command.
-        interactionDataApplicationCommandName :: T.Text,
+        applicationCommandDataName :: T.Text,
         -- | The resolved data in the command.
-        interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
+        resolvedData :: Maybe ResolvedData,
         -- | The id of the message that is the target.
-        interactionDataApplicationCommandTargetMessageId :: MessageId
+        applicationCommandDataTargetMessageId :: MessageId
       }
-  | InteractionDataApplicationCommandChatInput
+  | ApplicationCommandDataChatInput
       { -- | Id of the invoked command.
-        interactionDataApplicationCommandId :: ApplicationCommandId,
+        applicationCommandDataId :: ApplicationCommandId,
         -- | Name of the invoked command.
-        interactionDataApplicationCommandName :: T.Text,
+        applicationCommandDataName :: T.Text,
         -- | The resolved data in the command.
-        interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
+        resolvedData :: Maybe ResolvedData,
         -- | The options of the application command.
-        interactionDataApplicationCommandOptions :: Maybe InteractionDataApplicationCommandOptions
+        optionsData :: Maybe OptionsData
       }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataApplicationCommand where
+instance FromJSON ApplicationCommandData where
   parseJSON =
     withObject
-      "InteractionDataApplicationCommand"
+      "ApplicationCommandData"
       ( \v -> do
           aci <- v .: "id"
           name <- v .: "name"
@@ -289,86 +288,86 @@ instance FromJSON InteractionDataApplicationCommand where
           t <- v .: "type" :: Parser Int
           case t of
             1 ->
-              InteractionDataApplicationCommandChatInput aci name rd
+              ApplicationCommandDataChatInput aci name rd
                 <$> v .:? "options"
             2 ->
-              InteractionDataApplicationCommandUser aci name rd
+              ApplicationCommandDataUser aci name rd
                 <$> v .: "target_id"
             3 ->
-              InteractionDataApplicationCommandMessage aci name rd
+              ApplicationCommandDataMessage aci name rd
                 <$> v .: "target_id"
             _ -> fail "unknown interaction data component type"
       )
 
 -- | Either subcommands and groups, or values.
-data InteractionDataApplicationCommandOptions
-  = InteractionDataApplicationCommandOptionsSubcommands [InteractionDataApplicationCommandOptionSubcommandOrGroup]
-  | InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValue]
+data OptionsData
+  = OptionsDataSubcommands [OptionDataSubcommandOrGroup]
+  | OptionsDataValues [OptionDataValue]
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataApplicationCommandOptions where
+instance FromJSON OptionsData where
   parseJSON =
     withArray
-      "InteractionDataApplicationCommandOptions"
+      "OptionsData"
       ( \a -> do
           let a' = toList a
           case a' of
-            [] -> return $ InteractionDataApplicationCommandOptionsValues []
+            [] -> return $ OptionsDataValues []
             (v' : _) ->
               withObject
-                "InteractionDataApplicationCommandOptions item"
+                "OptionsData item"
                 ( \v -> do
                     t <- v .: "type" :: Parser Int
                     if t == 1 || t == 2
-                      then InteractionDataApplicationCommandOptionsSubcommands <$> mapM parseJSON a'
-                      else InteractionDataApplicationCommandOptionsValues <$> mapM parseJSON a'
+                      then OptionsDataSubcommands <$> mapM parseJSON a'
+                      else OptionsDataValues <$> mapM parseJSON a'
                 )
                 v'
       )
 
 -- | Either a subcommand group or a subcommand.
-data InteractionDataApplicationCommandOptionSubcommandOrGroup
-  = InteractionDataApplicationCommandOptionSubcommandGroup
-      { interactionDataApplicationCommandOptionSubcommandGroupName :: T.Text,
-        interactionDataApplicationCommandOptionSubcommandGroupOptions :: [InteractionDataApplicationCommandOptionSubcommand],
-        interactionDataApplicationCommandOptionSubcommandGroupFocused :: Bool
+data OptionDataSubcommandOrGroup
+  = OptionDataSubcommandGroup
+      { optionDataSubcommandGroupName :: T.Text,
+        optionDataSubcommandGroupOptions :: [OptionDataSubcommand],
+        optionDataSubcommandGroupFocused :: Bool
       }
-  | InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand InteractionDataApplicationCommandOptionSubcommand
+  | OptionDataSubcommandOrGroupSubcommand OptionDataSubcommand
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataApplicationCommandOptionSubcommandOrGroup where
+instance FromJSON OptionDataSubcommandOrGroup where
   parseJSON =
     withObject
-      "InteractionDataApplicationCommandOptionSubcommandOrGroup"
+      "OptionDataSubcommandOrGroup"
       ( \v -> do
           t <- v .: "type" :: Parser Int
           case t of
             2 ->
-              InteractionDataApplicationCommandOptionSubcommandGroup
+              OptionDataSubcommandGroup
                 <$> v .: "name"
                 <*> v .: "options"
                 <*> v .:? "focused" .!= False
-            1 -> InteractionDataApplicationCommandOptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
+            1 -> OptionDataSubcommandOrGroupSubcommand <$> parseJSON (Object v)
             _ -> fail "unexpected subcommand group type"
       )
 
 -- | Data for a single subcommand.
-data InteractionDataApplicationCommandOptionSubcommand = InteractionDataApplicationCommandOptionSubcommand
-  { interactionDataApplicationCommandOptionSubcommandName :: T.Text,
-    interactionDataApplicationCommandOptionSubcommandOptions :: [InteractionDataApplicationCommandOptionValue],
-    interactionDataApplicationCommandOptionSubcommandFocused :: Bool
+data OptionDataSubcommand = OptionDataSubcommand
+  { optionDataSubcommandName :: T.Text,
+    optionDataSubcommandOptions :: [OptionDataValue],
+    optionDataSubcommandFocused :: Bool
   }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
+instance FromJSON OptionDataSubcommand where
   parseJSON =
     withObject
-      "InteractionDataApplicationCommandOptionSubcommand"
+      "OptionDataSubcommand"
       ( \v -> do
           t <- v .: "type" :: Parser Int
           case t of
             1 ->
-              InteractionDataApplicationCommandOptionSubcommand
+              OptionDataSubcommand
                 <$> v .: "name"
                 <*> v .:? "options" .!= []
                 <*> v .:? "focused" .!= False
@@ -376,96 +375,96 @@ instance FromJSON InteractionDataApplicationCommandOptionSubcommand where
       )
 
 -- | Data for a single value.
-data InteractionDataApplicationCommandOptionValue
-  = InteractionDataApplicationCommandOptionValueString
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueStringValue :: Either T.Text T.Text
+data OptionDataValue
+  = OptionDataValueString
+      { optionDataValueName :: T.Text,
+        optionDataValueString :: Either T.Text T.Text
       }
-  | InteractionDataApplicationCommandOptionValueInteger
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueIntegerValue :: Either T.Text Integer
+  | OptionDataValueInteger
+      { optionDataValueName :: T.Text,
+        optionDataValueInteger :: Either T.Text Integer
       }
-  | InteractionDataApplicationCommandOptionValueBoolean
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueBooleanValue :: Bool
+  | OptionDataValueBoolean
+      { optionDataValueName :: T.Text,
+        optionDataValueBoolean :: Bool
       }
-  | InteractionDataApplicationCommandOptionValueUser
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueUserValue :: UserId
+  | OptionDataValueUser
+      { optionDataValueName :: T.Text,
+        optionDataValueUser :: UserId
       }
-  | InteractionDataApplicationCommandOptionValueChannel
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueChannelValue :: ChannelId
+  | OptionDataValueChannel
+      { optionDataValueName :: T.Text,
+        optionDataValueChannel :: ChannelId
       }
-  | InteractionDataApplicationCommandOptionValueRole
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueRoleValue :: RoleId
+  | OptionDataValueRole
+      { optionDataValueName :: T.Text,
+        optionDataValueRole :: RoleId
       }
-  | InteractionDataApplicationCommandOptionValueMentionable
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueMentionableValue :: Snowflake
+  | OptionDataValueMentionable
+      { optionDataValueName :: T.Text,
+        optionDataValueMentionable :: Snowflake
       }
-  | InteractionDataApplicationCommandOptionValueNumber
-      { interactionDataApplicationCommandOptionValueName :: T.Text,
-        interactionDataApplicationCommandOptionValueNumberValue :: Either T.Text Scientific
+  | OptionDataValueNumber
+      { optionDataValueName :: T.Text,
+        optionDataValueNumber :: Either T.Text Number
       }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataApplicationCommandOptionValue where
+instance FromJSON OptionDataValue where
   parseJSON =
     withObject
-      "InteractionDataApplicationCommandOptionValue"
+      "OptionDataValue"
       ( \v -> do
           name <- v .: "name"
           focused <- v .:? "focused" .!= False
           t <- v .: "type" :: Parser Int
           case t of
             3 ->
-              InteractionDataApplicationCommandOptionValueString name
+              OptionDataValueString name
                 <$> parseValue v focused
             4 ->
-              InteractionDataApplicationCommandOptionValueInteger name
+              OptionDataValueInteger name
                 <$> parseValue v focused
             10 ->
-              InteractionDataApplicationCommandOptionValueNumber name
+              OptionDataValueNumber name
                 <$> parseValue v focused
             5 ->
-              InteractionDataApplicationCommandOptionValueBoolean name
+              OptionDataValueBoolean name
                 <$> v .: "value"
             6 ->
-              InteractionDataApplicationCommandOptionValueUser name
+              OptionDataValueUser name
                 <$> v .: "value"
             7 ->
-              InteractionDataApplicationCommandOptionValueChannel name
+              OptionDataValueChannel name
                 <$> v .: "value"
             8 ->
-              InteractionDataApplicationCommandOptionValueRole name
+              OptionDataValueRole name
                 <$> v .: "value"
             9 ->
-              InteractionDataApplicationCommandOptionValueMentionable name
+              OptionDataValueMentionable name
                 <$> v .: "value"
             _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
       )
 
-data InteractionDataModal = InteractionDataModal
+data ModalData = ModalData
   { -- | The unique id of the component (up to 100 characters).
-    interactionDataModalCustomId :: T.Text,
+    modalDataCustomId :: T.Text,
     -- | Components from the modal.
-    interactionDataModalComponents :: [ComponentTextInput]
+    modalDataComponents :: [TextInput]
   }
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON InteractionDataModal where
+instance FromJSON ModalData where
   parseJSON =
     withObject
-      "InteractionDataModal"
+      "ModalData"
       ( \v ->
-          InteractionDataModal <$> v .: "custom_id"
+          ModalData <$> v .: "custom_id"
             <*> ((v .: "components") >>= (join <$>) . mapM getTextInput)
       )
     where
-      getTextInput :: Value -> Parser [ComponentTextInput]
-      getTextInput = withObject "InteractionDataModal.TextInput" $ \o -> do
+      getTextInput :: Value -> Parser [TextInput]
+      getTextInput = withObject "ModalData.TextInput" $ \o -> do
         t <- o .: "type" :: Parser Int
         case t of
           1 -> o .: "components"
@@ -555,7 +554,10 @@ instance ToJSON InteractionResponse where
   toJSON (InteractionResponseAutocompleteResult ms) = object [("type", Number 8), ("data", toJSON ms)]
   toJSON (InteractionResponseModal ms) = object [("type", Number 9), ("data", toJSON ms)]
 
-data InteractionResponseAutocomplete = InteractionResponseAutocompleteString [Choice T.Text] | InteractionResponseAutocompleteInteger [Choice Integer] | InteractionResponseAutocompleteNumber [Choice Scientific]
+data InteractionResponseAutocomplete
+  = InteractionResponseAutocompleteString [Choice T.Text]
+  | InteractionResponseAutocompleteInteger [Choice Integer]
+  | InteractionResponseAutocompleteNumber [Choice Number]
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON InteractionResponseAutocomplete where
@@ -570,7 +572,7 @@ data InteractionResponseMessage = InteractionResponseMessage
     interactionResponseMessageEmbeds :: Maybe [CreateEmbed],
     interactionResponseMessageAllowedMentions :: Maybe AllowedMentions,
     interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
-    interactionResponseMessageComponents :: Maybe [ComponentActionRow],
+    interactionResponseMessageComponents :: Maybe [ActionRow],
     interactionResponseMessageAttachments :: Maybe [Attachment]
   }
   deriving (Show, Read, Eq, Ord)
@@ -617,7 +619,7 @@ instance ToJSON InteractionResponseMessageFlags where
 data InteractionResponseModalData = InteractionResponseModalData
   { interactionResponseModalCustomId :: T.Text,
     interactionResponseModalTitle :: T.Text,
-    interactionResponseModalComponents :: [ComponentTextInput]
+    interactionResponseModalComponents :: [TextInput]
   }
   deriving (Show, Read, Eq, Ord)
 

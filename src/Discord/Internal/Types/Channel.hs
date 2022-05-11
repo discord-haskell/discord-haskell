@@ -18,7 +18,7 @@ import Data.Data (Data)
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
-import Discord.Internal.Types.Components (ComponentActionRow)
+import Discord.Internal.Types.Components (ActionRow)
 import Discord.Internal.Types.Emoji
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
@@ -481,7 +481,7 @@ data Message = Message
   , messageReferencedMessage  :: Maybe Message            -- ^ The full original message
   , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
-  , messageComponents         :: Maybe [ComponentActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
+  , messageComponents         :: Maybe [ActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
   , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
   } deriving (Show, Read, Eq, Ord)
 

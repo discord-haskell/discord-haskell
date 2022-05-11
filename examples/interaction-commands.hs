@@ -23,7 +23,7 @@ main =
     then TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
     else interactionCommandExample
 
-testserverid :: Snowflake
+testserverid :: GuildId
 testserverid = -1
 
 void :: DiscordHandler (Either RestCallErrorCode b) -> DiscordHandler ()
@@ -88,27 +88,27 @@ startHandler = do
 
 -- | Example user command
 exampleUserCommand :: Maybe CreateApplicationCommand
-exampleUserCommand = createApplicationCommandUser "usercomm"
+exampleUserCommand = createUser "usercomm"
 
 -- | Example slash command that has subcommands and multiple types of fields.
 newExampleSlashCommand :: Maybe CreateApplicationCommand
 newExampleSlashCommand =
-  createApplicationCommandChatInput
+  createChatInput
     "subtest"
     "testing out subcommands"
     >>= \d ->
       Just $
         d
-          { createApplicationCommandOptions =
+          { createOptions =
               Just
-                ( ApplicationCommandOptionsSubcommands
-                    [ ApplicationCommandOptionSubcommandGroup
+                ( OptionsSubcommands
+                    [ OptionSubcommandGroup
                         "frstsubcmdgrp"
                         "the sub command group"
-                        [ ApplicationCommandOptionSubcommand
+                        [ OptionSubcommand
                             "frstsubcmd"
                             "the first sub sub command"
-                            [ ApplicationCommandOptionValueString
+                            [ OptionValueString
                                 "onestringinput"
                                 "two options"
                                 True
@@ -117,14 +117,14 @@ newExampleSlashCommand =
                                       Choice "red" "red"
                                     ]
                                 ),
-                              ApplicationCommandOptionValueInteger "oneintinput" "choices galore" False (Left False) Nothing Nothing
+                              OptionValueInteger "oneintinput" "choices galore" False (Left False) Nothing Nothing
                             ]
                         ],
-                      ApplicationCommandOptionSubcommandOrGroupSubcommand $
-                        ApplicationCommandOptionSubcommand
+                      OptionSubcommandOrGroupSubcommand $
+                        OptionSubcommand
                           "frstsubcmd"
                           "the first subcommand"
-                          [ ApplicationCommandOptionValueString
+                          [ OptionValueString
                               "onestringinput"
                               "two options"
                               True
@@ -134,45 +134,45 @@ newExampleSlashCommand =
                                   ]
                               )
                           ],
-                      ApplicationCommandOptionSubcommandOrGroupSubcommand $
-                        ApplicationCommandOptionSubcommand
+                      OptionSubcommandOrGroupSubcommand $
+                        OptionSubcommand
                           "sndsubcmd"
                           "the second subcommand"
-                          [ ApplicationCommandOptionValueBoolean
+                          [ OptionValueBoolean
                               "trueorfalse"
                               "true or false"
                               True,
-                            ApplicationCommandOptionValueNumber
+                            OptionValueNumber
                               "numbercomm"
                               "number option"
                               False
                               (Left True)
                               (Just 3.1415)
                               (Just 101),
-                            ApplicationCommandOptionValueInteger
+                            OptionValueInteger
                               "numbercomm2"
                               "another number option"
                               False
                               (Right [Choice "one" 1, Choice "two" 2, Choice "minus 1" (-1)])
                               (Just $ -1)
                               (Just $ -2),
-                            ApplicationCommandOptionValueInteger
+                            OptionValueInteger
                               "numbercomm3"
                               "another another number option"
                               False
                               (Left True)
                               (Just $ -50)
                               (Just 50),
-                            ApplicationCommandOptionValueUser
+                            OptionValueUser
                               "user"
                               "testing asking for a user"
                               False,
-                            ApplicationCommandOptionValueChannel
+                            OptionValueChannel
                               "channel"
                               "testing asking for a channel"
                               False
                               (Just [ApplicationCommandChannelTypeGuildVoice]),
-                            ApplicationCommandOptionValueMentionable
+                            OptionValueMentionable
                               "mentionable"
                               "testing asking for a mentionable"
                               False
@@ -184,16 +184,16 @@ newExampleSlashCommand =
 -- | An example slash command.
 exampleSlashCommand :: Maybe CreateApplicationCommand
 exampleSlashCommand =
-  createApplicationCommandChatInput
+  createChatInput
     "test"
     "here is a description"
     >>= \cac ->
       return $
         cac
-          { createApplicationCommandOptions =
+          { createOptions =
               Just $
-                ApplicationCommandOptionsValues
-                  [ ApplicationCommandOptionValueString
+                OptionsValues
+                  [ OptionValueString
                       "randominput"
                       "I shall not"
                       True
@@ -201,8 +201,8 @@ exampleSlashCommand =
                   ]
           }
 
-exampleInteractionResponse :: InteractionDataApplicationCommandOptions -> InteractionResponse
-exampleInteractionResponse (InteractionDataApplicationCommandOptionsValues [InteractionDataApplicationCommandOptionValueString {interactionDataApplicationCommandOptionValueStringValue = s}]) =
+exampleInteractionResponse :: OptionsData -> InteractionResponse
+exampleInteractionResponse (OptionsDataValues [OptionDataValueString {optionDataValueString = s}]) =
   interactionResponseBasic (T.pack $ "Here's the reply! You chose: " ++ show s)
 exampleInteractionResponse _ =
   interactionResponseBasic
@@ -248,17 +248,17 @@ eventHandler event = case event of
             { R.messageDetailedContent = "An example of a message with buttons!",
               R.messageDetailedComponents =
                 Just
-                  [ ComponentActionRowButton
-                      [ ComponentButton "Button 1" False ButtonStylePrimary "Button 1" (Just (mkEmoji "🔥")),
-                        ComponentButton "Button 2" True ButtonStyleSuccess "Button 2" Nothing,
-                        ComponentButtonUrl
+                  [ ActionRowButtons
+                      [ Button "Button 1" False ButtonStylePrimary (Just "Button 1") (Just (mkEmoji "🔥")),
+                        Button "Button 2" True ButtonStyleSuccess (Just "Button 2") Nothing,
+                        ButtonUrl
                           "https://github.com/aquarial/discord-haskell"
                           False
-                          "Button 3"
+                          (Just "Button 3")
                           Nothing
                       ],
-                    ComponentActionRowSelectMenu
-                      ( ComponentSelectMenu
+                    ActionRowSelectMenu
+                      ( SelectMenu
                           "action select menu"
                           False
                           [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
@@ -297,13 +297,13 @@ eventHandler event = case event of
     vs <-
       mapM
         (maybe (return (Left $ RestCallErrorCode 0 "" "")) (restCall . R.CreateGuildApplicationCommand i testserverid))
-        [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand, createApplicationCommandChatInput "modal" "modal test"]
+        [exampleSlashCommand, exampleUserCommand, newExampleSlashCommand, createChatInput "modal" "modal test"]
     liftIO (putStrLn $ "number of application commands added " ++ show (length vs))
     acs <- restCall (R.GetGuildApplicationCommands i testserverid)
     case acs of
       Left r -> liftIO $ print r
       Right ls -> liftIO $ putStrLn $ "number of application commands total " ++ show (length ls)
-  InteractionCreate InteractionComponent {interactionDataComponent = cb@InteractionDataComponentButton {interactionDataComponentCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
+  InteractionCreate InteractionComponent {componentData = cb@ButtonData {componentDataCustomId = (T.take 3 -> "ttt")}, ..} -> case processTicTacToe cb interactionMessage of
     [r] ->
       void
         ( restCall
@@ -329,27 +329,27 @@ eventHandler event = case event of
           )
           rs
     _ -> return ()
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandUser {interactionDataApplicationCommandName = nm, interactionDataApplicationCommandTargetId = uid, ..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataUser {applicationCommandDataName = nm, applicationCommandDataTargetUserId = uid, ..}, ..} ->
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic $ "Command " <> nm <> T.pack (" selected user: " ++ show uid)))
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "test", interactionDataApplicationCommandOptions = Just d, ..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "test", optionsData = Just d, ..}, ..} ->
     void $
       restCall
         (R.CreateInteractionResponse interactionId interactionToken (exampleInteractionResponse d))
-  InteractionCreate InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just d, ..}, ..} -> void $ restCall (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic (T.pack $ "oh boy, subcommands! welp, here's everything I got from that: " <> show d)))
-  InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentButton {..}, ..} ->
+  InteractionCreate InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just d, ..}, ..} -> void $ restCall (R.CreateInteractionResponse interactionId interactionToken (interactionResponseBasic (T.pack $ "oh boy, subcommands! welp, here's everything I got from that: " <> show d)))
+  InteractionCreate InteractionComponent {componentData = ButtonData {..}, ..} ->
     void $
       restCall
         ( R.CreateInteractionResponse interactionId interactionToken $
             InteractionResponseChannelMessage
-              ( ( interactionResponseMessageBasic $ "You pressed the button " <> interactionDataComponentCustomId
+              ( ( interactionResponseMessageBasic $ "You pressed the button " <> componentDataCustomId
                 )
                   { interactionResponseMessageFlags = Just (InteractionResponseMessageFlags [InteractionResponseMessageFlagEphermeral])
                   }
               )
         )
-  InteractionCreate InteractionComponent {interactionDataComponent = InteractionDataComponentSelectMenu {interactionDataComponentValues = vs}, ..} ->
+  InteractionCreate InteractionComponent {componentData = SelectMenuData {componentDataValues = vs}, ..} ->
     void
       ( do
           exampleImage <- liftIO getImage
@@ -374,8 +374,8 @@ eventHandler event = case event of
                   }
             )
       )
-  InteractionCreate InteractionApplicationCommandAutocomplete {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "subtest", interactionDataApplicationCommandOptions = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
-  InteractionCreate i@InteractionApplicationCommand {interactionDataApplicationCommand = InteractionDataApplicationCommandChatInput {interactionDataApplicationCommandName = "modal"}} ->
+  InteractionCreate InteractionApplicationCommandAutocomplete {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
+  InteractionCreate i@InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "modal"}} ->
     void $
       restCall
         ( R.CreateInteractionResponse
@@ -385,15 +385,15 @@ eventHandler event = case event of
                 ( InteractionResponseModalData
                     "customidmodal"
                     "modal title"
-                    [mkComponentTextInput "textcid" "textlabel"]
+                    [mkTextInput "textcid" "textlabel"]
                 )
             )
         )
-  InteractionCreate i@InteractionModalSubmit {interactionDataModal = idm} -> void $ restCall (R.CreateInteractionResponse (interactionId i) (interactionToken i) (interactionResponseBasic (T.pack (show idm))))
+  InteractionCreate i@InteractionModalSubmit {modalData = idm} -> void $ restCall (R.CreateInteractionResponse (interactionId i) (interactionToken i) (interactionResponseBasic (T.pack (show idm))))
   _ -> return ()
 
-processTicTacToe :: InteractionDataComponent -> Message -> [InteractionResponseMessage]
-processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents m of
+processTicTacToe :: ComponentData -> Message -> [InteractionResponseMessage]
+processTicTacToe (ButtonData cid) m = case messageComponents m of
   Nothing -> [interactionResponseMessageBasic "Sorry, I couldn't get the components on that message."]
   (Just cs) ->
     let newComp = newComp' cs
@@ -407,31 +407,31 @@ processTicTacToe (InteractionDataComponentButton cid) m = case messageComponents
   where
     player = T.last (messageContent m)
     newComp' = updateTicTacToe (Just (cid, '0' == player))
-    disableAll (ComponentActionRowButton cs) = ComponentActionRowButton $ (\c -> c {componentButtonDisabled = True}) <$> cs
+    disableAll (ActionRowButtons cs) = ActionRowButtons $ (\c -> c {buttonDisabled = True}) <$> cs
     disableAll c = c
 processTicTacToe _ _ = [interactionResponseMessageBasic "Sorry, I couldn't understand that button."]
 
-checkTicTacToe :: [ComponentActionRow] -> Bool
+checkTicTacToe :: [ActionRow] -> Bool
 checkTicTacToe xs = checkRows unwrapped || checkRows unwrappedT || checkRows [diagonal unwrapped, diagonal (reverse <$> unwrapped)]
   where
     checkRows = any (\cbs -> all (\cb -> cb == head cbs && cb /= ButtonStyleSecondary) cbs)
-    unwrapped = (\(ComponentActionRowButton cbs) -> (\ComponentButton {componentButtonStyle = style} -> style) <$> cbs) <$> xs
+    unwrapped = (\(ActionRowButtons cbs) -> (\Button {buttonStyle = style} -> style) <$> cbs) <$> xs
     unwrappedT = transpose unwrapped
     diagonal [] = []
     diagonal ([] : _) = []
     diagonal (ys : yss) = head ys : diagonal (tail <$> yss)
 
-updateTicTacToe :: Maybe (T.Text, Bool) -> [ComponentActionRow] -> [ComponentActionRow]
-updateTicTacToe Nothing _ = (\y -> ComponentActionRowButton $ (\x -> ComponentButton (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary "[ ]" Nothing) <$> [0 .. 4]) <$> [0 .. 4]
+updateTicTacToe :: Maybe (T.Text, Bool) -> [ActionRow] -> [ActionRow]
+updateTicTacToe Nothing _ = (\y -> ActionRowButtons $ (\x -> Button (T.pack $ "ttt " <> show x <> show y) False ButtonStyleSecondary (Just "[ ]") Nothing) <$> [0 .. 4]) <$> [0 .. 4]
 updateTicTacToe (Just (tttxy, isFirst)) car
   | not (checkIsValid tttxy) = car
-  | otherwise = (\(ComponentActionRowButton cbs) -> ComponentActionRowButton (changeIf <$> cbs)) <$> car
+  | otherwise = (\(ActionRowButtons cbs) -> ActionRowButtons (changeIf <$> cbs)) <$> car
   where
     checkIsValid tttxy' = T.length tttxy' == 6 && all isDigit [T.index tttxy' 4, T.index tttxy' 5]
     getxy tttxy' = (T.index tttxy' 4, T.index tttxy' 5)
     (style, symbol) = if isFirst then (ButtonStyleSuccess, "[X]") else (ButtonStyleDanger, "[O]")
-    changeIf cb@ComponentButton {..}
-      | checkIsValid componentButtonCustomId && getxy tttxy == getxy componentButtonCustomId = cb {componentButtonDisabled = True, componentButtonStyle = style, componentButtonLabel = symbol}
+    changeIf cb@Button {..}
+      | checkIsValid buttonCustomId && getxy tttxy == getxy buttonCustomId = cb {buttonDisabled = True, buttonStyle = style, buttonLabel = Just symbol}
       | otherwise = cb
     changeIf cb = cb
 

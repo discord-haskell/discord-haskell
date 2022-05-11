@@ -10,13 +10,13 @@
 
 module Discord.Internal.Types.ApplicationCommands
   ( ApplicationCommand (..),
-    ApplicationCommandOptions (..),
-    ApplicationCommandOptionSubcommandOrGroup (..),
-    ApplicationCommandOptionSubcommand (..),
-    ApplicationCommandOptionValue (..),
-    createApplicationCommandChatInput,
-    createApplicationCommandUser,
-    createApplicationCommandMessage,
+    Options (..),
+    OptionSubcommandOrGroup (..),
+    OptionSubcommand (..),
+    OptionValue (..),
+    createChatInput,
+    createUser,
+    createMessage,
     CreateApplicationCommand (..),
     EditApplicationCommand (..),
     defaultEditApplicationCommand,
@@ -24,16 +24,19 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandChannelType (..),
     GuildApplicationCommandPermissions (..),
     ApplicationCommandPermissions (..),
+    Number,
   )
 where
 
-import Data.Aeson
+import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, toMaybeJSON)
+
+type Number = Scientific
 
 -- | The structure for an application command.
 data ApplicationCommand
@@ -77,7 +80,7 @@ data ApplicationCommand
         -- | The description of the application command.
         applicationCommandDescription :: T.Text,
         -- | The parameters for the command.
-        applicationCommandOptions :: Maybe ApplicationCommandOptions,
+        applicationCommandOptions :: Maybe Options,
         -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
@@ -107,197 +110,197 @@ instance FromJSON ApplicationCommand where
       )
 
 -- | Either subcommands and groups, or values.
-data ApplicationCommandOptions
-  = ApplicationCommandOptionsSubcommands [ApplicationCommandOptionSubcommandOrGroup]
-  | ApplicationCommandOptionsValues [ApplicationCommandOptionValue]
+data Options
+  = OptionsSubcommands [OptionSubcommandOrGroup]
+  | OptionsValues [OptionValue]
   deriving (Show, Eq, Read)
 
-instance FromJSON ApplicationCommandOptions where
+instance FromJSON Options where
   parseJSON =
     withArray
-      "ApplicationCommandOptions"
+      "Options"
       ( \a -> do
           let a' = toList a
           case a' of
-            [] -> return $ ApplicationCommandOptionsValues []
+            [] -> return $ OptionsValues []
             (v' : _) ->
               withObject
-                "ApplicationCommandOptions item"
+                "Options item"
                 ( \v -> do
                     t <- v .: "type" :: Parser Int
                     if t == 1 || t == 2
-                      then ApplicationCommandOptionsSubcommands <$> mapM parseJSON a'
-                      else ApplicationCommandOptionsValues <$> mapM parseJSON a'
+                      then OptionsSubcommands <$> mapM parseJSON a'
+                      else OptionsValues <$> mapM parseJSON a'
                 )
                 v'
       )
 
-instance ToJSON ApplicationCommandOptions where
-  toJSON (ApplicationCommandOptionsSubcommands o) = toJSON o
-  toJSON (ApplicationCommandOptionsValues o) = toJSON o
+instance ToJSON Options where
+  toJSON (OptionsSubcommands o) = toJSON o
+  toJSON (OptionsValues o) = toJSON o
 
 -- | Either a subcommand group or a subcommand.
-data ApplicationCommandOptionSubcommandOrGroup
-  = ApplicationCommandOptionSubcommandGroup
+data OptionSubcommandOrGroup
+  = OptionSubcommandGroup
       { -- | The name of the subcommand group
-        applicationCommandOptionSubcommandGroupName :: T.Text,
+        optionSubcommandGroupName :: T.Text,
         -- | The description of the subcommand group
-        applicationCommandOptionSubcommandGroupDescription :: T.Text,
+        optionSubcommandGroupDescription :: T.Text,
         -- | The subcommands in this subcommand group
-        applicationCommandOptionSubcommandGroupOptions :: [ApplicationCommandOptionSubcommand]
+        optionSubcommandGroupOptions :: [OptionSubcommand]
       }
-  | ApplicationCommandOptionSubcommandOrGroupSubcommand ApplicationCommandOptionSubcommand
+  | OptionSubcommandOrGroupSubcommand OptionSubcommand
   deriving (Show, Eq, Read)
 
-instance FromJSON ApplicationCommandOptionSubcommandOrGroup where
+instance FromJSON OptionSubcommandOrGroup where
   parseJSON =
     withObject
-      "ApplicationCommandOptionSubcommandOrGroup"
+      "OptionSubcommandOrGroup"
       ( \v -> do
           t <- v .: "type" :: Parser Int
           case t of
             2 ->
-              ApplicationCommandOptionSubcommandGroup
+              OptionSubcommandGroup
                 <$> v .: "name"
                 <*> v .: "description"
                 <*> v .: "options"
-            1 -> ApplicationCommandOptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
+            1 -> OptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
             _ -> fail "unexpected subcommand group type"
       )
 
-instance ToJSON ApplicationCommandOptionSubcommandOrGroup where
-  toJSON ApplicationCommandOptionSubcommandGroup {..} =
+instance ToJSON OptionSubcommandOrGroup where
+  toJSON OptionSubcommandGroup {..} =
     object
       [ ("type", Number 2),
-        ("name", toJSON applicationCommandOptionSubcommandGroupName),
-        ("description", toJSON applicationCommandOptionSubcommandGroupDescription),
-        ("options", toJSON applicationCommandOptionSubcommandGroupOptions)
+        ("name", toJSON optionSubcommandGroupName),
+        ("description", toJSON optionSubcommandGroupDescription),
+        ("options", toJSON optionSubcommandGroupOptions)
       ]
-  toJSON (ApplicationCommandOptionSubcommandOrGroupSubcommand a) = toJSON a
+  toJSON (OptionSubcommandOrGroupSubcommand a) = toJSON a
 
 -- | Data for a single subcommand.
-data ApplicationCommandOptionSubcommand = ApplicationCommandOptionSubcommand
+data OptionSubcommand = OptionSubcommand
   { -- | The name of the subcommand
-    applicationCommandOptionSubcommandName :: T.Text,
+    optionSubcommandName :: T.Text,
     -- | The description of the subcommand
-    applicationCommandOptionSubcommandDescription :: T.Text,
+    optionSubcommandDescription :: T.Text,
     -- | What options are there in this subcommand
-    applicationCommandOptionSubcommandOptions :: [ApplicationCommandOptionValue]
+    optionSubcommandOptions :: [OptionValue]
   }
   deriving (Show, Eq, Read)
 
-instance FromJSON ApplicationCommandOptionSubcommand where
+instance FromJSON OptionSubcommand where
   parseJSON =
     withObject
-      "ApplicationCommandOptionSubcommand"
+      "OptionSubcommand"
       ( \v -> do
           t <- v .: "type" :: Parser Int
           case t of
             1 ->
-              ApplicationCommandOptionSubcommand
+              OptionSubcommand
                 <$> v .: "name"
                 <*> v .: "description"
                 <*> v .:? "options" .!= []
             _ -> fail "unexpected subcommand type"
       )
 
-instance ToJSON ApplicationCommandOptionSubcommand where
-  toJSON ApplicationCommandOptionSubcommand {..} =
+instance ToJSON OptionSubcommand where
+  toJSON OptionSubcommand {..} =
     object
       [ ("type", Number 1),
-        ("name", toJSON applicationCommandOptionSubcommandName),
-        ("description", toJSON applicationCommandOptionSubcommandDescription),
-        ("options", toJSON applicationCommandOptionSubcommandOptions)
+        ("name", toJSON optionSubcommandName),
+        ("description", toJSON optionSubcommandDescription),
+        ("options", toJSON optionSubcommandOptions)
       ]
 
 -- | Data for a single value.
-data ApplicationCommandOptionValue
-  = ApplicationCommandOptionValueString
+data OptionValue
+  = OptionValueString
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool,
+        optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
-        applicationCommandOptionValueStringChoices :: AutocompleteOrChoice T.Text
+        optionValueStringChoices :: AutocompleteOrChoice T.Text
       }
-  | ApplicationCommandOptionValueInteger
+  | OptionValueInteger
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool,
+        optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
-        applicationCommandOptionValueIntegerChoices :: AutocompleteOrChoice Integer,
+        optionValueIntegerChoices :: AutocompleteOrChoice Integer,
         -- | The lower bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
-        applicationCommandOptionValueIntegerMinVal :: Maybe Integer,
+        optionValueIntegerMinVal :: Maybe Integer,
         -- | The upper bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
-        applicationCommandOptionValueIntegerMaxVal :: Maybe Integer
+        optionValueIntegerMaxVal :: Maybe Integer
       }
-  | ApplicationCommandOptionValueBoolean
+  | OptionValueBoolean
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool
+        optionValueRequired :: Bool
       }
-  | ApplicationCommandOptionValueUser
+  | OptionValueUser
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool
+        optionValueRequired :: Bool
       }
-  | ApplicationCommandOptionValueChannel
+  | OptionValueChannel
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool,
+        optionValueRequired :: Bool,
         -- | What type of channel can be put in here
-        applicationCommandOptionValueChannelTypes :: Maybe [ApplicationCommandChannelType]
+        optionValueChannelTypes :: Maybe [ApplicationCommandChannelType]
       }
-  | ApplicationCommandOptionValueRole
+  | OptionValueRole
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool
+        optionValueRequired :: Bool
       }
-  | ApplicationCommandOptionValueMentionable
+  | OptionValueMentionable
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool
+        optionValueRequired :: Bool
       }
-  | ApplicationCommandOptionValueNumber
+  | OptionValueNumber
       { -- | The name of the value
-        applicationCommandOptionValueName :: T.Text,
+        optionValueName :: T.Text,
         -- | The description of the value
-        applicationCommandOptionValueDescription :: T.Text,
+        optionValueDescription :: T.Text,
         -- | Whether this option is required
-        applicationCommandOptionValueRequired :: Bool,
+        optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
-        applicationCommandOptionValueNumberChoices :: AutocompleteOrChoice Scientific,
+        optionValueNumberChoices :: AutocompleteOrChoice Number,
         -- | The lower bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
-        applicationCommandOptionValueNumberMinVal :: Maybe Scientific,
+        optionValueNumberMinVal :: Maybe Number,
         -- | The upper bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
-        applicationCommandOptionValueNumberMaxVal :: Maybe Scientific
+        optionValueNumberMaxVal :: Maybe Number
       }
   deriving (Show, Eq, Read)
 
-instance FromJSON ApplicationCommandOptionValue where
+instance FromJSON OptionValue where
   parseJSON =
     withObject
-      "ApplicationCommandOptionValue"
+      "OptionValue"
       ( \v -> do
           name <- v .: "name"
           desc <- v .: "description"
@@ -305,73 +308,73 @@ instance FromJSON ApplicationCommandOptionValue where
           t <- v .: "type" :: Parser Int
           case t of
             3 ->
-              ApplicationCommandOptionValueString name desc required
+              OptionValueString name desc required
                 <$> parseJSON (Object v)
             4 ->
-              ApplicationCommandOptionValueInteger name desc required
+              OptionValueInteger name desc required
                 <$> parseJSON (Object v)
                 <*> v .:? "min_value"
                 <*> v .:? "max_value"
             10 ->
-              ApplicationCommandOptionValueNumber name desc required
+              OptionValueNumber name desc required
                 <$> parseJSON (Object v)
                 <*> v .:? "min_value"
                 <*> v .:? "max_value"
             7 ->
-              ApplicationCommandOptionValueChannel name desc required
+              OptionValueChannel name desc required
                 <$> v .:? "channel_types"
-            5 -> return $ ApplicationCommandOptionValueBoolean name desc required
-            6 -> return $ ApplicationCommandOptionValueUser name desc required
-            8 -> return $ ApplicationCommandOptionValueRole name desc required
-            9 -> return $ ApplicationCommandOptionValueMentionable name desc required
+            5 -> return $ OptionValueBoolean name desc required
+            6 -> return $ OptionValueUser name desc required
+            8 -> return $ OptionValueRole name desc required
+            9 -> return $ OptionValueMentionable name desc required
             _ -> fail "unknown application command option value type"
       )
 
-instance ToJSON ApplicationCommandOptionValue where
-  toJSON ApplicationCommandOptionValueString {..} =
+instance ToJSON OptionValue where
+  toJSON OptionValueString {..} =
     object
       [ ("type", Number 3),
-        ("name", toJSON applicationCommandOptionValueName),
-        ("description", toJSON applicationCommandOptionValueDescription),
-        ("required", toJSON applicationCommandOptionValueRequired),
-        choiceOrAutocompleteToJSON applicationCommandOptionValueStringChoices
+        ("name", toJSON optionValueName),
+        ("description", toJSON optionValueDescription),
+        ("required", toJSON optionValueRequired),
+        choiceOrAutocompleteToJSON optionValueStringChoices
       ]
-  toJSON ApplicationCommandOptionValueInteger {..} =
+  toJSON OptionValueInteger {..} =
     object
       [ ("type", Number 4),
-        ("name", toJSON applicationCommandOptionValueName),
-        ("description", toJSON applicationCommandOptionValueDescription),
-        ("required", toJSON applicationCommandOptionValueRequired),
-        choiceOrAutocompleteToJSON applicationCommandOptionValueIntegerChoices
+        ("name", toJSON optionValueName),
+        ("description", toJSON optionValueDescription),
+        ("required", toJSON optionValueRequired),
+        choiceOrAutocompleteToJSON optionValueIntegerChoices
       ]
-  toJSON ApplicationCommandOptionValueNumber {..} =
+  toJSON OptionValueNumber {..} =
     object
       [ ("type", Number 10),
-        ("name", toJSON applicationCommandOptionValueName),
-        ("description", toJSON applicationCommandOptionValueDescription),
-        ("required", toJSON applicationCommandOptionValueRequired),
-        choiceOrAutocompleteToJSON applicationCommandOptionValueNumberChoices
+        ("name", toJSON optionValueName),
+        ("description", toJSON optionValueDescription),
+        ("required", toJSON optionValueRequired),
+        choiceOrAutocompleteToJSON optionValueNumberChoices
       ]
-  toJSON ApplicationCommandOptionValueChannel {..} =
+  toJSON OptionValueChannel {..} =
     object
       [ ("type", Number 7),
-        ("name", toJSON applicationCommandOptionValueName),
-        ("description", toJSON applicationCommandOptionValueDescription),
-        ("required", toJSON applicationCommandOptionValueRequired),
-        ("channel_types", toJSON applicationCommandOptionValueChannelTypes)
+        ("name", toJSON optionValueName),
+        ("description", toJSON optionValueDescription),
+        ("required", toJSON optionValueRequired),
+        ("channel_types", toJSON optionValueChannelTypes)
       ]
   toJSON acov =
     object
       [ ("type", Number (t acov)),
-        ("name", toJSON $ applicationCommandOptionValueName acov),
-        ("description", toJSON $ applicationCommandOptionValueDescription acov),
-        ("required", toJSON $ applicationCommandOptionValueRequired acov)
+        ("name", toJSON $ optionValueName acov),
+        ("description", toJSON $ optionValueDescription acov),
+        ("required", toJSON $ optionValueRequired acov)
       ]
     where
-      t ApplicationCommandOptionValueBoolean {} = 5
-      t ApplicationCommandOptionValueUser {} = 6
-      t ApplicationCommandOptionValueRole {} = 8
-      t ApplicationCommandOptionValueMentionable {} = 9
+      t OptionValueBoolean {} = 5
+      t OptionValueUser {} = 6
+      t OptionValueRole {} = 8
+      t OptionValueMentionable {} = 9
       t _ = -1
 
 -- | Data type to be used when creating application commands. The specification
@@ -393,30 +396,28 @@ instance ToJSON ApplicationCommandOptionValue where
 data CreateApplicationCommand
   = CreateApplicationCommandChatInput
       { -- | The application command name (1-32 chars).
-        createApplicationCommandName :: T.Text,
-        -- | The application command description (1-100 chars). Has to be empty for
-        -- non-slash commands.
-        createApplicationCommandDescription :: T.Text,
-        -- | What options the application (max length 25). Has to be `Nothing` for
-        -- non-slash commands.
-        createApplicationCommandOptions :: Maybe ApplicationCommandOptions,
+        createName :: T.Text,
+        -- | The application command description (1-100 chars).
+        createDescription :: T.Text,
+        -- | What options the application (max length 25).
+        createOptions :: Maybe Options,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
-        createApplicationCommandDefaultPermission :: Bool
+        createDefaultPermission :: Bool
       }
   | CreateApplicationCommandUser
       { -- | The application command name (1-32 chars).
-        createApplicationCommandName :: T.Text,
+        createName :: T.Text,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
-        createApplicationCommandDefaultPermission :: Bool
+        createDefaultPermission :: Bool
       }
   | CreateApplicationCommandMessage
       { -- | The application command name (1-32 chars).
-        createApplicationCommandName :: T.Text,
+        createName :: T.Text,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
-        createApplicationCommandDefaultPermission :: Bool
+        createDefaultPermission :: Bool
       }
   deriving (Show, Eq, Read)
 
@@ -425,10 +426,10 @@ instance ToJSON CreateApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toMaybeJSON createApplicationCommandName),
-              ("description", toMaybeJSON createApplicationCommandDescription),
-              ("options", toJSON <$> createApplicationCommandOptions),
-              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+            [ ("name", toMaybeJSON createName),
+              ("description", toMaybeJSON createDescription),
+              ("options", toJSON <$> createOptions),
+              ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 1)
             ]
       ]
@@ -436,8 +437,8 @@ instance ToJSON CreateApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toMaybeJSON createApplicationCommandName),
-              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+            [ ("name", toMaybeJSON createName),
+              ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 2)
             ]
       ]
@@ -445,8 +446,8 @@ instance ToJSON CreateApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toMaybeJSON createApplicationCommandName),
-              ("default_permission", toMaybeJSON createApplicationCommandDefaultPermission),
+            [ ("name", toMaybeJSON createName),
+              ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 3)
             ]
       ]
@@ -461,22 +462,22 @@ nameIsValid isChatInput name = l >= 1 && l <= 32 && (isChatInput <= T.all (`elem
 -- to enter the other values. The name needs to be all lower case letters, and
 -- between 1 and 32 characters. The description has to be non-empty and less
 -- than or equal to 100 characters.
-createApplicationCommandChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
-createApplicationCommandChatInput name desc
+createChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
+createChatInput name desc
   | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name desc Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
-createApplicationCommandUser :: T.Text -> Maybe CreateApplicationCommand
-createApplicationCommandUser name
+createUser :: T.Text -> Maybe CreateApplicationCommand
+createUser name
   | nameIsValid False name = Just $ CreateApplicationCommandUser name True
   | otherwise = Nothing
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
-createApplicationCommandMessage :: T.Text -> Maybe CreateApplicationCommand
-createApplicationCommandMessage name
+createMessage :: T.Text -> Maybe CreateApplicationCommand
+createMessage name
   | nameIsValid False name = Just $ CreateApplicationCommandMessage name True
   | otherwise = Nothing
 
@@ -487,18 +488,18 @@ createApplicationCommandMessage name
 -- https://discord.com/developers/docs/interactions/application-commands#edit-global-application-command
 data EditApplicationCommand
   = EditApplicationCommandChatInput
-      { editApplicationCommandName :: Maybe T.Text,
-        editApplicationCommandDescription :: Maybe T.Text,
-        editApplicationCommandOptions :: Maybe ApplicationCommandOptions,
-        editApplicationCommandDefaultPermission :: Maybe Bool
+      { editName :: Maybe T.Text,
+        editDescription :: Maybe T.Text,
+        editOptions :: Maybe Options,
+        editDefaultPermission :: Maybe Bool
       }
   | EditApplicationCommandUser
-      { editApplicationCommandName :: Maybe T.Text,
-        editApplicationCommandDefaultPermission :: Maybe Bool
+      { editName :: Maybe T.Text,
+        editDefaultPermission :: Maybe Bool
       }
   | EditApplicationCommandMessage
-      { editApplicationCommandName :: Maybe T.Text,
-        editApplicationCommandDefaultPermission :: Maybe Bool
+      { editName :: Maybe T.Text,
+        editDefaultPermission :: Maybe Bool
       }
 
 defaultEditApplicationCommand :: Int -> EditApplicationCommand
@@ -511,10 +512,10 @@ instance ToJSON EditApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toJSON <$> editApplicationCommandName),
-              ("description", toJSON <$> editApplicationCommandDescription),
-              ("options", toJSON <$> editApplicationCommandOptions),
-              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+            [ ("name", toJSON <$> editName),
+              ("description", toJSON <$> editDescription),
+              ("options", toJSON <$> editOptions),
+              ("default_permission", toJSON <$> editDefaultPermission),
               ("type", Just $ Number 1)
             ]
       ]
@@ -522,8 +523,8 @@ instance ToJSON EditApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toJSON <$> editApplicationCommandName),
-              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+            [ ("name", toJSON <$> editName),
+              ("default_permission", toJSON <$> editDefaultPermission),
               ("type", Just $ Number 2)
             ]
       ]
@@ -531,8 +532,8 @@ instance ToJSON EditApplicationCommand where
     object
       [ (name, value)
         | (name, Just value) <-
-            [ ("name", toJSON <$> editApplicationCommandName),
-              ("default_permission", toJSON <$> editApplicationCommandDefaultPermission),
+            [ ("name", toJSON <$> editName),
+              ("default_permission", toJSON <$> editDefaultPermission),
               ("type", Just $ Number 3)
             ]
       ]
