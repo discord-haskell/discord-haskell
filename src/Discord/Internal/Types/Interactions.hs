@@ -254,7 +254,7 @@ data InteractionDataApplicationCommand
         -- | The resolved data in the command.
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
         -- | The id of the user that is the target.
-        interactionDataApplicationCommandTargetId :: UserId
+        interactionDataApplicationCommandTargetUserId :: UserId
       }
   | InteractionDataApplicationCommandMessage
       { -- | Id of the invoked command.
@@ -264,7 +264,7 @@ data InteractionDataApplicationCommand
         -- | The resolved data in the command.
         interactionDataApplicationCommandResolvedData :: Maybe ResolvedData,
         -- | The id of the message that is the target.
-        interactionDataApplicationCommandTargetId :: MessageId
+        interactionDataApplicationCommandTargetMessageId :: MessageId
       }
   | InteractionDataApplicationCommandChatInput
       { -- | Id of the invoked command.

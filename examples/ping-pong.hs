@@ -22,7 +22,7 @@ main = if testserverid == -1
 -- check the url in a discord server
 --                                <server id>           <channel id>
 -- https://discord.com/channels/2385235298674262408/4286572469284672046
-testserverid :: Snowflake
+testserverid :: GuildId
 testserverid = -1
 
 -- | Replies "pong" to every message that starts with "ping"

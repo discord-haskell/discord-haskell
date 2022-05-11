@@ -102,7 +102,7 @@ instance FromJSON ConnectionObject where
                <*> o .: "name"
                <*> o .: "type"
                <*> o .: "revoked"
-               <*> sequence (map (.: "id") integrations)
+               <*> mapM (.: "id") integrations
                <*> o .: "verified"
                <*> o .: "friend_sync"
                <*> o .: "show_activity"
