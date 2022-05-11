@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
@@ -417,7 +416,7 @@ instance ToJSON ThreadMember where
               , ("flags", toJSON <$> pure threadMemberFlags)
               ] ]
 
-data ThreadListSyncFields = ThreadListSyncFields 
+data ThreadListSyncFields = ThreadListSyncFields
   { threadListSyncFieldsGuildId :: GuildId
   , threadListSyncFieldsChannelIds :: Maybe [ChannelId]
   , threadListSyncFieldsThreads :: [Channel]
@@ -431,7 +430,7 @@ instance FromJSON ThreadListSyncFields where
                          <*> o .:  "threads"
                          <*> o .:  "members"
 
-data ThreadMembersUpdateFields = ThreadMembersUpdateFields 
+data ThreadMembersUpdateFields = ThreadMembersUpdateFields
   { threadMembersUpdateFieldsThreadId :: ChannelId
   , threadMembersUpdateFieldsGuildId :: GuildId
   , threadMembersUpdateFieldsMemberCount :: Integer
@@ -577,15 +576,15 @@ instance Default AllowedMentions where
 
 instance ToJSON AllowedMentions where
   toJSON AllowedMentions{..} = object [
-                                 ("parse" .= [name :: T.Text | (name, True) <-
-                                     [ ("everyone", mentionEveryone),
-                                       ("users",    mentionUsers && mentionUserIds == []),
-                                       ("roles",    mentionRoles && mentionRoleIds == []) ] ]),
+                                 "parse" .= [name :: T.Text | (name, True) <-
+                                    [ ("everyone", mentionEveryone),
+                                      ("users",    mentionUsers && null mentionUserIds),
+                                      ("roles",    mentionRoles && null mentionRoleIds) ] ],
                                  -- https://discord.com/developers/docs/resources/channel#allowed-mentions-object
                                  --  parse.users and users list cannot both be active, prioritize id list
-                                 ("roles"        .= mentionRoleIds),
-                                 ("users"        .= mentionUserIds),
-                                 ("replied_user" .= mentionRepliedUser) ]
+                                 "roles"        .= mentionRoleIds,
+                                 "users"        .= mentionUserIds,
+                                 "replied_user" .= mentionRepliedUser ]
 
 data MessageReaction = MessageReaction
   { messageReactionCount :: Int

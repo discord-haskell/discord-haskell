@@ -15,7 +15,6 @@ import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 
-import Data.Functor.Compose (Compose(Compose, getCompose))
 import Data.Bifunctor (first)
 import Text.Read (readMaybe)
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
@@ -32,14 +31,14 @@ authToken (Auth tok) = let token = T.strip tok
                        in bot <> token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
-newtype Snowflake = Snowflake Word64
+newtype Snowflake = Snowflake { unSnowflake :: Word64 }
   deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
 
 instance Read Snowflake where
-  readsPrec p = getCompose $ first Snowflake <$> Compose (readsPrec p)
+  readsPrec p = fmap (first Snowflake) . readsPrec p
 
 instance ToJSON Snowflake where
   toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
@@ -54,25 +53,84 @@ instance FromJSON Snowflake where
             (Just i) -> pure i
       )
 
-type ChannelId = Snowflake
-type StageId = Snowflake
-type GuildId = Snowflake
-type MessageId = Snowflake
-type AttachmentId = Snowflake
-type EmojiId = Snowflake
-type StickerId = Snowflake
-type UserId = Snowflake
-type OverwriteId = Snowflake
-type RoleId = Snowflake
-type IntegrationId = Snowflake
-type WebhookId = Snowflake
-type ParentId = Snowflake
-type ApplicationId = Snowflake
-type ApplicationCommandId = Snowflake
-type InteractionId = Snowflake
-type ScheduledEventId = Snowflake
-type ScheduledEventEntityId = Snowflake
-type InteractionToken = T.Text
+newtype DiscordId a = DiscordId { unId :: Snowflake }
+  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+
+instance Show (DiscordId a) where
+  show = show . unId
+
+instance Read (DiscordId a) where
+  readsPrec p = fmap (first DiscordId) . readsPrec p
+
+instance ToJSON (DiscordId a) where
+  toJSON = toJSON . unId
+
+instance FromJSON (DiscordId a) where
+  parseJSON = fmap DiscordId . parseJSON
+
+data ChannelIdType
+type ChannelId = DiscordId ChannelIdType
+
+data StageIdType
+type StageId = DiscordId StageIdType
+
+data GuildIdType
+type GuildId = DiscordId GuildIdType
+
+data MessageIdType
+type MessageId = DiscordId MessageIdType
+
+data AttachmentIdType
+type AttachmentId = DiscordId AttachmentIdType
+
+data EmojiIdType
+type EmojiId = DiscordId EmojiIdType
+
+data StickerIdType
+type StickerId = DiscordId StickerIdType
+
+data UserIdType
+type UserId = DiscordId UserIdType
+
+data OverwriteIdType
+type OverwriteId = DiscordId OverwriteIdType
+
+data RoleIdType
+type RoleId = DiscordId RoleIdType
+
+data IntegrationIdType
+type IntegrationId = DiscordId IntegrationIdType
+
+data WebhookIdType
+type WebhookId = DiscordId WebhookIdType
+
+data ParentIdType
+type ParentId = DiscordId ParentIdType
+
+data ApplicationIdType
+type ApplicationId = DiscordId ApplicationIdType
+
+data ApplicationCommandIdType
+type ApplicationCommandId = DiscordId ApplicationCommandIdType
+
+data InteractionIdType
+type InteractionId = DiscordId InteractionIdType
+
+data ScheduledEventIdType
+type ScheduledEventId = DiscordId ScheduledEventIdType
+
+data ScheduledEventEntityIdType
+type ScheduledEventEntityId = DiscordId ScheduledEventEntityIdType
+
+newtype InteractionToken = InteractionToken T.Text
+  deriving (Show, Read, Eq, Ord)
+
+instance ToJSON InteractionToken where
+  toJSON (InteractionToken token) = String token
+
+instance FromJSON InteractionToken where
+  parseJSON = withText "InteractionToken" (pure . InteractionToken)
+
 type Shard = (Int, Int)
 
 -- | Gets a creation date from a snowflake.

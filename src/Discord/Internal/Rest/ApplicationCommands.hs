@@ -93,7 +93,7 @@ applicationCommandJsonRequest a = case a of
   (GetApplicationCommandPermissions aid gid cid) ->
     Get (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") mempty
   (EditApplicationCommandPermissions aid gid cid ps) ->
-    Put (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions aid cid gid ps)) mempty
+    Put (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions cid aid gid ps)) mempty
   (BatchEditApplicationCommandPermissions aid gid ps) ->
     Put (applications aid /: "guilds" // gid /: "commands" /: "permissions") (R.ReqBodyJson $ toJSON ps) mempty
   where
