@@ -7,16 +7,16 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module Discord.Internal.Types.Components
-  ( ComponentActionRow (..),
-    ComponentButton (..),
+  ( ActionRow (..),
+    Button (..),
     ButtonStyle (..),
     mkButton,
-    ComponentSelectMenu (..),
+    SelectMenu (..),
     mkSelectMenu,
     SelectOption (..),
     mkSelectOption,
-    ComponentTextInput (..),
-    mkComponentTextInput,
+    TextInput (..),
+    mkTextInput,
   )
 where
 
@@ -28,13 +28,13 @@ import qualified Data.Text as T
 import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.Prelude (toMaybeJSON)
 
-data ComponentActionRow = ComponentActionRowButton [ComponentButton] | ComponentActionRowSelectMenu ComponentSelectMenu
+data ActionRow = ActionRowButtons [Button] | ActionRowSelectMenu SelectMenu
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON ComponentActionRow where
+instance FromJSON ActionRow where
   parseJSON =
     withObject
-      "ComponentActionRow"
+      "ActionRow"
       ( \cs -> do
           t <- cs .: "type" :: Parser Int
           case t of
@@ -42,62 +42,62 @@ instance FromJSON ComponentActionRow where
               a <- cs .: "components" :: Parser Array
               let a' = toList a
               case a' of
-                [] -> return $ ComponentActionRowButton []
+                [] -> return $ ActionRowButtons []
                 (c : _) ->
                   withObject
-                    "ComponentActionRow item"
+                    "ActionRow item"
                     ( \v -> do
                         t' <- v .: "type" :: Parser Int
                         case t' of
-                          2 -> ComponentActionRowButton <$> mapM parseJSON a'
-                          3 -> ComponentActionRowSelectMenu <$> parseJSON c
+                          2 -> ActionRowButtons <$> mapM parseJSON a'
+                          3 -> ActionRowSelectMenu <$> parseJSON c
                           _ -> fail $ "unknown component type: " ++ show t
                     )
                     c
             _ -> fail $ "expected action row type (1), got: " ++ show t
       )
 
-instance ToJSON ComponentActionRow where
-  toJSON (ComponentActionRowButton bs) = object [("type", Number 1), ("components", toJSON bs)]
-  toJSON (ComponentActionRowSelectMenu bs) = object [("type", Number 1), ("components", toJSON [bs])]
+instance ToJSON ActionRow where
+  toJSON (ActionRowButtons bs) = object [("type", Number 1), ("components", toJSON bs)]
+  toJSON (ActionRowSelectMenu bs) = object [("type", Number 1), ("components", toJSON [bs])]
 
 -- | Component type for a button, split into URL button and not URL button.
 --
 -- Don't directly send button components - they need to be within an action row.
-data ComponentButton
-  = ComponentButton
+data Button
+  = Button
       { -- | Dev indentifier
-        componentButtonCustomId :: T.Text,
+        buttonCustomId :: T.Text,
         -- | Whether the button is disabled
-        componentButtonDisabled :: Bool,
+        buttonDisabled :: Bool,
         -- | What is the style of the button
-        componentButtonStyle :: ButtonStyle,
+        buttonStyle :: ButtonStyle,
         -- | What is the user-facing label of the button
-        componentButtonLabel :: Maybe T.Text,
+        buttonLabel :: Maybe T.Text,
         -- | What emoji is displayed on the button
-        componentButtonEmoji :: Maybe Emoji
+        buttonEmoji :: Maybe Emoji
       }
-  | ComponentButtonUrl
+  | ButtonUrl
       { -- | The url for the button. If this is not a valid url, everything will
         -- break
-        componentButtonUrl :: T.Text,
+        buttonUrl :: T.Text,
         -- | Whether the button is disabled
-        componentButtonDisabled :: Bool,
+        buttonDisabled :: Bool,
         -- | What is the user-facing label of the button
-        componentButtonLabel :: Maybe T.Text,
+        buttonLabel :: Maybe T.Text,
         -- | What emoji is displayed on the button
-        componentButtonEmoji :: Maybe Emoji
+        buttonEmoji :: Maybe Emoji
       }
   deriving (Show, Read, Eq, Ord)
 
 -- | Takes the label and the custom id of the button that is to be generated.
-mkButton :: T.Text -> T.Text -> ComponentButton
-mkButton label customId = ComponentButton customId False ButtonStyleSecondary (Just label) Nothing
+mkButton :: T.Text -> T.Text -> Button
+mkButton label customId = Button customId False ButtonStyleSecondary (Just label) Nothing
 
-instance FromJSON ComponentButton where
+instance FromJSON Button where
   parseJSON =
     withObject
-      "ComponentButton"
+      "Button"
       ( \v -> do
           t <- v .: "type" :: Parser Int
           case t of
@@ -108,13 +108,13 @@ instance FromJSON ComponentButton where
               style <- v .: "style" :: Parser Scientific
               case style of
                 5 ->
-                  ComponentButtonUrl
+                  ButtonUrl
                     <$> v .: "url"
                     <*> return disabled
                     <*> return label
                     <*> return partialEmoji
                 _ ->
-                  ComponentButton
+                  Button
                     <$> v .: "custom_id"
                     <*> return disabled
                     <*> parseJSON (Number style)
@@ -123,29 +123,29 @@ instance FromJSON ComponentButton where
             _ -> fail "expected button type, got a different component"
       )
 
-instance ToJSON ComponentButton where
-  toJSON ComponentButtonUrl {..} =
+instance ToJSON Button where
+  toJSON ButtonUrl {..} =
     object
       [ (name, value)
         | (name, Just value) <-
             [ ("type", Just $ Number 2),
               ("style", Just $ Number 5),
-              ("label", toJSON <$> componentButtonLabel),
-              ("disabled", toMaybeJSON componentButtonDisabled),
-              ("url", toMaybeJSON componentButtonUrl),
-              ("emoji", toJSON <$> componentButtonEmoji)
+              ("label", toJSON <$> buttonLabel),
+              ("disabled", toMaybeJSON buttonDisabled),
+              ("url", toMaybeJSON buttonUrl),
+              ("emoji", toJSON <$> buttonEmoji)
             ]
       ]
-  toJSON ComponentButton {..} =
+  toJSON Button {..} =
     object
       [ (name, value)
         | (name, Just value) <-
             [ ("type", Just $ Number 2),
-              ("style", Just $ toJSON componentButtonStyle),
-              ("label", toJSON <$> componentButtonLabel),
-              ("disabled", toMaybeJSON componentButtonDisabled),
-              ("custom_id", toMaybeJSON componentButtonCustomId),
-              ("emoji", toJSON <$> componentButtonEmoji)
+              ("style", Just $ toJSON buttonStyle),
+              ("label", toJSON <$> buttonLabel),
+              ("disabled", toMaybeJSON buttonDisabled),
+              ("custom_id", toMaybeJSON buttonCustomId),
+              ("emoji", toJSON <$> buttonEmoji)
             ]
       ]
 
@@ -179,40 +179,40 @@ instance ToJSON ButtonStyle where
   toJSON ButtonStyleSuccess = Number 3
   toJSON ButtonStyleDanger = Number 4
 
--- | Component type for a select menus.
+-- | Component type for a select menu.
 --
 -- Don't directly send select menus - they need to be within an action row.
-data ComponentSelectMenu = ComponentSelectMenu
+data SelectMenu = SelectMenu
   { -- | Dev identifier
-    componentSelectMenuCustomId :: T.Text,
+    selectMenuCustomId :: T.Text,
     -- | Whether the select menu is disabled
-    componentSelectMenuDisabled :: Bool,
+    selectMenuDisabled :: Bool,
     -- | What options are in this select menu (up to 25)
-    componentSelectMenuOptions :: [SelectOption],
+    selectMenuOptions :: [SelectOption],
     -- | Placeholder text if nothing is selected
-    componentSelectMenuPlaceholder :: Maybe T.Text,
+    selectMenuPlaceholder :: Maybe T.Text,
     -- | Minimum number of values to select (def 1, min 0, max 25)
-    componentSelectMenuMinValues :: Maybe Integer,
+    selectMenuMinValues :: Maybe Integer,
     -- | Maximum number of values to select (def 1, max 25)
-    componentSelectMenuMaxValues :: Maybe Integer
+    selectMenuMaxValues :: Maybe Integer
   }
   deriving (Show, Read, Eq, Ord)
 
 -- | Takes the custom id and the options of the select menu that is to be
 -- generated.
-mkSelectMenu :: T.Text -> [SelectOption] -> ComponentSelectMenu
-mkSelectMenu customId sos = ComponentSelectMenu customId False sos Nothing Nothing Nothing
+mkSelectMenu :: T.Text -> [SelectOption] -> SelectMenu
+mkSelectMenu customId sos = SelectMenu customId False sos Nothing Nothing Nothing
 
-instance FromJSON ComponentSelectMenu where
+instance FromJSON SelectMenu where
   parseJSON =
     withObject
-      "ComponentSelectMenu"
+      "SelectMenu"
       ( \v ->
           do
             t <- v .: "type" :: Parser Int
             case t of
               3 ->
-                ComponentSelectMenu
+                SelectMenu
                   <$> v .: "custom_id"
                   <*> v .:? "disabled" .!= False
                   <*> v .: "options"
@@ -222,18 +222,18 @@ instance FromJSON ComponentSelectMenu where
               _ -> fail "expected select menu type, got different component"
       )
 
-instance ToJSON ComponentSelectMenu where
-  toJSON ComponentSelectMenu {..} =
+instance ToJSON SelectMenu where
+  toJSON SelectMenu {..} =
     object
       [ (name, value)
         | (name, Just value) <-
             [ ("type", Just $ Number 3),
-              ("custom_id", toMaybeJSON componentSelectMenuCustomId),
-              ("disabled", toMaybeJSON componentSelectMenuDisabled),
-              ("options", toMaybeJSON componentSelectMenuOptions),
-              ("placeholder", toJSON <$> componentSelectMenuPlaceholder),
-              ("min_values", toJSON <$> componentSelectMenuMinValues),
-              ("max_values", toJSON <$> componentSelectMenuMaxValues)
+              ("custom_id", toMaybeJSON selectMenuCustomId),
+              ("disabled", toMaybeJSON selectMenuDisabled),
+              ("options", toMaybeJSON selectMenuOptions),
+              ("placeholder", toJSON <$> selectMenuPlaceholder),
+              ("min_values", toJSON <$> selectMenuMinValues),
+              ("max_values", toJSON <$> selectMenuMaxValues)
             ]
       ]
 
@@ -277,49 +277,49 @@ instance ToJSON SelectOption where
             ]
       ]
 
-data ComponentTextInput = ComponentTextInput
+data TextInput = TextInput
   { -- | Dev identifier
-    componentTextInputCustomId :: T.Text,
+    textInputCustomId :: T.Text,
     -- | What style to use (short or paragraph)
-    componentTextInputIsParagraph :: Bool,
+    textInputIsParagraph :: Bool,
     -- | The label for this component
-    componentTextInputLabel :: T.Text,
+    textInputLabel :: T.Text,
     -- | The minimum input length for a text input (0-4000)
-    componentTextInputMinLength :: Maybe Integer,
+    textInputMinLength :: Maybe Integer,
     -- | The maximum input length for a text input (1-4000)
-    componentTextInputMaxLength :: Maybe Integer,
+    textInputMaxLength :: Maybe Integer,
     -- | Whether this component is required to be filled
-    componentTextInputRequired :: Bool,
+    textInputRequired :: Bool,
     -- | The prefilled value for this component (max 4000)
-    componentTextInputValue :: T.Text,
+    textInputValue :: T.Text,
     -- | Placeholder text if empty (max 4000)
-    componentTextInputPlaceholder :: T.Text
+    textInputPlaceholder :: T.Text
   }
   deriving (Show, Read, Eq, Ord)
 
-instance ToJSON ComponentTextInput where
-  toJSON ComponentTextInput {..} =
+instance ToJSON TextInput where
+  toJSON TextInput {..} =
     object
       [ (name, value)
         | (name, Just value) <-
             [ ("type", Just $ Number 4),
-              ("custom_id", toMaybeJSON componentTextInputCustomId),
-              ("style", toMaybeJSON (1 + fromEnum componentTextInputIsParagraph)),
-              ("label", toMaybeJSON componentTextInputLabel),
-              ("min_length", toJSON <$> componentTextInputMinLength),
-              ("max_length", toJSON <$> componentTextInputMaxLength),
-              ("required", toMaybeJSON componentTextInputRequired),
-              ("value", toMaybeJSON componentTextInputValue),
-              ("placeholder", toMaybeJSON componentTextInputPlaceholder)
+              ("custom_id", toMaybeJSON textInputCustomId),
+              ("style", toMaybeJSON (1 + fromEnum textInputIsParagraph)),
+              ("label", toMaybeJSON textInputLabel),
+              ("min_length", toJSON <$> textInputMinLength),
+              ("max_length", toJSON <$> textInputMaxLength),
+              ("required", toMaybeJSON textInputRequired),
+              ("value", toMaybeJSON textInputValue),
+              ("placeholder", toMaybeJSON textInputPlaceholder)
             ]
       ]
 
-instance FromJSON ComponentTextInput where
-  parseJSON = withObject "ComponentTextInput" $ \o -> do
+instance FromJSON TextInput where
+  parseJSON = withObject "TextInput" $ \o -> do
     t <- o .: "type" :: Parser Int
     case t of
       4 ->
-        ComponentTextInput <$> o .: "custom_id"
+        TextInput <$> o .: "custom_id"
           <*> fmap (== (2 :: Int)) (o .:? "style" .!= 1)
           <*> o .:? "label" .!= ""
           <*> o .:? "min_length"
@@ -329,5 +329,5 @@ instance FromJSON ComponentTextInput where
           <*> o .:? "placeholder" .!= ""
       _ -> fail "expected text input, found other type of component"
 
-mkComponentTextInput :: T.Text -> T.Text -> ComponentTextInput
-mkComponentTextInput cid label = ComponentTextInput cid False label Nothing Nothing True "" ""
+mkTextInput :: T.Text -> T.Text -> TextInput
+mkTextInput cid label = TextInput cid False label Nothing Nothing True "" ""

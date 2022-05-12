@@ -137,7 +137,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
   , messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , messageDetailedReference                :: Maybe MessageReference
-  , messageDetailedComponents               :: Maybe [ComponentActionRow]
+  , messageDetailedComponents               :: Maybe [ActionRow]
   , messageDetailedStickerIds               :: Maybe [StickerId]
   } deriving (Show, Read, Eq, Ord)
 
