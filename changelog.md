@@ -6,6 +6,12 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.13.0
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/117) Shorten ApplicationCommand names! To update search [the pull-request](https://github.com/aquarial/discord-haskell/pull/117/files) for what the names are replaced with
+
+[L0neGamer](https://github.com/aquarial/discord-haskell/pull/116) Typesafe Snowflakes (guildid, channelid, userid, etcid)
+
 Improve `restCall` type error messages https://github.com/aquarial/discord-haskell/issues/102
 
 ## 1.12.5
