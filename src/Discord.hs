@@ -2,6 +2,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | Main module of the library
+-- Contains all the entrypoints
 module Discord
   ( runDiscord
   , restCall
@@ -36,18 +38,36 @@ import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
 import Discord.Internal.Gateway
 
+-- | A `ReaderT` wrapper around `DiscordHandle` and `IO`. Most functions act in
+-- this monad
 type DiscordHandler = ReaderT DiscordHandle IO
 
+-- | Options for the connection. 
 data RunDiscordOpts = RunDiscordOpts
-  { discordToken :: T.Text
-  , discordOnStart :: DiscordHandler ()
-  , discordOnEnd :: IO ()
-  , discordOnEvent :: Event -> DiscordHandler ()
-  , discordOnLog :: T.Text -> IO ()
-  , discordForkThreadForEvents :: Bool
-  , discordGatewayIntent :: GatewayIntent
+  { -- | Token for the discord API
+    discordToken :: T.Text
+  , -- | Actions executed right after a connexion to discord's API is
+    -- established
+    discordOnStart :: DiscordHandler ()
+  , -- | Actions executed at termination.
+    --
+    -- Note that this runs in plain `IO` and not in `DiscordHandler` as the
+    -- connexion has been closed before this runs.
+    --
+    -- Useful for cleaning up.
+    discordOnEnd :: IO ()
+  , -- | Actions run upon the reception of an `Event`. This is here most of the
+    -- code of the bot may get dispatched from.
+    discordOnEvent :: Event -> DiscordHandler ()
+  , -- | Dispatching on internal logs
+    discordOnLog :: T.Text -> IO ()
+  , -- | Fork a thread for every `Event` recived
+    discordForkThreadForEvents :: Bool
+  , -- | The gateway intents the bot is asking for
+    discordGatewayIntent :: GatewayIntent
   }
 
+-- | Default values for `RunDiscordOpts`
 instance Default RunDiscordOpts where
   def = RunDiscordOpts { discordToken = ""
                        , discordOnStart = pure ()
@@ -58,6 +78,7 @@ instance Default RunDiscordOpts where
                        , discordGatewayIntent = def
                        }
 
+-- | Entrypoint to the library 
 runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
@@ -84,6 +105,7 @@ runDiscord opts = do
   finally (runDiscordLoop handle opts)
           (discordOnEnd opts >> runReaderT stopDiscord handle)
 
+-- | Runs the main loop 
 runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
 runDiscordLoop handle opts = do
   resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
@@ -119,7 +141,7 @@ runDiscordLoop handle opts = do
                                Right _ -> pure ()
                  loop
 
-
+-- | A Error code following a rest call
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
   deriving (Show, Read, Eq, Ord)
 
@@ -174,6 +196,7 @@ stopDiscord = do h <- ask
                    HandleThreadIdCache a -> a
                    HandleThreadIdLogger a -> a
 
+-- | Starts the internal logger
 startLogger :: (T.Text -> IO ()) -> Chan T.Text -> IO ThreadId
 startLogger handle logC = forkIO $ forever $
   do me <- try $ readChan logC >>= handle

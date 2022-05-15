@@ -1,3 +1,4 @@
+-- | The Discord Handle. Holds all the information related to the connection.
 module Discord.Handle
   ( DiscordHandle(..)
   , HandleThreadId(..)
@@ -15,6 +16,7 @@ data HandleThreadId = HandleThreadIdRest ThreadId
                       | HandleThreadIdLogger ThreadId
                       | HandleThreadIdGateway ThreadId
 
+-- | The main Handle structure
 data DiscordHandle = DiscordHandle
   { discordHandleRestChan :: RestChanHandle
   , discordHandleGateway :: GatewayHandle
