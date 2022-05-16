@@ -11,17 +11,28 @@ import Discord.Internal.Rest (RestChanHandle(..))
 import Discord.Internal.Gateway (GatewayHandle(..), CacheHandle(..))
 
 -- | Thread Ids marked by what type they are
-data HandleThreadId = HandleThreadIdRest ThreadId
-                      | HandleThreadIdCache ThreadId
-                      | HandleThreadIdLogger ThreadId
-                      | HandleThreadIdGateway ThreadId
+data HandleThreadId
+  = -- | A Rest API thread
+    HandleThreadIdRest ThreadId
+  | -- | A cache thread
+  HandleThreadIdCache ThreadId
+  | -- | A logger thread
+  HandleThreadIdLogger ThreadId
+  | -- | A gateway thread 
+  HandleThreadIdGateway ThreadId
 
 -- | The main Handle structure
 data DiscordHandle = DiscordHandle
-  { discordHandleRestChan :: RestChanHandle
-  , discordHandleGateway :: GatewayHandle
-  , discordHandleCache :: CacheHandle
-  , discordHandleThreads :: [HandleThreadId]
-  , discordHandleLog :: Chan T.Text
-  , discordHandleLibraryError :: MVar T.Text
+  { -- | Handle to the Rest loop
+    discordHandleRestChan :: RestChanHandle
+  , -- | Handle to the Websocket gateway event loop
+    discordHandleGateway :: GatewayHandle
+  , -- | Handle to the cache
+    discordHandleCache :: CacheHandle
+  , -- | List of the threads currently in use by the library
+    discordHandleThreads :: [HandleThreadId]
+  , -- | `Chan` used to send messages to the internal logger
+    discordHandleLog :: Chan T.Text
+  , -- | `MVar` containing a description of the latest library error
+    discordHandleLibraryError :: MVar T.Text
   }
