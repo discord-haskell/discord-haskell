@@ -6,6 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
+-- | Message components
 module Discord.Internal.Types.Components
   ( ActionRow (..),
     Button (..),
@@ -28,6 +29,7 @@ import qualified Data.Text as T
 import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.Prelude (toMaybeJSON)
 
+-- | Container for other message Components
 data ActionRow = ActionRowButtons [Button] | ActionRowSelectMenu SelectMenu
   deriving (Show, Read, Eq, Ord)
 
@@ -329,5 +331,6 @@ instance FromJSON TextInput where
           <*> o .:? "placeholder" .!= ""
       _ -> fail "expected text input, found other type of component"
 
+-- | Create a text input from an id and a label
 mkTextInput :: T.Text -> T.Text -> TextInput
 mkTextInput cid label = TextInput cid False label Nothing Nothing True "" ""
