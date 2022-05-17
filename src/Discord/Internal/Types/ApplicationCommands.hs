@@ -401,6 +401,10 @@ data CreateApplicationCommand
         createDescription :: T.Text,
         -- | What options the application (max length 25).
         createOptions :: Maybe Options,
+        -- | The default permissions required for members set when using the command
+        -- in a guild.
+        -- Set of permissions represented as a bit set.
+        createDefaultMemberPermissions :: Maybe T.Text,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
         createDefaultPermission :: Bool
@@ -408,6 +412,10 @@ data CreateApplicationCommand
   | CreateApplicationCommandUser
       { -- | The application command name (1-32 chars).
         createName :: T.Text,
+        -- | The default permissions required for members set when using the command
+        -- in a guild.
+        -- Set of permissions represented as a bit set.
+        createDefaultMemberPermissions :: Maybe T.Text,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
         createDefaultPermission :: Bool
@@ -415,6 +423,10 @@ data CreateApplicationCommand
   | CreateApplicationCommandMessage
       { -- | The application command name (1-32 chars).
         createName :: T.Text,
+        -- | The default permissions required for members set when using the command
+        -- in a guild.
+        -- Set of permissions represented as a bit set.
+        createDefaultMemberPermissions :: Maybe T.Text,
         -- | Whether the command is enabled by default when the application is added
         -- to a guild.
         createDefaultPermission :: Bool
@@ -429,6 +441,7 @@ instance ToJSON CreateApplicationCommand where
             [ ("name", toMaybeJSON createName),
               ("description", toMaybeJSON createDescription),
               ("options", toJSON <$> createOptions),
+              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
               ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 1)
             ]
@@ -438,6 +451,7 @@ instance ToJSON CreateApplicationCommand where
       [ (name, value)
         | (name, Just value) <-
             [ ("name", toMaybeJSON createName),
+              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
               ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 2)
             ]
@@ -447,6 +461,7 @@ instance ToJSON CreateApplicationCommand where
       [ (name, value)
         | (name, Just value) <-
             [ ("name", toMaybeJSON createName),
+              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
               ("default_permission", toMaybeJSON createDefaultPermission),
               ("type", Just $ Number 3)
             ]
@@ -464,21 +479,21 @@ nameIsValid isChatInput name = l >= 1 && l <= 32 && (isChatInput <= T.all (`elem
 -- than or equal to 100 characters.
 createChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
 createChatInput name desc
-  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name desc Nothing True
+  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name desc Nothing Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
 createUser :: T.Text -> Maybe CreateApplicationCommand
 createUser name
-  | nameIsValid False name = Just $ CreateApplicationCommandUser name True
+  | nameIsValid False name = Just $ CreateApplicationCommandUser name Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
 createMessage :: T.Text -> Maybe CreateApplicationCommand
 createMessage name
-  | nameIsValid False name = Just $ CreateApplicationCommandMessage name True
+  | nameIsValid False name = Just $ CreateApplicationCommandMessage name Nothing True
   | otherwise = Nothing
 
 -- | Data type to be used when editing application commands. The specification
