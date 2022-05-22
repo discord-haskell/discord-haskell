@@ -344,23 +344,26 @@ channelIsInGuild c = case c of
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
-  { overwriteId    :: OverwriteId -- ^ 'Role' or 'User' id
-  , overwriteType  :: Integer    -- ^ Either role (0) or member (1)
+  { overwriteId    :: Either RoleId UserId -- ^ 'Role' or 'User' id
   , overwriteAllow :: T.Text   -- ^ Allowed permission bit set
   , overwriteDeny  :: T.Text   -- ^ Denied permission bit set
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Overwrite where
-  parseJSON = withObject "Overwrite" $ \o ->
-    Overwrite <$> o .: "id"
-              <*> o .: "type"
-              <*> o .: "allow"
+  parseJSON = withObject "Overwrite" $ \o -> do
+    t <- o .: "type"
+    i <- case (t :: Int) of
+      0 -> Left <$> o .: "id"
+      1 -> Right <$> o .: "id"
+      _ -> error "Type field can only be 0 (role id) or 1 (user id)"
+    Overwrite i
+              <$> o .: "allow"
               <*> o .: "deny"
 
 instance ToJSON Overwrite where
   toJSON Overwrite{..} = object
-              [ ("id",     toJSON overwriteId)
-              , ("type",   toJSON overwriteType)
+              [ ("id",     toJSON $ either unId unId overwriteId)
+              , ("type",   toJSON $ (either (const 0) (const 1) overwriteId :: Int))
               , ("allow",  toJSON overwriteAllow)
               , ("deny",   toJSON overwriteDeny)
               ]

@@ -92,9 +92,6 @@ type StickerId = DiscordId StickerIdType
 data UserIdType
 type UserId = DiscordId UserIdType
 
-data OverwriteIdType
-type OverwriteId = DiscordId OverwriteIdType
-
 data RoleIdType
 type RoleId = DiscordId RoleIdType
 
