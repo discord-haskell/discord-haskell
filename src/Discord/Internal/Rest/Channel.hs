@@ -469,8 +469,8 @@ channelJsonRequest c = case c of
   (CreateChannelInvite chan patch) ->
       Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
-  (DeleteChannelPermission chan perm) ->
-      Delete (channels // chan /: "permissions" // perm) mempty
+  (DeleteChannelPermission chan overwriteId) ->
+      Delete (channels // chan /: "permissions" // either unId unId overwriteId) mempty
 
   (TriggerTypingIndicator chan) ->
       Post (channels // chan /: "typing") (pure R.NoReqBody) mempty
