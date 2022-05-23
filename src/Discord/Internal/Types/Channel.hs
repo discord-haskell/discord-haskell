@@ -602,8 +602,9 @@ instance ToJSON AllowedMentions where
                                  "users"        .= mentionUserIds,
                                  "replied_user" .= mentionRepliedUser ]
 
+-- | A reaction to a message
 data MessageReaction = MessageReaction
-  { messageReactionCount :: Int
+  { messageReactionCount :: Int 
   , messageReactionMeIncluded :: Bool
   , messageReactionEmoji :: Emoji
   } deriving (Show, Read, Eq, Ord)
