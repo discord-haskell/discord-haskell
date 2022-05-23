@@ -22,6 +22,7 @@ import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
+-- | Starts a thread for the cache
 startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
 startCacheThread log = do
   events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
