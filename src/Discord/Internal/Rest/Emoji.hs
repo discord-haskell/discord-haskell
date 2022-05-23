@@ -56,6 +56,7 @@ instance ToJSON ModifyGuildEmojiOpts where
 newtype EmojiImageParsed = EmojiImageParsed T.Text
   deriving (Show, Read, Eq, Ord)
 
+-- | Parse an image into an a format usable for an `Emoji`
 parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
 parseEmojiImage bs =
   if B.length bs > 256000
@@ -141,6 +142,7 @@ instance ToJSON StickerData where
         StickerDataAPNG _ -> "apng"
         StickerDataLOTTIE _ -> "lottie"
 
+-- | Options for `CreateGuildSticker`
 data CreateGuildStickerOpts = CreateGuildStickerOpts
   { guildStickerName :: T.Text,
     guildStickerDescription :: T.Text,
@@ -158,6 +160,7 @@ instance ToJSON CreateGuildStickerOpts where
         ("file", toJSON guildStickerFile)
       ]
 
+-- | Options for `ModifyGuildSticker`
 data EditGuildStickerOpts = EditGuildStickerOpts
   { editGuildStickerName :: Maybe T.Text,
     editGuildStickerDescription :: Maybe T.Text,
