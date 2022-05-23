@@ -83,16 +83,17 @@ instance FromJSON Webhook where
             <*> o .:? "token"
             <*> o .:  "channel_id"
 
+-- | The connection object that the user has attached.
 data ConnectionObject = ConnectionObject
-  { connectionObjectId :: Text
-  , connectionObjectName :: Text
-  , connectionObjectType :: Text
-  , connectionObjectRevoked :: Bool
-  , connectionObjectIntegrations :: [IntegrationId]
-  , connectionObjectVerified :: Bool
-  , connectionObjectFriendSyncOn :: Bool
-  , connectionObjectShownInPresenceUpdates :: Bool
-  , connectionObjectVisibleToOthers :: Bool
+  { connectionObjectId :: Text -- ^ id of the connection account
+  , connectionObjectName :: Text -- ^ the username of the connection account
+  , connectionObjectType :: Text -- ^ the service of the connection (twitch, youtube)
+  , connectionObjectRevoked :: Bool -- ^ whether the connection is revoked
+  , connectionObjectIntegrations :: [IntegrationId] -- ^ List of server `IntegrationId`
+  , connectionObjectVerified :: Bool -- ^ whether the connection is verified
+  , connectionObjectFriendSyncOn :: Bool -- ^ whether friend sync is enabled for this connection
+  , connectionObjectShownInPresenceUpdates :: Bool -- ^ whether activities related to this connection will be shown in presence updates
+  , connectionObjectVisibleToOthers :: Bool -- ^ visibility of this connection
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ConnectionObject where
