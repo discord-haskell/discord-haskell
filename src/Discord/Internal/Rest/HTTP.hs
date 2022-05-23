@@ -31,11 +31,17 @@ import qualified Data.Map.Strict as M
 import Discord.Internal.Types
 import Discord.Internal.Rest.Prelude
 
-data RestCallInternalException = RestCallInternalErrorCode Int B.ByteString B.ByteString
-                               | RestCallInternalNoParse String BL.ByteString
-                               | RestCallInternalHttpException R.HttpException
+-- | An exception in a Rest call
+data RestCallInternalException
+  -- | Error code from Discord
+  = RestCallInternalErrorCode Int B.ByteString B.ByteString
+  -- | Couldn't parse the response
+  | RestCallInternalNoParse String BL.ByteString
+  -- | Something went bad in the HTTP process
+  | RestCallInternalHttpException R.HttpException
   deriving (Show)
 
+-- | Rest event loop
 restLoop :: Auth -> Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
                  -> Chan T.Text -> IO ()
 restLoop auth urls log = loop M.empty
