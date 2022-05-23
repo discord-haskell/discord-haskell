@@ -22,7 +22,7 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Events
 import Discord.Internal.Types.Guild (Activity (..))
 
--- | Sent by gateway
+-- | Messages that can be sent by gateway to the library
 data GatewayReceivable
   = Dispatch EventInternalParse Integer
   | HeartbeatRequest Integer
@@ -41,7 +41,10 @@ data GatewaySendableInternal
   deriving (Show, Read, Eq, Ord)
 
 
--- | https://discord.com/developers/docs/topics/gateway#list-of-intents
+-- | Gateway intents to subrscribe to
+-- 
+-- Details of which intent englobs what data is avalilable at
+-- [the official Discord documentation](https://discord.com/developers/docs/topics/gateway#list-of-intents)
 data GatewayIntent = GatewayIntent
   { gatewayIntentGuilds :: Bool
   , gatewayIntentMembers :: Bool
@@ -51,7 +54,7 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentWebhooks :: Bool
   , gatewayIntentInvites :: Bool
   , gatewayIntentVoiceStates :: Bool
-  , gatewayIntentPrecenses :: Bool
+  , gatewayIntentPresenses :: Bool
   , gatewayIntentMessageChanges :: Bool
   , gatewayIntentMessageReactions :: Bool
   , gatewayIntentMessageTyping :: Bool
@@ -70,7 +73,7 @@ instance Default GatewayIntent where
                       , gatewayIntentWebhooks               = True
                       , gatewayIntentInvites                = True
                       , gatewayIntentVoiceStates            = True
-                      , gatewayIntentPrecenses              = False  -- false
+                      , gatewayIntentPresenses              = False  -- false
                       , gatewayIntentMessageChanges         = True
                       , gatewayIntentMessageReactions       = True
                       , gatewayIntentMessageTyping          = True
@@ -91,7 +94,7 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^  5, gatewayIntentWebhooks)
                        , (2 ^  6, gatewayIntentInvites)
                        , (2 ^  7, gatewayIntentVoiceStates)
-                       , (2 ^  8, gatewayIntentPrecenses)
+                       , (2 ^  8, gatewayIntentPresenses)
                        , (2 ^  9, gatewayIntentMessageChanges)
                        , (2 ^ 10, gatewayIntentMessageReactions)
                        , (2 ^ 11, gatewayIntentMessageTyping)
@@ -109,12 +112,14 @@ data GatewaySendable
   | UpdateStatusVoice UpdateStatusVoiceOpts
   deriving (Show, Read, Eq, Ord)
 
+-- | Options for `RequestGuildMembers`
 data RequestGuildMembersOpts = RequestGuildMembersOpts
                              { requestGuildMembersOptsGuildId :: GuildId
                              , requestGuildMembersOptsNamesStartingWith :: T.Text
                              , requestGuildMembersOptsLimit :: Integer }
   deriving (Show, Read, Eq, Ord)
 
+-- | Options for `UpdateStatusVoice`
 data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            { updateStatusVoiceOptsGuildId :: GuildId
                            , updateStatusVoiceOptsChannelId :: Maybe ChannelId
@@ -123,6 +128,7 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
                            }
   deriving (Show, Read, Eq, Ord)
 
+-- | Options for `UpdateStatus`
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusOptsSince :: Maybe UTCTime
                       , updateStatusOptsGame :: Maybe Activity
@@ -131,6 +137,7 @@ data UpdateStatusOpts = UpdateStatusOpts
                       }
   deriving (Show, Read, Eq, Ord)
 
+-- | Possible values for `updateStatusOptsNewStatus`
 data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusDoNotDisturb
                       | UpdateStatusAwayFromKeyboard
@@ -138,6 +145,8 @@ data UpdateStatusType = UpdateStatusOnline
                       | UpdateStatusOffline
   deriving (Show, Read, Eq, Ord, Enum)
 
+
+-- | Converts an UpdateStatusType to a textual representation
 statusString :: UpdateStatusType -> T.Text
 statusString s = case s of
   UpdateStatusOnline -> "online"
