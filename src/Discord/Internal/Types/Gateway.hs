@@ -54,7 +54,7 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentWebhooks :: Bool
   , gatewayIntentInvites :: Bool
   , gatewayIntentVoiceStates :: Bool
-  , gatewayIntentPresenses :: Bool
+  , gatewayIntentPresences :: Bool
   , gatewayIntentMessageChanges :: Bool
   , gatewayIntentMessageReactions :: Bool
   , gatewayIntentMessageTyping :: Bool
@@ -73,7 +73,7 @@ instance Default GatewayIntent where
                       , gatewayIntentWebhooks               = True
                       , gatewayIntentInvites                = True
                       , gatewayIntentVoiceStates            = True
-                      , gatewayIntentPresenses              = False  -- false
+                      , gatewayIntentPresences              = False  -- false
                       , gatewayIntentMessageChanges         = True
                       , gatewayIntentMessageReactions       = True
                       , gatewayIntentMessageTyping          = True
@@ -94,7 +94,7 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^  5, gatewayIntentWebhooks)
                        , (2 ^  6, gatewayIntentInvites)
                        , (2 ^  7, gatewayIntentVoiceStates)
-                       , (2 ^  8, gatewayIntentPresenses)
+                       , (2 ^  8, gatewayIntentPresences)
                        , (2 ^  9, gatewayIntentMessageChanges)
                        , (2 ^ 10, gatewayIntentMessageReactions)
                        , (2 ^ 11, gatewayIntentMessageTyping)

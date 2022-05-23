@@ -36,7 +36,7 @@ pingpongExample = do
                           , discordOnEnd = liftIO $ threadDelay (round (0.4 * 10^6)) >>  putStrLn "Ended"
                           , discordOnEvent = eventHandler
                           , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
-                          , discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses =True}
+                          , discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPresences =True}
                           }
 
   -- only reached on an unrecoverable error
