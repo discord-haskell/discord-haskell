@@ -15,7 +15,6 @@ module Discord.Internal.Rest.Channel
   , ModifyChannelOpts(..)
   , ChannelPermissionsOpts(..)
   , GroupDMAddRecipientOpts(..)
-  , ChannelPermissionsOptsType(..)
   , StartThreadOpts(..)
   , StartThreadNoMessageOpts(..)
   , ListThreads(..)
@@ -77,13 +76,13 @@ data ChannelRequest a where
   -- | Deletes a group of messages.
   BulkDeleteMessage         :: (ChannelId, [MessageId]) -> ChannelRequest ()
   -- | Edits a permission overrides for a channel.
-  EditChannelPermissions    :: ChannelId -> OverwriteId -> ChannelPermissionsOpts -> ChannelRequest ()
+  EditChannelPermissions    :: ChannelId -> Either RoleId UserId -> ChannelPermissionsOpts -> ChannelRequest ()
   -- | Gets all instant invites to a channel.
   GetChannelInvites         :: ChannelId -> ChannelRequest Object
   -- | Creates an instant invite to a channel.
   CreateChannelInvite       :: ChannelId -> ChannelInviteOpts -> ChannelRequest Invite
   -- | Deletes a permission override from a channel.
-  DeleteChannelPermission   :: ChannelId -> OverwriteId -> ChannelRequest ()
+  DeleteChannelPermission   :: ChannelId -> Either RoleId UserId -> ChannelRequest ()
   -- | Sends a typing indicator a channel which lasts 10 seconds.
   TriggerTypingIndicator    :: ChannelId -> ChannelRequest ()
   -- | Gets all pinned messages of a channel.
@@ -227,24 +226,14 @@ instance ToJSON ModifyChannelOpts where
                 ("locked",  toJSON <$> modifyChannelThreadLocked),
                 ("invitable",  toJSON <$> modifyChannelThreadInvitiable) ] ]
 
+-- | Since the JSON encoding of this datatype will require information in the
+-- route (the Either decides whether the overwrite is for a user or a role), we
+-- do not provide a ToJSON instance. Instead, the JSON is manually constructed
+-- in the 'channelJsonRequest' function.
 data ChannelPermissionsOpts = ChannelPermissionsOpts
   { channelPermissionsOptsAllow :: Integer
   , channelPermissionsOptsDeny :: Integer
-  , channelPermissionsOptsType :: ChannelPermissionsOptsType
   } deriving (Show, Read, Eq, Ord)
-
-data ChannelPermissionsOptsType = ChannelPermissionsOptsUser
-                                | ChannelPermissionsOptsRole
-  deriving (Show, Read, Eq, Ord)
-
-instance ToJSON ChannelPermissionsOptsType where
-  toJSON t = case t of ChannelPermissionsOptsUser -> String "member"
-                       ChannelPermissionsOptsRole -> String "role"
-
-instance ToJSON ChannelPermissionsOpts where
-  toJSON (ChannelPermissionsOpts a d t) = object [ ("allow", toJSON a )
-                                                 , ("deny", toJSON d)
-                                                 , ("type", toJSON t)]
 
 -- | https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
 data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
@@ -468,8 +457,11 @@ channelJsonRequest c = case c of
       let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
       in Post (channels // chan /: "messages" /: "bulk-delete") body mempty
 
-  (EditChannelPermissions chan perm patch) ->
-      Put (channels // chan /: "permissions" // perm) (R.ReqBodyJson patch) mempty
+  (EditChannelPermissions chan overwriteId (ChannelPermissionsOpts a d)) ->
+      let body = R.ReqBodyJson $ object [("type", toJSON $ (either (const 0) (const 1) overwriteId :: Int))
+                                        ,("allow", toJSON a)
+                                        ,("deny", toJSON d)]
+      in Put (channels // chan /: "permissions" // either unId unId overwriteId) body mempty
 
   (GetChannelInvites chan) ->
       Get (channels // chan /: "invites") mempty
@@ -477,8 +469,8 @@ channelJsonRequest c = case c of
   (CreateChannelInvite chan patch) ->
       Post (channels // chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
 
-  (DeleteChannelPermission chan perm) ->
-      Delete (channels // chan /: "permissions" // perm) mempty
+  (DeleteChannelPermission chan overwriteId) ->
+      Delete (channels // chan /: "permissions" // either unId unId overwriteId) mempty
 
   (TriggerTypingIndicator chan) ->
       Post (channels // chan /: "typing") (pure R.NoReqBody) mempty
