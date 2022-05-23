@@ -38,15 +38,16 @@ data Channel
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
       }
+  -- | A news Channel in a guild.
   | ChannelNews
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelName        :: T.Text
-      , channelPosition    :: Integer
-      , channelPermissions :: [Overwrite]
-      , channelNSFW        :: Bool
-      , channelTopic       :: T.Text
-      , channelLastMessage :: Maybe MessageId
+      { channelId          :: ChannelId -- ^ The id of the channel
+      , channelGuild       :: GuildId -- ^ The id of the guild
+      , channelName        :: T.Text -- ^ The name of the channel (2 - 1000 characters)
+      , channelPosition    :: Integer -- ^ The position of the channel
+      , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overrite's
+      , channelNSFW        :: Bool -- ^ Is not-safe-for-work
+      , channelTopic       :: T.Text -- ^ Topic of the channel (0 - 1024 characters)
+      , channelLastMessage :: Maybe MessageId -- ^ The ID of the last message of the channel
       }
   | ChannelStorePage
       { channelId          :: ChannelId
