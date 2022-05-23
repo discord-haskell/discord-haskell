@@ -14,6 +14,7 @@ import Data.Aeson.Types
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
+import Web.Internal.HttpApiData
 
 import Data.Bifunctor (first)
 import Text.Read (readMaybe)
@@ -119,14 +120,27 @@ type ScheduledEventId = DiscordId ScheduledEventIdType
 data ScheduledEventEntityIdType
 type ScheduledEventEntityId = DiscordId ScheduledEventEntityIdType
 
-newtype InteractionToken = InteractionToken T.Text
-  deriving (Show, Read, Eq, Ord)
+newtype DiscordToken a = DiscordToken { unToken :: T.Text }
+  deriving (Ord, Eq)
 
-instance ToJSON InteractionToken where
-  toJSON (InteractionToken token) = String token
+instance Show (DiscordToken a) where
+  show = show . unToken
 
-instance FromJSON InteractionToken where
-  parseJSON = withText "InteractionToken" (pure . InteractionToken)
+instance Read (DiscordToken a) where
+  readsPrec p = fmap (first DiscordToken) . readsPrec p
+
+instance ToJSON (DiscordToken a) where
+  toJSON = toJSON . unToken
+
+instance FromJSON (DiscordToken a) where
+  parseJSON = fmap DiscordToken . parseJSON
+
+instance ToHttpApiData (DiscordToken a) where
+  toUrlPiece = unToken
+
+type InteractionToken = DiscordToken InteractionIdType
+
+type WebhookToken = DiscordToken WebhookIdType
 
 type Shard = (Int, Int)
 

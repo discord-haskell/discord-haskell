@@ -109,3 +109,4 @@ library
                      , mtl
                      , unliftio
                      , scientific
+                     , http-api-data

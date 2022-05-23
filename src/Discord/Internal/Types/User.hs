@@ -73,7 +73,7 @@ instance ToJSON User where
 -- TODO: fully update webhook structure
 data Webhook = Webhook
   { webhookId :: WebhookId
-  , webhookToken :: Maybe Text
+  , webhookToken :: Maybe WebhookToken
   , webhookChannelId :: ChannelId
   } deriving (Show, Read, Eq, Ord)
 

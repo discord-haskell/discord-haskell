@@ -13,7 +13,6 @@ import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
-import qualified Data.Text as T
 
 data InteractionResponseRequest a where
   CreateInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
@@ -41,12 +40,12 @@ interactionResponseMajorRoute a = case a of
   (DeleteFollowupInteractionMessage aid _ _) -> "intrespf " <> show aid
 
 interaction :: ApplicationId -> InteractionToken -> R.Url 'R.Https
-interaction aid it = baseUrl /: "webhooks" // aid /: fromToken it /: "messages"
+interaction aid it = baseUrl /: "webhooks" // aid R./~ it /: "messages"
 
 interactionResponseJsonRequest :: InteractionResponseRequest a -> JsonRequest
 interactionResponseJsonRequest a = case a of
   (CreateInteractionResponse iid it i) ->
-    Post (baseUrl /: "interactions" // iid /: fromToken it /: "callback") (convert i) mempty
+    Post (baseUrl /: "interactions" // iid R./~ it /: "callback") (convert i) mempty
   (GetOriginalInteractionResponse aid it) ->
     Get (interaction aid it /: "@original") mempty
   (EditOriginalInteractionResponse aid it i) ->
@@ -54,7 +53,7 @@ interactionResponseJsonRequest a = case a of
   (DeleteOriginalInteractionResponse aid it) ->
     Delete (interaction aid it /: "@original") mempty
   (CreateFollowupInteractionMessage aid it i) ->
-    Post (baseUrl /: "webhooks" // aid /: fromToken it) (convertIRM i) mempty
+    Post (baseUrl /: "webhooks" // aid R./~ it) (convertIRM i) mempty
   (GetFollowupInteractionMessage aid it mid) ->
     Get (interaction aid it // mid) mempty
   (EditFollowupInteractionMessage aid it mid i) ->
@@ -72,6 +71,3 @@ interactionResponseJsonRequest a = case a of
     convert' InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
       Nothing -> []
       Just f -> (maybeEmbed . Just) =<< f
-
-fromToken :: InteractionToken -> T.Text
-fromToken (InteractionToken t) = t
