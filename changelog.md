@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+[yutotakano](https://github.com/aquarial/discord-haskell/pull/121) Replace `OverwriteId` with `Either RoleId UserId` in `ChannelPermission` requests, and remove the `type` field from `ChannelPermissionsOpts`
+
 ## 1.13.0
 
 [L0neGamer](https://github.com/aquarial/discord-haskell/pull/117) Shorten ApplicationCommand names! To update search [the pull-request](https://github.com/aquarial/discord-haskell/pull/117/files) for what the names are replaced with
