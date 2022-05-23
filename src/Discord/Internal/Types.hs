@@ -29,6 +29,7 @@ import Discord.Internal.Types.Guild
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
 
+-- | Converts an internal event to its user facing counterpart
 userFacingEvent :: EventInternalParse -> Event
 userFacingEvent event = case event of
   InternalReady a b c d e f g -> Ready a b c d e f g
