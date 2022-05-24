@@ -41,7 +41,7 @@ data ApplicationCommandRequest a where
   BatchEditApplicationCommandPermissions :: ApplicationId -> GuildId -> [GuildApplicationCommandPermissions] -> ApplicationCommandRequest [GuildApplicationCommandPermissions]
 
 applications :: ApplicationId -> R.Url 'R.Https
-applications s = baseUrl /: "applications" // s
+applications s = baseUrl /: "applications" /~ s
 
 applicationCommandMajorRoute :: ApplicationCommandRequest a -> String
 applicationCommandMajorRoute a = case a of
@@ -69,33 +69,33 @@ applicationCommandJsonRequest a = case a of
   (CreateGlobalApplicationCommand aid cac) ->
     Post (applications aid /: "commands") (convert cac) mempty
   (GetGlobalApplicationCommand aid aci) ->
-    Get (applications aid /: "commands" // aci) mempty
+    Get (applications aid /: "commands" /~ aci) mempty
   (EditGlobalApplicationCommand aid aci eac) ->
-    Patch (applications aid /: "commands" // aci) (convert eac) mempty
+    Patch (applications aid /: "commands" /~ aci) (convert eac) mempty
   (DeleteGlobalApplicationCommand aid aci) ->
-    Delete (applications aid /: "commands" // aci) mempty
+    Delete (applications aid /: "commands" /~ aci) mempty
   (BulkOverWriteGlobalApplicationCommand aid cacs) ->
     Put (applications aid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
   (GetGuildApplicationCommands aid gid) ->
-    Get (applications aid /: "guilds" // gid /: "commands") mempty
+    Get (applications aid /: "guilds" /~ gid /: "commands") mempty
   (CreateGuildApplicationCommand aid gid cac) ->
-    Post (applications aid /: "guilds" // gid /: "commands") (convert cac) mempty
+    Post (applications aid /: "guilds" /~ gid /: "commands") (convert cac) mempty
   (GetGuildApplicationCommand aid gid aci) ->
-    Get (applications aid /: "guilds" // gid /: "commands" // aci) mempty
+    Get (applications aid /: "guilds" /~ gid /: "commands" /~ aci) mempty
   (EditGuildApplicationCommand aid gid aci eac) ->
-    Patch (applications aid /: "guilds" // gid /: "commands" // aci) (convert eac) mempty
+    Patch (applications aid /: "guilds" /~ gid /: "commands" /~ aci) (convert eac) mempty
   (DeleteGuildApplicationCommand aid gid aci) ->
-    Delete (applications aid /: "guilds" // gid /: "commands" // aci) mempty
+    Delete (applications aid /: "guilds" /~ gid /: "commands" /~ aci) mempty
   (BulkOverWriteGuildApplicationCommand aid gid cacs) ->
-    Put (applications aid /: "guilds" // gid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
+    Put (applications aid /: "guilds" /~ gid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
   (GetGuildApplicationCommandPermissions aid gid) ->
-    Get (applications aid /: "guilds" // gid /: "commands" /: "permissions") mempty
+    Get (applications aid /: "guilds" /~ gid /: "commands" /: "permissions") mempty
   (GetApplicationCommandPermissions aid gid cid) ->
-    Get (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") mempty
+    Get (applications aid /: "guilds" /~ gid /: "commands" /~ cid /: "permissions") mempty
   (EditApplicationCommandPermissions aid gid cid ps) ->
-    Put (applications aid /: "guilds" // gid /: "commands" // cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions cid aid gid ps)) mempty
+    Put (applications aid /: "guilds" /~ gid /: "commands" /~ cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions cid aid gid ps)) mempty
   (BatchEditApplicationCommandPermissions aid gid ps) ->
-    Put (applications aid /: "guilds" // gid /: "commands" /: "permissions") (R.ReqBodyJson $ toJSON ps) mempty
+    Put (applications aid /: "guilds" /~ gid /: "commands" /: "permissions") (R.ReqBodyJson $ toJSON ps) mempty
   where
     convert :: (ToJSON a) => a -> RestIO (ReqBodyJson Value)
     convert = (pure @RestIO) . R.ReqBodyJson . toJSON

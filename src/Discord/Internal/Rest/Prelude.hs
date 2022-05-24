@@ -37,9 +37,9 @@ authHeader auth =
   agent = "DiscordBot (https://github.com/aquarial/discord-haskell, 1.13.0)"
 
 -- Append to an URL
-infixl 5 //
-(//) :: Show a => R.Url scheme -> a -> R.Url scheme
-(//) url part = url R./: T.pack (show part)
+-- infixl 5 //
+-- (//) :: Show a => R.Url scheme -> a -> R.Url scheme
+-- (//) url part = url R./: T.pack (show part)
 
 -- Possibly append to an URL
 infixl 5 /?

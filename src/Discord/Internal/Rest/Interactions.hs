@@ -11,7 +11,7 @@ import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
-import Network.HTTP.Req ((/:))
+import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 
 data InteractionResponseRequest a where
@@ -40,12 +40,12 @@ interactionResponseMajorRoute a = case a of
   (DeleteFollowupInteractionMessage aid _ _) -> "intrespf " <> show aid
 
 interaction :: ApplicationId -> InteractionToken -> R.Url 'R.Https
-interaction aid it = baseUrl /: "webhooks" // aid R./~ it /: "messages"
+interaction aid it = baseUrl /: "webhooks" /~ aid /~ it /: "messages"
 
 interactionResponseJsonRequest :: InteractionResponseRequest a -> JsonRequest
 interactionResponseJsonRequest a = case a of
   (CreateInteractionResponse iid it i) ->
-    Post (baseUrl /: "interactions" // iid R./~ it /: "callback") (convert i) mempty
+    Post (baseUrl /: "interactions" /~ iid /~ it /: "callback") (convert i) mempty
   (GetOriginalInteractionResponse aid it) ->
     Get (interaction aid it /: "@original") mempty
   (EditOriginalInteractionResponse aid it i) ->
@@ -53,13 +53,13 @@ interactionResponseJsonRequest a = case a of
   (DeleteOriginalInteractionResponse aid it) ->
     Delete (interaction aid it /: "@original") mempty
   (CreateFollowupInteractionMessage aid it i) ->
-    Post (baseUrl /: "webhooks" // aid R./~ it) (convertIRM i) mempty
+    Post (baseUrl /: "webhooks" /~ aid /~ it) (convertIRM i) mempty
   (GetFollowupInteractionMessage aid it mid) ->
-    Get (interaction aid it // mid) mempty
+    Get (interaction aid it /~ mid) mempty
   (EditFollowupInteractionMessage aid it mid i) ->
-    Patch (interaction aid it // mid) (convert i) mempty
+    Patch (interaction aid it /~ mid) (convert i) mempty
   (DeleteFollowupInteractionMessage aid it mid) ->
-    Delete (interaction aid it // mid) mempty
+    Delete (interaction aid it /~ mid) mempty
   where
     convert :: InteractionResponse -> RestIO R.ReqBodyMultipart
     convert ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)

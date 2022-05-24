@@ -23,7 +23,7 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
-import Network.HTTP.Req ((/:))
+import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 
 instance Request (EmojiRequest a) where
@@ -107,11 +107,11 @@ guilds = baseUrl /: "guilds"
 
 emojiJsonRequest :: EmojiRequest r -> JsonRequest
 emojiJsonRequest c = case c of
-  (ListGuildEmojis g) -> Get (guilds // g /: "emojis") mempty
-  (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty
+  (ListGuildEmojis g) -> Get (guilds /~ g /: "emojis") mempty
+  (GetGuildEmoji g e) -> Get (guilds /~ g /: "emojis" /~ e) mempty
   (CreateGuildEmoji g name (EmojiImageParsed im)) ->
     Post
-      (guilds // g /: "emojis")
+      (guilds /~ g /: "emojis")
       ( pure
           ( R.ReqBodyJson
               ( object
@@ -125,10 +125,10 @@ emojiJsonRequest c = case c of
       mempty
   (ModifyGuildEmoji g e o) ->
     Patch
-      (guilds // g /: "emojis" // e)
+      (guilds /~ g /: "emojis" /~ e)
       (pure (R.ReqBodyJson o))
       mempty
-  (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty
+  (DeleteGuildEmoji g e) -> Delete (guilds /~ g /: "emojis" /~ e) mempty
 
 data StickerData = StickerDataPNG {stickerData :: B.ByteString} | StickerDataAPNG {stickerData :: B.ByteString} | StickerDataLOTTIE {stickerData :: B.ByteString}
   deriving (Show, Read, Eq, Ord)
@@ -212,12 +212,12 @@ stickerMajorRoute = \case
 
 stickerJsonRequest :: StickerRequest a -> JsonRequest
 stickerJsonRequest = \case
-  GetSticker gid -> Get (baseUrl /: "stickers" // gid) mempty
+  GetSticker gid -> Get (baseUrl /: "stickers" /~ gid) mempty
   ListNitroStickerPacks -> Get (baseUrl /: "sticker-packs") mempty
   ListGuildStickers gid -> Get (stickersGuild gid) mempty
-  GetGuildSticker gid sid -> Get (stickersGuild gid // sid) mempty
+  GetGuildSticker gid sid -> Get (stickersGuild gid /~ sid) mempty
   CreateGuildSticker gid cgso -> Post (stickersGuild gid) (pure $ R.ReqBodyJson $ toJSON cgso) mempty
-  ModifyGuildSticker gid sid egso -> Patch (stickersGuild gid // sid) (pure $ R.ReqBodyJson egso) mempty
-  DeleteGuildSticker gid sid -> Delete (stickersGuild gid // sid) mempty
+  ModifyGuildSticker gid sid egso -> Patch (stickersGuild gid /~ sid) (pure $ R.ReqBodyJson egso) mempty
+  DeleteGuildSticker gid sid -> Delete (stickersGuild gid /~ sid) mempty
   where
-    stickersGuild gid = baseUrl /: "guilds" // gid /: "stickers"
+    stickersGuild gid = baseUrl /: "guilds" /~ gid /: "stickers"

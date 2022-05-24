@@ -17,7 +17,7 @@ import           Data.Aeson
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import           Network.HTTP.Req ((/:))
+import           Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
 import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
@@ -120,32 +120,32 @@ webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->
     let body = pure (R.ReqBodyJson patch)
-    in Post (baseUrl /: "channels" // channel /: "webhooks") body  mempty
+    in Post (baseUrl /: "channels" /~ channel /: "webhooks") body  mempty
 
   (GetChannelWebhooks c) ->
-    Get (baseUrl /: "channels" // c /: "webhooks")  mempty
+    Get (baseUrl /: "channels" /~ c /: "webhooks")  mempty
 
   (GetGuildWebhooks g) ->
-    Get (baseUrl /: "guilds" // g /: "webhooks")  mempty
+    Get (baseUrl /: "guilds" /~ g /: "webhooks")  mempty
 
   (GetWebhook w t) ->
-    Get (baseUrl /: "webhooks" // w /? t)  mempty
+    Get (baseUrl /: "webhooks" /~ w /? t)  mempty
 
   (ModifyWebhook w t p) ->
-    Patch (baseUrl /: "webhooks" // w /? t) (pure (R.ReqBodyJson p))  mempty
+    Patch (baseUrl /: "webhooks" /~ w /? t) (pure (R.ReqBodyJson p))  mempty
 
   (DeleteWebhook w t) ->
-    Delete (baseUrl /: "webhooks" // w /? t)  mempty
+    Delete (baseUrl /: "webhooks" /~ w /? t)  mempty
 
   (ExecuteWebhook w tok o) ->
     case executeWebhookWithTokenOptsContent o of
       WebhookContentFile name text  ->
         let part = partFileRequestBody "file" (T.unpack name) (RequestBodyBS text)
             body = R.reqBodyMultipart [part]
-        in Post (baseUrl /: "webhooks" // w R./~ tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentText _ ->
         let body = pure (R.ReqBodyJson o)
-        in Post (baseUrl /: "webhooks" // w R./~ tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentEmbeds embeds ->
         let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
             uploads CreateEmbed{..} = [(n,c) | (n, Just (CreateEmbedImageUpload c)) <-
@@ -156,13 +156,13 @@ webhookJsonRequest ch = case ch of
             parts =  map mkPart (concatMap uploads embeds)
             partsJson = [partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["embed" .= createEmbed e] | e <- embeds]
             body = R.reqBodyMultipart (partsJson ++ parts)
-        in Post (baseUrl /: "webhooks" // w /: unToken tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /: unToken tok) body mempty
 
   (GetWebhookMessage w t m) ->
-    Get (baseUrl /: "webhooks" // w R./~ t /: "messages" // m)  mempty
+    Get (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty
 
   (EditWebhookMessage w t m p) ->
-    Patch (baseUrl /: "webhooks" // w R./~ t /: "messages" // m) (pure (R.ReqBodyJson p))  mempty
+    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (pure (R.ReqBodyJson p))  mempty
 
   (DeleteWebhookMessage w t m) ->
-    Delete (baseUrl /: "webhooks" // w R./~ t /: "messages" // m)  mempty
+    Delete (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty

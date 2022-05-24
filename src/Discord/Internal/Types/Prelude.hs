@@ -54,6 +54,9 @@ instance FromJSON Snowflake where
             (Just i) -> pure i
       )
 
+instance ToHttpApiData Snowflake where
+  toUrlPiece = T.pack . show
+
 newtype DiscordId a = DiscordId { unId :: Snowflake }
   deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
 
@@ -68,6 +71,9 @@ instance ToJSON (DiscordId a) where
 
 instance FromJSON (DiscordId a) where
   parseJSON = fmap DiscordId . parseJSON
+
+instance ToHttpApiData (DiscordId a) where
+  toUrlPiece = T.pack . show
 
 data ChannelIdType
 type ChannelId = DiscordId ChannelIdType
