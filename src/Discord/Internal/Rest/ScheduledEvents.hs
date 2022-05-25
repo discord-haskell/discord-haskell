@@ -50,7 +50,7 @@ data ScheduledEventRequest a where
   DeleteScheduledEvent   ::GuildId
                          -> ScheduledEventId
                          -> ScheduledEventRequest ()
-  -- | Gets the Users that subsribed to the event
+  -- | Gets the Users that subscribed to the event
   GetScheduledEventUsers ::GuildId
                          -> ScheduledEventId
                          -> ScheduledEventRequest [ScheduledEventUser]

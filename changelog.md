@@ -6,6 +6,8 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+[Annwan](https://github.com/aquarial/discord-haskell/pull/123) Huge documentation flourish. Removed deprecated AppCommandPermissions func & fix presences typo
+
 [yutotakano](https://github.com/aquarial/discord-haskell/pull/121) Replace `OverwriteId` with `Either RoleId UserId` in `ChannelPermission` requests, and remove the `type` field from `ChannelPermissionsOpts`
 
 ## 1.13.0
