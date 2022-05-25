@@ -128,16 +128,24 @@ data ChannelRequest a where
   ListJoinedPrivateArchivedThreads :: ChannelId -> (Maybe UTCTime, Maybe Integer) -> ChannelRequest ListThreads
 
 
--- | Data constructor for CreateMessageDetailed requests.
+-- | Options for `CreateMessageDetailed` requests.
 data MessageDetailedOpts = MessageDetailedOpts
-  { messageDetailedContent                  :: T.Text
-  , messageDetailedTTS                      :: Bool
-  , messageDetailedEmbeds                   :: Maybe [CreateEmbed]
-  , messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
-  , messageDetailedAllowedMentions          :: Maybe AllowedMentions
-  , messageDetailedReference                :: Maybe MessageReference
-  , messageDetailedComponents               :: Maybe [ActionRow]
-  , messageDetailedStickerIds               :: Maybe [StickerId]
+  { -- | The message contents (up to 2000 characters)
+    messageDetailedContent                  :: T.Text
+  , -- | `True` if this is a TTS message
+    messageDetailedTTS                      :: Bool
+  , -- | embedded rich content (up to 6000 characters)
+    messageDetailedEmbeds                   :: Maybe [CreateEmbed]
+  , -- | the contents of the file being sent
+    messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
+  , -- | allowed mentions for the message
+    messageDetailedAllowedMentions          :: Maybe AllowedMentions
+  , -- | If `Just`, reply to the message referenced
+    messageDetailedReference                :: Maybe MessageReference
+  , -- | Message components for the message
+    messageDetailedComponents               :: Maybe [ActionRow]
+  , -- | IDs of up to 3 `Sticker` in the server to send with the message
+    messageDetailedStickerIds               :: Maybe [StickerId]
   } deriving (Show, Read, Eq, Ord)
 
 instance Default MessageDetailedOpts where
@@ -151,7 +159,7 @@ instance Default MessageDetailedOpts where
                             , messageDetailedStickerIds      = Nothing
                             }
 
--- | Data constructor for GetReaction requests
+-- | Data constructor for `GetReactions` requests
 data ReactionTiming = BeforeReaction MessageId
                     | AfterReaction MessageId
                     | LatestReaction
@@ -163,7 +171,9 @@ reactionTimingToQuery t = case t of
   (AfterReaction snow) -> "after"  R.=: show snow
   (LatestReaction) -> mempty
 
--- | Data constructor for GetChannelMessages requests. See <https://discord.com/developers/docs/resources/channel#get-channel-messages>
+-- | Data constructor for `GetChannelMessages` requests.
+-- 
+-- See <https://discord.com/developers/docs/resources/channel#get-channel-messages>
 data MessageTiming = AroundMessage MessageId
                    | BeforeMessage MessageId
                    | AfterMessage MessageId
@@ -177,11 +187,17 @@ messageTimingToQuery t = case t of
   (AfterMessage snow) -> "after"  R.=: show snow
   (LatestMessages) -> mempty
 
+-- | Options for `CreateChannelInvite` requests
 data ChannelInviteOpts = ChannelInviteOpts
-  { channelInviteOptsMaxAgeSeconds          :: Maybe Integer
-  , channelInviteOptsMaxUsages              :: Maybe Integer
-  , channelInviteOptsIsTemporary            :: Maybe Bool
-  , channelInviteOptsDontReuseSimilarInvite :: Maybe Bool
+  { -- | How long the invite is valid for (in seconds)
+    channelInviteOptsMaxAgeSeconds          :: Maybe Integer
+  , -- | How many uses the invite is valid for
+    channelInviteOptsMaxUsages              :: Maybe Integer
+  , -- | Whether this invite only grants temporary membership
+    channelInviteOptsIsTemporary            :: Maybe Bool
+  , -- | Don't reuse a similar invite. Useful for creating many unique one time
+    -- use invites
+    channelInviteOptsDontReuseSimilarInvite :: Maybe Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ChannelInviteOpts where
@@ -191,24 +207,46 @@ instance ToJSON ChannelInviteOpts where
                           ("temporary", toJSON <$> channelInviteOptsIsTemporary),
                           ("unique",    toJSON <$> channelInviteOptsDontReuseSimilarInvite) ] ]
 
+-- | Options for `ModifyChannel` requests
 data ModifyChannelOpts = ModifyChannelOpts
-  { modifyChannelName                 :: Maybe T.Text
-  , modifyChannelPosition             :: Maybe Integer
-  , modifyChannelTopic                :: Maybe T.Text
-  , modifyChannelNSFW                 :: Maybe Bool
-  , modifyChannelBitrate              :: Maybe Integer
-  , modifyChannelUserRateLimit        :: Maybe Integer
-  , modifyChannelPermissionOverwrites :: Maybe [Overwrite]
-  , modifyChannelParentId             :: Maybe ChannelId
-  , modifyChannelDefaultAutoArchive   :: Maybe Integer
-  , modifyChannelThreadArchived       :: Maybe Bool
-  , modifyChannelThreadAutoArchive    :: Maybe Integer
-  , modifyChannelThreadLocked         :: Maybe Bool
-  , modifyChannelThreadInvitiable     :: Maybe Bool
+  { -- | (All) The name of the channel (max 100 characters)
+    modifyChannelName                 :: Maybe T.Text
+  , -- | (All) Position of the channel in the listing
+    modifyChannelPosition             :: Maybe Integer
+  , -- | (Text) The channel topic text (max 1024 characters)
+    modifyChannelTopic                :: Maybe T.Text
+  , -- | (Text) Wether the channel is tagged as NSFW
+    modifyChannelNSFW                 :: Maybe Bool
+  , -- | (Voice) Bitrate (in bps) of a voice channel. Min 8000, max 96000
+    -- (128000 for boosted servers)
+    modifyChannelBitrate              :: Maybe Integer
+  , -- | (Text) The rate limit of the channel, in seconds (0-21600), does not
+    -- affect bots and users with @manage_channel@ or @manage_messages@
+    -- permissons
+    modifyChannelUserRateLimit        :: Maybe Integer
+  , -- | (Voice) the user limit of the voice channel, max 99
+    modifyChannelUserLimit            :: Maybe Integer
+  , -- | (All) The channel permissions
+    modifyChannelPermissionOverwrites :: Maybe [Overwrite]
+  , -- | (All) The parent category of the channel
+    modifyChannelParentId             :: Maybe ChannelId
+  , -- | (Text) Auto-archive duration for Threads
+    modifyChannelDefaultAutoArchive   :: Maybe Integer
+  , -- | (Thread) Whether the thread is archived
+    modifyChannelThreadArchived       :: Maybe Bool
+  , -- | (Thread) duration in minutes to automatically archive the thread after
+    -- recent activity, can be set to: 60, 1440, 4320 or 10080
+    modifyChannelThreadAutoArchive    :: Maybe Integer
+  , -- | (Thread) Whether the thread is locked. When a thread is locked, only
+    -- users with @manage_threads@ can unarchive it
+    modifyChannelThreadLocked         :: Maybe Bool
+  , -- | (Thread) Whether non-moderators can add other non-moderators to a
+    -- thread. Only available on private threads
+    modifyChannelThreadInvitable     :: Maybe Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance Default ModifyChannelOpts where
-  def = ModifyChannelOpts Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+  def = ModifyChannelOpts Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ModifyChannelOpts where
   toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
@@ -217,35 +255,53 @@ instance ToJSON ModifyChannelOpts where
                 ("topic",      toJSON <$> modifyChannelTopic),
                 ("nsfw",       toJSON <$> modifyChannelNSFW),
                 ("bitrate",    toJSON <$> modifyChannelBitrate),
-                ("user_limit", toJSON <$> modifyChannelUserRateLimit),
+                ("rate_limit_per_user", toJSON <$> modifyChannelUserRateLimit),
+                ("user_limit", toJSON <$> modifyChannelUserLimit),
                 ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
                 ("parent_id",  toJSON <$> modifyChannelParentId),
                 ("default_auto_archive_duration",  toJSON <$> modifyChannelDefaultAutoArchive),
                 ("archived",  toJSON <$> modifyChannelThreadArchived),
                 ("auto_archive_duration",  toJSON <$> modifyChannelThreadAutoArchive),
                 ("locked",  toJSON <$> modifyChannelThreadLocked),
-                ("invitable",  toJSON <$> modifyChannelThreadInvitiable) ] ]
+                ("invitable",  toJSON <$> modifyChannelThreadInvitable) ] ]
 
--- | Since the JSON encoding of this datatype will require information in the
+-- | Options for The `EditChannelPermissions` request
+--
+-- Since the JSON encoding of this datatype will require information in the
 -- route (the Either decides whether the overwrite is for a user or a role), we
 -- do not provide a ToJSON instance. Instead, the JSON is manually constructed
 -- in the 'channelJsonRequest' function.
 data ChannelPermissionsOpts = ChannelPermissionsOpts
-  { channelPermissionsOptsAllow :: Integer
-  , channelPermissionsOptsDeny :: Integer
+  { -- | The permission integer for the explicitly allowed permissions
+    channelPermissionsOptsAllow :: Integer
+  , -- | The permission integer for the explicitly denied permissions
+    channelPermissionsOptsDeny :: Integer
   } deriving (Show, Read, Eq, Ord)
 
--- | https://discord.com/developers/docs/resources/channel#group-dm-add-recipient
+-- | Options for `GroupDMAddRecipient` request
+--
+-- See <https://discord.com/developers/docs/resources/channel#group-dm-add-recipient>
 data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
-  { groupDMAddRecipientUserToAdd :: UserId
-  , groupDMAddRecipientUserToAddNickName :: T.Text
-  , groupDMAddRecipientGDMJoinAccessToken :: T.Text
+  { -- | The id of the user to add to the Group DM
+    groupDMAddRecipientUserToAdd :: UserId
+  , -- | The nickname given to the user being added
+    groupDMAddRecipientUserToAddNickName :: T.Text
+  , -- | Access token of the user. That user must have granted your app the
+    -- @gdm.join@ scope.
+    groupDMAddRecipientGDMJoinAccessToken :: T.Text
   } deriving (Show, Read, Eq, Ord)
 
+-- | Options for `StartThreadFromMessage` request
 data StartThreadOpts = StartThreadOpts 
-  { startThreadName :: T.Text
-  , startThreadAutoArchive :: Maybe Integer -- ^ can be one of 60, 1440, 4320, 10080
-  , startThreadRateLimit :: Maybe Integer
+  { -- | Name of the thread
+    startThreadName :: T.Text
+  , -- | Period of innactivity after which the thread gets archived in minutes.
+    -- 
+    -- Can be one of 60, 1440, 4320, 10080
+    startThreadAutoArchive :: Maybe Integer
+  , -- | Amount of seconds a user has to wait before sending another message
+    -- (0-21600)
+    startThreadRateLimit :: Maybe Integer
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON StartThreadOpts where
@@ -256,10 +312,18 @@ instance ToJSON StartThreadOpts where
       ]
     ]
 
+-- | Options for `StartThreadNoMessage` request
 data StartThreadNoMessageOpts = StartThreadNoMessageOpts
-  { startThreadNoMessageBaseOpts :: StartThreadOpts
-  , startThreadNoMessageType :: Integer -- ^ 10, 11, or 12 (https://discord.com/developers/docs/resources/channel#channel-object-channel-types)
-  , startThreadNoMessageInvitable :: Maybe Bool
+  { -- | Base options for the thread
+    startThreadNoMessageBaseOpts :: StartThreadOpts
+  , -- | The type of thread to create
+    --
+    -- Can be @10@, @11@, or @12@. See
+    -- <https://discord.com/developers/docs/resources/channel#channel-object-channel-types>
+    startThreadNoMessageType :: Integer
+  , -- | Whether non-moderators can add other non-moderators to a thread. Only
+    -- available when creating a private thread.
+    startThreadNoMessageInvitable :: Maybe Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON StartThreadNoMessageOpts where
@@ -272,10 +336,16 @@ instance ToJSON StartThreadNoMessageOpts where
       ]
     ]
 
+-- | Result type of `ListJoinedPrivateArchivedThreads`,
+-- `ListPrivateArchivedThreads` and `ListPublicArchivedThreads`
 data ListThreads = ListThreads 
-  { listThreadsThreads :: [Channel]
-  , listThreadsMembers :: [ThreadMember]
-  , listThreadsHasMore :: Bool -- ^ whether there is more data to retrieve
+  { -- | The returned threads
+    listThreadsThreads :: [Channel]
+  , -- | A thread member object for each returned thread the current user has
+    -- joined
+    listThreadsMembers :: [ThreadMember]
+  ,  -- | Whether there is more data to retrieve
+    listThreadsHasMore :: Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ListThreads where

@@ -150,6 +150,7 @@ instance ToJSON StickerItem where
         ("format_type", toJSON stickerItemFormatType)
       ]
 
+-- | The format of a sticker
 data StickerFormatType
   = StickerFormatTypePNG
   | StickerFormatTypeAPNG

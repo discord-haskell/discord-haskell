@@ -25,111 +25,121 @@ import Discord.Internal.Types.Emoji
 data Channel
   -- | A text channel in a guild.
   = ChannelText
-      { channelId          :: ChannelId   -- ^ The id of the channel (Will be equal to
-                                          --   the guild if it's the "general" channel).
-      , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelName        :: T.Text      -- ^ The name of the channel (2 - 1000 characters).
-      , channelPosition    :: Integer     -- ^ The storing position of the channel.
-      , channelPermissions :: [Overwrite] -- ^ An array of permission 'Overwrite's
-      , channelUserRateLimit :: Integer   -- ^ Seconds before a user can speak again
-      , channelNSFW        :: Bool        -- ^ Is not-safe-for-work
-      , channelTopic       :: T.Text      -- ^ The topic of the channel. (0 - 1024 chars).
+      { channelId          :: ChannelId         -- ^ The id of the channel (Will be equal to
+                                                --   the guild if it's the "general" channel).
+      , channelGuild       :: GuildId           -- ^ The id of the guild.
+      , channelName        :: T.Text            -- ^ The name of the channel (2 - 1000 characters).
+      , channelPosition    :: Integer           -- ^ The storing position of the channel.
+      , channelPermissions :: [Overwrite]       -- ^ An array of permission 'Overwrite's
+      , channelUserRateLimit :: Integer         -- ^ Seconds before a user can speak again
+      , channelNSFW        :: Bool              -- ^ Is not-safe-for-work
+      , channelTopic       :: T.Text            -- ^ The topic of the channel. (0 - 1024 chars).
       , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
                                                 --   channel
       , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
       }
+  -- | A news Channel in a guild.
   | ChannelNews
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelName        :: T.Text
-      , channelPosition    :: Integer
-      , channelPermissions :: [Overwrite]
-      , channelNSFW        :: Bool
-      , channelTopic       :: T.Text
-      , channelLastMessage :: Maybe MessageId
+      { channelId          :: ChannelId       -- ^ The id of the channel
+      , channelGuild       :: GuildId         -- ^ The id of the guild
+      , channelName        :: T.Text          -- ^ The name of the channel (2 - 1000 characters)
+      , channelPosition    :: Integer         -- ^ The position of the channel
+      , channelPermissions :: [Overwrite]     -- ^ An array of permission 'Overrite's
+      , channelNSFW        :: Bool            -- ^ Is not-safe-for-work
+      , channelTopic       :: T.Text          -- ^ Topic of the channel (0 - 1024 characters)
+      , channelLastMessage :: Maybe MessageId -- ^ The ID of the last message of the channel
+      , channelParentId    :: Maybe ParentId  -- ^ The id of the parent channel (category)
       }
+   -- | A store page channel in a guild
   | ChannelStorePage
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelName        :: T.Text
-      , channelPosition    :: Integer
-      , channelNSFW        :: Bool
-      , channelPermissions :: [Overwrite]
-      , channelParentId    :: Maybe ParentId
+      { channelId          :: ChannelId      -- ^ The id of the channel
+      , channelGuild       :: GuildId        -- ^ The id of the guild
+      , channelName        :: T.Text         -- ^ The name of the channel (2 - 1000 characters)
+      , channelPosition    :: Integer        -- ^ The position of the channel
+      , channelNSFW        :: Bool           -- ^ Is not-safe-for-work
+      , channelPermissions :: [Overwrite]    -- ^ An array of permission 'Overrite's
+      , channelParentId    :: Maybe ParentId -- ^ The id of the parrent channel (category)
       }
   -- | A voice channel in a guild.
   | ChannelVoice
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelName        :: T.Text
-      , channelPosition    :: Integer
-      , channelPermissions :: [Overwrite]
-      , channelNSFW        :: Bool
-      , channelBitRate     :: Integer     -- ^ The bitrate (in bits) of the channel.
-      , channelUserLimit   :: Integer     -- ^ The user limit of the voice channel.
-      , channelParentId    :: Maybe ParentId
+      { channelId          :: ChannelId       -- ^ The id of the channel
+      , channelGuild       :: GuildId         -- ^ The id of the guild
+      , channelName        :: T.Text          -- ^ The name of the channel (2 - 1000) characters
+      , channelPosition    :: Integer         -- ^ The position of the channel
+      , channelPermissions :: [Overwrite]     -- ^ An array of permission 'Overrite's
+      , channelNSFW        :: Bool            -- ^ Is not-safe-for-work
+      , channelBitRate     :: Integer         -- ^ The bitrate (in bps) of the channel.
+      , channelUserLimit   :: Integer         -- ^ The user limit of the voice channel.
+      , channelParentId    :: Maybe ParentId  -- ^ The id of the parrent channel (category)
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
   | ChannelDirectMessage
-      { channelId          :: ChannelId
-      , channelRecipients  :: [User]      -- ^ The 'User' object(s) of the DM recipient(s).
-      , channelLastMessage :: Maybe MessageId
+      { channelId          :: ChannelId       -- ^ The id of the channel
+      , channelRecipients  :: [User]          -- ^ The 'User' object(s) of the DM recipient(s).
+      , channelLastMessage :: Maybe MessageId -- ^ The last message sent to the channel
       }
+  -- | Like a 'ChannelDirectMessage' but for more people
   | ChannelGroupDM
-      { channelId          :: ChannelId
-      , channelRecipients  :: [User]
-      , channelLastMessage :: Maybe MessageId
+      { channelId          :: ChannelId       -- ^ The id of the channel
+      , channelRecipients  :: [User]          -- ^ The 'User' object(s) of the DM recipent(s).
+      , channelLastMessage :: Maybe MessageId -- ^ The last message sent to the channel
       }
+  -- | A channel category
   | ChannelGuildCategory
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelName        :: T.Text
-      , channelPosition    :: Integer
-      , channelPermissions :: [Overwrite]
+      { channelId          :: ChannelId   -- ^ The id of the category
+      , channelGuild       :: GuildId     -- ^ The id of the gild
+      , channelName        :: T.Text      -- ^ The name of the category
+      , channelPosition    :: Integer     -- ^ The position of the category
+      , channelPermissions :: [Overwrite] -- ^ A list of permission 'Overrite's
       }
+  -- | A stage channel
   | ChannelStage
-      { channelId          :: ChannelId
-      , channelGuild       :: GuildId
-      , channelStageId     :: StageId
-      , channelStageTopic  :: Text
+      { channelId          :: ChannelId -- ^ The id of the channel
+      , channelGuild       :: GuildId   -- ^ The id of the guild
+      , channelStageId     :: StageId   -- ^ The id of the stage
+      , channelStageTopic  :: Text      -- ^ The topic text
       }
+  -- | A news Thread
   | ChannelNewsThread
-      { channelId          :: ChannelId   -- ^ The id of the thread
-      , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      { channelId          :: ChannelId               -- ^ The id of the thread
+      , channelGuild       :: GuildId                 -- ^ The id of the guild.
+      , channelThreadName  :: Maybe T.Text            -- ^ The name of the channel (2 - 1000 characters).
       , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
-      , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
-                                                --   channel
-      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
+      , channelLastMessage :: Maybe MessageId         -- ^ The id of the last message sent in the
+                                                      --   channel
+      , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
-      , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
+      , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
       }
+  -- | A thread anyone can join
   | ChannelPublicThread
-      { channelId          :: ChannelId   -- ^ The id of the thread
-      , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      { channelId          :: ChannelId               -- ^ The id of the thread
+      , channelGuild       :: GuildId                 -- ^ The id of the guild.
+      , channelThreadName  :: Maybe T.Text            -- ^ The name of the channel (2 - 1000 characters).
       , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
-      , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
-                                                --   channel
-      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
+      , channelLastMessage :: Maybe MessageId         -- ^ The id of the last message sent in the
+                                                      --   channel
+      , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
-      , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
+      , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
       }
+  -- | An on-invite thread
   | ChannelPrivateThread
-      { channelId          :: ChannelId   -- ^ The id of the thread
-      , channelGuild       :: GuildId     -- ^ The id of the guild.
-      , channelThreadName  :: Maybe T.Text      -- ^ The name of the channel (2 - 1000 characters).
+      { channelId          :: ChannelId               -- ^ The id of the thread
+      , channelGuild       :: GuildId                 -- ^ The id of the guild.
+      , channelThreadName  :: Maybe T.Text            -- ^ The name of the channel (2 - 1000 characters).
       , channelUserRateLimitThread :: Maybe Integer   -- ^ Seconds before a user can speak again
-      , channelLastMessage :: Maybe MessageId   -- ^ The id of the last message sent in the
-                                                --   channel
-      , channelParentId    :: Maybe ParentId    -- ^ The id of the parent channel (category)
+      , channelLastMessage :: Maybe MessageId         -- ^ The id of the last message sent in the
+                                                      --   channel
+      , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
-      , channelThreadMember :: Maybe ThreadMember -- ^ Used to indicate if the user has joined the thread
+      , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
       }
+  -- | A channel of unknown type
   | ChannelUnknownType
-      { channelId          :: ChannelId
-      , channelJSON        :: Text
+      { channelId          :: ChannelId -- ^ The id of the channel
+      , channelJSON        :: Text      -- ^ The library couldn't parse the channel type, here is the raw JSON
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Channel where
@@ -180,6 +190,7 @@ instance FromJSON Channel where
                     <*> o .:? "nsfw" .!= False
                     <*> o .:? "topic" .!= ""
                     <*> o .:? "last_message_id"
+                    <*> o .:? "parent_id"
       6 ->
         ChannelStorePage <$> o .:  "id"
                          <*> o .:? "guild_id" .!= 0
@@ -244,7 +255,7 @@ instance ToJSON Channel where
               , ("nsfw", toJSON <$> pure channelNSFW)
               , ("topic",   toJSON <$> pure channelTopic)
               , ("last_message_id",  toJSON <$> channelLastMessage)
-
+              , ("parent_id", toJSON <$> channelParentId)
               ] ]
   toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
               [ ("type", Just (Number 6))
@@ -345,8 +356,8 @@ channelIsInGuild c = case c of
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
   { overwriteId    :: Either RoleId UserId -- ^ 'Role' or 'User' id
-  , overwriteAllow :: T.Text   -- ^ Allowed permission bit set
-  , overwriteDeny  :: T.Text   -- ^ Denied permission bit set
+  , overwriteAllow :: T.Text               -- ^ Allowed permission bit set
+  , overwriteDeny  :: T.Text               -- ^ Denied permission bit set
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Overwrite where
@@ -397,6 +408,7 @@ instance ToJSON ThreadMetadata where
               , ("create_timestamp", toJSON <$> pure threadMetadataCreateTime)
               ] ]
 
+-- | A user in a thread
 data ThreadMember = ThreadMember
  { threadMemberThreadId :: Maybe ChannelId -- ^ id of the thread
  , threadMemberUserId   :: Maybe UserId    -- ^ id of the user
@@ -418,6 +430,7 @@ instance ToJSON ThreadMember where
               , ("join_timestamp", toJSON <$> pure threadMemberJoinTime)
               , ("flags", toJSON <$> pure threadMemberFlags)
               ] ]
+
 
 data ThreadListSyncFields = ThreadListSyncFields
   { threadListSyncFieldsGuildId :: GuildId
@@ -560,12 +573,12 @@ instance ToJSON Message where
 
 -- | Data constructor for a part of MessageDetailedOpts.
 data AllowedMentions = AllowedMentions
-  { mentionEveryone    :: Bool
-  , mentionUsers       :: Bool
-  , mentionRoles       :: Bool
-  , mentionUserIds     :: [UserId]
-  , mentionRoleIds     :: [RoleId]
-  , mentionRepliedUser :: Bool
+  { mentionEveryone    :: Bool     -- ^ Can mention @\@everyone@
+  , mentionUsers       :: Bool     -- ^ Can mention any user
+  , mentionRoles       :: Bool     -- ^ Can mention any mentionable role
+  , mentionUserIds     :: [UserId] -- ^ List of users able to be mentionned
+  , mentionRoleIds     :: [RoleId] -- ^ List of roles able to be mentioneed 
+  , mentionRepliedUser :: Bool     -- ^ Can mention the sender of the replied message 
   } deriving (Show, Read, Eq, Ord)
 
 instance Default AllowedMentions where
@@ -589,8 +602,9 @@ instance ToJSON AllowedMentions where
                                  "users"        .= mentionUserIds,
                                  "replied_user" .= mentionRepliedUser ]
 
+-- | A reaction to a message
 data MessageReaction = MessageReaction
-  { messageReactionCount :: Int
+  { messageReactionCount :: Int 
   , messageReactionMeIncluded :: Bool
   , messageReactionEmoji :: Emoji
   } deriving (Show, Read, Eq, Ord)

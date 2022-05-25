@@ -3,11 +3,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Discord.Internal.Rest.Interactions where
+module Discord.Internal.Rest.Interactions (InteractionResponseRequest(..)) where
 
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy as BL
 import Discord.Internal.Rest.Prelude
+    ( RestIO,
+      Request(..),
+      JsonRequest(Delete, Post, Get, Patch),
+      baseUrl,
+      (//) )
 import Discord.Internal.Types
 import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
@@ -15,14 +20,27 @@ import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 
+-- | Data constructor for Interaction response requests
 data InteractionResponseRequest a where
+  -- | Create a response to an Interaction from the gateway.
+  --
+  -- This endpoint also supports file attachments similar to the webhook endpoints.
+  -- Refer to [Uploading files](https://discord.com/developers/docs/reference#uploading-files)
+  -- for details on uploading files and @multipart/form-data@ requests.
   CreateInteractionResponse :: InteractionId -> InteractionToken -> InteractionResponse -> InteractionResponseRequest ()
+  -- | Returns the initial Interaction response.
   GetOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest Message
+  -- | Edits the initial Interaction response.
   EditOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseMessage -> InteractionResponseRequest Message
+  -- | Deletes the initial Interaction response.
   DeleteOriginalInteractionResponse :: ApplicationId -> InteractionToken -> InteractionResponseRequest ()
+  -- | Create a followup message for an Interaction
   CreateFollowupInteractionMessage :: ApplicationId -> InteractionToken -> InteractionResponseMessage -> InteractionResponseRequest Message
+  -- | Returns a followup message for an Interaction.
   GetFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
+  -- | Edits a followup message for an Interaction.
   EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
+  -- | Deletes a followup message for an Interaction.
   DeleteFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
 
 instance Request (InteractionResponseRequest a) where

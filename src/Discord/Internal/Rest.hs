@@ -25,6 +25,7 @@ import qualified Data.Text as T
 import Discord.Internal.Types
 import Discord.Internal.Rest.HTTP
 
+-- | Handle to the Rest 'Chan'
 data RestChanHandle = RestChanHandle
       { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
       }

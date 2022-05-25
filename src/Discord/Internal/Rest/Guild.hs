@@ -141,6 +141,7 @@ data GuildRequest a where
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
+-- | Options for `ModifyGuildIntegration`
 data ModifyGuildIntegrationOpts = ModifyGuildIntegrationOpts
   { modifyGuildIntegrationOptsExpireBehavior :: Integer
   , modifyGuildIntegrationOptsExpireGraceSeconds :: Integer
@@ -153,6 +154,7 @@ instance ToJSON ModifyGuildIntegrationOpts where
          , ("expire_behavior", toJSON <$> pure modifyGuildIntegrationOptsExpireBehavior )
          , ("enable_emoticons", toJSON <$> pure modifyGuildIntegrationOptsEmoticonsEnabled ) ]]
 
+-- | Options for `CreateGuildIntegration`
 data CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
   { createGuildIntegrationOptsType :: T.Text
   } deriving (Show, Read, Eq, Ord)
@@ -161,6 +163,7 @@ instance ToJSON CreateGuildIntegrationOpts where
   toJSON CreateGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
                        [("type", toJSON <$> pure createGuildIntegrationOptsType ) ]]
 
+-- | Options for `CreateGuildBan`
 data CreateGuildBanOpts = CreateGuildBanOpts
   { createGuildBanOptsDeleteLastNMessages :: Maybe Int
   , createGuildBanOptsReason              :: Maybe T.Text
@@ -172,6 +175,7 @@ instance ToJSON CreateGuildBanOpts where
                              toJSON <$> createGuildBanOptsDeleteLastNMessages ),
                         ("reason", toJSON <$> createGuildBanOptsReason )]]
 
+-- | Options for `ModifyGuildRole`
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   { modifyGuildRoleOptsName            :: Maybe T.Text
   , modifyGuildRoleOptsPermissions     :: Maybe T.Text
@@ -188,6 +192,7 @@ instance ToJSON ModifyGuildRoleOpts where
                         ("hoist",       toJSON <$> modifyGuildRoleOptsSeparateSidebar ),
                         ("mentionable", toJSON <$> modifyGuildRoleOptsMentionable )]]
 
+-- | Options for `AddGuildMember`
 data AddGuildMemberOpts = AddGuildMemberOpts
   { addGuildMemberOptsAccessToken :: T.Text
   , addGuildMemberOptsNickname    :: Maybe T.Text
@@ -204,6 +209,7 @@ instance ToJSON AddGuildMemberOpts where
                                    ("mute",   toJSON <$> addGuildMemberOptsIsMuted ),
                                    ("deaf",   toJSON <$> addGuildMemberOptsIsDeafened )]]
 
+-- | Options for `ModifyGuildMember`
 data ModifyGuildMemberOpts = ModifyGuildMemberOpts
   { modifyGuildMemberOptsNickname      :: Maybe T.Text
   , modifyGuildMemberOptsRoles         :: Maybe [RoleId]
@@ -225,19 +231,24 @@ instance ToJSON ModifyGuildMemberOpts where
                                    ("channel_id", toJSON <$> modifyGuildMemberOptsMoveToChannel),
                                    ("communication_disabled_until", toJSON <$> modifyGuildMemberOptsTimeoutUntil)]]
 
+-- | Options for `CreateGuildChannel`
 data CreateGuildChannelOpts
+  -- | Create a text channel
   = CreateGuildChannelOptsText {
     createGuildChannelOptsTopic :: Maybe T.Text
   , createGuildChannelOptsUserMessageRateDelay :: Maybe Integer
   , createGuildChannelOptsIsNSFW :: Maybe Bool
   , createGuildChannelOptsCategoryId :: Maybe ChannelId }
+  -- | Create a voice channel
   | CreateGuildChannelOptsVoice {
     createGuildChannelOptsBitrate :: Maybe Integer
   , createGuildChannelOptsMaxUsers :: Maybe Integer
   , createGuildChannelOptsCategoryId :: Maybe ChannelId }
+  -- | Create a category
   | CreateGuildChannelOptsCategory
   deriving (Show, Read, Eq, Ord)
 
+-- | Converts a channel name, a list of permissions and other channel options into a JSON Value 
 createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
 createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <- optsJSON]
   where
@@ -263,7 +274,9 @@ createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <
                           ,("permission_overwrites", toJSON <$> Just perms)]
 
 
--- | https://discord.com/developers/docs/resources/guild#modify-guild
+-- | Options for `ModifyGuild`
+--
+-- See <https://discord.com/developers/docs/resources/guild#modify-guild>
 data ModifyGuildOpts = ModifyGuildOpts
   { modifyGuildOptsName         :: Maybe T.Text
   , modifyGuildOptsAFKChannelId :: Maybe ChannelId

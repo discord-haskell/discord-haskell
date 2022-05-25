@@ -41,22 +41,56 @@ instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute
   jsonRequest = webhookJsonRequest
 
--- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
+-- | Data constructors for webhook requests.
 data WebhookRequest a where
-  CreateWebhook :: ChannelId -> CreateWebhookOpts -> WebhookRequest Webhook
-  GetChannelWebhooks :: ChannelId -> WebhookRequest [Webhook]
-  GetGuildWebhooks :: GuildId -> WebhookRequest [Webhook]
-  GetWebhook :: WebhookId -> WebhookRequest Webhook
-  GetWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest Webhook
-  ModifyWebhook :: WebhookId -> ModifyWebhookOpts
-                                      -> WebhookRequest Webhook
-  ModifyWebhookWithToken :: WebhookId -> T.Text -> ModifyWebhookOpts
-                                      -> WebhookRequest Webhook
-  DeleteWebhook :: WebhookId -> WebhookRequest ()
-  DeleteWebhookWithToken :: WebhookId -> T.Text -> WebhookRequest ()
-  ExecuteWebhookWithToken :: WebhookId -> T.Text -> ExecuteWebhookWithTokenOpts
-                                       -> WebhookRequest ()
+  -- | Creates a new webhook and returns a webhook object on success. Requires the @MANAGE_WEBHOOKS@ permission.
+  -- An error will be returned if a webhook name (name) is not valid. A webhook name is valid if:
+  --
+  -- * It does not contain the substring @clyde@ (case-insensitive)
+  -- * It follows the nickname guidelines in the Usernames and Nicknames documentation,
+  --   with an exception that webhook names can be up to 80 characters
+  CreateWebhook :: ChannelId
+                -> CreateWebhookOpts
+                -> WebhookRequest Webhook
+  -- | Returns a channel's `Webhook`s as a list. Requires the @MANAGE_WEBHOOKS@ permission.
+  GetChannelWebhooks :: ChannelId
+                     -> WebhookRequest [Webhook]
+  -- | Returns a guild's `Webhook`s as a list. Requires the @MANAGE_WEBHOOKS@ permission.
+  GetGuildWebhooks :: GuildId
+                   -> WebhookRequest [Webhook]
+  -- | Returns the `Webhook` for the given id.
+  GetWebhook :: WebhookId
+             -> WebhookRequest Webhook
+  -- | Same as `GetWebhook`, except this call does not require authentication.
+  GetWebhookWithToken :: WebhookId
+                      -> T.Text
+                      -> WebhookRequest Webhook
+  -- | Modify a webhook. Requires the @MANAGE_WEBHOOKS@ permission. Returns the updated `Webhook` on success.
+  ModifyWebhook :: WebhookId
+                -> ModifyWebhookOpts
+                -> WebhookRequest Webhook
+  -- | Same as `ModifyWebhook`, except this call does not require authentication.
+  ModifyWebhookWithToken :: WebhookId
+                         -> T.Text
+                         -> ModifyWebhookOpts
+                         -> WebhookRequest Webhook
+  -- | Delete a webhook permanently. Requires the @MANAGE_WEBHOOKS@ permission.
+  DeleteWebhook :: WebhookId
+                -> WebhookRequest ()
+  -- | Same as `DeleteWebhook`, except this call does not require authentication.
+  DeleteWebhookWithToken :: WebhookId
+                         -> T.Text
+                         -> WebhookRequest ()
+  -- | Executes a Webhook.
+  -- 
+  -- Refer to [Uploading Files](https://discord.com/developers/docs/reference#uploading-files)
+  -- for details on attachments and @multipart/form-data@ requests.
+  ExecuteWebhookWithToken :: WebhookId
+                          -> T.Text
+                          -> ExecuteWebhookWithTokenOpts
+                          -> WebhookRequest ()
 
+-- | Options for `ModifyWebhook` and `ModifyWebhookWithToken`
 data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
   , modifyWebhookOptsAvatar        :: Maybe T.Text
@@ -69,6 +103,7 @@ instance ToJSON ModifyWebhookOpts where
                           ("name",   toJSON <$> modifyWebhookOptsName),
                           ("avatar",  toJSON <$> modifyWebhookOptsAvatar) ] ]
 
+-- | Options for `CreateWebhook`
 data CreateWebhookOpts = CreateWebhookOpts
   { createWebhookOptsName          :: T.Text
   , createWebhookOptsAvatar        :: Maybe T.Text
@@ -79,11 +114,13 @@ instance ToJSON CreateWebhookOpts where
                          [("name",   toJSON <$> Just createWebhookOptsName),
                           ("avatar",  toJSON <$> createWebhookOptsAvatar) ] ]
 
+-- | Options for `ExecuteWebhookWithToken`
 data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
   { executeWebhookWithTokenOptsUsername      :: Maybe T.Text
   , executeWebhookWithTokenOptsContent       :: WebhookContent
   } deriving (Show, Read, Eq, Ord)
 
+-- | A webhook's content
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text B.ByteString
                     | WebhookContentEmbeds [CreateEmbed]
@@ -100,7 +137,7 @@ instance ToJSON ExecuteWebhookWithTokenOpts where
                          [("username",   toJSON <$> executeWebhookWithTokenOptsUsername)]
                            <> webhookContentJson executeWebhookWithTokenOptsContent
                          ]
-
+-- | Major routes for webhook requests
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
   (CreateWebhook c _) ->            "aaaaaahook " <> show c
@@ -114,6 +151,7 @@ webhookMajorRoute ch = case ch of
   (DeleteWebhookWithToken w _) ->   "deletehook " <> show w
   (ExecuteWebhookWithToken w _ _) -> "executehk " <> show w
 
+-- | Create a 'JsonRequest' from a `WebhookRequest`
 webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->

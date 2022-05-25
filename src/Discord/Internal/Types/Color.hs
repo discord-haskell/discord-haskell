@@ -22,7 +22,8 @@ import Discord.Internal.Types.Prelude (InternalDiscordEnum(..))
 -- All discord embed color stuff is credited to
 -- https://github.com/WarwickTabletop/tablebot/pull/34
 data DiscordColor
-  = DiscordColorRGB Integer Integer Integer
+  = -- | An RGB color with values in @[0..255]@ 
+    DiscordColorRGB Integer Integer Integer
   | DiscordColorDefault
   | DiscordColorAqua
   | DiscordColorDarkAqua
@@ -95,6 +96,7 @@ hexToDiscordColor hex =
   let (r, g, b) = fromMaybe (0, 0, 0) $ hexToRGB hex
    in DiscordColorRGB r g b
 
+-- | Convert a color to its internal `Integer` representation
 colorToInternal :: DiscordColor -> Integer
 -- colorToInternal (DiscordColor i) = i
 colorToInternal (DiscordColorRGB r g b) = (r * 256 + g) * 256 + b
@@ -133,6 +135,7 @@ colorToInternal DiscordColorDiscordFuschia = 15418782
 colorToInternal DiscordColorDiscordRed = 15548997
 colorToInternal DiscordColorDiscordBlack = 16777215
 
+-- | Convert a color integer to a RGB color with values in @[0..255]@
 convertToRGB :: Integer -> DiscordColor
 convertToRGB i = DiscordColorRGB (div i (256 * 256) .&. 255) (div i 256 .&. 255) (i .&. 255)
 
