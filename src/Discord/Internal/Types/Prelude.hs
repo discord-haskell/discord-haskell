@@ -11,6 +11,7 @@ import Data.Bits
 import Data.Word
 
 import Data.Aeson.Types
+import qualified Data.ByteString as B
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
@@ -178,3 +179,20 @@ class Data a => InternalDiscordEnum a where
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
+
+
+-- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
+-- based on the first several bytes. It may return any of PNG/JPEG/GIF or WEBP
+-- mimetypes, or Nothing if none are matched.
+-- Borrowed from discord.py's implementation.
+getMimeType :: B.ByteString -> Maybe T.Text
+getMimeType bs
+  | B.take 8 bs == "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+  = Just "image/png"
+  | B.take 3 bs == "\xff\xd8\xff" || B.take 3 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
+  = Just "image/jpeg"
+  | B.take 6 bs == "\x47\x49\x46\x38\x37\x61" || B.take 6 bs == "\x47\x49\x46\x38\x39\x61"
+  = Just "image/gif"
+  | B.take 4 bs == "RIFF" && B.take 4 (B.drop 8 bs) == "WEBP"
+  = Just "image/webp"
+  | otherwise = Nothing

@@ -15,7 +15,6 @@ module Discord.Internal.Rest.Emoji
   )
 where
 
-import Codec.Picture
 import Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
@@ -56,44 +55,17 @@ instance ToJSON ModifyGuildEmojiOpts where
 newtype EmojiImageParsed = EmojiImageParsed T.Text
   deriving (Show, Read, Eq, Ord)
 
--- | Parse an image into an a format usable for an `Emoji`
+-- | @parseEmojiImage bs@ will attempt to convert the given image ByteString
+-- to the base64 format expected by the Discord API. It may return Left with an
+-- error reason if either the bytestring is too large, or if the image format
+-- could not be predetermined from the opening few bytes. This function does
+-- /not/ validate the rest of the image, nor check that its dimensions are
+-- 128x128 as required by Discord. This is up to the library user to check.
 parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
-parseEmojiImage bs =
-  if B.length bs > 256000
-    then Left "Cannot create emoji - File is larger than 256kb"
-    else case (decodeGifImages bs, decodeImage bs) of
-      (Left e1, Left e2) ->
-        Left
-          ( "Could not parse image or gif: " <> T.pack e1
-              <> " and "
-              <> T.pack e2
-          )
-      (Right ims, _) ->
-        if all is128 ims
-          then
-            Right
-              ( EmojiImageParsed
-                  ( "data:text/plain;"
-                      <> "base64,"
-                      <> TE.decodeUtf8 (B64.encode bs)
-                  )
-              )
-          else Left "The frames are not all 128x128"
-      (_, Right im) ->
-        if is128 im
-          then
-            Right
-              ( EmojiImageParsed
-                  ( "data:text/plain;"
-                      <> "base64,"
-                      <> TE.decodeUtf8 (B64.encode bs)
-                  )
-              )
-          else Left "Image is not 128x128"
-  where
-    is128 im =
-      let i = convertRGB8 im
-       in imageWidth i == 128 && imageHeight i == 128
+parseEmojiImage bs
+  | B.length bs > 256000        = Left "Cannot create emoji - File is larger than 256kb"
+  | Just mime <- getMimeType bs = Right (EmojiImageParsed ("data:" <> mime <> ";base64," <> TE.decodeUtf8 (B64.encode bs)))
+  | otherwise                   = Left "Unsupported image format provided"
 
 emojiMajorRoute :: EmojiRequest a -> String
 emojiMajorRoute c = case c of
