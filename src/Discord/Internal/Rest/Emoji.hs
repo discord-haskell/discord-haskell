@@ -9,6 +9,7 @@ module Discord.Internal.Rest.Emoji
   ( EmojiRequest (..),
     ModifyGuildEmojiOpts (..),
     parseEmojiImage,
+    parseStickerImage,
     StickerRequest (..),
     CreateGuildStickerOpts (..),
     EditGuildStickerOpts (..)
@@ -52,15 +53,20 @@ instance ToJSON ModifyGuildEmojiOpts where
   toJSON (ModifyGuildEmojiOpts name roles) =
     object ["name" .= name, "roles" .= roles]
 
+-- | @EmojiImageParsed@ represents the base64 encoding of an emoji image with
+-- accepted mime type and accepted file size. The constructor is not exported.
+-- Initialisation should be done using the 'parseEmojiImage' smart constructor.
 newtype EmojiImageParsed = EmojiImageParsed T.Text
   deriving (Show, Read, Eq, Ord)
 
--- | @parseEmojiImage bs@ will attempt to convert the given image ByteString
+-- | @parseEmojiImage bs@ will attempt to convert the given image bytestring @bs@
 -- to the base64 format expected by the Discord API. It may return Left with an
 -- error reason if either the bytestring is too large, or if the image format
 -- could not be predetermined from the opening few bytes. This function does
 -- /not/ validate the rest of the image, nor check that its dimensions are
 -- 128x128 as required by Discord. This is up to the library user to check.
+--
+-- This function accepts all file types accepted by 'getMimeType'.
 parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
 parseEmojiImage bs
   | B.length bs > 256000        = Left "Cannot create emoji - File is larger than 256kb"
@@ -103,33 +109,44 @@ emojiJsonRequest c = case c of
       mempty
   (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty
 
-data StickerData = StickerDataPNG {stickerData :: B.ByteString} | StickerDataAPNG {stickerData :: B.ByteString} | StickerDataLOTTIE {stickerData :: B.ByteString}
+-- | @StickerImageParsed@ represents the base64 encoding of a sticker image with
+-- accepted mime type and accepted file size. The constructor is not exported.
+-- Initialisation should be done using the 'parseStickerImage' smart constructor.
+newtype StickerImageParsed = StickerImageParsed T.Text
   deriving (Show, Read, Eq, Ord)
 
-instance ToJSON StickerData where
-  toJSON sd = String $ "data:image/" <> sdt <> ";base64," <> TE.decodeUtf8 (B64.encode (stickerData sd))
-    where
-      sdt = case sd of
-        StickerDataPNG _ -> "png"
-        StickerDataAPNG _ -> "apng"
-        StickerDataLOTTIE _ -> "lottie"
+-- | @parseStickerImage bs@ accepts PNG, APNG, or Lottie JSON bytestring and
+-- will attempt to convert it to the base64 format expected by the Discord API.
+-- It may return Left with an error reason if the image format is unexpected.
+-- This function does /not/ validate the contents of the image, this is up to
+-- the library user to check.
+parseStickerImage :: B.ByteString -> Either T.Text StickerImageParsed
+parseStickerImage bs
+  | B.length bs > 512000
+  = Left "Cannot create sticker - File is larger than 512kb"
+  | Just "image/png" <- getMimeType bs
+  = Right (StickerImageParsed ("data:image/png;base64," <> TE.decodeUtf8 (B64.encode bs)))
+  | not (B.null bs) && B.head bs == 0x7b
+  = Right (StickerImageParsed ("data:application/json;base64," <> TE.decodeUtf8 (B64.encode bs)))
+  | otherwise
+  = Left "Unsupported image format provided"
 
 -- | Options for `CreateGuildSticker`
 data CreateGuildStickerOpts = CreateGuildStickerOpts
   { guildStickerName :: T.Text,
     guildStickerDescription :: T.Text,
     guildStickerTags :: [T.Text],
-    guildStickerFile :: StickerData
+    guildStickerFile :: StickerImageParsed
   }
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildStickerOpts where
-  toJSON CreateGuildStickerOpts {..} =
+  toJSON (CreateGuildStickerOpts name desc tags (StickerImageParsed im)) =
     object
-      [ ("name", toJSON guildStickerName),
-        ("description", toJSON guildStickerDescription),
-        ("tags", toJSON . T.intercalate "," $ guildStickerTags),
-        ("file", toJSON guildStickerFile)
+      [ ("name", toJSON name),
+        ("description", toJSON desc),
+        ("tags", toJSON $ T.intercalate "," tags),
+        ("file", toJSON im)
       ]
 
 -- | Options for `ModifyGuildSticker`

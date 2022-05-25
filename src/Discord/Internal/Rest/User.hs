@@ -50,15 +50,19 @@ data UserRequest a where
 
   GetUserConnections   :: UserRequest [ConnectionObject]
 
--- | Formatted avatar data https://discord.com/developers/docs/resources/user#avatar-data
+-- | @AvatarImageParsed@ represents the base64 encoding of an avatar image with
+-- accepted mime type and accepted file size. The constructor is not exported.
+-- Initialisation should be done using the 'parseAvatarImage' smart constructor.
 data AvatarImageParsed = AvatarImageParsed T.Text
   deriving (Show, Read, Eq, Ord)
 
--- | @parseAvatarImage bs@ will attempt to convert the given image ByteString
--- to the base64 format expected by the Discord API. It may return Left with an
--- error reason if the image format could not be predetermined from the
--- opening few bytes. This function does /not/ validate the rest of the image,
+-- | @parseAvatarImage bs@ will attempt to convert the given image bytestring
+-- @bs@ to the base64 format expected by the Discord API. It may return Left
+-- with an error reason if the image format could not be predetermined from the
+-- opening magic bytes. This function does /not/ validate the rest of the image,
 -- and this is up to the library user to check themselves.
+--
+-- This function accepts all file types accepted by 'getMimeType'.
 parseAvatarImage :: B.ByteString -> Either T.Text AvatarImageParsed
 parseAvatarImage bs
   | Just mime <- getMimeType bs = Right (AvatarImageParsed ("data:" <> mime <> ";base64," <> TE.decodeUtf8 (B64.encode bs)))
