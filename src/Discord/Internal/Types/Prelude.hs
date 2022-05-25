@@ -182,19 +182,21 @@ toMaybeJSON = return . toJSON
 
 
 -- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
--- based on the first several bytes. It may return any of PNG/JPEG/GIF or WEBP
+-- based on the first few magic bytes. It may return any of PNG/JPEG/GIF or WEBP
 -- mimetypes, or Nothing if none are matched.
 --
--- /Borrowed from discord.py's implementation./
+-- Reference: https://en.wikipedia.org/wiki/List_of_file_signatures
 --
 -- Although Discord's official documentation does not state WEBP as a supported
 -- format, it has been accepted for both emojis and user avatars no problem
 -- when tested manually.
+--
+-- /Inspired by discord.py's implementation./
 getMimeType :: B.ByteString -> Maybe T.Text
 getMimeType bs
   | B.take 8 bs == "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
   = Just "image/png"
-  | B.take 3 bs == "\xff\xd8\xff" || B.take 3 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
+  | B.take 3 bs == "\xff\xd8\xff" || B.take 4 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
   = Just "image/jpeg"
   | B.take 6 bs == "\x47\x49\x46\x38\x37\x61" || B.take 6 bs == "\x47\x49\x46\x38\x39\x61"
   = Just "image/gif"
