@@ -181,6 +181,22 @@ toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
 
 
+-- | @Base64Image mime data@ represents the base64 encoding of an image (as
+-- @data@), together with a tag of its mime type (@mime@).  The constructor is
+-- only for Internal use, and its public export is hidden in Discord.Types.
+--
+-- Public creation of this datatype should be done using the relevant smart
+-- constructors for Emoji, Sticker, or Avatar.
+data Base64Image a = Base64Image T.Text T.Text
+  deriving (Show, Read, Eq, Ord)
+
+-- | The ToJSON instance for Base64Image creates a string representation of the
+-- image's base-64 data, suited for using as JSON values.
+--
+-- The format is: @data:%MIME%;base64,%DATA%@.
+instance ToJSON (Base64Image a) where
+  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> im
+
 -- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
 -- based on the first few magic bytes. It may return any of PNG/JPEG/GIF or WEBP
 -- mimetypes, or Nothing if none are matched.

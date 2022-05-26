@@ -8,7 +8,6 @@
 module Discord.Internal.Rest.User
   ( UserRequest(..)
   , parseAvatarImage
-  , AvatarImageParsed
   ) where
 
 
@@ -37,7 +36,7 @@ data UserRequest a where
   -- | Returns a 'User' for a given user ID
   GetUser              :: UserId -> UserRequest User
   -- | Modify user's username & avatar pic
-  ModifyCurrentUser    :: T.Text -> AvatarImageParsed -> UserRequest User
+  ModifyCurrentUser    :: T.Text -> Base64Image User -> UserRequest User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
   GetCurrentUserGuilds :: UserRequest [PartialGuild]
@@ -50,12 +49,6 @@ data UserRequest a where
 
   GetUserConnections   :: UserRequest [ConnectionObject]
 
--- | @AvatarImageParsed@ represents the base64 encoding of an avatar image with
--- accepted mime type and accepted file size. The constructor is not exported.
--- Initialisation should be done using the 'parseAvatarImage' smart constructor.
-data AvatarImageParsed = AvatarImageParsed T.Text
-  deriving (Show, Read, Eq, Ord)
-
 -- | @parseAvatarImage bs@ will attempt to convert the given image bytestring
 -- @bs@ to the base64 format expected by the Discord API. It may return Left
 -- with an error reason if the image format could not be predetermined from the
@@ -63,9 +56,9 @@ data AvatarImageParsed = AvatarImageParsed T.Text
 -- and this is up to the library user to check themselves.
 --
 -- This function accepts all file types accepted by 'getMimeType'.
-parseAvatarImage :: B.ByteString -> Either T.Text AvatarImageParsed
+parseAvatarImage :: B.ByteString -> Either T.Text (Base64Image User)
 parseAvatarImage bs
-  | Just mime <- getMimeType bs = Right (AvatarImageParsed ("data:" <> mime <> ";base64," <> TE.decodeUtf8 (B64.encode bs)))
+  | Just mime <- getMimeType bs = Right (Base64Image mime (TE.decodeUtf8 (B64.encode bs)))
   | otherwise                   = Left "Unsupported image format provided"
 
 userMajorRoute :: UserRequest a -> String
@@ -88,9 +81,9 @@ userJsonRequest c = case c of
 
   (GetUser user) -> Get (users // user ) mempty
 
-  (ModifyCurrentUser name (AvatarImageParsed im)) ->
+  (ModifyCurrentUser name b64im) ->
       Patch (users /: "@me")  (pure (R.ReqBodyJson (object [ "username" .= name
-                                                           , "avatar" .= im ]))) mempty
+                                                           , "avatar" .= b64im ]))) mempty
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 

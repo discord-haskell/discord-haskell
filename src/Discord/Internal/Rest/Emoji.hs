@@ -37,7 +37,7 @@ data EmojiRequest a where
   -- | Emoji object for the given guild and emoji ID
   GetGuildEmoji :: GuildId -> EmojiId -> EmojiRequest Emoji
   -- | Create a new guild emoji (static&animated). Requires MANAGE_EMOJIS permission.
-  CreateGuildEmoji :: GuildId -> T.Text -> EmojiImageParsed -> EmojiRequest Emoji
+  CreateGuildEmoji :: GuildId -> T.Text -> Base64Image Emoji -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
   ModifyGuildEmoji :: GuildId -> EmojiId -> ModifyGuildEmojiOpts -> EmojiRequest Emoji
   -- | Requires MANAGE_EMOJIS permission
@@ -53,11 +53,6 @@ instance ToJSON ModifyGuildEmojiOpts where
   toJSON (ModifyGuildEmojiOpts name roles) =
     object ["name" .= name, "roles" .= roles]
 
--- | @EmojiImageParsed@ represents the base64 encoding of an emoji image with
--- accepted mime type and accepted file size. The constructor is not exported.
--- Initialisation should be done using the 'parseEmojiImage' smart constructor.
-newtype EmojiImageParsed = EmojiImageParsed T.Text
-  deriving (Show, Read, Eq, Ord)
 
 -- | @parseEmojiImage bs@ will attempt to convert the given image bytestring @bs@
 -- to the base64 format expected by the Discord API. It may return Left with an
@@ -67,10 +62,10 @@ newtype EmojiImageParsed = EmojiImageParsed T.Text
 -- 128x128 as required by Discord. This is up to the library user to check.
 --
 -- This function accepts all file types accepted by 'getMimeType'.
-parseEmojiImage :: B.ByteString -> Either T.Text EmojiImageParsed
+parseEmojiImage :: B.ByteString -> Either T.Text (Base64Image Emoji)
 parseEmojiImage bs
   | B.length bs > 256000        = Left "Cannot create emoji - File is larger than 256kb"
-  | Just mime <- getMimeType bs = Right (EmojiImageParsed ("data:" <> mime <> ";base64," <> TE.decodeUtf8 (B64.encode bs)))
+  | Just mime <- getMimeType bs = Right (Base64Image mime (TE.decodeUtf8 (B64.encode bs)))
   | otherwise                   = Left "Unsupported image format provided"
 
 emojiMajorRoute :: EmojiRequest a -> String
@@ -88,14 +83,14 @@ emojiJsonRequest :: EmojiRequest r -> JsonRequest
 emojiJsonRequest c = case c of
   (ListGuildEmojis g) -> Get (guilds // g /: "emojis") mempty
   (GetGuildEmoji g e) -> Get (guilds // g /: "emojis" // e) mempty
-  (CreateGuildEmoji g name (EmojiImageParsed im)) ->
+  (CreateGuildEmoji g name b64im) ->
     Post
       (guilds // g /: "emojis")
       ( pure
           ( R.ReqBodyJson
               ( object
                   [ "name" .= name,
-                    "image" .= im
+                    "image" .= b64im
                     -- todo , "roles" .= ...
                   ]
               )
@@ -109,25 +104,19 @@ emojiJsonRequest c = case c of
       mempty
   (DeleteGuildEmoji g e) -> Delete (guilds // g /: "emojis" // e) mempty
 
--- | @StickerImageParsed@ represents the base64 encoding of a sticker image with
--- accepted mime type and accepted file size. The constructor is not exported.
--- Initialisation should be done using the 'parseStickerImage' smart constructor.
-newtype StickerImageParsed = StickerImageParsed T.Text
-  deriving (Show, Read, Eq, Ord)
-
--- | @parseStickerImage bs@ accepts PNG, APNG, or Lottie JSON bytestring and
+-- | @parseStickerImage bs@ accepts PNG, APNG, or Lottie JSON bytestring @bs@ and
 -- will attempt to convert it to the base64 format expected by the Discord API.
 -- It may return Left with an error reason if the image format is unexpected.
 -- This function does /not/ validate the contents of the image, this is up to
 -- the library user to check.
-parseStickerImage :: B.ByteString -> Either T.Text StickerImageParsed
+parseStickerImage :: B.ByteString -> Either T.Text (Base64Image Sticker)
 parseStickerImage bs
   | B.length bs > 512000
   = Left "Cannot create sticker - File is larger than 512kb"
   | Just "image/png" <- getMimeType bs
-  = Right (StickerImageParsed ("data:image/png;base64," <> TE.decodeUtf8 (B64.encode bs)))
-  | not (B.null bs) && B.head bs == 0x7b
-  = Right (StickerImageParsed ("data:application/json;base64," <> TE.decodeUtf8 (B64.encode bs)))
+  = Right (Base64Image "image/png" (TE.decodeUtf8 (B64.encode bs)))
+  | not (B.null bs) && B.head bs == 0x7b -- '{'
+  = Right (Base64Image "application/json" (TE.decodeUtf8 (B64.encode bs)))
   | otherwise
   = Left "Unsupported image format provided"
 
@@ -136,17 +125,17 @@ data CreateGuildStickerOpts = CreateGuildStickerOpts
   { guildStickerName :: T.Text,
     guildStickerDescription :: T.Text,
     guildStickerTags :: [T.Text],
-    guildStickerFile :: StickerImageParsed
+    guildStickerFile :: Base64Image Sticker
   }
   deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildStickerOpts where
-  toJSON (CreateGuildStickerOpts name desc tags (StickerImageParsed im)) =
+  toJSON (CreateGuildStickerOpts name desc tags b64im) =
     object
       [ ("name", toJSON name),
         ("description", toJSON desc),
         ("tags", toJSON $ T.intercalate "," tags),
-        ("file", toJSON im)
+        ("file", toJSON b64im)
       ]
 
 -- | Options for `ModifyGuildSticker`
