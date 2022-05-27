@@ -21,50 +21,91 @@ import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
 
 
--- | Represents possible events sent by discord. Detailed information can be found at https://discord.com/developers/docs/topics/gateway.
+-- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
 data Event =
+  -- | Contains the initial state information
     Ready                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+  -- | Response to a @Resume@ gateway command
   | Resumed                    [T.Text]
+  -- | new guild channel created
   | ChannelCreate              Channel
+  -- | channel was updated
   | ChannelUpdate              Channel
+  -- | channel was deleted
   | ChannelDelete              Channel
+  -- | thread created, also sent when being added to a private thread
   | ThreadCreate               Channel
+  -- | thread was updated
   | ThreadUpdate               Channel
+  -- | thread was deleted
   | ThreadDelete               Channel
-  | ThreadListSync             ThreadListSyncFields 
-  | ThreadMembersUpdate        ThreadMembersUpdateFields 
+  -- | sent when gaining access to a channel, contains all active threads in that channel
+  | ThreadListSync             ThreadListSyncFields
+  -- | thread member for the current user was updated
+  | ThreadMembersUpdate        ThreadMembersUpdateFields
+  -- | message was pinned or unpinned
   | ChannelPinsUpdate          ChannelId (Maybe UTCTime)
+  -- | lazy-load for unavailable guild, guild became available, or user joined a new guild
   | GuildCreate                Guild
+  -- | guild was updated
   | GuildUpdate                Guild
+  -- | guild became unavailable, or user left/was removed from a guild
   | GuildDelete                GuildUnavailable
+  -- | user was banned from a guild
   | GuildBanAdd                GuildId User
+  -- | user was unbanned from a guild
   | GuildBanRemove             GuildId User
+  -- | guild emojis were updated
   | GuildEmojiUpdate           GuildId [Emoji]
+  -- | guild integration was updated
   | GuildIntegrationsUpdate    GuildId
+  -- | new user joined a guild
   | GuildMemberAdd             GuildId GuildMember
+  -- | user was removed from a guild
   | GuildMemberRemove          GuildId User
+  -- | guild member was updated
   | GuildMemberUpdate          GuildId [RoleId] User (Maybe T.Text)
+  -- | response to @Request Guild Members@ gateway command
   | GuildMemberChunk           GuildId [GuildMember]
+  -- | guild role was created
   | GuildRoleCreate            GuildId Role
+  -- | guild role was updated
   | GuildRoleUpdate            GuildId Role
+  -- | guild role was deleted
   | GuildRoleDelete            GuildId RoleId
+  -- | message was created
   | MessageCreate              Message
+  -- | message was updated
   | MessageUpdate              ChannelId MessageId
+  -- | message was deleted
   | MessageDelete              ChannelId MessageId
+  -- | multiple messages were deleted at once
   | MessageDeleteBulk          ChannelId [MessageId]
+  -- | user reacted to a message
   | MessageReactionAdd         ReactionInfo
+  -- | user removed a reaction from a message
   | MessageReactionRemove      ReactionInfo
+  -- | all reactions were explicitly removed from a message
   | MessageReactionRemoveAll   ChannelId MessageId
+  -- | all reactions for a given emoji were explicitly removed from a message
   | MessageReactionRemoveEmoji ReactionRemoveInfo
+  -- | user was updated
   | PresenceUpdate             PresenceInfo
+  -- | user started typing in a channel
   | TypingStart                TypingInfo
+  -- | properties about the user changed
   | UserUpdate                 User
+  -- | someone joined, left, or moved a voice channel
   | InteractionCreate          Interaction
-  -- | VoiceStateUpdate
-  -- | VoiceServerUpdate
+  --  | VoiceStateUpdate
+  --  | VoiceServerUpdate
+  -- | An Unknown Event, none of the others
   | UnknownEvent               T.Text Object
   deriving (Show, Eq)
 
+-- | Internal Event representation. Each matches to the corresponding constructor of `Event`.
+--
+-- An application should never have to use those directly
 data EventInternalParse =
     InternalReady                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   | InternalResumed                    [T.Text]
@@ -103,11 +144,12 @@ data EventInternalParse =
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
   | InternalInteractionCreate          Interaction
-  -- -- | InternalVoiceStateUpdate
-  -- -- | InternalVoiceServerUpdate
+  --  | InternalVoiceStateUpdate
+  --  | InternalVoiceServerUpdate
   | InternalUnknownEvent               T.Text Object
   deriving (Show, Eq, Read)
 
+-- | Structure containing partial information about an Application
 data PartialApplication = PartialApplication
   { partialApplicationID :: ApplicationId
   , partialApplicationFlags :: Int
@@ -116,12 +158,13 @@ data PartialApplication = PartialApplication
 instance FromJSON PartialApplication where
   parseJSON = withObject "PartialApplication" (\v -> PartialApplication <$> v .: "id" <*> v .: "flags")
 
+-- | Structure containing information about a reaction
 data ReactionInfo = ReactionInfo
-  { reactionUserId    :: UserId
-  , reactionGuildId   :: Maybe GuildId
-  , reactionChannelId :: ChannelId
-  , reactionMessageId :: MessageId
-  , reactionEmoji     :: Emoji
+  { reactionUserId    :: UserId -- ^ User who reacted
+  , reactionGuildId   :: Maybe GuildId -- ^ Guild in which the reacted message is (if any) 
+  , reactionChannelId :: ChannelId -- ^ Channel in which the reacted message is
+  , reactionMessageId :: MessageId -- ^ The reacted message
+  , reactionEmoji     :: Emoji -- ^ The Emoji used for the reaction
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON ReactionInfo where
@@ -132,6 +175,7 @@ instance FromJSON ReactionInfo where
                  <*> o .:  "message_id"
                  <*> o .:  "emoji"
 
+-- | Structure containing information about a reaction that has been removed
 data ReactionRemoveInfo  = ReactionRemoveInfo
   { reactionRemoveChannelId :: ChannelId
   , reactionRemoveGuildId   :: GuildId
@@ -146,6 +190,7 @@ instance FromJSON ReactionRemoveInfo where
                        <*> o .:  "message_id"
                        <*> o .:  "emoji"
 
+-- | Structre containing typing status information
 data TypingInfo = TypingInfo
   { typingUserId    :: UserId
   , typingChannelId :: ChannelId
@@ -168,6 +213,7 @@ reparse val = case parseEither parseJSON $ toJSON val of
                 Left r -> fail r
                 Right b -> pure b
 
+-- | Parse an event from name and JSON data
 eventParse :: T.Text -> Object -> Parser EventInternalParse
 eventParse t o = case t of
     "READY"                     -> InternalReady <$> o .: "v"

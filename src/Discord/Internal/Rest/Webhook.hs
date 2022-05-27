@@ -40,25 +40,67 @@ instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute
   jsonRequest = webhookJsonRequest
 
--- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
+-- | Data constructors for webhook requests.
 data WebhookRequest a where
-  CreateWebhook :: ChannelId -> CreateWebhookOpts -> WebhookRequest Webhook
-  GetChannelWebhooks :: ChannelId -> WebhookRequest [Webhook]
-  GetGuildWebhooks :: GuildId -> WebhookRequest [Webhook]
-  -- GetWebhook :: WebhookId -> WebhookRequest Webhook
-  GetWebhook :: WebhookId -> Maybe WebhookToken -> WebhookRequest Webhook
-  ModifyWebhook :: WebhookId -> Maybe WebhookToken -> ModifyWebhookOpts
-                                      -> WebhookRequest Webhook
-  DeleteWebhook :: WebhookId -> Maybe WebhookToken -> WebhookRequest ()
-  ExecuteWebhook :: WebhookId -> WebhookToken -> ExecuteWebhookWithTokenOpts
-                                       -> WebhookRequest ()
-  -- we don't support slack and github compatible webhooks because you should
-  --  just use execute webhook
-  GetWebhookMessage :: WebhookId -> WebhookToken -> MessageId -> WebhookRequest Message
-  EditWebhookMessage :: WebhookId -> WebhookToken -> MessageId -> T.Text -- currently we don't support the full range of edits
-                                          -> WebhookRequest Message
-  DeleteWebhookMessage :: WebhookId -> WebhookToken -> MessageId -> WebhookRequest ()
+  -- | Creates a new webhook and returns a webhook object on success. Requires the @MANAGE_WEBHOOKS@ permission.
+  -- An error will be returned if a webhook name (name) is not valid. A webhook name is valid if:
+  --
+  -- * It does not contain the substring @clyde@ (case-insensitive)
+  -- * It follows the nickname guidelines in the Usernames and Nicknames documentation,
+  --   with an exception that webhook names can be up to 80 characters
+  CreateWebhook :: ChannelId
+                -> CreateWebhookOpts
+                -> WebhookRequest Webhook
+  -- | Returns a channel's `Webhook`s as a list. Requires the @MANAGE_WEBHOOKS@ permission.
+  GetChannelWebhooks :: ChannelId
+                     -> WebhookRequest [Webhook]
+  -- | Returns a guild's `Webhook`s as a list. Requires the @MANAGE_WEBHOOKS@ permission.
+  GetGuildWebhooks :: GuildId
+                   -> WebhookRequest [Webhook]
+  -- | Returns the `Webhook` for the given id. If a token is given, authentication is not required.
+  GetWebhook :: WebhookId
+             -> Maybe WebhookToken
+             -> WebhookRequest Webhook
+  -- | Modify a webhook. Requires the @MANAGE_WEBHOOKS@ permission. Returns the updated `Webhook` on success.
+  -- If a token is given, authentication is not required.
+  ModifyWebhook :: WebhookId
+                -> Maybe WebhookToken
+                -> ModifyWebhookOpts
+                -> WebhookRequest Webhook
+  -- | Delete a webhook permanently. Requires the @MANAGE_WEBHOOKS@ permission.
+  -- If a token is given, authentication is not required.
+  DeleteWebhook :: WebhookId
+                -> Maybe WebhookToken
+                -> WebhookRequest ()
+  -- | Executes a Webhook.
+  -- 
+  -- Refer to [Uploading Files](https://discord.com/developers/docs/reference#uploading-files)
+  -- for details on attachments and @multipart/form-data@ requests.
+  ExecuteWebhook :: WebhookId
+                 -> WebhookToken
+                 -> ExecuteWebhookWithTokenOpts
+                 -> WebhookRequest ()
+  -- We don't support slack and github compatible webhooks because you should
+  --  just use execute webhook.
 
+  -- | Returns a previously-sent webhook message from the same token.
+  GetWebhookMessage :: WebhookId 
+                    -> WebhookToken 
+                    -> MessageId 
+                    -> WebhookRequest Message
+  -- | Edits a previously-sent webhook message from the same token.
+  EditWebhookMessage :: WebhookId 
+                     -> WebhookToken 
+                     -> MessageId 
+                     -> T.Text -- currently we don't support the full range of edits - feel free to PR and fix this
+                     -> WebhookRequest Message
+  -- | Deletes a previously-sent webhook message from the same token.
+  DeleteWebhookMessage :: WebhookId 
+                       -> WebhookToken 
+                       -> MessageId 
+                       -> WebhookRequest ()
+
+-- | Options for `ModifyWebhook` and `ModifyWebhookWithToken`
 data ModifyWebhookOpts = ModifyWebhookOpts
   { modifyWebhookOptsName          :: Maybe T.Text
   , modifyWebhookOptsAvatar        :: Maybe T.Text
@@ -71,6 +113,7 @@ instance ToJSON ModifyWebhookOpts where
                           ("name",   toJSON <$> modifyWebhookOptsName),
                           ("avatar",  toJSON <$> modifyWebhookOptsAvatar) ] ]
 
+-- | Options for `CreateWebhook`
 data CreateWebhookOpts = CreateWebhookOpts
   { createWebhookOptsName          :: T.Text
   , createWebhookOptsAvatar        :: Maybe T.Text
@@ -81,11 +124,13 @@ instance ToJSON CreateWebhookOpts where
                          [("name",   toJSON <$> Just createWebhookOptsName),
                           ("avatar",  toJSON <$> createWebhookOptsAvatar) ] ]
 
+-- | Options for `ExecuteWebhookWithToken`
 data ExecuteWebhookWithTokenOpts = ExecuteWebhookWithTokenOpts
   { executeWebhookWithTokenOptsUsername      :: Maybe T.Text
   , executeWebhookWithTokenOptsContent       :: WebhookContent
   } deriving (Show, Read, Eq, Ord)
 
+-- | A webhook's content
 data WebhookContent = WebhookContentText T.Text
                     | WebhookContentFile T.Text B.ByteString
                     | WebhookContentEmbeds [CreateEmbed]
@@ -102,7 +147,7 @@ instance ToJSON ExecuteWebhookWithTokenOpts where
                          [("username",   toJSON <$> executeWebhookWithTokenOptsUsername)]
                            <> webhookContentJson executeWebhookWithTokenOptsContent
                          ]
-
+-- | Major routes for webhook requests
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
   (CreateWebhook c _) ->    "aaaaaahook " <> show c
@@ -116,6 +161,7 @@ webhookMajorRoute ch = case ch of
   (EditWebhookMessage w _ _ _) -> "edithkmsg " <> show w
   (DeleteWebhookMessage w _ _) -> "delhkmsg " <> show w
 
+-- | Create a 'JsonRequest' from a `WebhookRequest`
 webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->
@@ -162,7 +208,7 @@ webhookJsonRequest ch = case ch of
     Get (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty
 
   (EditWebhookMessage w t m p) ->
-    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (pure (R.ReqBodyJson p))  mempty
+    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (pure (R.ReqBodyJson $ object ["content" .= p]))  mempty
 
   (DeleteWebhookMessage w t m) ->
     Delete (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty

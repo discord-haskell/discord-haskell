@@ -20,8 +20,9 @@ instance Request (VoiceRequest a) where
   majorRoute = voiceMajorRoute
   jsonRequest = voiceJsonRequest
 
--- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
+-- | Data constructor for requests
 data VoiceRequest a where
+  -- | List all available 'VoiceRegion's.
   ListVoiceRegions :: VoiceRequest [VoiceRegion]
 
 voiceMajorRoute :: VoiceRequest a -> String

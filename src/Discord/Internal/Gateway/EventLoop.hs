@@ -3,6 +3,20 @@
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Realistically, this is probably lower level than most
 --   people will need
+--
+-- Some quick documentation for some of the variables passed around:
+--
+-- Auth                                                         needed to connect
+-- GatewayIntent                                                needed to connect
+-- GatewayHandle (eventsGifts,status,usersends,seq,sesh)        needed all over
+-- log :: Chan (T.Text)                                         needed all over
+--
+-- sendableConnection                                 set by setup,  need sendableLoop
+-- librarySendables :: Chan (GatewaySendableInternal) set by setup,  need heartbeat
+-- heartbeatInterval :: Int                           set by Hello,  need heartbeat
+--
+-- sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
+-- sessionId :: Text                                  set by Ready,  need reconnect
 module Discord.Internal.Gateway.EventLoop where
 
 import Prelude hiding (log)
@@ -56,21 +70,7 @@ data SendablesData = SendablesData
   , heartbeatInterval :: Integer
   }
 
-{-
-Some quick documentation for some of the variables passed around:
 
-Auth                                                         needed to connect
-GatewayIntent                                                needed to connect
-GatewayHandle (eventsGifts,status,usersends,seq,sesh)        needed all over
-log :: Chan (T.Text)                                         needed all over
-
-sendableConnection                                 set by setup,  need sendableLoop
-librarySendables :: Chan (GatewaySendableInternal) set by setup,  need heartbeat
-heartbeatInterval :: Int                           set by Hello,  need heartbeat
-
-sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
-sessionId :: Text                                  set by Ready,  need reconnect
--}
 
 connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
 connectionLoop auth intent gatewayHandle log = outerloop LoopStart
