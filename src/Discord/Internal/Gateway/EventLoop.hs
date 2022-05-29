@@ -43,7 +43,7 @@ data GatewayHandle = GatewayHandle
   }
 
 -- | Ways the gateway connection can fail with no possibility of recovery.
-data GatewayException = GatewayExceptionIntent T.Text
+newtype GatewayException = GatewayExceptionIntent T.Text
   deriving (Show)
 
 -- | State of the eventloop
@@ -91,7 +91,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
             Left _ -> do
               t <- getRandomR (3, 20)
               threadDelay (t * (10 ^ (6 :: Int)))
-              writeChan log ("gateway - trying to reconnect after failure(s)")
+              writeChan log "gateway - trying to reconnect after failure(s)"
               outerloop LoopReconnect
             Right n -> outerloop n
 
@@ -106,7 +106,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
           seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
           if seshId == ""
             then do
-              writeChan log ("gateway - WARNING seshID was not set by READY?")
+              writeChan log "gateway - WARNING seshID was not set by READY?"
               pure $ Just $ Identify auth intent (0, 1)
             else pure $ Just $ Resume auth seshId seqId
         LoopClosed -> pure Nothing
@@ -166,15 +166,15 @@ runEventLoop thehandle sendablesData log = do loop
             _ -> writeIORef (startsendingUsers sendablesData) True
           loop
         Right (Hello _interval) -> do
-          writeChan log ("eventloop - unexpected hello")
+          writeChan log "eventloop - unexpected hello"
           loop
         Right (HeartbeatRequest sq) -> do
           writeIORef (gatewayHandleLastSequenceId thehandle) sq
           writeChan (librarySendables sendablesData) (Heartbeat sq)
           loop
         Right (InvalidSession retry) -> pure $ if retry then LoopReconnect else LoopStart
-        Right (Reconnect) -> pure LoopReconnect
-        Right (HeartbeatAck) -> loop
+        Right Reconnect -> pure LoopReconnect
+        Right HeartbeatAck -> loop
         Right (ParseError _e) -> loop -- getPayload logs the parse error. nothing to do here
         Left (CloseRequest code str) -> case code of
           -- see Discord and MDN documentation on gateway close event codes

@@ -1,6 +1,5 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
@@ -166,7 +165,7 @@ instance ToJSON ModifyGuildIntegrationOpts where
       ]
 
 -- | Options for `CreateGuildIntegration`
-data CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
+newtype CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
   { createGuildIntegrationOptsType :: T.Text
   }
   deriving (Show, Read, Eq, Ord)
