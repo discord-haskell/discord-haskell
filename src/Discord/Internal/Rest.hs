@@ -1,34 +1,33 @@
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverloadedStrings  #-}
 
 -- | Provides a higher level interface to the rest functions.
 --   Preperly writes to the rate-limit loop. Creates separate
 --   MVars for each call
 module Discord.Internal.Rest
-  ( module Discord.Internal.Types
-  , RestChanHandle(..)
-  , Request(..)
-  , writeRestCall
-  , startRestThread
-  , RestCallInternalException(..)
-  ) where
+  ( module Discord.Internal.Types,
+    RestChanHandle (..),
+    Request (..),
+    writeRestCall,
+    startRestThread,
+    RestCallInternalException (..),
+  )
+where
 
-import Prelude hiding (log)
-import Data.Aeson (FromJSON, eitherDecode)
+import Control.Concurrent (ThreadId, forkIO)
 import Control.Concurrent.Chan
 import Control.Concurrent.MVar
-import Control.Concurrent (forkIO, ThreadId)
+import Data.Aeson (FromJSON, eitherDecode)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
-
-
-import Discord.Internal.Types
 import Discord.Internal.Rest.HTTP
+import Discord.Internal.Types
+import Prelude hiding (log)
 
 -- | Handle to the Rest 'Chan'
 data RestChanHandle = RestChanHandle
-      { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
-      }
+  { restHandleChan :: Chan (String, JsonRequest, MVar (Either RestCallInternalException BL.ByteString))
+  }
 
 -- | Starts the http request thread. Please only call this once
 startRestThread :: Auth -> Chan T.Text -> IO (RestChanHandle, ThreadId)
@@ -45,9 +44,13 @@ writeRestCall c req = do
   r <- readMVar m
   pure $ case eitherDecode <$> r of
     Right (Right o) -> Right o
-    (Right (Left er)) -> Left (RestCallInternalNoParse er (case r of
-      Right x -> x
-      Left _ -> ""))
+    (Right (Left er)) ->
+      Left
+        ( RestCallInternalNoParse
+            er
+            ( case r of
+                Right x -> x
+                Left _ -> ""
+            )
+        )
     Left e -> Left e
-
-

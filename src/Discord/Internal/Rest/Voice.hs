@@ -1,20 +1,19 @@
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Provides actions for Voice API interactions
 module Discord.Internal.Rest.Voice
-  ( VoiceRequest(..)
-  ) where
-
-
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
+  ( VoiceRequest (..),
+  )
+where
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Network.HTTP.Req ((/:))
+import qualified Network.HTTP.Req as R
 
 instance Request (VoiceRequest a) where
   majorRoute = voiceMajorRoute

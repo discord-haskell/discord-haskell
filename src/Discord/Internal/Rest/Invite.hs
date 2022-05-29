@@ -1,26 +1,25 @@
-{-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Provides actions for Channel API interactions
 module Discord.Internal.Rest.Invite
-  ( InviteRequest(..)
-  ) where
+  ( InviteRequest (..),
+  )
+where
 
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
-
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Network.HTTP.Req ((/:))
+import qualified Network.HTTP.Req as R
 
 instance Request (InviteRequest a) where
   majorRoute = inviteMajorRoute
   jsonRequest = inviteJsonRequest
-
 
 -- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 data InviteRequest a where
@@ -31,8 +30,8 @@ data InviteRequest a where
 
 inviteMajorRoute :: InviteRequest a -> String
 inviteMajorRoute c = case c of
-  (GetInvite _) ->     "invite "
-  (DeleteInvite _) ->  "invite "
+  (GetInvite _) -> "invite "
+  (DeleteInvite _) -> "invite "
 
 invite :: R.Url 'R.Https
 invite = baseUrl /: "invites"

@@ -1,13 +1,10 @@
+import Control.Concurrent -- Chans and Threads
+import Control.Monad (forever)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-
-import           Control.Monad (forever)
-import           Control.Concurrent      -- Chans and Threads
-
-import           Discord.Types
+import Discord.Internal.Rest (RestCallInternalException (..), startRestThread, writeRestCall)
 import qualified Discord.Requests as R
-
-import           Discord.Internal.Rest (startRestThread, writeRestCall, RestCallInternalException(..))
+import Discord.Types
 
 {-
 Peel back the `runDiscord` abstraction

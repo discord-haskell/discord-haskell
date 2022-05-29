@@ -211,7 +211,6 @@ exampleInteractionResponse _ =
 getImage :: IO B.ByteString
 getImage = return "\137PNG\r\n\SUB\n\NUL\NUL\NUL\rIHDR\NUL\NUL\NUL\SOH\NUL\NUL\NUL\SOH\b\STX\NUL\NUL\NUL\144wS\222\NUL\NUL\NUL\SOHsRGB\NUL\174\206\FS\233\NUL\NUL\NUL\EOTgAMA\NUL\NUL\177\143\v\252a\ENQ\NUL\NUL\NUL\tpHYs\NUL\NUL\SO\195\NUL\NUL\SO\195\SOH\199o\168d\NUL\NUL\NUL\fIDAT\CANWc\248\239\180\t\NUL\EOT7\SOH\244\162\155\ENQ\235\NUL\NUL\NUL\NULIEND\174B`\130"
 
-
 -- If an event handler throws an exception, discord-haskell will continue to run
 eventHandler :: Event -> DiscordHandler ()
 eventHandler event = case event of

@@ -3,24 +3,24 @@
 -- | Provides a rather raw interface to the websocket events
 --   through a real-time Chan
 module Discord.Internal.Gateway
-  ( GatewayHandle(..)
-  , CacheHandle(..)
-  , GatewayException(..)
-  , Cache(..)
-  , startCacheThread
-  , startGatewayThread
-  , module Discord.Internal.Types
-  ) where
+  ( GatewayHandle (..),
+    CacheHandle (..),
+    GatewayException (..),
+    Cache (..),
+    startCacheThread,
+    startGatewayThread,
+    module Discord.Internal.Types,
+  )
+where
 
-import Prelude hiding (log)
-import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
+import Control.Concurrent (MVar, ThreadId, forkIO, newEmptyMVar)
+import Control.Concurrent.Chan (Chan, dupChan, newChan)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
-
+import Discord.Internal.Gateway.Cache (Cache (..), CacheHandle (..), cacheLoop)
+import Discord.Internal.Gateway.EventLoop (GatewayException (..), GatewayHandle (..), connectionLoop)
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
-import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
+import Prelude hiding (log)
 
 -- | Starts a thread for the cache
 startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
@@ -43,6 +43,3 @@ startGatewayThread auth intent cacheHandle log = do
   let gatewayHandle = GatewayHandle events sends status seqid seshid
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)
-
-
-

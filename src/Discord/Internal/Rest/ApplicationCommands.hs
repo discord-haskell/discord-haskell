@@ -9,11 +9,12 @@ import Data.Aeson (Value)
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Discord.Internal.Types.ApplicationCommands
-    ( ApplicationCommandPermissions,
-      GuildApplicationCommandPermissions(GuildApplicationCommandPermissions),
-      EditApplicationCommand,
-      CreateApplicationCommand,
-      ApplicationCommand )
+  ( ApplicationCommand,
+    ApplicationCommandPermissions,
+    CreateApplicationCommand,
+    EditApplicationCommand,
+    GuildApplicationCommandPermissions (GuildApplicationCommandPermissions),
+  )
 import Network.HTTP.Req as R
 
 instance Request (ApplicationCommandRequest a) where
@@ -23,81 +24,95 @@ instance Request (ApplicationCommandRequest a) where
 -- | Requests related to application commands
 data ApplicationCommandRequest a where
   -- | Fetch all of the global commands for your application. Returns an list of 'ApplicationCommand's.
-  GetGlobalApplicationCommands :: ApplicationId
-                               -> ApplicationCommandRequest [ApplicationCommand]
+  GetGlobalApplicationCommands ::
+    ApplicationId ->
+    ApplicationCommandRequest [ApplicationCommand]
   -- | Create a new global command. Returns an 'ApplicationCommand'.
   --
   -- __Note__: Creating a command with the same name as an existing command for your application will overwrite the old command.
-  CreateGlobalApplicationCommand :: ApplicationId
-                                 -> CreateApplicationCommand
-                                 -> ApplicationCommandRequest ApplicationCommand
+  CreateGlobalApplicationCommand ::
+    ApplicationId ->
+    CreateApplicationCommand ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Fetch a global command for your application. Returns an 'ApplicationCommand'.
-  GetGlobalApplicationCommand :: ApplicationId
-                              -> ApplicationCommandId
-                              -> ApplicationCommandRequest ApplicationCommand
+  GetGlobalApplicationCommand ::
+    ApplicationId ->
+    ApplicationCommandId ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Edit a global command. Returns an 'ApplicationCommand'.
   --
   -- All fields are optional, but any fields provided will entirely overwrite the existing values of those fields.
-  EditGlobalApplicationCommand :: ApplicationId
-                               -> ApplicationCommandId
-                               -> EditApplicationCommand
-                               -> ApplicationCommandRequest ApplicationCommand
+  EditGlobalApplicationCommand ::
+    ApplicationId ->
+    ApplicationCommandId ->
+    EditApplicationCommand ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Delete a global command.
-  DeleteGlobalApplicationCommand :: ApplicationId
-                                 -> ApplicationCommandId
-                                 -> ApplicationCommandRequest ()
+  DeleteGlobalApplicationCommand ::
+    ApplicationId ->
+    ApplicationCommandId ->
+    ApplicationCommandRequest ()
   -- | Takes a list of 'CreateApplicationCommand', overwriting the existing global command list for this application.
   --
   -- __Note__: This will overwrite __all__ types of application commands: slash commands, user commands, and message commands.
-  BulkOverWriteGlobalApplicationCommand :: ApplicationId
-                                        -> [CreateApplicationCommand]
-                                        -> ApplicationCommandRequest ()
+  BulkOverWriteGlobalApplicationCommand ::
+    ApplicationId ->
+    [CreateApplicationCommand] ->
+    ApplicationCommandRequest ()
   -- | Fetch all of the guild commands for your application for a specific guild. Returns an list of 'ApplicationCommands'.
-  GetGuildApplicationCommands :: ApplicationId
-                              -> GuildId
-                              -> ApplicationCommandRequest [ApplicationCommand]
+  GetGuildApplicationCommands ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandRequest [ApplicationCommand]
   -- | Create a new guild command. New guild commands will be available in the guild immediately.
   -- Returns an 'ApplicationCommand'.
   -- If the command did not already exist, it will count toward daily application command create limits.
   --
   -- __Note__: Creating a command with the same name as an existing command for your application will overwrite the old command.
-  CreateGuildApplicationCommand :: ApplicationId
-                                -> GuildId
-                                -> CreateApplicationCommand
-                                -> ApplicationCommandRequest ApplicationCommand
+  CreateGuildApplicationCommand ::
+    ApplicationId ->
+    GuildId ->
+    CreateApplicationCommand ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Fetch a guild command for your application. Returns an 'ApplicationCommand'
-  GetGuildApplicationCommand :: ApplicationId
-                             -> GuildId
-                             -> ApplicationCommandId
-                             -> ApplicationCommandRequest ApplicationCommand
+  GetGuildApplicationCommand ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandId ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Edit a guild command. Updates for guild commands will be available immediately. Returns an 'ApplicationCommand'.
   -- All fields are optional, but any fields provided will entirely overwrite the existing values of those fields.
-  EditGuildApplicationCommand :: ApplicationId
-                              -> GuildId
-                              -> ApplicationCommandId
-                              -> CreateApplicationCommand
-                              -> ApplicationCommandRequest ApplicationCommand
+  EditGuildApplicationCommand ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandId ->
+    CreateApplicationCommand ->
+    ApplicationCommandRequest ApplicationCommand
   -- | Delete a guild command.
-  DeleteGuildApplicationCommand :: ApplicationId
-                                -> GuildId
-                                -> ApplicationCommandId
-                                -> ApplicationCommandRequest ()
+  DeleteGuildApplicationCommand ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandId ->
+    ApplicationCommandRequest ()
   -- | Takes a list of `CreateApplicationCommand`, overwriting the existing command list for this application for the targeted guild.
   --
   -- __Note__: This will overwrite __all__ types of application commands: slash commands, user commands, and message commands.
-  BulkOverWriteGuildApplicationCommand :: ApplicationId
-                                       -> GuildId
-                                       -> [CreateApplicationCommand]
-                                       -> ApplicationCommandRequest ()
-  -- | Fetches permissions for all commands for your application in a guild. 
-  GetGuildApplicationCommandPermissions :: ApplicationId
-                                        -> GuildId
-                                        -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  BulkOverWriteGuildApplicationCommand ::
+    ApplicationId ->
+    GuildId ->
+    [CreateApplicationCommand] ->
+    ApplicationCommandRequest ()
+  -- | Fetches permissions for all commands for your application in a guild.
+  GetGuildApplicationCommandPermissions ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandRequest GuildApplicationCommandPermissions
   -- | Fetches permissions for a specific command for your application in a guild.
-  GetApplicationCommandPermissions :: ApplicationId
-                                   -> GuildId
-                                   -> ApplicationCommandId
-                                   -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  GetApplicationCommandPermissions ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandId ->
+    ApplicationCommandRequest GuildApplicationCommandPermissions
   -- | Edits command permissions for a specific command for your application.
   -- You can add up to 100 permission overwrites for a command.
   -- __Notes__:
@@ -105,11 +120,12 @@ data ApplicationCommandRequest a where
   --   * This endpoint will overwrite existing permissions for the command in that guild
   --   * This endpoint requires authentication with a Bearer token that has permission to manage the guild and its roles.
   --   * Deleting or renaming a command will permanently delete all permissions for the command
-  EditApplicationCommandPermissions :: ApplicationId
-                                    -> GuildId
-                                    -> ApplicationCommandId
-                                    -> [ApplicationCommandPermissions]
-                                    -> ApplicationCommandRequest GuildApplicationCommandPermissions
+  EditApplicationCommandPermissions ::
+    ApplicationId ->
+    GuildId ->
+    ApplicationCommandId ->
+    [ApplicationCommandPermissions] ->
+    ApplicationCommandRequest GuildApplicationCommandPermissions
 
 -- | The base url for application commands
 applications :: ApplicationId -> R.Url 'R.Https

@@ -3,17 +3,14 @@
 -- | Data structures pertaining to Discord Colors
 module Discord.Internal.Types.Color where
 
-
-import Text.Read (readMaybe)
-import Data.Maybe (fromMaybe)
-import Data.Char (toLower)
+import Control.Applicative (Alternative ((<|>)))
 import Data.Aeson
+import Data.Bits (Bits ((.&.)))
+import Data.Char (toLower)
 import Data.Data
-import Control.Applicative (Alternative((<|>)))
-import Data.Bits (Bits((.&.)))
-
-
-import Discord.Internal.Types.Prelude (InternalDiscordEnum(..))
+import Data.Maybe (fromMaybe)
+import Discord.Internal.Types.Prelude (InternalDiscordEnum (..))
+import Text.Read (readMaybe)
 
 -- | Color names
 -- Color is a bit of a mess on discord embeds.
@@ -22,7 +19,7 @@ import Discord.Internal.Types.Prelude (InternalDiscordEnum(..))
 -- All discord embed color stuff is credited to
 -- https://github.com/WarwickTabletop/tablebot/pull/34
 data DiscordColor
-  = -- | An RGB color with values in @[0..255]@ 
+  = -- | An RGB color with values in @[0..255]@
     DiscordColorRGB Integer Integer Integer
   | DiscordColorDefault
   | DiscordColorAqua
@@ -70,7 +67,7 @@ hexToRGB hex = do
   b <- drop2 h >>= drop2 >>= toDec
   return (r, g, b)
   where
-    take2 (a:b:_) = Just [a, b]
+    take2 (a : b : _) = Just [a, b]
     take2 _ = Nothing
     drop2 (_ : _ : as) = Just as
     drop2 _ = Nothing

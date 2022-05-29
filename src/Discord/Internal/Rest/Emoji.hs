@@ -11,7 +11,7 @@ module Discord.Internal.Rest.Emoji
     parseEmojiImage,
     StickerRequest (..),
     CreateGuildStickerOpts (..),
-    EditGuildStickerOpts (..)
+    EditGuildStickerOpts (..),
   )
 where
 
@@ -185,7 +185,7 @@ instance Request (StickerRequest a) where
 
 -- | Data constructor for requests. See <https://discord.com/developers/docs/resources/ API>
 --
--- Be warned that these are untested due to not having a spare server with 
+-- Be warned that these are untested due to not having a spare server with
 -- boosts. Functionality is at your own risk.
 data StickerRequest a where
   -- | Returns a sticker object for the given sticker ID.

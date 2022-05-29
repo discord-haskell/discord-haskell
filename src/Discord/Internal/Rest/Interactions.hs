@@ -3,22 +3,23 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 
-module Discord.Internal.Rest.Interactions (InteractionResponseRequest(..)) where
+module Discord.Internal.Rest.Interactions (InteractionResponseRequest (..)) where
 
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text as T
 import Discord.Internal.Rest.Prelude
-    ( RestIO,
-      Request(..),
-      JsonRequest(Delete, Post, Get, Patch),
-      baseUrl,
-      (//) )
+  ( JsonRequest (Delete, Get, Patch, Post),
+    Request (..),
+    RestIO,
+    baseUrl,
+    (//),
+  )
 import Discord.Internal.Types
 import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
-import qualified Data.Text as T
 
 -- | Data constructor for Interaction response requests
 data InteractionResponseRequest a where

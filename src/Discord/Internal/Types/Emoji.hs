@@ -115,7 +115,7 @@ instance FromJSON Sticker where
   parseJSON = withObject "Sticker" $ \o ->
     Sticker <$> o .: "id"
       <*> o .:? "pack_id"
-      <*> o .:  "name"
+      <*> o .: "name"
       <*> o .:? "description"
       <*> ((o .: "tags") <&> T.splitOn "\n")
       <*> ((o .: "type") <&> (== (1 :: Int)))
