@@ -11,6 +11,7 @@ import Data.Bits
 import Data.Word
 
 import Data.Aeson.Types
+import qualified Data.ByteString as B
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Time.Clock.POSIX
@@ -178,3 +179,43 @@ class Data a => InternalDiscordEnum a where
 
 toMaybeJSON :: (ToJSON a) => a -> Maybe Value
 toMaybeJSON = return . toJSON
+
+
+-- | @Base64Image mime data@ represents the base64 encoding of an image (as
+-- @data@), together with a tag of its mime type (@mime@).  The constructor is
+-- only for Internal use, and its public export is hidden in Discord.Types.
+--
+-- Public creation of this datatype should be done using the relevant smart
+-- constructors for Emoji, Sticker, or Avatar.
+data Base64Image a = Base64Image T.Text T.Text
+  deriving (Show, Read, Eq, Ord)
+
+-- | The ToJSON instance for Base64Image creates a string representation of the
+-- image's base-64 data, suited for using as JSON values.
+--
+-- The format is: @data:%MIME%;base64,%DATA%@.
+instance ToJSON (Base64Image a) where
+  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> im
+
+-- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
+-- based on the first few magic bytes. It may return any of PNG/JPEG/GIF or WEBP
+-- mimetypes, or Nothing if none are matched.
+--
+-- Reference: https://en.wikipedia.org/wiki/List_of_file_signatures
+--
+-- Although Discord's official documentation does not state WEBP as a supported
+-- format, it has been accepted for both emojis and user avatars no problem
+-- when tested manually.
+--
+-- /Inspired by discord.py's implementation./
+getMimeType :: B.ByteString -> Maybe T.Text
+getMimeType bs
+  | B.take 8 bs == "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
+  = Just "image/png"
+  | B.take 3 bs == "\xff\xd8\xff" || B.take 4 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
+  = Just "image/jpeg"
+  | B.take 6 bs == "\x47\x49\x46\x38\x37\x61" || B.take 6 bs == "\x47\x49\x46\x38\x39\x61"
+  = Just "image/gif"
+  | B.take 4 bs == "RIFF" && B.take 4 (B.drop 8 bs) == "WEBP"
+  = Just "image/webp"
+  | otherwise = Nothing

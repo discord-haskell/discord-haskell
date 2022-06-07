@@ -7,19 +7,16 @@
 -- | Provides actions for Channel API interactions
 module Discord.Internal.Rest.User
   ( UserRequest(..)
-  , parseCurrentUserAvatar
-  , CurrentUserAvatar
+  , parseAvatarImage
   ) where
 
 
 import Data.Aeson
-import Codec.Picture
 import Network.HTTP.Req ((/:))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Base64 as B64
 
 import Discord.Internal.Rest.Prelude
@@ -39,7 +36,7 @@ data UserRequest a where
   -- | Returns a 'User' for a given user ID
   GetUser              :: UserId -> UserRequest User
   -- | Modify user's username & avatar pic
-  ModifyCurrentUser    :: T.Text -> CurrentUserAvatar -> UserRequest User
+  ModifyCurrentUser    :: T.Text -> Base64Image User -> UserRequest User
   -- | Returns a list of user 'Guild' objects the current user is a member of.
   --   Requires the guilds OAuth2 scope.
   GetCurrentUserGuilds :: UserRequest [PartialGuild]
@@ -52,17 +49,17 @@ data UserRequest a where
 
   GetUserConnections   :: UserRequest [ConnectionObject]
 
--- | Formatted avatar data https://discord.com/developers/docs/resources/user#avatar-data
-data CurrentUserAvatar = CurrentUserAvatar T.Text
-  deriving (Show, Read, Eq, Ord)
-
-parseCurrentUserAvatar :: B.ByteString -> Either T.Text CurrentUserAvatar
-parseCurrentUserAvatar bs =
-  case decodeImage bs of
-    Left e -> Left (T.pack e)
-    Right im -> Right $ CurrentUserAvatar $ "data:image/png;base64,"
-                <> TE.decodeUtf8 (B64.encode (BL.toStrict (encodePng (convertRGBA8 im))))
-
+-- | @parseAvatarImage bs@ will attempt to convert the given image bytestring
+-- @bs@ to the base64 format expected by the Discord API. It may return Left
+-- with an error reason if the image format could not be predetermined from the
+-- opening magic bytes. This function does /not/ validate the rest of the image,
+-- and this is up to the library user to check themselves.
+--
+-- This function accepts all file types accepted by 'getMimeType'.
+parseAvatarImage :: B.ByteString -> Either T.Text (Base64Image User)
+parseAvatarImage bs
+  | Just mime <- getMimeType bs = Right (Base64Image mime (TE.decodeUtf8 (B64.encode bs)))
+  | otherwise                   = Left "Unsupported image format provided"
 
 userMajorRoute :: UserRequest a -> String
 userMajorRoute c = case c of
@@ -84,9 +81,9 @@ userJsonRequest c = case c of
 
   (GetUser user) -> Get (users // user ) mempty
 
-  (ModifyCurrentUser name (CurrentUserAvatar im)) ->
+  (ModifyCurrentUser name b64im) ->
       Patch (users /: "@me")  (pure (R.ReqBodyJson (object [ "username" .= name
-                                                           , "avatar" .= im ]))) mempty
+                                                           , "avatar" .= b64im ]))) mempty
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 

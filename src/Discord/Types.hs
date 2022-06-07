@@ -8,6 +8,7 @@ import Discord.Internal.Types hiding
     , GatewayReceivable(..)
     , EventInternalParse(..)
     , InternalDiscordEnum(..)
+    , Base64Image(..)
 
     , colorToInternal
     , convertToRGB
