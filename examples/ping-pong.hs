@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
+import System.Exit (exitSuccess)
 import Control.Monad (when, forM_, void)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
@@ -13,9 +14,7 @@ import qualified Discord.Requests as R
 
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
-main = if testserverid == -1
-       then TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
-       else pingpongExample
+main = pingpongExample
 
 
 
@@ -28,6 +27,10 @@ testserverid = -1
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
+  when (testserverid == (-1 :: GuildId)) $ do
+      TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
+      exitSuccess
+
   tok <- TIO.readFile "./examples/auth-token.secret"
 
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields

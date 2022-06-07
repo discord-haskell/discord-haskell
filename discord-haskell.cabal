@@ -100,7 +100,6 @@ library
                      , iso8601-time
                      , MonadRandom
                      , req
-                     , JuicyPixels
                      , safe-exceptions
                      , text
                      , time
