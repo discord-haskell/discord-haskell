@@ -252,7 +252,7 @@ eventHandler event = case event of
                       [ Button "Button 1" False ButtonStylePrimary (Just "Button 1") (Just (mkEmoji "🔥")),
                         Button "Button 2" True ButtonStyleSuccess (Just "Button 2") Nothing,
                         ButtonUrl
-                          "https://github.com/aquarial/discord-haskell"
+                          "https://github.com/discord-haskell/discord-haskell"
                           False
                           (Just "Button 3")
                           Nothing

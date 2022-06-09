@@ -185,11 +185,11 @@ runEventLoop thehandle sendablesData log = do loop
           4014 -> do writeChan eventChan (Left (GatewayExceptionIntent $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
-                           "https://github.com/aquarial/discord-haskell/blob/master/docs/intents.md"))
+                           "https://github.com/discord-haskell/discord-haskell/blob/master/docs/intents.md"))
                      pure LoopClosed
           _ -> do writeChan log ("gateway - unknown websocket close code " <> T.pack (show code)
                                   <> " [" <> TE.decodeUtf8 (BL.toStrict str) <> "]. Consider opening an issue "
-                                  <> "https://github.com/aquarial/discord-haskell/issues")
+                                  <> "https://github.com/discord-haskell/discord-haskell/issues")
                   pure LoopStart
       Left _ -> pure LoopReconnect
 
