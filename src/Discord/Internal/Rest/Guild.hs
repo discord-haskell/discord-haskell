@@ -20,7 +20,7 @@ module Discord.Internal.Rest.Guild
 
 
 import Data.Aeson
-import Network.HTTP.Req ((/:))
+import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 
@@ -355,113 +355,113 @@ guilds = baseUrl /: "guilds"
 guildJsonRequest :: GuildRequest r -> JsonRequest
 guildJsonRequest c = case c of
   (GetGuild guild) ->
-      Get (guilds // guild) mempty
+      Get (guilds /~ guild) mempty
 
   (ModifyGuild guild patch) ->
-      Patch (guilds // guild) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuild guild) ->
-      Delete (guilds // guild) mempty
+      Delete (guilds /~ guild) mempty
 
   (GetGuildChannels guild) ->
-      Get (guilds // guild /: "channels") mempty
+      Get (guilds /~ guild /: "channels") mempty
 
   (CreateGuildChannel guild name perms patch) ->
-      Post (guilds // guild /: "channels")
+      Post (guilds /~ guild /: "channels")
            (pure (R.ReqBodyJson (createChannelOptsToJSON name perms patch))) mempty
 
   (ModifyGuildChannelPositions guild newlocs) ->
       let patch = map (\(a, b) -> object [("id", toJSON a)
                                          ,("position", toJSON b)]) newlocs
-      in Patch (guilds // guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+      in Patch (guilds /~ guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildMember guild member) ->
-      Get (guilds // guild /: "members" // member) mempty
+      Get (guilds /~ guild /: "members" /~ member) mempty
 
   (ListGuildMembers guild range) ->
-      Get (guilds // guild /: "members") (guildMembersTimingToQuery range)
+      Get (guilds /~ guild /: "members") (guildMembersTimingToQuery range)
 
   (AddGuildMember guild user patch) ->
-      Put (guilds // guild /: "members" // user) (R.ReqBodyJson patch) mempty
+      Put (guilds /~ guild /: "members" /~ user) (R.ReqBodyJson patch) mempty
 
   (ModifyGuildMember guild member patch) ->
-      Patch (guilds // guild /: "members" // member) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "members" /~ member) (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyCurrentUserNick guild name) ->
       let patch = object ["nick" .= name]
-      in Patch (guilds // guild /: "members/@me/nick") (pure (R.ReqBodyJson patch)) mempty
+      in Patch (guilds /~ guild /: "members/@me/nick") (pure (R.ReqBodyJson patch)) mempty
 
   (AddGuildMemberRole guild user role) ->
       let body = R.ReqBodyJson (object [])
-      in Put (guilds // guild /: "members" // user /: "roles" // role) body mempty
+      in Put (guilds /~ guild /: "members" /~ user /: "roles" /~ role) body mempty
 
   (RemoveGuildMemberRole guild user role) ->
-      Delete (guilds // guild /: "members" // user /: "roles" // role) mempty
+      Delete (guilds /~ guild /: "members" /~ user /: "roles" /~ role) mempty
 
   (RemoveGuildMember guild user) ->
-      Delete (guilds // guild /: "members" // user) mempty
+      Delete (guilds /~ guild /: "members" /~ user) mempty
 
-  (GetGuildBan guild user) -> Get (guilds // guild /: "bans" // user) mempty
+  (GetGuildBan guild user) -> Get (guilds /~ guild /: "bans" /~ user) mempty
 
-  (GetGuildBans guild) -> Get (guilds // guild /: "bans") mempty
+  (GetGuildBans guild) -> Get (guilds /~ guild /: "bans") mempty
 
   (CreateGuildBan guild user patch) ->
-      Put (guilds // guild /: "bans" // user) (R.ReqBodyJson patch) mempty
+      Put (guilds /~ guild /: "bans" /~ user) (R.ReqBodyJson patch) mempty
 
   (RemoveGuildBan guild ban) ->
-      Delete (guilds // guild /: "bans" // ban) mempty
+      Delete (guilds /~ guild /: "bans" /~ ban) mempty
 
   (GetGuildRoles guild) ->
-      Get (guilds // guild /: "roles") mempty
+      Get (guilds /~ guild /: "roles") mempty
 
   (CreateGuildRole guild patch) ->
-      Post (guilds // guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
+      Post (guilds /~ guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyGuildRolePositions guild patch) ->
       let body = map (\(role, pos) -> object ["id".=role, "position".=pos]) patch
-      in Patch (guilds // guild /: "roles") (pure (R.ReqBodyJson body)) mempty
+      in Patch (guilds /~ guild /: "roles") (pure (R.ReqBodyJson body)) mempty
 
   (ModifyGuildRole guild role patch) ->
-      Patch (guilds // guild /: "roles" // role) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "roles" /~ role) (pure (R.ReqBodyJson patch)) mempty
 
   (DeleteGuildRole guild role) ->
-      Delete (guilds // guild /: "roles" // role) mempty
+      Delete (guilds /~ guild /: "roles" /~ role) mempty
 
   (GetGuildPruneCount guild days) ->
-      Get (guilds // guild /: "prune") ("days" R.=: days)
+      Get (guilds /~ guild /: "prune") ("days" R.=: days)
 
   (BeginGuildPrune guild days) ->
-      Post (guilds // guild /: "prune") (pure R.NoReqBody) ("days" R.=: days)
+      Post (guilds /~ guild /: "prune") (pure R.NoReqBody) ("days" R.=: days)
 
   (GetGuildVoiceRegions guild) ->
-      Get (guilds // guild /: "regions") mempty
+      Get (guilds /~ guild /: "regions") mempty
 
   (GetGuildInvites guild) ->
-      Get (guilds // guild /: "invites") mempty
+      Get (guilds /~ guild /: "invites") mempty
 
   (GetGuildIntegrations guild) ->
-      Get (guilds // guild /: "integrations") mempty
+      Get (guilds /~ guild /: "integrations") mempty
 
   (CreateGuildIntegration guild iid opts) ->
       let patch = object [("type" .= createGuildIntegrationOptsType opts) ,("id"   .= iid)]
-      in Post (guilds // guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
+      in Post (guilds /~ guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyGuildIntegration guild iid patch) ->
       let body = pure (R.ReqBodyJson patch)
-      in Patch (guilds // guild /: "integrations" // iid) body mempty
+      in Patch (guilds /~ guild /: "integrations" /~ iid) body mempty
 
   (DeleteGuildIntegration guild integ) ->
-      Delete (guilds // guild /: "integrations" // integ) mempty
+      Delete (guilds /~ guild /: "integrations" /~ integ) mempty
 
   (SyncGuildIntegration guild integ) ->
-      Post (guilds // guild /: "integrations" // integ) (pure R.NoReqBody) mempty
+      Post (guilds /~ guild /: "integrations" /~ integ) (pure R.NoReqBody) mempty
 
   (GetGuildWidget guild) ->
-      Get (guilds // guild /: "integrations") mempty
+      Get (guilds /~ guild /: "integrations") mempty
 
   (ModifyGuildWidget guild patch) ->
-      Patch (guilds // guild /: "widget") (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "widget") (pure (R.ReqBodyJson patch)) mempty
 
   (GetGuildVanityURL guild) ->
-      Get (guilds // guild /: "vanity-url") mempty
+      Get (guilds /~ guild /: "vanity-url") mempty
 

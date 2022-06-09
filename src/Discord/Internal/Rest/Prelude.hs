@@ -12,8 +12,8 @@ import Control.Monad.IO.Class (MonadIO, liftIO)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
-
 import qualified Network.HTTP.Req as R
+import Web.Internal.HttpApiData (ToHttpApiData)
 
 import Discord.Internal.Types
 
@@ -36,10 +36,11 @@ authHeader auth =
   -- Second place where the library version is noted
   agent = "DiscordBot (https://github.com/discord-haskell/discord-haskell, 1.13.0)"
 
--- Append to an URL
-infixl 5 //
-(//) :: Show a => R.Url scheme -> a -> R.Url scheme
-(//) url part = url R./: T.pack (show part)
+-- Possibly append to an URL
+infixl 5 /?
+(/?) :: ToHttpApiData a => R.Url scheme -> Maybe a -> R.Url scheme
+(/?) url Nothing = url
+(/?) url (Just part) = url R./~ part
 
 
 -- | A compiled HTTP request ready to execute
