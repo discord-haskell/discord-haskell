@@ -1,30 +1,30 @@
 # Changelog
 
-View on github for newest version: https://github.com/aquarial/discord-haskell/blob/master/changelog.md
+View on github for newest version: https://github.com/discord-haskell/discord-haskell/blob/master/changelog.md
 
 Discord API changes, so use the most recent version at all times
 
 ## master
 
-[Annwan](https://github.com/aquarial/discord-haskell/pull/123) Huge documentation flourish. Removed deprecated AppCommandPermissions func & fix presences typo
+[Annwan](https://github.com/discord-haskell/discord-haskell/pull/123) Huge documentation flourish. Removed deprecated AppCommandPermissions func & fix presences typo
 
-[yutotakano](https://github.com/aquarial/discord-haskell/pull/121) Replace `OverwriteId` with `Either RoleId UserId` in `ChannelPermission` requests, and remove the `type` field from `ChannelPermissionsOpts`
+[yutotakano](https://github.com/discord-haskell/discord-haskell/pull/121) Replace `OverwriteId` with `Either RoleId UserId` in `ChannelPermission` requests, and remove the `type` field from `ChannelPermissionsOpts`
 
 ## 1.13.0
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/117) Shorten ApplicationCommand names! To update search [the pull-request](https://github.com/aquarial/discord-haskell/pull/117/files) for what the names are replaced with
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/117) Shorten ApplicationCommand names! To update search [the pull-request](https://github.com/discord-haskell/discord-haskell/pull/117/files) for what the names are replaced with
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/116) Typesafe Snowflakes (guildid, channelid, userid, etcid)
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/116) Typesafe Snowflakes (guildid, channelid, userid, etcid)
 
-Improve `restCall` type error messages https://github.com/aquarial/discord-haskell/issues/102
+Improve `restCall` type error messages https://github.com/discord-haskell/discord-haskell/issues/102
 
 ## 1.12.5
 
-[Annwan](https://github.com/aquarial/discord-haskell/pull/109) Add `ScheduledEvent` rest API
+[Annwan](https://github.com/discord-haskell/discord-haskell/pull/109) Add `ScheduledEvent` rest API
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/110) Add stickers API
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/110) Add stickers API
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/111) Add ModifyGuildMember 'timeout' option
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/111) Add ModifyGuildMember 'timeout' option
 
 ## 1.12.4
 
@@ -36,35 +36,35 @@ Add another CreateMessage flag option, stop crashing on unknown flags.
 
 ## 1.12.2
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/107) `EditMessage` takes full `MessageDetailedOpts` (instead of Embed)
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/107) `EditMessage` takes full `MessageDetailedOpts` (instead of Embed)
 
 Removed `CreateMessageUploadFile` (use `CreateMessageDetailed { MessageDetailedOpts { messageDetailedFile } }`)
 
 ## 1.12.1
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/103) Add threads, switch api to V10, Update Guild data fields
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/103) Add threads, switch api to V10, Update Guild data fields
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/104) Add model interaction and components
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/104) Add model interaction and components
 
 ## 1.12.0
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/96) breaking changes and fixes to application commands, interactions, and components, and updates elsewhere
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/96) breaking changes and fixes to application commands, interactions, and components, and updates elsewhere
 
 ## 1.11.0
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/88) did a LOT of work wrangling the discord API for interactions and commands!
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/88) did a LOT of work wrangling the discord API for interactions and commands!
 
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/94) fixed a parse error with webhooktoken
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/94) fixed a parse error with webhooktoken
 
 
 rename fields `messageText` -> `messageContent`, `messageChannel` -> `messageChannelId`
 
 ## 1.10.0
 
-[drewolson](https://github.com/aquarial/discord-haskell/pull/80) allows parsing an optional guild region
+[drewolson](https://github.com/discord-haskell/discord-haskell/pull/80) allows parsing an optional guild region
 
-[L0neGamer](https://github.com/aquarial/discord-haskell/pull/82) add 'animated' flag for Emoji
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/82) add 'animated' flag for Emoji
 
 Removed `CreateGuild` rest call! You can only do it if your bot is in fewer than 10 guilds, and it's [a pain to support](https://discord.com/developers/docs/resources/guild#create-guild). Just do it manually.
 
@@ -72,60 +72,60 @@ Added `Read` instance to complement `Show` for lots of types. Removed ToJSON for
 
 ## 1.9.1
 
-Add [color attribute for CreateEmbed](https://github.com/aquarial/discord-haskell/issues/78)
+Add [color attribute for CreateEmbed](https://github.com/discord-haskell/discord-haskell/issues/78)
 
-Rewrite [EventLoop.hs](https://github.com/aquarial/discord-haskell/issues/70) to be easier to modify
+Rewrite [EventLoop.hs](https://github.com/discord-haskell/discord-haskell/issues/70) to be easier to modify
 
 Rename a bunch of internal handles so they have more consistent names
 
 ## 1.8.9
 
-Handle both aeson 1.0 and 2.0 [(breaking changes broke builds)](https://github.com/aquarial/discord-haskell/issues/77)
+Handle both aeson 1.0 and 2.0 [(breaking changes broke builds)](https://github.com/discord-haskell/discord-haskell/issues/77)
 
-Simplify [some examples](https://github.com/aquarial/discord-haskell/issues/71)
+Simplify [some examples](https://github.com/discord-haskell/discord-haskell/issues/71)
 
 ## 1.8.8
 
-Remove git artifacts from [examples/ping-pong.hs](https://github.com/aquarial/discord-haskell/issues/69)
+Remove git artifacts from [examples/ping-pong.hs](https://github.com/discord-haskell/discord-haskell/issues/69)
 
 ## 1.8.7
 
-Add [Stage channel](https://github.com/aquarial/discord-haskell/issues/68) and a catch-all Unknown channel so we stop crashing on new releases (?)
+Add [Stage channel](https://github.com/discord-haskell/discord-haskell/issues/68) and a catch-all Unknown channel so we stop crashing on new releases (?)
 
 ## 1.8.6
 
-Add [missing fields](https://github.com/aquarial/discord-haskell/issues/67) to ChannelGuildCategory
+Add [missing fields](https://github.com/discord-haskell/discord-haskell/issues/67) to ChannelGuildCategory
 
 ## 1.8.5
 
- Fix examples/ping-pong.hs compilation error https://github.com/aquarial/discord-haskell/issues/65
+ Fix examples/ping-pong.hs compilation error https://github.com/discord-haskell/discord-haskell/issues/65
 
 ## 1.8.4
 
-[yutotakano](https://github.com/aquarial/discord-haskell/pull/64) Added discord replies type, and message constructor
+[yutotakano](https://github.com/discord-haskell/discord-haskell/pull/64) Added discord replies type, and message constructor
 
 ## 1.8.3
 
-Bot no longer disconnects randomly (hopefully)  https://github.com/aquarial/discord-haskell/issues/62
+Bot no longer disconnects randomly (hopefully)  https://github.com/discord-haskell/discord-haskell/issues/62
 
 ## 1.8.2
 
-Added 'Competing' activity https://github.com/aquarial/discord-haskell/issues/61
+Added 'Competing' activity https://github.com/discord-haskell/discord-haskell/issues/61
 
-Resend the last Activity settings on Resume fixing https://github.com/aquarial/discord-haskell/issues/60
+Resend the last Activity settings on Resume fixing https://github.com/discord-haskell/discord-haskell/issues/60
 ## 1.8.1
 
-Added `MessageReaction` to Message https://github.com/aquarial/discord-haskell/issues/56
+Added `MessageReaction` to Message https://github.com/discord-haskell/discord-haskell/issues/56
 
 ## 1.8.0
 
-Fixed [null parent_id on channel](https://github.com/aquarial/discord-haskell/issues/55)
+Fixed [null parent_id on channel](https://github.com/discord-haskell/discord-haskell/issues/55)
 
 ## 1.7.0
 
-[elikoga](https://github.com/aquarial/discord-haskell/pull/51) Changed to use `ReaderT` interface
+[elikoga](https://github.com/discord-haskell/discord-haskell/pull/51) Changed to use `ReaderT` interface
 
-[elikoga](https://github.com/aquarial/discord-haskell/pull/50) Fixed compiler warnings
+[elikoga](https://github.com/discord-haskell/discord-haskell/pull/50) Fixed compiler warnings
 
 Changed api url to new `discord.com`
 
@@ -133,7 +133,7 @@ Changed api url to new `discord.com`
 
 Changed discordapp.com to discord.com in accordance with official discord policy 
 
-[rexim](https://github.com/aquarial/discord-haskell/pull/41) Add `Emoji.user` field. Who uploaded the emoji
+[rexim](https://github.com/discord-haskell/discord-haskell/pull/41) Add `Emoji.user` field. Who uploaded the emoji
 
 ## 1.6.0
 
@@ -147,7 +147,7 @@ Fix `EditMessage` rest request, send JSON
 
 ## 1.5.0
 
-[rexim](https://github.com/aquarial/discord-haskell/pull/35) Add `Read` instance for `Snowflake`
+[rexim](https://github.com/discord-haskell/discord-haskell/pull/35) Add `Read` instance for `Snowflake`
 
 ## 1.4.0
 
@@ -155,11 +155,11 @@ Rename `SubEmbed` to `EmbedPart`
 
 New and improved Embed API: Add `CreateEmbed` record and `createEmbed :: CreateEmbed -> Embed`
 
-`CreateEmbedImageUpload` implementation inspired by [Flutterlice](https://github.com/aquarial/discord-haskell/pull/32)
+`CreateEmbedImageUpload` implementation inspired by [Flutterlice](https://github.com/discord-haskell/discord-haskell/pull/32)
 
 ## 1.3.0
 
-[PixeLinc](https://github.com/aquarial/discord-haskell/pull/33) Add `DeleteSingleReaction` rest-request, Add GuildId to `ReactinInfo`, Add `MESSAGE_REACTION_REMOVE_EMOJI` gateway event
+[PixeLinc](https://github.com/discord-haskell/discord-haskell/pull/33) Add `DeleteSingleReaction` rest-request, Add GuildId to `ReactinInfo`, Add `MESSAGE_REACTION_REMOVE_EMOJI` gateway event
 
 `GetReactions` actually returns the User objects request
 
@@ -169,13 +169,13 @@ Re-export UTCTime from `time` package
 
 ## 1.2.0
 
-[MDeltaX](https://github.com/aquarial/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
+[MDeltaX](https://github.com/discord-haskell/discord-haskell/pull/27) Fixed typo: depreciated --> deprecated
 
-[MDeltaX](https://github.com/aquarial/discord-haskell/pull/29) More consistency: RoleID --> RoleId
+[MDeltaX](https://github.com/discord-haskell/discord-haskell/pull/29) More consistency: RoleID --> RoleId
 
-[MDeltaX](https://github.com/aquarial/discord-haskell/pull/29) Fix ModifyGuildRole: Post --> Patch && optional args
+[MDeltaX](https://github.com/discord-haskell/discord-haskell/pull/29) Fix ModifyGuildRole: Post --> Patch && optional args
 
-[Hippu](https://github.com/aquarial/discord-haskell/pull/31) Won't crash on integer-nonces in ChannelMessage-events (usually strings)
+[Hippu](https://github.com/discord-haskell/discord-haskell/pull/31) Won't crash on integer-nonces in ChannelMessage-events (usually strings)
 
 ## 1.1.3
 
@@ -183,7 +183,7 @@ Minor improvements to rate-limiting like using newer `X-RateLimit-Reset-After` h
 
 ## 1.1.2
 
-[michalrus](https://github.com/aquarial/discord-haskell/issues/25) Fix `DeleteGuildRole` parse exception
+[michalrus](https://github.com/discord-haskell/discord-haskell/issues/25) Fix `DeleteGuildRole` parse exception
 
 ## 1.1.1
 
@@ -197,14 +197,14 @@ Upgrade req to 2.x major version.
 
 Going through some major updates to the library. Expect types to change and things to break.
 
-Compare the [old ping-pong](https://github.com/aquarial/discord-haskell/blob/20f7f8556823a754c76d01484118a5abf336530b/examples/ping-pong.hs)
-to the [new ping-pong](https://github.com/aquarial/discord-haskell/blob/7eaa6ca068f945603de7f43f6f270c2dbecd3c85/examples/ping-pong.hs)
+Compare the [old ping-pong](https://github.com/discord-haskell/discord-haskell/blob/20f7f8556823a754c76d01484118a5abf336530b/examples/ping-pong.hs)
+to the [new ping-pong](https://github.com/discord-haskell/discord-haskell/blob/7eaa6ca068f945603de7f43f6f270c2dbecd3c85/examples/ping-pong.hs)
 
 Added a few rest ADT types
 
 ## 0.8.4
 
-[marcotoniut](https://github.com/aquarial/discord-haskell/pull/18) Improved changed Embed ADT to have optional fields, and improved two field names
+[marcotoniut](https://github.com/discord-haskell/discord-haskell/pull/18) Improved changed Embed ADT to have optional fields, and improved two field names
 
 Add `ModifyGuildMember`, `AddGuildMember`, `AddGuildMemberRole`, `AddGuildMemberRole`, `RemoveGuildmembeRole`, `GetGuildBan`, `GetGuildVanityURL` rest data types
 
@@ -218,11 +218,11 @@ Add `loginRestGatewayWithLog`
 
 Hardcode CreateReaction delay so bots can add reactions 4 times faster
 
-[MP2E](https://github.com/aquarial/discord-haskell/pull/14) Fixed parse error on GuildBanAdd + GuildBanRevoke: user\_object instead the whole object
+[MP2E](https://github.com/discord-haskell/discord-haskell/pull/14) Fixed parse error on GuildBanAdd + GuildBanRevoke: user\_object instead the whole object
 
 ### 0.8.1
 
-[MP2E](https://github.com/aquarial/discord-haskell/pull/11) Fixed parse error on GuildRoleDelete: role_id instead of role
+[MP2E](https://github.com/discord-haskell/discord-haskell/pull/11) Fixed parse error on GuildRoleDelete: role_id instead of role
 
 ### 0.8.0
 
@@ -240,13 +240,13 @@ UpdateStatusVoiceOpts takes Bool for Mute
 
 ### 0.7.1
 
-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed.
+[t1m0thyj](https://github.com/discord-haskell/discord-haskell/pull/6/files) Typo in RequestGuildMemberOpts fields fixed.
 
-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/6/files) Added Activity, ActivityType ADT
+[t1m0thyj](https://github.com/discord-haskell/discord-haskell/pull/6/files) Added Activity, ActivityType ADT
 
 UpdateStatusTypes became UpdateStatusType (singular ADT)
 
-[t1m0thyj](https://github.com/aquarial/discord-haskell/pull/7) Retry connection on 1001 websocket close
+[t1m0thyj](https://github.com/discord-haskell/discord-haskell/pull/7) Retry connection on 1001 websocket close
 
 ### 0.7.0
 
