@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -18,7 +17,7 @@ import           Data.Aeson
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import           Network.HTTP.Req ((/:))
+import           Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 import Network.HTTP.Client (RequestBody (RequestBodyBS))
 import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
@@ -58,37 +57,48 @@ data WebhookRequest a where
   -- | Returns a guild's `Webhook`s as a list. Requires the @MANAGE_WEBHOOKS@ permission.
   GetGuildWebhooks :: GuildId
                    -> WebhookRequest [Webhook]
-  -- | Returns the `Webhook` for the given id.
+  -- | Returns the `Webhook` for the given id. If a token is given, authentication is not required.
   GetWebhook :: WebhookId
+             -> Maybe WebhookToken
              -> WebhookRequest Webhook
-  -- | Same as `GetWebhook`, except this call does not require authentication.
-  GetWebhookWithToken :: WebhookId
-                      -> T.Text
-                      -> WebhookRequest Webhook
   -- | Modify a webhook. Requires the @MANAGE_WEBHOOKS@ permission. Returns the updated `Webhook` on success.
+  -- If a token is given, authentication is not required.
   ModifyWebhook :: WebhookId
+                -> Maybe WebhookToken
                 -> ModifyWebhookOpts
                 -> WebhookRequest Webhook
-  -- | Same as `ModifyWebhook`, except this call does not require authentication.
-  ModifyWebhookWithToken :: WebhookId
-                         -> T.Text
-                         -> ModifyWebhookOpts
-                         -> WebhookRequest Webhook
   -- | Delete a webhook permanently. Requires the @MANAGE_WEBHOOKS@ permission.
+  -- If a token is given, authentication is not required.
   DeleteWebhook :: WebhookId
+                -> Maybe WebhookToken
                 -> WebhookRequest ()
-  -- | Same as `DeleteWebhook`, except this call does not require authentication.
-  DeleteWebhookWithToken :: WebhookId
-                         -> T.Text
-                         -> WebhookRequest ()
   -- | Executes a Webhook.
   -- 
   -- Refer to [Uploading Files](https://discord.com/developers/docs/reference#uploading-files)
   -- for details on attachments and @multipart/form-data@ requests.
-  ExecuteWebhookWithToken :: WebhookId
-                          -> T.Text
-                          -> ExecuteWebhookWithTokenOpts
-                          -> WebhookRequest ()
+  ExecuteWebhook :: WebhookId
+                 -> WebhookToken
+                 -> ExecuteWebhookWithTokenOpts
+                 -> WebhookRequest ()
+  -- We don't support slack and github compatible webhooks because you should
+  --  just use execute webhook.
+
+  -- | Returns a previously-sent webhook message from the same token.
+  GetWebhookMessage :: WebhookId 
+                    -> WebhookToken 
+                    -> MessageId 
+                    -> WebhookRequest Message
+  -- | Edits a previously-sent webhook message from the same token.
+  EditWebhookMessage :: WebhookId 
+                     -> WebhookToken 
+                     -> MessageId 
+                     -> T.Text -- currently we don't support the full range of edits - feel free to PR and fix this
+                     -> WebhookRequest Message
+  -- | Deletes a previously-sent webhook message from the same token.
+  DeleteWebhookMessage :: WebhookId 
+                       -> WebhookToken 
+                       -> MessageId 
+                       -> WebhookRequest ()
 
 -- | Options for `ModifyWebhook` and `ModifyWebhookWithToken`
 data ModifyWebhookOpts = ModifyWebhookOpts
@@ -140,57 +150,48 @@ instance ToJSON ExecuteWebhookWithTokenOpts where
 -- | Major routes for webhook requests
 webhookMajorRoute :: WebhookRequest a -> String
 webhookMajorRoute ch = case ch of
-  (CreateWebhook c _) ->            "aaaaaahook " <> show c
-  (GetChannelWebhooks c) ->         "aaaaaahook " <> show c
-  (GetGuildWebhooks g) ->           "aaaaaahook " <> show g
-  (GetWebhook w) ->                 "aaaaaahook " <> show w
-  (GetWebhookWithToken w _) ->      "getwebhook " <> show w
-  (ModifyWebhook w _) ->            "modifyhook " <> show w
-  (ModifyWebhookWithToken w _ _) -> "modifyhook " <> show w
-  (DeleteWebhook w) ->              "deletehook " <> show w
-  (DeleteWebhookWithToken w _) ->   "deletehook " <> show w
-  (ExecuteWebhookWithToken w _ _) -> "executehk " <> show w
+  (CreateWebhook c _) ->    "aaaaaahook " <> show c
+  (GetChannelWebhooks c) -> "aaaaaahook " <> show c
+  (GetGuildWebhooks g) ->   "aaaaaahook " <> show g
+  (GetWebhook w _) ->       "getwebhook " <> show w
+  (ModifyWebhook w _ _) ->  "modifyhook " <> show w
+  (DeleteWebhook w _) ->    "deletehook " <> show w
+  (ExecuteWebhook w _ _) ->  "executehk " <> show w
+  (GetWebhookMessage w _ _) -> "gethkmsg " <> show w
+  (EditWebhookMessage w _ _ _) -> "edithkmsg " <> show w
+  (DeleteWebhookMessage w _ _) -> "delhkmsg " <> show w
 
 -- | Create a 'JsonRequest' from a `WebhookRequest`
 webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->
     let body = pure (R.ReqBodyJson patch)
-    in Post (baseUrl /: "channels" // channel /: "webhooks") body  mempty
+    in Post (baseUrl /: "channels" /~ channel /: "webhooks") body  mempty
 
   (GetChannelWebhooks c) ->
-    Get (baseUrl /: "channels" // c /: "webhooks")  mempty
+    Get (baseUrl /: "channels" /~ c /: "webhooks")  mempty
 
   (GetGuildWebhooks g) ->
-    Get (baseUrl /: "guilds" // g /: "webhooks")  mempty
+    Get (baseUrl /: "guilds" /~ g /: "webhooks")  mempty
 
-  (GetWebhook w) ->
-    Get (baseUrl /: "webhooks" // w)  mempty
+  (GetWebhook w t) ->
+    Get (baseUrl /: "webhooks" /~ w /? t)  mempty
 
-  (GetWebhookWithToken w t) ->
-    Get (baseUrl /: "webhooks" // w /: t)  mempty
+  (ModifyWebhook w t p) ->
+    Patch (baseUrl /: "webhooks" /~ w /? t) (pure (R.ReqBodyJson p))  mempty
 
-  (ModifyWebhook w patch) ->
-    Patch (baseUrl /: "webhooks" // w) (pure (R.ReqBodyJson patch))  mempty
+  (DeleteWebhook w t) ->
+    Delete (baseUrl /: "webhooks" /~ w /? t)  mempty
 
-  (ModifyWebhookWithToken w t p) ->
-    Patch (baseUrl /: "webhooks" // w /: t) (pure (R.ReqBodyJson p))  mempty
-
-  (DeleteWebhook w) ->
-    Delete (baseUrl /: "webhooks" // w)  mempty
-
-  (DeleteWebhookWithToken w t) ->
-    Delete (baseUrl /: "webhooks" // w /: t)  mempty
-
-  (ExecuteWebhookWithToken w tok o) ->
+  (ExecuteWebhook w tok o) ->
     case executeWebhookWithTokenOptsContent o of
       WebhookContentFile name text  ->
         let part = partFileRequestBody "file" (T.unpack name) (RequestBodyBS text)
             body = R.reqBodyMultipart [part]
-        in Post (baseUrl /: "webhooks" // w /: tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentText _ ->
         let body = pure (R.ReqBodyJson o)
-        in Post (baseUrl /: "webhooks" // w /: tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentEmbeds embeds ->
         let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
             uploads CreateEmbed{..} = [(n,c) | (n, Just (CreateEmbedImageUpload c)) <-
@@ -201,4 +202,13 @@ webhookJsonRequest ch = case ch of
             parts =  map mkPart (concatMap uploads embeds)
             partsJson = [partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["embed" .= createEmbed e] | e <- embeds]
             body = R.reqBodyMultipart (partsJson ++ parts)
-        in Post (baseUrl /: "webhooks" // w /: tok) body mempty
+        in Post (baseUrl /: "webhooks" /~ w /: unToken tok) body mempty
+
+  (GetWebhookMessage w t m) ->
+    Get (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty
+
+  (EditWebhookMessage w t m p) ->
+    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (pure (R.ReqBodyJson $ object ["content" .= p]))  mempty
+
+  (DeleteWebhookMessage w t m) ->
+    Delete (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty

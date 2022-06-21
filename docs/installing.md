@@ -3,7 +3,7 @@
 discord-haskell is on hosted on hackage at <https://hackage.haskell.org/package/discord-haskell>,
 
 use the latest the HACKAGE_VERSION from the changelog
-<https://github.com/aquarial/discord-haskell/blob/master/changelog.md>
+<https://github.com/discord-haskell/discord-haskell/blob/master/changelog.md>
 
 
 #### Stack - Hackage (recommended)
@@ -70,9 +70,9 @@ In `stack.yaml`
 resolver: lts-16.20
 
 extra-deps:
-- git: git@github.com:aquarial/discord-haskell.git
+- git: git@github.com:discord-haskell/discord-haskell.git
   commit: SOME_COMMIT_HASH
-   # go to https://github.com/aquarial/discord-haskell/commits/master
+   # go to https://github.com/discord-haskell/discord-haskell/commits/master
    # and click on a commit to view the commit hash
    # if you don't have a specific hash you're looking for,
    # I recommend using the `Stack - Hackage` style installing

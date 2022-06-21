@@ -6,10 +6,10 @@ description:         Functions and data types to write discord bots.
                      Official discord docs <https://discord.com/developers/docs/reference>.
                      .
                      See the project readme for quickstart notes
-                     <https://github.com/aquarial/discord-haskell#discord-haskell->
+                     <https://github.com/discord-haskell/discord-haskell#discord-haskell->
 synopsis:            Write bots for Discord in Haskell
-homepage:            https://github.com/aquarial/discord-haskell
-bug-reports:         https://github.com/aquarial/discord-haskell/issues
+homepage:            https://github.com/discord-haskell/discord-haskell
+bug-reports:         https://github.com/discord-haskell/discord-haskell/issues
 license:             MIT
 license-file:        LICENSE
 author:              Karl
@@ -22,7 +22,7 @@ extra-doc-files:     README.md
 
 source-repository head
   type:                git
-  location:            https://github.com/aquarial/discord-haskell.git
+  location:            https://github.com/discord-haskell/discord-haskell.git
 
 executable ping-pong
   main-is:             examples/ping-pong.hs

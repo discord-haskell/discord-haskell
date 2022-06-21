@@ -12,7 +12,7 @@ module Discord.Internal.Rest.User
 
 
 import Data.Aeson
-import Network.HTTP.Req ((/:))
+import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -79,7 +79,7 @@ userJsonRequest :: UserRequest r -> JsonRequest
 userJsonRequest c = case c of
   (GetCurrentUser) -> Get (users /: "@me") mempty
 
-  (GetUser user) -> Get (users // user ) mempty
+  (GetUser user) -> Get (users /~ user ) mempty
 
   (ModifyCurrentUser name b64im) ->
       Patch (users /: "@me")  (pure (R.ReqBodyJson (object [ "username" .= name
@@ -87,7 +87,7 @@ userJsonRequest c = case c of
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 
-  (LeaveGuild guild) -> Delete (users /: "@me" /: "guilds" // guild) mempty
+  (LeaveGuild guild) -> Delete (users /: "@me" /: "guilds" /~ guild) mempty
 
   (GetUserDMs) -> Get (users /: "@me" /: "channels") mempty
 
