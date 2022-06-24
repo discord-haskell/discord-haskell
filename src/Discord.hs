@@ -23,6 +23,7 @@ module Discord
   ) where
 
 import Prelude hiding (log)
+import Control.Exception (Exception)
 import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
@@ -144,6 +145,8 @@ runDiscordLoop handle opts = do
 -- | A Error code following a rest call
 data RestCallErrorCode = RestCallErrorCode Int T.Text T.Text
   deriving (Show, Read, Eq, Ord)
+
+instance Exception RestCallErrorCode
 
 -- | Execute one http request and get a response
 restCall :: (Request (r a), FromJSON a) => r a -> DiscordHandler (Either RestCallErrorCode a)
