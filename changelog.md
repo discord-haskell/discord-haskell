@@ -6,6 +6,12 @@ Discord API changes, so use the most recent version at all times
 
 ## master
 
+## 1.14.0
+
+[yutotakano](https://github.com/discord-haskell/discord-haskell/pull/124) Replace JuicyPixels image parsing with a mimetype check. Make image handling consistent: use `parseStickerImage` fro sticker images. Use `parseAvatarImage` for avatars.
+
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/123/files) Make webhook API smaller, each constructor takes in a `Maybe WebhookToken`. Passing `Nothing` will continue to work as normal.
+
 [Annwan](https://github.com/discord-haskell/discord-haskell/pull/123) Huge documentation flourish. Removed deprecated AppCommandPermissions func & fix presences typo
 
 [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/121) Replace `OverwriteId` with `Either RoleId UserId` in `ChannelPermission` requests, and remove the `type` field from `ChannelPermissionsOpts`
