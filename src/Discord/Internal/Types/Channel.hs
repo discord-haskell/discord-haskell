@@ -232,113 +232,113 @@ instance FromJSON Channel where
                               <*> pure (T.pack (show o))
 
 instance ToJSON Channel where
-  toJSON ChannelText{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 0))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("rate_limit_per_user", toJSON <$> pure channelUserRateLimit)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("topic",   toJSON <$> pure channelTopic)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id",  toJSON <$> pure channelParentId)
-              ] ]
-  toJSON ChannelNews{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 5))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("topic",   toJSON <$> pure channelTopic)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id", toJSON <$> channelParentId)
-              ] ]
-  toJSON ChannelStorePage{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 6))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              ] ]
-  toJSON ChannelDirectMessage{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 1))
-              , ("id",     toJSON <$> pure channelId)
-              , ("recipients",   toJSON <$> pure channelRecipients)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              ] ]
-  toJSON ChannelVoice{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 2))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> pure channelName)
-              , ("position",   toJSON <$> pure channelPosition)
-              , ("nsfw", toJSON <$> pure channelNSFW)
-              , ("permission_overwrites",   toJSON <$> pure channelPermissions)
-              , ("bitrate",   toJSON <$> pure channelBitRate)
-              , ("user_limit",  toJSON <$> pure channelUserLimit)
-              ] ]
-  toJSON ChannelGroupDM{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 3))
-              , ("id",     toJSON <$> pure channelId)
-              , ("recipients",   toJSON <$> pure channelRecipients)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              ] ]
-  toJSON ChannelGuildCategory{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 4))
-              , ("id",     toJSON <$> pure channelId)
-              , ("name", toJSON <$> pure channelName)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              ] ]
-  toJSON ChannelStage{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 13))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("channel_id", toJSON <$> pure channelStageId)
-              , ("topic", toJSON <$> pure channelStageTopic)
-              ] ]
-  toJSON ChannelNewsThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 10))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> channelThreadName)
-              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> channelThreadMetadata)
-              , ("member", toJSON <$> channelThreadMember)
-              ] ]
-  toJSON ChannelPublicThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 11))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> channelThreadName)
-              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> channelThreadMetadata)
-              , ("member", toJSON <$> channelThreadMember)
-              ] ]
-  toJSON ChannelPrivateThread{..} = object [(name,value) | (name, Just value) <-
-              [ ("type", Just (Number 12))
-              , ("id",     toJSON <$> pure channelId)
-              , ("guild_id", toJSON <$> pure channelGuild)
-              , ("name",  toJSON <$> channelThreadName)
-              , ("rate_limit_per_user", toJSON <$> channelUserRateLimitThread)
-              , ("last_message_id",  toJSON <$> channelLastMessage)
-              , ("parent_id",  toJSON <$> pure channelParentId)
-              , ("thread_metadata", toJSON <$> channelThreadMetadata)
-              , ("member", toJSON <$> channelThreadMember)
-              ] ]
-  toJSON ChannelUnknownType{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure channelId)
-              , ("json", toJSON <$> pure channelJSON)
-              ] ]
+  toJSON ChannelText{..} = objectFromMaybes
+              [ "type" .== Number 0
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .== channelName
+              , "position" .== channelPosition
+              , "rate_limit_per_user" .== channelUserRateLimit
+              , "nsfw" .== channelNSFW
+              , "permission_overwrites" .== channelPermissions
+              , "topic" .== channelTopic
+              , "last_message_id" .=? channelLastMessage
+              , "parent_id" .== channelParentId
+              ]
+  toJSON ChannelNews{..} = objectFromMaybes
+              [ "type" .== Number 5
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .== channelName
+              , "position" .== channelPosition
+              , "permission_overwrites" .== channelPermissions
+              , "nsfw" .== channelNSFW
+              , "topic" .== channelTopic
+              , "last_message_id" .=? channelLastMessage
+              , "parent_id" .=? channelParentId
+              ]
+  toJSON ChannelStorePage{..} = objectFromMaybes
+              [ "type" .== Number 6
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .== channelName
+              , "nsfw" .== channelNSFW
+              , "position" .== channelPosition
+              , "permission_overwrites" .== channelPermissions
+              ]
+  toJSON ChannelDirectMessage{..} = objectFromMaybes
+              [ "type" .== Number 1
+              , "id" .== channelId
+              , "recipients" .== channelRecipients
+              , "last_message_id" .=? channelLastMessage
+              ]
+  toJSON ChannelVoice{..} = objectFromMaybes
+              [ "type" .== Number 2
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .== channelName
+              , "position" .== channelPosition
+              , "nsfw" .== channelNSFW
+              , "permission_overwrites" .== channelPermissions
+              , "bitrate" .== channelBitRate
+              , "user_limit" .== channelUserLimit
+              ]
+  toJSON ChannelGroupDM{..} = objectFromMaybes
+              [ "type" .== Number 3
+              , "id" .== channelId
+              , "recipients" .== channelRecipients
+              , "last_message_id" .=? channelLastMessage
+              ]
+  toJSON ChannelGuildCategory{..} = objectFromMaybes
+              [ "type" .== Number 4
+              , "id" .== channelId
+              , "name" .== channelName
+              , "guild_id" .== channelGuild
+              ]
+  toJSON ChannelStage{..} = objectFromMaybes
+              [ "type" .== Number 13
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "channel_id" .== channelStageId
+              , "topic" .== channelStageTopic
+              ]
+  toJSON ChannelNewsThread{..} = objectFromMaybes
+              [ "type" .== Number 10
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .=? channelThreadName
+              , "rate_limit_per_user" .=? channelUserRateLimitThread
+              , "last_message_id" .=? channelLastMessage
+              , "parent_id" .== channelParentId
+              , "thread_metadata" .=? channelThreadMetadata
+              , "member" .=? channelThreadMember
+              ]
+  toJSON ChannelPublicThread{..} = objectFromMaybes
+              [ "type" .== Number 11
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .=? channelThreadName
+              , "rate_limit_per_user" .=? channelUserRateLimitThread
+              , "last_message_id" .=? channelLastMessage
+              , "parent_id" .== channelParentId
+              , "thread_metadata" .=? channelThreadMetadata
+              , "member" .=? channelThreadMember
+              ]
+  toJSON ChannelPrivateThread{..} = objectFromMaybes
+              [ "type" .== Number 12
+              , "id" .== channelId
+              , "guild_id" .== channelGuild
+              , "name" .=? channelThreadName
+              , "rate_limit_per_user" .=? channelUserRateLimitThread
+              , "last_message_id" .=? channelLastMessage
+              , "parent_id" .== channelParentId
+              , "thread_metadata" .=? channelThreadMetadata
+              , "member" .=? channelThreadMember
+              ]
+  toJSON ChannelUnknownType{..} = objectFromMaybes
+              [ "id" .== channelId
+              , "json" .== channelJSON
+              ]
 
 -- | If the channel is part of a guild (has a guild id field)
 channelIsInGuild :: Channel -> Bool
@@ -374,7 +374,7 @@ instance FromJSON Overwrite where
 instance ToJSON Overwrite where
   toJSON Overwrite{..} = object
               [ ("id",     toJSON $ either unId unId overwriteId)
-              , ("type",   toJSON $ (either (const 0) (const 1) overwriteId :: Int))
+              , ("type",   toJSON (either (const 0) (const 1) overwriteId :: Int))
               , ("allow",  toJSON overwriteAllow)
               , ("deny",   toJSON overwriteDeny)
               ]
@@ -399,14 +399,14 @@ instance FromJSON ThreadMetadata where
                    <*> o .:? "create_timestamp"
 
 instance ToJSON ThreadMetadata where
-  toJSON ThreadMetadata{..} =  object [(name,value) | (name, Just value) <-
-              [ ("archived", toJSON <$> pure threadMetadataArchived)
-              , ("auto_archive_duration", toJSON <$> pure threadMetadataAutoArchive)
-              , ("archive_timestamp", toJSON <$> pure threadMetadataArchiveTime)
-              , ("locked", toJSON <$> pure threadMetadataLocked)
-              , ("invitable", toJSON <$> threadMetadataInvitable)
-              , ("create_timestamp", toJSON <$> pure threadMetadataCreateTime)
-              ] ]
+  toJSON ThreadMetadata{..} = objectFromMaybes
+              [ "archived" .== threadMetadataArchived
+              , "auto_archive_duration" .== threadMetadataAutoArchive
+              , "archive_timestamp" .== threadMetadataArchiveTime
+              , "locked" .== threadMetadataLocked
+              , "invitable" .=? threadMetadataInvitable
+              , "create_timestamp" .== threadMetadataCreateTime
+              ]
 
 -- | A user in a thread
 data ThreadMember = ThreadMember
@@ -424,12 +424,12 @@ instance FromJSON ThreadMember where
                  <*> o .:  "flags"
 
 instance ToJSON ThreadMember where
-  toJSON ThreadMember{..} =  object [(name,value) | (name, Just value) <-
-              [ ("id", toJSON <$> threadMemberThreadId)
-              , ("user_id", toJSON <$> threadMemberUserId)
-              , ("join_timestamp", toJSON <$> pure threadMemberJoinTime)
-              , ("flags", toJSON <$> pure threadMemberFlags)
-              ] ]
+  toJSON ThreadMember{..} = objectFromMaybes
+              [ "id" .=? threadMemberThreadId
+              , "user_id" .=? threadMemberUserId
+              , "join_timestamp" .== threadMemberJoinTime
+              , "flags" .== threadMemberFlags
+              ]
 
 
 data ThreadListSyncFields = ThreadListSyncFields
@@ -539,37 +539,37 @@ instance FromJSON Message where
 
 
 instance ToJSON Message where
-  toJSON Message {..} = object [(name, value) | (name, Just value) <-
-      [ ("id",                  toJSON <$> pure messageId)
-      , ("channel_id",          toJSON <$> pure messageChannelId)
-      , ("guild_id",            toJSON <$>      messageGuildId)
-      , ("author",              toJSON <$> pure messageAuthor)
-      , ("member",              toJSON <$>      messageMember)
-      , ("content",             toJSON <$> pure messageContent)
-      , ("timestamp",           toJSON <$> pure messageTimestamp)
-      , ("edited_timestamp",    toJSON <$>      messageEdited)
-      , ("tts",                 toJSON <$> pure messageTts)
-      , ("mention_everyone",    toJSON <$> pure messageEveryone)
-      , ("mentions",            toJSON <$> pure messageMentions)
-      , ("mention_roles",       toJSON <$> pure messageMentionRoles)
-      , ("attachments",         toJSON <$> pure messageAttachments)
-      , ("embeds",              toJSON <$> pure messageEmbeds)
-      , ("reactions",           toJSON <$> pure messageReactions)
-      , ("nonce",               toJSON <$>      messageNonce)
-      , ("pinned",              toJSON <$> pure messagePinned)
-      , ("webhook_id",          toJSON <$>      messageWebhookId)
-      , ("type",                toJSON <$> pure messageType)
-      , ("activity",            toJSON <$>      messageActivity)
+  toJSON Message {..} = objectFromMaybes
+      [ "id" .== messageId
+      , "channel_id" .== messageChannelId
+      , "guild_id" .=? messageGuildId
+      , "author" .== messageAuthor
+      , "member" .=? messageMember
+      , "content" .== messageContent
+      , "timestamp" .== messageTimestamp
+      , "edited_timestamp" .=? messageEdited
+      , "tts" .== messageTts
+      , "mention_everyone" .== messageEveryone
+      , "mentions" .== messageMentions
+      , "mention_roles" .== messageMentionRoles
+      , "attachments" .== messageAttachments
+      , "embeds" .== messageEmbeds
+      , "reactions" .== messageReactions
+      , "nonce" .=? messageNonce
+      , "pinned" .== messagePinned
+      , "webhook_id" .=? messageWebhookId
+      , "type" .== messageType
+      , "activity" .=? messageActivity
       -- , ("application",            toJSON <$>      messageApplication)
-      , ("application_id",      toJSON <$>      messageApplicationId)
-      , ("message_reference",   toJSON <$>      messageReference)
-      , ("flags",               toJSON <$>      messageFlags)
-      , ("referenced_message",  toJSON <$>      messageReferencedMessage)
-      , ("interaction",         toJSON <$>      messageInteraction)
-      , ("thread",              toJSON <$>      messageThread)
-      , ("components",          toJSON <$>      messageComponents)
-      , ("sticker_items",       toJSON <$>      messageStickerItems)
-      ] ]
+      , "application_id" .=? messageApplicationId
+      , "message_reference" .=? messageReference
+      , "flags" .=? messageFlags
+      , "referenced_message" .=? messageReferencedMessage
+      , "interaction" .=? messageInteraction
+      , "thread" .=? messageThread
+      , "components" .=? messageComponents
+      , "sticker_items" .=? messageStickerItems
+      ]
 
 -- | Data constructor for a part of MessageDetailedOpts.
 data AllowedMentions = AllowedMentions
@@ -604,7 +604,7 @@ instance ToJSON AllowedMentions where
 
 -- | A reaction to a message
 data MessageReaction = MessageReaction
-  { messageReactionCount :: Int 
+  { messageReactionCount :: Int
   , messageReactionMeIncluded :: Bool
   , messageReactionEmoji :: Emoji
   } deriving (Show, Read, Eq, Ord)
@@ -616,11 +616,11 @@ instance FromJSON MessageReaction where
                     <*> o .: "emoji"
 
 instance ToJSON MessageReaction where
-  toJSON MessageReaction{..} = object [(name, value) | (name, Just value) <-
-      [ ("count", toJSON <$> pure messageReactionCount)
-      , ("me",    toJSON <$> pure messageReactionMeIncluded)
-      , ("emoji", toJSON <$> pure messageReactionEmoji)
-      ]]
+  toJSON MessageReaction{..} = objectFromMaybes
+      [ "count" .== messageReactionCount
+      , "me" .== messageReactionMeIncluded
+      , "emoji" .== messageReactionEmoji
+      ]
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
@@ -644,15 +644,15 @@ instance FromJSON Attachment where
                <*> o .:? "width"
 
 instance ToJSON Attachment where
-  toJSON Attachment {..} = object [(name, value) | (name, Just value) <-
-      [ ("id",        toJSON <$> pure attachmentId)
-      , ("filename",  toJSON <$> pure attachmentFilename)
-      , ("size",      toJSON <$> pure attachmentSize)
-      , ("url",       toJSON <$> pure attachmentUrl)
-      , ("proxy_url", toJSON <$> pure attachmentProxy)
-      , ("height",    toJSON <$>      attachmentHeight)
-      , ("width",     toJSON <$>      attachmentWidth)
-      ] ]
+  toJSON Attachment {..} = objectFromMaybes
+      [ "id" .== attachmentId
+      , "filename" .== attachmentFilename
+      , "size" .== attachmentSize
+      , "url" .== attachmentUrl
+      , "proxy_url" .== attachmentProxy
+      , "height" .=? attachmentHeight
+      , "width" .=? attachmentWidth
+      ]
 
 newtype Nonce = Nonce T.Text
   deriving (Show, Read, Eq, Ord)
@@ -682,12 +682,12 @@ instance FromJSON MessageReference where
                      <*> o .:? "fail_if_not_exists" .!= True
 
 instance ToJSON MessageReference where
-  toJSON MessageReference{..} = object [(name,value) | (name, Just value) <-
-              [ ("message_id",     toJSON <$> pure referenceMessageId)
-              , ("channel_id", toJSON <$> pure referenceChannelId)
-              , ("guild_id",  toJSON <$> pure referenceGuildId)
-              , ("fail_if_not_exists",   toJSON <$> pure failIfNotExists)
-              ] ]
+  toJSON MessageReference{..} = objectFromMaybes
+              [ "message_id" .== referenceMessageId
+              , "channel_id" .== referenceChannelId
+              , "guild_id" .== referenceGuildId
+              , "fail_if_not_exists" .== failIfNotExists
+              ]
 
 instance Default MessageReference where
   def = MessageReference { referenceMessageId = Nothing
@@ -767,10 +767,10 @@ instance FromJSON MessageActivity where
                      <*> o .:? "party_id"
 
 instance ToJSON MessageActivity where
-  toJSON MessageActivity{..} = object [(name,value) | (name, Just value) <-
-              [ ("type",     toJSON <$> pure messageActivityType)
-              , ("party_id", toJSON <$>      messageActivityPartyId)
-              ] ]
+  toJSON MessageActivity{..} = objectFromMaybes
+              [ "type" .== messageActivityType
+              , "party_id" .=? messageActivityPartyId
+              ]
 
 data MessageActivityType
   = MessageActivityTypeJoin -- ^ Join a Rich Presence event
@@ -842,12 +842,12 @@ data MessageInteraction = MessageInteraction
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON MessageInteraction where
-  toJSON MessageInteraction{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",     toJSON <$> pure messageInteractionId)
-              , ("type",   toJSON <$> pure messageInteractionType)
-              , ("name",   toJSON <$> pure messageInteractionName)
-              , ("user",   toJSON <$> pure messageInteractionUser)
-              ] ]
+  toJSON MessageInteraction{..} = objectFromMaybes
+              [ "id"   .== messageInteractionId
+              , "type" .== messageInteractionType
+              , "name" .== messageInteractionName
+              , "user" .== messageInteractionUser
+              ]
 
 
 instance FromJSON MessageInteraction where

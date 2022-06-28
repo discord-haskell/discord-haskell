@@ -1,6 +1,5 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -149,19 +148,19 @@ data ModifyGuildIntegrationOpts = ModifyGuildIntegrationOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildIntegrationOpts where
-  toJSON ModifyGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
-         [ ("expire_grace_period", toJSON <$> pure modifyGuildIntegrationOptsExpireGraceSeconds )
-         , ("expire_behavior", toJSON <$> pure modifyGuildIntegrationOptsExpireBehavior )
-         , ("enable_emoticons", toJSON <$> pure modifyGuildIntegrationOptsEmoticonsEnabled ) ]]
+  toJSON ModifyGuildIntegrationOpts{..} = objectFromMaybes
+         [ "expire_grace_period" .== modifyGuildIntegrationOptsExpireGraceSeconds
+         , "expire_behavior" .== modifyGuildIntegrationOptsExpireBehavior
+         , "enable_emoticons" .== modifyGuildIntegrationOptsEmoticonsEnabled ]
 
 -- | Options for `CreateGuildIntegration`
-data CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
+newtype CreateGuildIntegrationOpts = CreateGuildIntegrationOpts
   { createGuildIntegrationOptsType :: T.Text
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildIntegrationOpts where
-  toJSON CreateGuildIntegrationOpts{..} =  object [(name, val) | (name, Just val) <-
-                       [("type", toJSON <$> pure createGuildIntegrationOptsType ) ]]
+  toJSON CreateGuildIntegrationOpts{..} = objectFromMaybes
+                       ["type" .== createGuildIntegrationOptsType]
 
 -- | Options for `CreateGuildBan`
 data CreateGuildBanOpts = CreateGuildBanOpts
@@ -170,10 +169,10 @@ data CreateGuildBanOpts = CreateGuildBanOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON CreateGuildBanOpts where
-  toJSON CreateGuildBanOpts{..} =  object [(name, val) | (name, Just val) <-
-                       [("delete_message_days",
-                             toJSON <$> createGuildBanOptsDeleteLastNMessages ),
-                        ("reason", toJSON <$> createGuildBanOptsReason )]]
+  toJSON CreateGuildBanOpts{..} = objectFromMaybes
+                       [ "delete_message_days"
+                           .=? createGuildBanOptsDeleteLastNMessages
+                       , "reason" .=? createGuildBanOptsReason]
 
 -- | Options for `ModifyGuildRole`
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
@@ -185,12 +184,12 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildRoleOpts where
-  toJSON ModifyGuildRoleOpts{..} =  object [(name, val) | (name, Just val) <-
-                       [("name",        toJSON <$> modifyGuildRoleOptsName ),
-                        ("permissions", toJSON <$> modifyGuildRoleOptsPermissions ),
-                        ("color",       toJSON <$> modifyGuildRoleOptsColor ),
-                        ("hoist",       toJSON <$> modifyGuildRoleOptsSeparateSidebar ),
-                        ("mentionable", toJSON <$> modifyGuildRoleOptsMentionable )]]
+  toJSON ModifyGuildRoleOpts{..} = objectFromMaybes
+                       ["name" .=? modifyGuildRoleOptsName,
+                        "permissions" .=? modifyGuildRoleOptsPermissions,
+                        "color" .=? modifyGuildRoleOptsColor,
+                        "hoist" .=? modifyGuildRoleOptsSeparateSidebar,
+                        "mentionable" .=? modifyGuildRoleOptsMentionable]
 
 -- | Options for `AddGuildMember`
 data AddGuildMemberOpts = AddGuildMemberOpts
@@ -202,12 +201,12 @@ data AddGuildMemberOpts = AddGuildMemberOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON AddGuildMemberOpts where
-  toJSON AddGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
-                                  [("access_token", toJSON <$> Just addGuildMemberOptsAccessToken ),
-                                   ("nick",   toJSON <$> addGuildMemberOptsNickname ),
-                                   ("roles",  toJSON <$> addGuildMemberOptsRoles ),
-                                   ("mute",   toJSON <$> addGuildMemberOptsIsMuted ),
-                                   ("deaf",   toJSON <$> addGuildMemberOptsIsDeafened )]]
+  toJSON AddGuildMemberOpts{..} = objectFromMaybes
+                                  ["access_token" .== addGuildMemberOptsAccessToken,
+                                   "nick" .=? addGuildMemberOptsNickname,
+                                   "roles" .=? addGuildMemberOptsRoles,
+                                   "mute" .=? addGuildMemberOptsIsMuted,
+                                   "deaf" .=? addGuildMemberOptsIsDeafened]
 
 -- | Options for `ModifyGuildMember`
 data ModifyGuildMemberOpts = ModifyGuildMemberOpts
@@ -220,16 +219,16 @@ data ModifyGuildMemberOpts = ModifyGuildMemberOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance Default ModifyGuildMemberOpts where
-  def = ModifyGuildMemberOpts Nothing Nothing Nothing Nothing Nothing Nothing 
+  def = ModifyGuildMemberOpts Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ModifyGuildMemberOpts where
-  toJSON ModifyGuildMemberOpts{..} =  object [(name, val) | (name, Just val) <-
-                                  [("nick",  toJSON <$> modifyGuildMemberOptsNickname ),
-                                   ("roles", toJSON <$> modifyGuildMemberOptsRoles ),
-                                   ("mute",  toJSON <$> modifyGuildMemberOptsIsMuted ),
-                                   ("deaf",  toJSON <$> modifyGuildMemberOptsIsDeafened ),
-                                   ("channel_id", toJSON <$> modifyGuildMemberOptsMoveToChannel),
-                                   ("communication_disabled_until", toJSON <$> modifyGuildMemberOptsTimeoutUntil)]]
+  toJSON ModifyGuildMemberOpts{..} = objectFromMaybes
+                                  ["nick" .=? modifyGuildMemberOptsNickname,
+                                   "roles" .=? modifyGuildMemberOptsRoles,
+                                   "mute" .=? modifyGuildMemberOptsIsMuted,
+                                   "deaf" .=? modifyGuildMemberOptsIsDeafened,
+                                   "channel_id" .=? modifyGuildMemberOptsMoveToChannel,
+                                   "communication_disabled_until" .=? modifyGuildMemberOptsTimeoutUntil]
 
 -- | Options for `CreateGuildChannel`
 data CreateGuildChannelOpts
@@ -250,28 +249,28 @@ data CreateGuildChannelOpts
 
 -- | Converts a channel name, a list of permissions and other channel options into a JSON Value 
 createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
-createChannelOptsToJSON name perms opts = object [(key, val) | (key, Just val) <- optsJSON]
+createChannelOptsToJSON name perms opts = objectFromMaybes optsJSON
   where
   optsJSON = case opts of
     CreateGuildChannelOptsText{..} ->
-                          [("name",                  Just (String name))
-                          ,("type",                  Just (Number 0))
-                          ,("permission_overwrites", toJSON <$> Just perms)
-                          ,("topic",                 toJSON <$> createGuildChannelOptsTopic)
-                          ,("rate_limit_per_user",   toJSON <$> createGuildChannelOptsUserMessageRateDelay)
-                          ,("nsfw",                  toJSON <$> createGuildChannelOptsIsNSFW)
-                          ,("parent_id",             toJSON <$> createGuildChannelOptsCategoryId)]
+                          ["name" .== String name
+                          ,"type" .== Number 0
+                          ,"permission_overwrites" .== perms
+                          ,"topic" .=? createGuildChannelOptsTopic
+                          ,"rate_limit_per_user" .=? createGuildChannelOptsUserMessageRateDelay
+                          ,"nsfw" .=? createGuildChannelOptsIsNSFW
+                          ,"parent_id" .=? createGuildChannelOptsCategoryId]
     CreateGuildChannelOptsVoice{..} ->
-                          [("name",                  Just (String name))
-                          ,("type",                  Just (Number 2))
-                          ,("permission_overwrites", toJSON <$> Just perms)
-                          ,("bitrate",               toJSON <$> createGuildChannelOptsBitrate)
-                          ,("user_limit",            toJSON <$> createGuildChannelOptsMaxUsers)
-                          ,("parent_id",             toJSON <$> createGuildChannelOptsCategoryId)]
+                          ["name" .== String name
+                          ,"type" .== Number 2
+                          ,"permission_overwrites" .== perms
+                          ,"bitrate" .=? createGuildChannelOptsBitrate
+                          ,"user_limit" .=? createGuildChannelOptsMaxUsers
+                          ,"parent_id" .=? createGuildChannelOptsCategoryId]
     CreateGuildChannelOptsCategory ->
-                          [("name",                  Just (String name))
-                          ,("type",                  Just (Number 4))
-                          ,("permission_overwrites", toJSON <$> Just perms)]
+                          ["name" .== String name
+                          ,"type" .== Number 4
+                          ,"permission_overwrites" .== perms]
 
 
 -- | Options for `ModifyGuild`
@@ -289,11 +288,11 @@ data ModifyGuildOpts = ModifyGuildOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildOpts where
-  toJSON ModifyGuildOpts{..} =  object [(name, val) | (name, Just val) <-
-                                  [("name",            toJSON <$>  modifyGuildOptsName ),
-                                   ("afk_channel_id",  toJSON <$>  modifyGuildOptsAFKChannelId ),
-                                   ("icon",            toJSON <$>  modifyGuildOptsIcon ),
-                                   ("owner_id",        toJSON <$>  modifyGuildOptsOwnerId )] ]
+  toJSON ModifyGuildOpts{..} = objectFromMaybes
+                                  ["name" .=? modifyGuildOptsName,
+                                   "afk_channel_id" .=? modifyGuildOptsAFKChannelId,
+                                   "icon" .=? modifyGuildOptsIcon,
+                                   "owner_id" .=? modifyGuildOptsOwnerId]
 
 data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
@@ -334,7 +333,7 @@ guildMajorRoute c = case c of
   (CreateGuildRole g _) ->          "guild_roles " <> show g
   (ModifyGuildRolePositions g _) -> "guild_roles " <> show g
   (ModifyGuildRole g _ _) ->         "guild_role " <> show g
-  (DeleteGuildRole g _ ) ->          "guild_role " <> show g
+  (DeleteGuildRole g _) ->           "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
   (BeginGuildPrune g _) ->          "guild_prune " <> show g
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
@@ -344,8 +343,8 @@ guildMajorRoute c = case c of
   (ModifyGuildIntegration g _ _) -> "guild_intgr " <> show g
   (DeleteGuildIntegration g _) ->   "guild_intgr " <> show g
   (SyncGuildIntegration g _) ->      "guild_sync " <> show g
-  (GetGuildWidget g) ->              "guild_widget " <> show g
-  (ModifyGuildWidget g _) ->         "guild_widget " <> show g
+  (GetGuildWidget g) ->            "guild_widget " <> show g
+  (ModifyGuildWidget g _) ->       "guild_widget " <> show g
   (GetGuildVanityURL g) ->                "guild " <> show g
 
 
@@ -443,7 +442,7 @@ guildJsonRequest c = case c of
       Get (guilds /~ guild /: "integrations") mempty
 
   (CreateGuildIntegration guild iid opts) ->
-      let patch = object [("type" .= createGuildIntegrationOptsType opts) ,("id"   .= iid)]
+      let patch = object ["type" .= createGuildIntegrationOptsType opts, "id" .= iid]
       in Post (guilds /~ guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
 
   (ModifyGuildIntegration guild iid patch) ->

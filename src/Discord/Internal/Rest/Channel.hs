@@ -1,6 +1,5 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -169,7 +168,7 @@ reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
 reactionTimingToQuery t = case t of
   (BeforeReaction snow) -> "before" R.=: show snow
   (AfterReaction snow) -> "after"  R.=: show snow
-  (LatestReaction) -> mempty
+  LatestReaction -> mempty
 
 -- | Data constructor for `GetChannelMessages` requests.
 -- 
@@ -185,7 +184,7 @@ messageTimingToQuery t = case t of
   (AroundMessage snow) -> "around" R.=: show snow
   (BeforeMessage snow) -> "before" R.=: show snow
   (AfterMessage snow) -> "after"  R.=: show snow
-  (LatestMessages) -> mempty
+  LatestMessages -> mempty
 
 -- | Options for `CreateChannelInvite` requests
 data ChannelInviteOpts = ChannelInviteOpts
@@ -201,11 +200,11 @@ data ChannelInviteOpts = ChannelInviteOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ChannelInviteOpts where
-  toJSON ChannelInviteOpts{..} = object [(name, val) | (name, Just val) <-
-                         [("max_age",   toJSON <$> channelInviteOptsMaxAgeSeconds),
-                          ("max_uses",  toJSON <$> channelInviteOptsMaxUsages),
-                          ("temporary", toJSON <$> channelInviteOptsIsTemporary),
-                          ("unique",    toJSON <$> channelInviteOptsDontReuseSimilarInvite) ] ]
+  toJSON ChannelInviteOpts{..} = objectFromMaybes
+                         ["max_age" .=? channelInviteOptsMaxAgeSeconds,
+                          "max_uses" .=? channelInviteOptsMaxUsages,
+                          "temporary" .=? channelInviteOptsIsTemporary,
+                          "unique" .=? channelInviteOptsDontReuseSimilarInvite ]
 
 -- | Options for `ModifyChannel` requests
 data ModifyChannelOpts = ModifyChannelOpts
@@ -249,21 +248,21 @@ instance Default ModifyChannelOpts where
   def = ModifyChannelOpts Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON ModifyChannelOpts where
-  toJSON ModifyChannelOpts{..} = object [(name, val) | (name, Just val) <-
-               [("name",       toJSON <$> modifyChannelName),
-                ("position",   toJSON <$> modifyChannelPosition),
-                ("topic",      toJSON <$> modifyChannelTopic),
-                ("nsfw",       toJSON <$> modifyChannelNSFW),
-                ("bitrate",    toJSON <$> modifyChannelBitrate),
-                ("rate_limit_per_user", toJSON <$> modifyChannelUserRateLimit),
-                ("user_limit", toJSON <$> modifyChannelUserLimit),
-                ("permission_overwrites",  toJSON <$> modifyChannelPermissionOverwrites),
-                ("parent_id",  toJSON <$> modifyChannelParentId),
-                ("default_auto_archive_duration",  toJSON <$> modifyChannelDefaultAutoArchive),
-                ("archived",  toJSON <$> modifyChannelThreadArchived),
-                ("auto_archive_duration",  toJSON <$> modifyChannelThreadAutoArchive),
-                ("locked",  toJSON <$> modifyChannelThreadLocked),
-                ("invitable",  toJSON <$> modifyChannelThreadInvitable) ] ]
+  toJSON ModifyChannelOpts{..} = objectFromMaybes
+               ["name" .=? modifyChannelName,
+                "position" .=? modifyChannelPosition,
+                "topic" .=? modifyChannelTopic,
+                "nsfw" .=? modifyChannelNSFW,
+                "bitrate" .=? modifyChannelBitrate,
+                "rate_limit_per_user" .=? modifyChannelUserRateLimit,
+                "user_limit" .=? modifyChannelUserLimit,
+                "permission_overwrites" .=? modifyChannelPermissionOverwrites,
+                "parent_id" .=? modifyChannelParentId,
+                "default_auto_archive_duration" .=? modifyChannelDefaultAutoArchive,
+                "archived" .=? modifyChannelThreadArchived,
+                "auto_archive_duration" .=? modifyChannelThreadAutoArchive,
+                "locked" .=? modifyChannelThreadLocked,
+                "invitable" .=? modifyChannelThreadInvitable ]
 
 -- | Options for The `EditChannelPermissions` request
 --
@@ -292,7 +291,7 @@ data GroupDMAddRecipientOpts = GroupDMAddRecipientOpts
   } deriving (Show, Read, Eq, Ord)
 
 -- | Options for `StartThreadFromMessage` request
-data StartThreadOpts = StartThreadOpts 
+data StartThreadOpts = StartThreadOpts
   { -- | Name of the thread
     startThreadName :: T.Text
   , -- | Period of innactivity after which the thread gets archived in minutes.
@@ -305,12 +304,11 @@ data StartThreadOpts = StartThreadOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON StartThreadOpts where
-  toJSON StartThreadOpts{..} = object [ (name, value) | (name, Just value) <- 
-      [ ("name", toJSON <$> pure startThreadName)
-      , ("auto_archive_duration", toJSON <$> startThreadAutoArchive)
-      , ("rate_limit_per_user", toJSON <$> startThreadRateLimit)
+  toJSON StartThreadOpts{..} = objectFromMaybes
+      [ "name" .== startThreadName
+      , "auto_archive_duration" .=? startThreadAutoArchive
+      , "rate_limit_per_user" .=? startThreadRateLimit
       ]
-    ]
 
 -- | Options for `StartThreadNoMessage` request
 data StartThreadNoMessageOpts = StartThreadNoMessageOpts
@@ -327,18 +325,17 @@ data StartThreadNoMessageOpts = StartThreadNoMessageOpts
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON StartThreadNoMessageOpts where
-  toJSON StartThreadNoMessageOpts{..} = object [ (name, value) | (name, Just value) <- 
-      [ ("name", toJSON <$> pure (startThreadName startThreadNoMessageBaseOpts))
-      , ("auto_archive_duration", toJSON <$> (startThreadAutoArchive startThreadNoMessageBaseOpts))
-      , ("rate_limit_per_user", toJSON <$> (startThreadRateLimit startThreadNoMessageBaseOpts))
-      , ("type", toJSON <$> pure startThreadNoMessageType)
-      , ("invitable", toJSON <$> startThreadNoMessageInvitable)
+  toJSON StartThreadNoMessageOpts{..} = objectFromMaybes
+      [ "name" .== startThreadName startThreadNoMessageBaseOpts
+      , "auto_archive_duration" .=? startThreadAutoArchive startThreadNoMessageBaseOpts
+      , "rate_limit_per_user" .=? startThreadRateLimit startThreadNoMessageBaseOpts
+      , "type" .== startThreadNoMessageType
+      , "invitable" .=? startThreadNoMessageInvitable
       ]
-    ]
 
 -- | Result type of `ListJoinedPrivateArchivedThreads`,
 -- `ListPrivateArchivedThreads` and `ListPublicArchivedThreads`
-data ListThreads = ListThreads 
+data ListThreads = ListThreads
   { -- | The returned threads
     listThreadsThreads :: [Channel]
   , -- | A thread member object for each returned thread the current user has
@@ -349,7 +346,7 @@ data ListThreads = ListThreads
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ListThreads where
-  toJSON ListThreads{..} = object 
+  toJSON ListThreads{..} = object
     [ ("threads", toJSON listThreadsThreads)
     , ("members", toJSON listThreadsMembers)
     , ("has_more", toJSON listThreadsHasMore)
@@ -451,15 +448,15 @@ channelJsonRequest c = case c of
           )
             ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
-        payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
-                                , "tts"     .= messageDetailedTTS msgOpts ] ++
-                                [ name .= value | (name, Just value) <-
-                                  [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                                  , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
-                                  , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                  , ("components", toJSON <$> messageDetailedComponents msgOpts)
-                                  , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
-                                  ] ]
+        payloadData =  objectFromMaybes $
+                        [ "content" .== messageDetailedContent msgOpts
+                        , "tts"     .== messageDetailedTTS msgOpts ] ++
+                        [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                        , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
+                        , "message_reference" .=? messageDetailedReference msgOpts
+                        , "components" .=? messageDetailedComponents msgOpts
+                        , "sticker_ids" .=? messageDetailedStickerIds msgOpts
+                        ]
         payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
         body = R.reqBodyMultipart (payloadPart : filePart)
@@ -492,7 +489,7 @@ channelJsonRequest c = case c of
       Delete (channels /~ chan /: "messages" /~ msgid /: "reactions" ) mempty
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
-  (EditMessage (chan, msg) msgOpts) ->      
+  (EditMessage (chan, msg) msgOpts) ->
     let fileUpload = messageDetailedFile msgOpts
         filePart =
           ( case fileUpload of
@@ -506,15 +503,15 @@ channelJsonRequest c = case c of
           )
             ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
-        payloadData =  object $ [ "content" .= messageDetailedContent msgOpts
-                                , "tts"     .= messageDetailedTTS msgOpts ] ++
-                                [ name .= value | (name, Just value) <-
-                                  [ ("embeds", toJSON . (createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                                  , ("allowed_mentions", toJSON <$> messageDetailedAllowedMentions msgOpts)
-                                  , ("message_reference", toJSON <$> messageDetailedReference msgOpts)
-                                  , ("components", toJSON <$> messageDetailedComponents msgOpts)
-                                  , ("sticker_ids", toJSON <$> messageDetailedStickerIds msgOpts)
-                                  ] ]
+        payloadData =  objectFromMaybes $
+                        [ "content" .== messageDetailedContent msgOpts
+                        , "tts"     .== messageDetailedTTS msgOpts ] ++
+                        [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                        , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
+                        , "message_reference" .=? messageDetailedReference msgOpts
+                        , "components" .=? messageDetailedComponents msgOpts
+                        , "sticker_ids" .=? messageDetailedStickerIds msgOpts
+                        ]
         payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
         body = R.reqBodyMultipart (payloadPart : filePart)
@@ -528,7 +525,7 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages" /: "bulk-delete") body mempty
 
   (EditChannelPermissions chan overwriteId (ChannelPermissionsOpts a d)) ->
-      let body = R.ReqBodyJson $ object [("type", toJSON $ (either (const 0) (const 1) overwriteId :: Int))
+      let body = R.ReqBodyJson $ object [("type", toJSON (either (const 0) (const 1) overwriteId :: Int))
                                         ,("allow", toJSON a)
                                         ,("deny", toJSON d)]
       in Put (channels /~ chan /: "permissions" /~ either unId unId overwriteId) body mempty

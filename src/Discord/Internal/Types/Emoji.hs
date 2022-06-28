@@ -43,17 +43,14 @@ instance FromJSON Emoji where
 
 instance ToJSON Emoji where
   toJSON Emoji {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("id", toJSON <$> emojiId),
-              ("name", toMaybeJSON emojiName),
-              ("roles", toJSON <$> emojiRoles),
-              ("user", toJSON <$> emojiUser),
-              ("managed", toJSON <$> emojiManaged),
-              ("animated", toJSON <$> emojiAnimated)
+    objectFromMaybes
+            [ "id" .=? emojiId,
+              "name" .== emojiName,
+              "roles" .=? emojiRoles,
+              "user" .=? emojiUser,
+              "managed" .=? emojiManaged,
+              "animated" .=? emojiAnimated
             ]
-      ]
 
 -- | Represents a pack of standard stickers.
 data StickerPack = StickerPack

@@ -52,23 +52,23 @@ instance FromJSON User where
          <*> o .:? "member"
 
 instance ToJSON User where
-  toJSON User{..} = object [(name,value) | (name, Just value) <-
-              [ ("id",            toJSON <$> pure userId)
-              , ("username",      toJSON <$> pure userName)
-              , ("discriminator", toJSON <$>      userDiscrim)
-              , ("avatar",        toJSON <$>      userAvatar)
-              , ("bot",           toJSON <$> pure userIsBot)
-              , ("system",        toJSON <$>      userIsSystem)
-              , ("mfa_enabled",   toJSON <$>      userMfa)
-              , ("banner",        toJSON <$>      userBanner)
-              , ("accent_color",  toJSON <$>      userAccentColor)
-              , ("verified",      toJSON <$>      userVerified)
-              , ("email",         toJSON <$>      userEmail)
-              , ("flags",         toJSON <$>      userFlags)
-              , ("premium_type",  toJSON <$>      userPremiumType)
-              , ("public_flags",  toJSON <$>      userPublicFlags)
-              , ("member",        toJSON <$>      userPublicFlags)
-              ] ]
+  toJSON User{..} = objectFromMaybes
+              [ "id" .== userId
+              , "username" .== userName
+              , "discriminator" .=? userDiscrim
+              , "avatar" .=? userAvatar
+              , "bot" .== userIsBot
+              , "system" .=? userIsSystem
+              , "mfa_enabled" .=? userMfa
+              , "banner" .=? userBanner
+              , "accent_color" .=? userAccentColor
+              , "verified" .=? userVerified
+              , "email" .=? userEmail
+              , "flags" .=? userFlags
+              , "premium_type" .=? userPremiumType
+              , "public_flags" .=? userPublicFlags
+              , "member" .=? userPublicFlags
+              ]
 
 -- TODO: fully update webhook structure
 data Webhook = Webhook
@@ -140,16 +140,16 @@ instance FromJSON GuildMember where
                 <*> o .:? "communication_disabled_until"
 
 instance ToJSON GuildMember where
-  toJSON GuildMember {..} = object [(name, value) | (name, Just value) <-
-      [ ("user",      toJSON <$>      memberUser)
-      , ("nick",      toJSON <$>      memberNick)
-      , ("avatar",    toJSON <$>      memberAvatar)
-      , ("roles",     toJSON <$> pure memberRoles)
-      , ("joined_at", toJSON <$> pure memberJoinedAt)
-      , ("premium_since",    toJSON <$>      memberPremiumSince)
-      , ("deaf",      toJSON <$> pure memberDeaf)
-      , ("mute",      toJSON <$> pure memberMute)
-      , ("pending",      toJSON <$> pure memberPending)
-      , ("permissions",    toJSON <$>      memberPermissions)
-      , ("communication_disabled_until",    toJSON <$>      memberTimeoutEnd)
-      ] ]
+  toJSON GuildMember {..} = objectFromMaybes
+      [ "user" .=? memberUser
+      , "nick" .=? memberNick
+      , "avatar" .=? memberAvatar
+      , "roles" .== memberRoles
+      , "joined_at" .== memberJoinedAt
+      , "premium_since" .=? memberPremiumSince
+      , "deaf" .== memberDeaf
+      , "mute" .== memberMute
+      , "pending" .== memberPending
+      , "permissions" .=? memberPermissions
+      , "communication_disabled_until" .=? memberTimeoutEnd
+      ]

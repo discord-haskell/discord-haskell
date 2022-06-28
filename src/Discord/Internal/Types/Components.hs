@@ -27,7 +27,7 @@ import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Emoji (Emoji)
-import Discord.Internal.Types.Prelude (toMaybeJSON)
+import Discord.Internal.Types.Prelude (objectFromMaybes, (.==), (.=?))
 
 -- | Container for other message Components
 data ActionRow = ActionRowButtons [Button] | ActionRowSelectMenu SelectMenu
@@ -127,28 +127,22 @@ instance FromJSON Button where
 
 instance ToJSON Button where
   toJSON ButtonUrl {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("type", Just $ Number 2),
-              ("style", Just $ Number 5),
-              ("label", toJSON <$> buttonLabel),
-              ("disabled", toMaybeJSON buttonDisabled),
-              ("url", toMaybeJSON buttonUrl),
-              ("emoji", toJSON <$> buttonEmoji)
-            ]
+    objectFromMaybes
+      [ "type" .== Number 2,
+        "style" .== Number 5,
+        "label" .=? buttonLabel,
+        "disabled" .== buttonDisabled,
+        "url" .== buttonUrl,
+        "emoji" .=? buttonEmoji
       ]
   toJSON Button {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("type", Just $ Number 2),
-              ("style", Just $ toJSON buttonStyle),
-              ("label", toJSON <$> buttonLabel),
-              ("disabled", toMaybeJSON buttonDisabled),
-              ("custom_id", toMaybeJSON buttonCustomId),
-              ("emoji", toJSON <$> buttonEmoji)
-            ]
+    objectFromMaybes
+      [ "type" .== Number 2,
+        "style" .== buttonStyle,
+        "label" .=? buttonLabel,
+        "disabled" .== buttonDisabled,
+        "custom_id" .== buttonCustomId,
+        "emoji" .=? buttonEmoji
       ]
 
 -- | Buttton colors.
@@ -226,17 +220,14 @@ instance FromJSON SelectMenu where
 
 instance ToJSON SelectMenu where
   toJSON SelectMenu {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("type", Just $ Number 3),
-              ("custom_id", toMaybeJSON selectMenuCustomId),
-              ("disabled", toMaybeJSON selectMenuDisabled),
-              ("options", toMaybeJSON selectMenuOptions),
-              ("placeholder", toJSON <$> selectMenuPlaceholder),
-              ("min_values", toJSON <$> selectMenuMinValues),
-              ("max_values", toJSON <$> selectMenuMaxValues)
-            ]
+    objectFromMaybes
+      [ "type" .== Number 3,
+        "custom_id" .== selectMenuCustomId,
+        "disabled" .== selectMenuDisabled,
+        "options" .== selectMenuOptions,
+        "placeholder" .=? selectMenuPlaceholder,
+        "min_values" .=? selectMenuMinValues,
+        "max_values" .=? selectMenuMaxValues
       ]
 
 -- | A single option in a select menu.
@@ -268,15 +259,12 @@ instance FromJSON SelectOption where
 
 instance ToJSON SelectOption where
   toJSON SelectOption {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("label", toMaybeJSON selectOptionLabel),
-              ("value", toMaybeJSON selectOptionValue),
-              ("description", toJSON <$> selectOptionDescription),
-              ("emoji", toJSON <$> selectOptionEmoji),
-              ("default", toJSON <$> selectOptionDefault)
-            ]
+    objectFromMaybes
+      [ "label" .== selectOptionLabel,
+        "value" .== selectOptionValue,
+        "description" .=? selectOptionDescription,
+        "emoji" .=? selectOptionEmoji,
+        "default" .=? selectOptionDefault
       ]
 
 data TextInput = TextInput
@@ -301,19 +289,16 @@ data TextInput = TextInput
 
 instance ToJSON TextInput where
   toJSON TextInput {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("type", Just $ Number 4),
-              ("custom_id", toMaybeJSON textInputCustomId),
-              ("style", toMaybeJSON (1 + fromEnum textInputIsParagraph)),
-              ("label", toMaybeJSON textInputLabel),
-              ("min_length", toJSON <$> textInputMinLength),
-              ("max_length", toJSON <$> textInputMaxLength),
-              ("required", toMaybeJSON textInputRequired),
-              ("value", toMaybeJSON textInputValue),
-              ("placeholder", toMaybeJSON textInputPlaceholder)
-            ]
+    objectFromMaybes
+      [ "type" .== Number 4,
+        "custom_id" .== textInputCustomId,
+        "style" .== (1 + fromEnum textInputIsParagraph),
+        "label" .== textInputLabel,
+        "min_length" .=? textInputMinLength,
+        "max_length" .=? textInputMaxLength,
+        "required" .== textInputRequired,
+        "value" .== textInputValue,
+        "placeholder" .== textInputPlaceholder
       ]
 
 instance FromJSON TextInput where

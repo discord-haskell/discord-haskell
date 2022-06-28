@@ -40,7 +40,7 @@ import Discord.Internal.Types.ApplicationCommands (Choice, Number)
 import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
 import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId, objectFromMaybes, (.=?))
 import Discord.Internal.Types.User (GuildMember, User)
 
 -- | An interaction received from discord.
@@ -213,7 +213,7 @@ instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
   parseJSON =
     withObject
       "MemberOrUser"
-      ( \v -> MemberOrUser <$> ((Left <$> v .: "member") <|> (Right <$> v .: "user"))
+      ( \v -> MemberOrUser <$> (Left <$> v .: "member" <|> Right <$> v .: "user")
       )
 
 data ComponentData
@@ -495,16 +495,13 @@ data ResolvedData = ResolvedData
 
 instance ToJSON ResolvedData where
   toJSON ResolvedData {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("users", resolvedDataUsers),
-              ("members", resolvedDataMembers),
-              ("roles", resolvedDataRoles),
-              ("channels", resolvedDataChannels),
-              ("messages", resolvedDataMessages),
-              ("attachments", resolvedDataAttachments)
-            ]
+    objectFromMaybes
+      [ "users" .=? resolvedDataUsers,
+        "members" .=? resolvedDataMembers,
+        "roles" .=? resolvedDataRoles,
+        "channels" .=? resolvedDataChannels,
+        "messages" .=? resolvedDataMessages,
+        "attachments" .=? resolvedDataAttachments
       ]
 
 instance FromJSON ResolvedData where
@@ -584,17 +581,14 @@ interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) 
 
 instance ToJSON InteractionResponseMessage where
   toJSON InteractionResponseMessage {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("tts", toJSON <$> interactionResponseMessageTTS),
-              ("content", toJSON <$> interactionResponseMessageContent),
-              ("embeds", toJSON . (createEmbed <$>) <$> interactionResponseMessageEmbeds),
-              ("allowed_mentions", toJSON <$> interactionResponseMessageAllowedMentions),
-              ("flags", toJSON <$> interactionResponseMessageFlags),
-              ("components", toJSON <$> interactionResponseMessageComponents),
-              ("attachments", toJSON <$> interactionResponseMessageAttachments)
-            ]
+    objectFromMaybes
+      [ "tts" .=? interactionResponseMessageTTS,
+        "content" .=? interactionResponseMessageContent,
+        "embeds" .=? ((createEmbed <$>) <$> interactionResponseMessageEmbeds),
+        "allowed_mentions" .=? interactionResponseMessageAllowedMentions,
+        "flags" .=? interactionResponseMessageFlags,
+        "components" .=? interactionResponseMessageComponents,
+        "attachments" .=? interactionResponseMessageAttachments
       ]
 
 -- | Types of flags to attach to the interaction message.

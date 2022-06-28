@@ -5,21 +5,65 @@
 {-# LANGUAGE RankNTypes  #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
-module Discord.Internal.Types.Prelude where
+module Discord.Internal.Types.Prelude
+  ( Auth (..)
+  , authToken
 
-import Data.Bits
-import Data.Word
+  , Snowflake (..)
+  , snowflakeCreationDate
+  
+  , DiscordId (..)
+  , ChannelId
+  , StageId
+  , GuildId
+  , MessageId
+  , AttachmentId
+  , EmojiId
+  , StickerId
+  , UserId
+  , RoleId
+  , IntegrationId
+  , WebhookId
+  , ParentId
+  , ApplicationId
+  , ApplicationCommandId
+  , InteractionId
+  , ScheduledEventId
+  , ScheduledEventEntityId
+
+  , DiscordToken (..)
+  , InteractionToken
+  , WebhookToken
+
+  , Shard
+  , epochTime
+
+  , InternalDiscordEnum (..)
+
+  , Base64Image (..)
+  , getMimeType
+
+  , (.==)
+  , (.=?)
+  , objectFromMaybes
+  )
+
+ where
+
+import Data.Bifunctor (first)
+import Data.Bits (Bits(shiftR))
+import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
+import Data.Word (Word64)
+import Data.Maybe (catMaybes)
+import Text.Read (readMaybe)
 
 import Data.Aeson.Types
-import qualified Data.ByteString as B
 import Data.Time.Clock
-import qualified Data.Text as T
 import Data.Time.Clock.POSIX
 import Web.Internal.HttpApiData
 
-import Data.Bifunctor (first)
-import Text.Read (readMaybe)
-import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
+import qualified Data.ByteString as B
+import qualified Data.Text as T
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -197,8 +241,17 @@ class Data a => InternalDiscordEnum a where
         | fromIntegral (round i) == i = Just $ round i
         | otherwise = Nothing
 
-toMaybeJSON :: (ToJSON a) => a -> Maybe Value
-toMaybeJSON = return . toJSON
+-- when we upgrade aeson, we need to change Text to Key
+
+(.==) :: ToJSON a => T.Text -> a -> Maybe Pair
+k .== v = Just (k .= v)
+
+(.=?) :: ToJSON a => T.Text -> Maybe a -> Maybe Pair
+k .=? (Just v) = Just (k .= v)
+_ .=? Nothing = Nothing
+
+objectFromMaybes :: [Maybe Pair] -> Value
+objectFromMaybes = object . catMaybes
 
 
 -- | @Base64Image mime data@ represents the base64 encoding of an image (as
