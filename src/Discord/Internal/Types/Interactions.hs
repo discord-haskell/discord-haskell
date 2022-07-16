@@ -64,6 +64,8 @@ data Interaction
         interactionVersion :: Int,
         -- | What message is associated with this interaction.
         interactionMessage :: Message,
+        -- | What permissions does the app or bot have within the sent channel.
+        interactionPermissions :: Maybe T.Text,
         -- | The invoking user's preferred locale.
         interactionLocale :: T.Text,
         -- | The invoking guild's preferred locale.
@@ -77,7 +79,9 @@ data Interaction
         -- | The unique token that represents this interaction.
         interactionToken :: InteractionToken,
         -- | What version of interaction is this (always 1).
-        interactionVersion :: Int
+        interactionVersion :: Int,
+        -- | What permissions does the app or bot have within the sent channel.
+        interactionPermissions :: Maybe T.Text
       }
   | InteractionApplicationCommand
       { -- | The id of this interaction.
@@ -96,6 +100,8 @@ data Interaction
         interactionToken :: InteractionToken,
         -- | What version of interaction is this (always 1).
         interactionVersion :: Int,
+        -- | What permissions does the app or bot have within the sent channel.
+        interactionPermissions :: Maybe T.Text,
         -- | The invoking user's preferred locale.
         interactionLocale :: T.Text,
         -- | The invoking guild's preferred locale.
@@ -118,6 +124,8 @@ data Interaction
         interactionToken :: InteractionToken,
         -- | What version of interaction is this (always 1).
         interactionVersion :: Int,
+        -- | What permissions does the app or bot have within the sent channel.
+        interactionPermissions :: Maybe T.Text,
         -- | The invoking user's preferred locale.
         interactionLocale :: T.Text,
         -- | The invoking guild's preferred locale.
@@ -140,6 +148,8 @@ data Interaction
         interactionToken :: InteractionToken,
         -- | What version of interaction is this (always 1).
         interactionVersion :: Int,
+        -- | What permissions does the app or bot have within the sent channel.
+        interactionPermissions :: Maybe T.Text,
         -- | The invoking user's preferred locale.
         interactionLocale :: T.Text,
         -- | The invoking guild's preferred locale.
@@ -159,9 +169,10 @@ instance FromJSON Interaction where
           tok <- v .: "token"
           version <- v .: "version"
           glocale <- v .:? "guild_locale"
+          permissions <- v .:? "app_permissions"
           t <- v .: "type" :: Parser Int
           case t of
-            1 -> return $ InteractionPing iid aid tok version
+            1 -> return $ InteractionPing iid aid tok version permissions
             2 ->
               InteractionApplicationCommand iid aid
                 <$> v .: "data"
@@ -170,6 +181,7 @@ instance FromJSON Interaction where
                 <*> parseJSON (Object v)
                 <*> return tok
                 <*> return version
+                <*> return permissions
                 <*> v .: "locale"
                 <*> return glocale
             3 ->
@@ -181,6 +193,7 @@ instance FromJSON Interaction where
                 <*> return tok
                 <*> return version
                 <*> v .: "message"
+                <*> return permissions
                 <*> v .: "locale"
                 <*> return glocale
             4 ->
@@ -191,6 +204,7 @@ instance FromJSON Interaction where
                 <*> parseJSON (Object v)
                 <*> return tok
                 <*> return version
+                <*> return permissions
                 <*> v .: "locale"
                 <*> return glocale
             5 ->
@@ -201,6 +215,7 @@ instance FromJSON Interaction where
                 <*> parseJSON (Object v)
                 <*> return tok
                 <*> return version
+                <*> return permissions
                 <*> v .: "locale"
                 <*> return glocale
             _ -> fail "unknown interaction type"

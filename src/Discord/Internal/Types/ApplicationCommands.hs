@@ -25,6 +25,7 @@ module Discord.Internal.Types.ApplicationCommands
     GuildApplicationCommandPermissions (..),
     ApplicationCommandPermissions (..),
     Number,
+    AutocompleteOrChoice,
   )
 where
 
@@ -223,7 +224,11 @@ data OptionValue
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
-        optionValueStringChoices :: AutocompleteOrChoice T.Text
+        optionValueStringChoices :: AutocompleteOrChoice T.Text,
+        -- | The minimum length of the string (minimum 0)
+        optionValueStringMinLen :: Maybe Integer,
+        -- | The maximum length of the string (minimum 1)
+        optionValueStringMaxLen :: Maybe Integer
       }
   | OptionValueInteger
       { -- | The name of the value
@@ -310,6 +315,8 @@ instance FromJSON OptionValue where
             3 ->
               OptionValueString name desc required
                 <$> parseJSON (Object v)
+                <*> v .:? "min_length"
+                <*> v .:? "max_length"
             4 ->
               OptionValueInteger name desc required
                 <$> parseJSON (Object v)
@@ -337,6 +344,8 @@ instance ToJSON OptionValue where
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
         ("required", toJSON optionValueRequired),
+        ("min_length", toJSON optionValueStringMinLen),
+        ("max_length", toJSON optionValueStringMaxLen),
         choiceOrAutocompleteToJSON optionValueStringChoices
       ]
   toJSON OptionValueInteger {..} =
@@ -345,6 +354,8 @@ instance ToJSON OptionValue where
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
         ("required", toJSON optionValueRequired),
+        ("min_value", toJSON optionValueIntegerMinVal),
+        ("max_value", toJSON optionValueIntegerMaxVal),
         choiceOrAutocompleteToJSON optionValueIntegerChoices
       ]
   toJSON OptionValueNumber {..} =
@@ -353,6 +364,8 @@ instance ToJSON OptionValue where
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
         ("required", toJSON optionValueRequired),
+        ("min_value", toJSON optionValueNumberMinVal),
+        ("max_value", toJSON optionValueNumberMaxVal),
         choiceOrAutocompleteToJSON optionValueNumberChoices
       ]
   toJSON OptionValueChannel {..} =
