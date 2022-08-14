@@ -20,6 +20,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Lazy as BL
 
 import Wuss (runSecureClient)
+import Network.Socket (HostName)
 import Network.WebSockets (ConnectionException(..), Connection,
                            receiveData, sendTextData, sendClose)
 
@@ -38,7 +39,13 @@ data GatewayHandle = GatewayHandle
     -- | Recent sent event sequence (used to reconnect)
     gatewayHandleLastSequenceId :: IORef Integer,
     -- | Which discord server session (used to reconnect)
-    gatewayHandleSessionId      :: IORef T.Text
+    gatewayHandleSessionId      :: IORef T.Text,
+    -- | Which discord gateway to connect to. This should contain a default value
+    -- ("gateway.discord.gg") on first connect, but on subsequent Resumes this
+    -- may contain a different value. This should never contain trailing slashes,
+    -- or any "wss://" prefixes, since HostNames of this kind are not supported
+    -- by the websockets library.
+    gatewayHandleHostname       :: IORef HostName
   }
 
 -- | Ways the gateway connection can fail with no possibility of recovery.
@@ -83,12 +90,15 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
     -- | Main connection loop. Catch exceptions and reconnect.
     outerloop :: LoopState -> IO ()
     outerloop state = do
+        -- Read the gateway address, since each new connection to the gateway
+        -- may have a different Host to connect to.
+        gatewayHost <- readIORef (gatewayHandleHostname gatewayHandle)
         mfirst <- firstmessage state -- construct first message
         case mfirst of
           Nothing -> pure () -- close
 
           Just message -> do
-              nextstate <- try (startOneConnection message)  -- connection
+              nextstate <- try (startOneConnection gatewayHost message)  -- connection
               case nextstate :: Either SomeException LoopState of
                 Left _ -> do t <- getRandomR (3,20)
                              threadDelay (t * (10^(6 :: Int)))
@@ -110,8 +120,15 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                             else pure $ Just $ Resume auth seshId seqId
         LoopClosed -> pure Nothing
 
-    startOneConnection :: GatewaySendableInternal -> IO LoopState
-    startOneConnection message = runSecureClient "gateway.discord.gg" 443 ("/?v=" <> T.unpack apiVersion <>"&encoding=json") $ \conn -> do
+    startOneConnection
+      :: HostName
+      -- ^ The gateway address to connect to. Should be "gateway.discord.gg" on first try, but
+      -- all Resumes should go to the resume_gateway_url specified in the Ready event
+      -- https://discord.com/developers/docs/change-log#sessionspecific-gateway-resume-urls
+      -> GatewaySendableInternal
+      -- ^ The first message to send. Either an Identify or Resume.
+      -> IO LoopState
+    startOneConnection gatewayAddr message = runSecureClient gatewayAddr 443 ("/?v=" <> T.unpack apiVersion <>"&encoding=json") $ \conn -> do
                         msg <- getPayload conn log
                         case msg of
                             Right (Hello interval) -> do
@@ -159,8 +176,9 @@ runEventLoop thehandle sendablesData log = do loop
                                       writeIORef (gatewayHandleLastSequenceId thehandle) sq
                                       writeChan eventChan (Right event) -- send the event to user
                                       case event of
-                                        (InternalReady _ _ _ seshID _ _) ->
+                                        (InternalReady _ _ _ seshID resumeHost _ _) -> do
                                             writeIORef (gatewayHandleSessionId thehandle) seshID
+                                            writeIORef (gatewayHandleHostname thehandle) $ resumeHost
                                         _ -> writeIORef (startsendingUsers sendablesData) True
                                       loop
       Right (Hello _interval) -> do writeChan log ("eventloop - unexpected hello")

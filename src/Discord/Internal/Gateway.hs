@@ -40,7 +40,8 @@ startGatewayThread auth intent cacheHandle log = do
   status <- newIORef Nothing
   seqid <- newIORef 0
   seshid <- newIORef ""
-  let gatewayHandle = GatewayHandle events sends status seqid seshid
+  host <- newIORef $ "gateway.discord.gg"
+  let gatewayHandle = GatewayHandle events sends status seqid seshid host
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)
 

@@ -8,6 +8,7 @@ import Prelude hiding (id)
 import Data.Time.ISO8601 (parseISO8601)
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import Network.Socket (HostName)
 
 import Data.Aeson
 import Data.Aeson.Types
@@ -24,7 +25,7 @@ import Discord.Internal.Types.Emoji (Emoji)
 -- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
 data Event =
   -- | Contains the initial state information
-    Ready                      Int User [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+    Ready                      Int User [GuildUnavailable] T.Text HostName (Maybe Shard) PartialApplication
   -- | Response to a @Resume@ gateway command
   | Resumed                    [T.Text]
   -- | new guild channel created
@@ -107,7 +108,7 @@ data Event =
 --
 -- An application should never have to use those directly
 data EventInternalParse =
-    InternalReady                      Int User [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+    InternalReady                      Int User [GuildUnavailable] T.Text HostName (Maybe Shard) PartialApplication
   | InternalResumed                    [T.Text]
   | InternalChannelCreate              Channel
   | InternalChannelUpdate              Channel
@@ -213,6 +214,14 @@ reparse val = case parseEither parseJSON $ toJSON val of
                 Left r -> fail r
                 Right b -> pure b
 
+-- | Remove the "wss://" and the trailing slash in a gateway URL, thereby returning
+-- the hostname portion of the URL that we can connect to.
+extractHostname :: String -> HostName
+extractHostname ('w':'s':'s':':':'/':'/':rest) = extractHostname rest
+extractHostname ('/':[]) = []
+extractHostname (a:b) = a:(extractHostname b)
+extractHostname [] = []
+
 -- | Parse an event from name and JSON data
 eventParse :: T.Text -> Object -> Parser EventInternalParse
 eventParse t o = case t of
@@ -220,6 +229,10 @@ eventParse t o = case t of
                                          <*> o .: "user"
                                          <*> o .: "guilds"
                                          <*> o .: "session_id"
+                                          -- Discord can send us the resume gateway URL prefixed with "wss://",
+                                          -- and suffixed with a trailing slash. This is not a valid HostName,
+                                          -- so remove them both if they exist.
+                                         <*> (extractHostname <$> o .: "resume_gateway_url")
                                          <*> o .: "shard"
                                          <*> o .: "application"
     "RESUMED"                   -> InternalResumed <$> o .: "_trace"
