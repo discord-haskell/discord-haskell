@@ -159,7 +159,7 @@ runEventLoop thehandle sendablesData log = do loop
                                       writeIORef (gatewayHandleLastSequenceId thehandle) sq
                                       writeChan eventChan (Right event) -- send the event to user
                                       case event of
-                                        (InternalReady _ _ _ _ seshID _ _) ->
+                                        (InternalReady _ _ _ seshID _ _) ->
                                             writeIORef (gatewayHandleSessionId thehandle) seshID
                                         _ -> writeIORef (startsendingUsers sendablesData) True
                                       loop

@@ -24,7 +24,7 @@ import Discord.Internal.Types.Emoji (Emoji)
 -- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
 data Event =
   -- | Contains the initial state information
-    Ready                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+    Ready                      Int User [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   -- | Response to a @Resume@ gateway command
   | Resumed                    [T.Text]
   -- | new guild channel created
@@ -107,7 +107,7 @@ data Event =
 --
 -- An application should never have to use those directly
 data EventInternalParse =
-    InternalReady                      Int User [Channel] [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
+    InternalReady                      Int User [GuildUnavailable] T.Text (Maybe Shard) PartialApplication
   | InternalResumed                    [T.Text]
   | InternalChannelCreate              Channel
   | InternalChannelUpdate              Channel
@@ -218,7 +218,6 @@ eventParse :: T.Text -> Object -> Parser EventInternalParse
 eventParse t o = case t of
     "READY"                     -> InternalReady <$> o .: "v"
                                          <*> o .: "user"
-                                         <*> o .: "private_channels"
                                          <*> o .: "guilds"
                                          <*> o .: "session_id"
                                          <*> o .: "shard"
