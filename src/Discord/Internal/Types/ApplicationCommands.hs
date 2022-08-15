@@ -35,7 +35,7 @@ import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, toMaybeJSON)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
 
 type Number = Scientific
 
@@ -448,40 +448,31 @@ data CreateApplicationCommand
 
 instance ToJSON CreateApplicationCommand where
   toJSON CreateApplicationCommandChatInput {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toMaybeJSON createName),
-              ("description", toMaybeJSON createDescription),
-              ("options", toJSON <$> createOptions),
-              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
-              ("default_permission", toMaybeJSON createDefaultPermission),
-              ("type", Just $ Number 1)
-            ]
+    objectFromMaybes
+      [ "name" .== createName,
+        "description" .== createDescription,
+        "options" .=? createOptions,
+        "default_member_permissions" .== createDefaultMemberPermissions,
+        "default_permission" .== createDefaultPermission,
+        "type" .== Number 1
       ]
   toJSON CreateApplicationCommandUser {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toMaybeJSON createName),
-              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
-              ("default_permission", toMaybeJSON createDefaultPermission),
-              ("type", Just $ Number 2)
-            ]
+    objectFromMaybes
+      [ "name" .== createName,
+        "default_member_permissions" .== createDefaultMemberPermissions,
+        "default_permission" .== createDefaultPermission,
+        "type" .== Number 2
       ]
   toJSON CreateApplicationCommandMessage {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toMaybeJSON createName),
-              ("default_member_permissions", toMaybeJSON createDefaultMemberPermissions),
-              ("default_permission", toMaybeJSON createDefaultPermission),
-              ("type", Just $ Number 3)
-            ]
+    objectFromMaybes
+      [ "name" .== createName,
+        "default_member_permissions" .== createDefaultMemberPermissions,
+        "default_permission" .== createDefaultPermission,
+        "type" .== Number 3
       ]
 
 nameIsValid :: Bool -> T.Text -> Bool
-nameIsValid isChatInput name = l >= 1 && l <= 32 && (isChatInput <= T.all (`elem` validChars) name)
+nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (`elem` validChars) name
   where
     l = T.length name
     validChars = '-' : ['a' .. 'z']
@@ -537,33 +528,24 @@ defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothin
 
 instance ToJSON EditApplicationCommand where
   toJSON EditApplicationCommandChatInput {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toJSON <$> editName),
-              ("description", toJSON <$> editDescription),
-              ("options", toJSON <$> editOptions),
-              ("default_permission", toJSON <$> editDefaultPermission),
-              ("type", Just $ Number 1)
-            ]
+    objectFromMaybes
+      [ "name" .=? editName,
+        "description" .=? editDescription,
+        "options" .=? editOptions,
+        "default_permission" .=? editDefaultPermission,
+        "type" .== Number 1
       ]
   toJSON EditApplicationCommandUser {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toJSON <$> editName),
-              ("default_permission", toJSON <$> editDefaultPermission),
-              ("type", Just $ Number 2)
-            ]
+    objectFromMaybes
+      [ "name" .=? editName,
+        "default_permission" .=? editDefaultPermission,
+        "type" .== Number 2
       ]
   toJSON EditApplicationCommandMessage {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toJSON <$> editName),
-              ("default_permission", toJSON <$> editDefaultPermission),
-              ("type", Just $ Number 3)
-            ]
+    objectFromMaybes
+      [ "name" .=? editName,
+        "default_permission" .=? editDefaultPermission,
+        "type" .== Number 3
       ]
 
 data Choice a = Choice {choiceName :: T.Text, choiceValue :: a}
@@ -677,14 +659,11 @@ instance FromJSON GuildApplicationCommandPermissions where
 
 instance ToJSON GuildApplicationCommandPermissions where
   toJSON GuildApplicationCommandPermissions {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("id", toMaybeJSON guildApplicationCommandPermissionsId),
-              ("application_id", toMaybeJSON guildApplicationCommandPermissionsApplicationId),
-              ("guild_id", toMaybeJSON guildApplicationCommandPermissionsGuildId),
-              ("permissions", toMaybeJSON guildApplicationCommandPermissionsPermissions)
-            ]
+    objectFromMaybes
+      [ "id" .== guildApplicationCommandPermissionsId,
+        "application_id" .== guildApplicationCommandPermissionsApplicationId,
+        "guild_id" .== guildApplicationCommandPermissionsGuildId,
+        "permissions" .== guildApplicationCommandPermissionsPermissions
       ]
 
 -- | Application command permissions allow you to enable or disable commands for
@@ -712,11 +691,8 @@ instance FromJSON ApplicationCommandPermissions where
 
 instance ToJSON ApplicationCommandPermissions where
   toJSON ApplicationCommandPermissions {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("id", toMaybeJSON applicationCommandPermissionsId),
-              ("type", toMaybeJSON applicationCommandPermissionsType),
-              ("permission", toMaybeJSON applicationCommandPermissionsPermission)
-            ]
+    objectFromMaybes
+      [ "id" .== applicationCommandPermissionsId,
+        "type" .== applicationCommandPermissionsType,
+        "permission" .== applicationCommandPermissionsPermission
       ]

@@ -33,7 +33,9 @@ import           Discord.Internal.Types.Prelude ( ChannelId
                                                 , ScheduledEventEntityId
                                                 , ScheduledEventId
                                                 , UserId
-                                                , toMaybeJSON
+                                                , (.==)
+                                                , (.=?)
+                                                , objectFromMaybes
                                                 )
 import           Discord.Internal.Types.User    ( GuildMember
                                                 , User
@@ -93,65 +95,55 @@ data ScheduledEvent
       }
 
 instance ToJSON ScheduledEvent where
-  toJSON ScheduledEventStage {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("id"                  , toMaybeJSON scheduledEventStageId)
-      , ("guild_id"            , toMaybeJSON scheduledEventStageGuildId)
-      , ("channel_id"          , toMaybeJSON scheduledEventStageChannelId)
-      , ("creator_id"          , toJSON <$> scheduledEventStageCreatorId)
-      , ("name"                , toMaybeJSON scheduledEventStageName)
-      , ("description"         , toJSON <$> scheduledEventStageDescription)
-      , ("scheduled_start_time", toMaybeJSON scheduledEventStageStartTime)
-      , ("scheduled_end_time"  , toJSON <$> scheduledEventStageEndTime)
-      , ("privacy_level"       , toMaybeJSON scheduledEventStagePrivacyLevel)
-      , ("entity_type"         , Just $ Number 1)
-      , ("entity_id"           , toJSON <$> scheduledEventStageEntityId)
-      , ("creator"             , toJSON <$> scheduledEventStageCreator)
-      , ("user_count"          , toJSON <$> scheduledEventStageUserCount)
-      , ("image"               , toJSON <$> scheduledEventStageImage)
+  toJSON ScheduledEventStage {..} = objectFromMaybes
+      [ "id"                   .== scheduledEventStageId
+      , "guild_id"             .== scheduledEventStageGuildId
+      , "channel_id"           .== scheduledEventStageChannelId
+      , "creator_id"           .=? scheduledEventStageCreatorId
+      , "name"                 .== scheduledEventStageName
+      , "description"          .=? scheduledEventStageDescription
+      , "scheduled_start_time" .== scheduledEventStageStartTime
+      , "scheduled_end_time"   .=? scheduledEventStageEndTime
+      , "privacy_level"        .== scheduledEventStagePrivacyLevel
+      , "entity_type"          .== Number 1
+      , "entity_id"            .=? scheduledEventStageEntityId
+      , "creator"              .=? scheduledEventStageCreator
+      , "user_count"           .=? scheduledEventStageUserCount
+      , "image"                .=? scheduledEventStageImage
       ]
-    ]
-  toJSON ScheduledEventVoice {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("id"                  , toMaybeJSON scheduledEventVoiceId)
-      , ("guild_id"            , toMaybeJSON scheduledEventVoiceGuildId)
-      , ("channel_id"          , toMaybeJSON scheduledEventVoiceChannelId)
-      , ("creator_id"          , toJSON <$> scheduledEventVoiceCreatorId)
-      , ("name"                , toMaybeJSON scheduledEventVoiceName)
-      , ("description"         , toJSON <$> scheduledEventVoiceDescription)
-      , ("scheduled_start_time", toMaybeJSON scheduledEventVoiceStartTime)
-      , ("scheduled_end_time"  , toJSON <$> scheduledEventVoiceEndTime)
-      , ("privacy_level"       , toMaybeJSON scheduledEventVoicePrivacyLevel)
-      , ("entity_type"         , Just $ Number 2)
-      , ("entity_id"           , toJSON <$> scheduledEventVoiceEntityId)
-      , ("creator"             , toJSON <$> scheduledEventVoiceCreator)
-      , ("user_count"          , toJSON <$> scheduledEventVoiceUserCount)
-      , ("image"               , toJSON <$> scheduledEventVoiceImage)
+  toJSON ScheduledEventVoice {..} = objectFromMaybes
+      [ "id"                   .== scheduledEventVoiceId
+      , "guild_id"             .== scheduledEventVoiceGuildId
+      , "channel_id"           .== scheduledEventVoiceChannelId
+      , "creator_id"           .=? scheduledEventVoiceCreatorId
+      , "name"                 .== scheduledEventVoiceName
+      , "description"          .=? scheduledEventVoiceDescription
+      , "scheduled_start_time" .== scheduledEventVoiceStartTime
+      , "scheduled_end_time"   .=? scheduledEventVoiceEndTime
+      , "privacy_level"        .== scheduledEventVoicePrivacyLevel
+      , "entity_type"          .== Number 2
+      , "entity_id"            .=? scheduledEventVoiceEntityId
+      , "creator"              .=? scheduledEventVoiceCreator
+      , "user_count"           .=? scheduledEventVoiceUserCount
+      , "image"                .=? scheduledEventVoiceImage
       ]
-    ]
-  toJSON ScheduledEventExternal {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("id"                  , toMaybeJSON scheduledEventExternalId)
-      , ("guild_id"            , toMaybeJSON scheduledEventExternalGuildId)
-      , ("creator_id"          , toJSON <$> scheduledEventExternalCreatorId)
-      , ("name"                , toMaybeJSON scheduledEventExternalName)
-      , ("description"         , toJSON <$> scheduledEventExternalDescription)
-      , ("scheduled_start_time", toMaybeJSON scheduledEventExternalStartTime)
-      , ("scheduled_end_time"  , toMaybeJSON scheduledEventExternalEndTime)
-      , ("privacy_level", toMaybeJSON scheduledEventExternalPrivacyLevel)
-      , ("entity_type"         , Just $ Number 3)
-      , ("entity_id"           , toJSON <$> scheduledEventExternalEntityId)
-      , ("creator"             , toJSON <$> scheduledEventExternalCreator)
-      , ("user_count"          , toJSON <$> scheduledEventExternalUserCount)
-      , ("image"               , toJSON <$> scheduledEventExternalImage)
-      , ( "entity_metadata"
-        , Just $ object ["location" .= toJSON scheduledEventExternalLocation]
-        )
+  toJSON ScheduledEventExternal {..} = objectFromMaybes
+      [ "id"                   .== scheduledEventExternalId
+      , "guild_id"             .== scheduledEventExternalGuildId
+      , "creator_id"           .=? scheduledEventExternalCreatorId
+      , "name"                 .== scheduledEventExternalName
+      , "description"          .=? scheduledEventExternalDescription
+      , "scheduled_start_time" .== scheduledEventExternalStartTime
+      , "scheduled_end_time"   .== scheduledEventExternalEndTime
+      , "privacy_level"        .== scheduledEventExternalPrivacyLevel
+      , "entity_type"          .== Number 3
+      , "entity_id"            .=? scheduledEventExternalEntityId
+      , "creator"              .=? scheduledEventExternalCreator
+      , "user_count"           .=? scheduledEventExternalUserCount
+      , "image"                .=? scheduledEventExternalImage
+      , "entity_metadata"
+         .== object ["location" .= toJSON scheduledEventExternalLocation]
       ]
-    ]
 
 
 instance FromJSON ScheduledEvent where
@@ -327,57 +319,37 @@ data CreateScheduledEventData
       }
 
 instance ToJSON CreateScheduledEventData where
-  toJSON CreateScheduledEventDataStage {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("channel_id"   , toMaybeJSON createScheduleEventDataStageChannelId)
-      , ("name"         , toMaybeJSON createScheduleEventDataStageName)
-      , ("privacy_level", toMaybeJSON createScheduleEventDataStagePrivacyLevel)
-      , ( "scheduled_start_time"
-        , toMaybeJSON createScheduleEventDataStageStartTime
-        )
-      , ("scheduled_end_time", toJSON <$> createScheduleEventDataStageEndTime)
-      , ("description", toJSON <$> createScheduleEventDataStageDescription)
-      , ("entity_type"       , Just $ Number 1)
-      , ("image"             , toJSON <$> createScheduleEventDataStageImage)
+  toJSON CreateScheduledEventDataStage {..} = objectFromMaybes
+      [ "channel_id"           .== createScheduleEventDataStageChannelId
+      , "name"                 .== createScheduleEventDataStageName
+      , "privacy_level"        .== createScheduleEventDataStagePrivacyLevel
+      , "scheduled_start_time" .== createScheduleEventDataStageStartTime
+      , "scheduled_end_time"   .=? createScheduleEventDataStageEndTime
+      , "description"          .=? createScheduleEventDataStageDescription
+      , "entity_type"          .== Number 1
+      , "image"                .=? createScheduleEventDataStageImage
       ]
-    ]
-  toJSON CreateScheduledEventDataVoice {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("channel_id"   , toMaybeJSON createScheduleEventDataVoiceChannelId)
-      , ("name"         , toMaybeJSON createScheduleEventDataVoiceName)
-      , ("privacy_level", toMaybeJSON createScheduleEventDataVoicePrivacyLevel)
-      , ( "scheduled_start_time"
-        , toMaybeJSON createScheduleEventDataVoiceStartTime
-        )
-      , ("scheduled_end_time", toJSON <$> createScheduleEventDataVoiceEndTime)
-      , ("description", toJSON <$> createScheduleEventDataVoiceDescription)
-      , ("entity_type"       , Just $ Number 2)
-      , ("image"             , toJSON <$> createScheduleEventDataVoiceImage)
+  toJSON CreateScheduledEventDataVoice {..} = objectFromMaybes
+      [ "channel_id"           .== createScheduleEventDataVoiceChannelId
+      , "name"                 .== createScheduleEventDataVoiceName
+      , "privacy_level"        .== createScheduleEventDataVoicePrivacyLevel
+      , "scheduled_start_time" .== createScheduleEventDataVoiceStartTime
+      , "scheduled_end_time"   .=? createScheduleEventDataVoiceEndTime
+      , "description"          .=? createScheduleEventDataVoiceDescription
+      , "entity_type"          .== Number 2
+      , "image"                .=? createScheduleEventDataVoiceImage
       ]
-    ]
-  toJSON CreateScheduledEventDataExternal {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ( "entity_metadata"
-        , Just $ object ["location" .= createScheduleEventDataExternalLocation]
-        )
-      , ("name", toMaybeJSON createScheduleEventDataExternalName)
-      , ( "privacy_level"
-        , toMaybeJSON createScheduleEventDataExternalPrivacyLevel
-        )
-      , ( "scheduled_start_time"
-        , toMaybeJSON createScheduleEventDataExternalStartTime
-        )
-      , ( "scheduled_end_time"
-        , toMaybeJSON createScheduleEventDataExternalEndTime
-        )
-      , ("description", toJSON <$> createScheduleEventDataExternalDescription)
-      , ("entity_type", Just $ Number 2)
-      , ("image", toJSON <$> createScheduleEventDataExternalImage)
+  toJSON CreateScheduledEventDataExternal {..} = objectFromMaybes
+      [ "entity_metadata"
+         .== object ["location" .= createScheduleEventDataExternalLocation]
+      , "name"                 .== createScheduleEventDataExternalName
+      , "privacy_level"        .== createScheduleEventDataExternalPrivacyLevel
+      , "scheduled_start_time" .== createScheduleEventDataExternalStartTime
+      , "scheduled_end_time"   .== createScheduleEventDataExternalEndTime
+      , "description"          .=? createScheduleEventDataExternalDescription
+      , "entity_type"          .== Number 2
+      , "image"                .=? createScheduleEventDataExternalImage
       ]
-    ]
 
 instance FromJSON CreateScheduledEventData where
   parseJSON = withObject
@@ -474,20 +446,17 @@ instance Default ModifyScheduledEventData where
                                  Nothing
 
 instance ToJSON ModifyScheduledEventData where
-  toJSON ModifyScheduledEventData {..} = object
-    [ (name, value)
-    | (name, Just value) <-
-      [ ("channel_id", toJSON <$> modifyScheduledEventDataChannelId)
-      , ("entity_metadata"     , loc)
-      , ("name", toJSON <$> modifyScheduledEventDataName)
-      , ("scheduled_start_time", toJSON <$> modifyScheduledEventDataStartTime)
-      , ("scheduled_end_time", toJSON <$> modifyScheduledEventDataEndTime)
-      , ("description", toJSON <$> modifyScheduledEventDataDescription)
-      , ("entity_type", toJSON <$> modifyScheduledEventDataType)
-      , ("status", toJSON <$> modifyScheduledEventDataStatus)
-      , ("image", toJSON <$> modifyScheduledEventDataImage)
+  toJSON ModifyScheduledEventData {..} = objectFromMaybes
+      [ "channel_id"           .=? modifyScheduledEventDataChannelId
+      , "entity_metadata"      .=? loc
+      , "name"                 .=? modifyScheduledEventDataName
+      , "scheduled_start_time" .=? modifyScheduledEventDataStartTime
+      , "scheduled_end_time"   .=? modifyScheduledEventDataEndTime
+      , "description"          .=? modifyScheduledEventDataDescription
+      , "entity_type"          .=? modifyScheduledEventDataType
+      , "status"               .=? modifyScheduledEventDataStatus
+      , "image"                .=? modifyScheduledEventDataImage
       ]
-    ]
    where
     loc = case modifyScheduledEventDataLocation of
       Nothing      -> Nothing

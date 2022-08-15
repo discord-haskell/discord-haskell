@@ -148,13 +148,10 @@ data EditGuildStickerOpts = EditGuildStickerOpts
 
 instance ToJSON EditGuildStickerOpts where
   toJSON EditGuildStickerOpts {..} =
-    object
-      [ (name, value)
-        | (name, Just value) <-
-            [ ("name", toJSON <$> editGuildStickerName),
-              ("description", toJSON <$> editGuildStickerDescription),
-              ("tags", toJSON . T.intercalate "," <$> editGuildStickerTags)
-            ]
+    objectFromMaybes
+      [ "name" .=? editGuildStickerName,
+        "description" .=? editGuildStickerDescription,
+        "tags" .=? fmap (T.intercalate ",") editGuildStickerTags
       ]
 
 instance Request (StickerRequest a) where
