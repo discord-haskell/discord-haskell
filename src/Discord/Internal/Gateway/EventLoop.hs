@@ -90,8 +90,6 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
     -- | Main connection loop. Catch exceptions and reconnect.
     outerloop :: LoopState -> IO ()
     outerloop state = do
-        -- Read the gateway address, since each new connection to the gateway
-        -- may have a different Host to connect to.
         gatewayHost <- readIORef (gatewayHandleHostname gatewayHandle)
         mfirst <- firstmessage state -- construct first message
         case mfirst of
