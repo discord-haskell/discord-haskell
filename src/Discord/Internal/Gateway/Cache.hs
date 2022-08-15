@@ -30,9 +30,8 @@ cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
 cacheLoop cacheHandle log = do
       ready <- readChan eventChan
       case ready of
-        Right (InternalReady _ user dmChannels _unavailableGuilds _ _ pApp) -> do
-          let dmChans = M.fromList (zip (map channelId dmChannels) dmChannels)
-          putMVar cache (Right (Cache user dmChans M.empty M.empty pApp))
+        Right (InternalReady _ user _ _ _ _ pApp) -> do
+          putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
           loop
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
