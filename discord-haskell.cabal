@@ -89,7 +89,7 @@ library
     , Discord.Internal.Types.ScheduledEvents
   build-depends:
     base ==4.*,
-    aeson >=1.5 && <1.6,
+    aeson >= 1.5 && < 1.6 || >= 2.0 && < 2.2,
     async >=2.2 && <2.3,
     bytestring >=0.10 && <0.11,
     base64-bytestring >=1.1 && <1.2,

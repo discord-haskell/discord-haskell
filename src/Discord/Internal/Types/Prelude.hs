@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE RankNTypes  #-}
+{-# LANGUAGE CPP #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude
@@ -45,6 +46,7 @@ module Discord.Internal.Types.Prelude
 
   , (.==)
   , (.=?)
+  , AesonKey
   , objectFromMaybes
   )
 
@@ -64,6 +66,10 @@ import Web.Internal.HttpApiData
 
 import qualified Data.ByteString as B
 import qualified Data.Text as T
+
+#if MIN_VERSION_aeson(2, 0, 0)
+import qualified Data.Aeson.Key as Key
+#endif
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -241,12 +247,21 @@ class Data a => InternalDiscordEnum a where
         | fromIntegral (round i) == i = Just $ round i
         | otherwise = Nothing
 
--- when we upgrade aeson, we need to change Text to Key
+-- Aeson 2.0 uses KeyMaps with a defined Key type for its objects. Aeson up to
+-- 1.5 uses HashMaps with Text for the key. Both types have an IsString instance.
+-- To keep our version bounds as loose as possible while the Haskell ecosystem
+-- (and thus our users) switch over to Aeson 2.0, we use some CPP to define a
+-- AesonKey as an alias.
+#if MIN_VERSION_aeson(2, 0, 0)
+type AesonKey = Key.Key
+# else
+type AesonKey = T.Text
+# endif
 
-(.==) :: ToJSON a => T.Text -> a -> Maybe Pair
+(.==) :: ToJSON a => AesonKey -> a -> Maybe Pair
 k .== v = Just (k .= v)
 
-(.=?) :: ToJSON a => T.Text -> Maybe a -> Maybe Pair
+(.=?) :: ToJSON a => AesonKey -> Maybe a -> Maybe Pair
 k .=? (Just v) = Just (k .= v)
 _ .=? Nothing = Nothing
 

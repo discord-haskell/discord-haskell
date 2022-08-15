@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
@@ -24,18 +23,6 @@ import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
-
--- aeson introduced type name for json key (text)
--- https://github.com/haskell/aeson/issues/881
--- this is unneeded due to version bounds.
--- # if MIN_VERSION_aeson(2, 0, 0)
--- import qualified Data.Aeson.Key as Key
--- toKey :: T.Text -> Key.Key
--- toKey = Key.fromText
--- # else
--- toKey :: T.Text -> T.Text
--- toKey = id
--- # endif
 
 instance Request (WebhookRequest a) where
   majorRoute = webhookMajorRoute
@@ -137,7 +124,7 @@ data WebhookContent = WebhookContentText T.Text
                     | WebhookContentEmbeds [CreateEmbed]
   deriving (Show, Read, Eq, Ord)
 
-webhookContentJson :: WebhookContent -> [(T.Text, Value)]
+webhookContentJson :: WebhookContent -> [(AesonKey, Value)]
 webhookContentJson c = case c of
                       WebhookContentText t -> [("content", toJSON t)]
                       WebhookContentFile _ _  -> []
