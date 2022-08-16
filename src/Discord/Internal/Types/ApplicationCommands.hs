@@ -50,6 +50,8 @@ data ApplicationCommand
         applicationCommandGuildId :: Maybe GuildId,
         -- | The name of the application command.
         applicationCommandName :: T.Text,
+        -- | The localized names of the application command.
+        applicationCommandLocalizedName :: Maybe LocalizedText,
         -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
@@ -64,6 +66,8 @@ data ApplicationCommand
         applicationCommandGuildId :: Maybe GuildId,
         -- | The name of the application command.
         applicationCommandName :: T.Text,
+        -- | The localized names of the application command.
+        applicationCommandLocalizedName :: Maybe LocalizedText,
         -- | Whether the command is enabled by default when the app is added to a guild.
         applicationCommandDefaultPermission :: Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
@@ -78,8 +82,12 @@ data ApplicationCommand
         applicationCommandGuildId :: Maybe GuildId,
         -- | The name of the application command.
         applicationCommandName :: T.Text,
+        -- | The localized names of the application command.
+        applicationLocalizedName :: Maybe LocalizedText,
         -- | The description of the application command.
         applicationCommandDescription :: T.Text,
+        -- | The localized descriptions of the application command.
+        applicationCommandLocalizedDescription :: Maybe LocalizedText,
         -- | The parameters for the command.
         applicationCommandOptions :: Maybe Options,
         -- | Whether the command is enabled by default when the app is added to a guild.
@@ -98,16 +106,18 @@ instance FromJSON ApplicationCommand where
           aid <- v .: "application_id"
           gid <- v .:? "guild_id"
           name <- v .: "name"
+          lname <- v .:? "name_localizations"
           defPerm <- v .:? "default_permission" .!= True
           version <- v .: "version"
           t <- v .:? "type" :: Parser (Maybe Int)
           case t of
-            (Just 2) -> return $ ApplicationCommandUser acid aid gid name defPerm version
-            (Just 3) -> return $ ApplicationCommandMessage acid aid gid name defPerm version
+            (Just 2) -> return $ ApplicationCommandUser acid aid gid name lname defPerm version
+            (Just 3) -> return $ ApplicationCommandMessage acid aid gid name lname defPerm version
             _ -> do
               desc <- v .: "description"
               options <- v .:? "options"
-              return $ ApplicationCommandChatInput acid aid gid name desc options defPerm version
+              ldesc <- v .: "description_localizations"
+              return $ ApplicationCommandChatInput acid aid gid name lname desc ldesc options defPerm version
       )
 
 -- | Either subcommands and groups, or values.
@@ -145,8 +155,12 @@ data OptionSubcommandOrGroup
   = OptionSubcommandGroup
       { -- | The name of the subcommand group
         optionSubcommandGroupName :: T.Text,
+        -- | The localized name of the subcommand group
+        optionSubcommandGroupLocalizedName :: Maybe LocalizedText,
         -- | The description of the subcommand group
         optionSubcommandGroupDescription :: T.Text,
+        -- | The localized description of the subcommand group
+        optionSubcommandGroupLocalizedDescription :: Maybe LocalizedText,
         -- | The subcommands in this subcommand group
         optionSubcommandGroupOptions :: [OptionSubcommand]
       }
@@ -163,7 +177,9 @@ instance FromJSON OptionSubcommandOrGroup where
             2 ->
               OptionSubcommandGroup
                 <$> v .: "name"
+                <*> v .:? "name_localizations"
                 <*> v .: "description"
+                <*> v .:? "description_localizations"
                 <*> v .: "options"
             1 -> OptionSubcommandOrGroupSubcommand <$> parseJSON (Object v)
             _ -> fail "unexpected subcommand group type"
@@ -174,7 +190,9 @@ instance ToJSON OptionSubcommandOrGroup where
     object
       [ ("type", Number 2),
         ("name", toJSON optionSubcommandGroupName),
+        ("name_localizations", toJSON optionSubcommandGroupLocalizedName),
         ("description", toJSON optionSubcommandGroupDescription),
+        ("description_localizations", toJSON optionSubcommandGroupLocalizedDescription),
         ("options", toJSON optionSubcommandGroupOptions)
       ]
   toJSON (OptionSubcommandOrGroupSubcommand a) = toJSON a
@@ -183,8 +201,12 @@ instance ToJSON OptionSubcommandOrGroup where
 data OptionSubcommand = OptionSubcommand
   { -- | The name of the subcommand
     optionSubcommandName :: T.Text,
+    -- | The localized name of the subcommand
+    optionSubcommandLocalizedName :: Maybe LocalizedText,
     -- | The description of the subcommand
     optionSubcommandDescription :: T.Text,
+    -- | The localized description of the subcommand
+    optionSubcommandLocalizedDescription :: Maybe LocalizedText,
     -- | What options are there in this subcommand
     optionSubcommandOptions :: [OptionValue]
   }
@@ -200,7 +222,9 @@ instance FromJSON OptionSubcommand where
             1 ->
               OptionSubcommand
                 <$> v .: "name"
+                <*> v .:? "name_localizations"
                 <*> v .: "description"
+                <*> v .:? "description_localizations"
                 <*> v .:? "options" .!= []
             _ -> fail "unexpected subcommand type"
       )
@@ -210,7 +234,9 @@ instance ToJSON OptionSubcommand where
     object
       [ ("type", Number 1),
         ("name", toJSON optionSubcommandName),
+        ("name_localizations", toJSON optionSubcommandLocalizedName),
         ("description", toJSON optionSubcommandDescription),
+        ("description_localizations", toJSON optionSubcommandLocalizedDescription),
         ("options", toJSON optionSubcommandOptions)
       ]
 
@@ -219,8 +245,12 @@ data OptionValue
   = OptionValueString
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
@@ -233,8 +263,12 @@ data OptionValue
   | OptionValueInteger
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
@@ -247,24 +281,36 @@ data OptionValue
   | OptionValueBoolean
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool
       }
   | OptionValueUser
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool
       }
   | OptionValueChannel
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | What type of channel can be put in here
@@ -273,24 +319,36 @@ data OptionValue
   | OptionValueRole
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool
       }
   | OptionValueMentionable
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool
       }
   | OptionValueNumber
       { -- | The name of the value
         optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
         -- | The description of the value
         optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | Whether to autocomplete or have a list of named choices. For neither option, use `Left False`
@@ -308,32 +366,34 @@ instance FromJSON OptionValue where
       "OptionValue"
       ( \v -> do
           name <- v .: "name"
+          lname <- v .:? "name_localizations"
           desc <- v .: "description"
+          ldesc <- v .:? "description_localizations"
           required <- v .:? "required" .!= False
           t <- v .: "type" :: Parser Int
           case t of
             3 ->
-              OptionValueString name desc required
+              OptionValueString name lname desc ldesc required
                 <$> parseJSON (Object v)
                 <*> v .:? "min_length"
                 <*> v .:? "max_length"
             4 ->
-              OptionValueInteger name desc required
+              OptionValueInteger name lname desc ldesc required
                 <$> parseJSON (Object v)
                 <*> v .:? "min_value"
                 <*> v .:? "max_value"
             10 ->
-              OptionValueNumber name desc required
+              OptionValueNumber name lname desc ldesc required
                 <$> parseJSON (Object v)
                 <*> v .:? "min_value"
                 <*> v .:? "max_value"
             7 ->
-              OptionValueChannel name desc required
+              OptionValueChannel name lname desc ldesc required
                 <$> v .:? "channel_types"
-            5 -> return $ OptionValueBoolean name desc required
-            6 -> return $ OptionValueUser name desc required
-            8 -> return $ OptionValueRole name desc required
-            9 -> return $ OptionValueMentionable name desc required
+            5 -> return $ OptionValueBoolean name lname desc ldesc required
+            6 -> return $ OptionValueUser name lname desc ldesc required
+            8 -> return $ OptionValueRole name lname desc ldesc required
+            9 -> return $ OptionValueMentionable name lname desc ldesc required
             _ -> fail "unknown application command option value type"
       )
 
@@ -343,6 +403,8 @@ instance ToJSON OptionValue where
       [ ("type", Number 3),
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
+        ("name_localizations", toJSON optionValueLocalizedName),
+        ("description_localizations", toJSON optionValueLocalizedDescription),
         ("required", toJSON optionValueRequired),
         ("min_length", toJSON optionValueStringMinLen),
         ("max_length", toJSON optionValueStringMaxLen),
@@ -353,6 +415,8 @@ instance ToJSON OptionValue where
       [ ("type", Number 4),
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
+        ("name_localizations", toJSON optionValueLocalizedName),
+        ("description_localizations", toJSON optionValueLocalizedDescription),
         ("required", toJSON optionValueRequired),
         ("min_value", toJSON optionValueIntegerMinVal),
         ("max_value", toJSON optionValueIntegerMaxVal),
@@ -363,6 +427,8 @@ instance ToJSON OptionValue where
       [ ("type", Number 10),
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
+        ("name_localizations", toJSON optionValueLocalizedName),
+        ("description_localizations", toJSON optionValueLocalizedDescription),
         ("required", toJSON optionValueRequired),
         ("min_value", toJSON optionValueNumberMinVal),
         ("max_value", toJSON optionValueNumberMaxVal),
@@ -373,6 +439,8 @@ instance ToJSON OptionValue where
       [ ("type", Number 7),
         ("name", toJSON optionValueName),
         ("description", toJSON optionValueDescription),
+        ("name_localizations", toJSON optionValueLocalizedName),
+        ("description_localizations", toJSON optionValueLocalizedDescription),
         ("required", toJSON optionValueRequired),
         ("channel_types", toJSON optionValueChannelTypes)
       ]
@@ -381,6 +449,8 @@ instance ToJSON OptionValue where
       [ ("type", Number (t acov)),
         ("name", toJSON $ optionValueName acov),
         ("description", toJSON $ optionValueDescription acov),
+        ("name_localizations", toJSON $ optionValueLocalizedName acov),
+        ("description_localizations", toJSON $ optionValueLocalizedDescription acov),
         ("required", toJSON $ optionValueRequired acov)
       ]
     where
@@ -410,8 +480,12 @@ data CreateApplicationCommand
   = CreateApplicationCommandChatInput
       { -- | The application command name (1-32 chars).
         createName :: T.Text,
+        -- | The localized application name
+        createLocalizedName :: Maybe LocalizedText,
         -- | The application command description (1-100 chars).
         createDescription :: T.Text,
+        -- | The localized application command description.
+        createLocalizedDescription :: Maybe LocalizedText,
         -- | What options the application (max length 25).
         createOptions :: Maybe Options,
         -- | The default permissions required for members set when using the command
@@ -425,6 +499,8 @@ data CreateApplicationCommand
   | CreateApplicationCommandUser
       { -- | The application command name (1-32 chars).
         createName :: T.Text,
+        -- | The localized application name
+        createLocalizedName :: Maybe LocalizedText,
         -- | The default permissions required for members set when using the command
         -- in a guild.
         -- Set of permissions represented as a bit set.
@@ -436,6 +512,8 @@ data CreateApplicationCommand
   | CreateApplicationCommandMessage
       { -- | The application command name (1-32 chars).
         createName :: T.Text,
+        -- | The localized application name
+        createLocalizedName :: Maybe LocalizedText,
         -- | The default permissions required for members set when using the command
         -- in a guild.
         -- Set of permissions represented as a bit set.
@@ -450,7 +528,9 @@ instance ToJSON CreateApplicationCommand where
   toJSON CreateApplicationCommandChatInput {..} =
     objectFromMaybes
       [ "name" .== createName,
+        "name_localizations" .=? createLocalizedName,
         "description" .== createDescription,
+        "description_localizations" .=? createLocalizedDescription,
         "options" .=? createOptions,
         "default_member_permissions" .== createDefaultMemberPermissions,
         "default_permission" .== createDefaultPermission,
@@ -459,6 +539,7 @@ instance ToJSON CreateApplicationCommand where
   toJSON CreateApplicationCommandUser {..} =
     objectFromMaybes
       [ "name" .== createName,
+        "name_localizations" .=? createLocalizedName,
         "default_member_permissions" .== createDefaultMemberPermissions,
         "default_permission" .== createDefaultPermission,
         "type" .== Number 2
@@ -466,6 +547,7 @@ instance ToJSON CreateApplicationCommand where
   toJSON CreateApplicationCommandMessage {..} =
     objectFromMaybes
       [ "name" .== createName,
+        "name_localizations" .=? createLocalizedName,
         "default_member_permissions" .== createDefaultMemberPermissions,
         "default_permission" .== createDefaultPermission,
         "type" .== Number 3
@@ -483,21 +565,21 @@ nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (`elem`
 -- than or equal to 100 characters.
 createChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
 createChatInput name desc
-  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name desc Nothing Nothing True
+  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name Nothing desc Nothing Nothing Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
 createUser :: T.Text -> Maybe CreateApplicationCommand
 createUser name
-  | nameIsValid False name = Just $ CreateApplicationCommandUser name Nothing True
+  | nameIsValid False name = Just $ CreateApplicationCommandUser name Nothing Nothing True
   | otherwise = Nothing
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
 createMessage :: T.Text -> Maybe CreateApplicationCommand
 createMessage name
-  | nameIsValid False name = Just $ CreateApplicationCommandMessage name Nothing True
+  | nameIsValid False name = Just $ CreateApplicationCommandMessage name Nothing Nothing True
   | otherwise = Nothing
 
 -- | Data type to be used when editing application commands. The specification
@@ -508,29 +590,35 @@ createMessage name
 data EditApplicationCommand
   = EditApplicationCommandChatInput
       { editName :: Maybe T.Text,
+        editLocalizedName :: Maybe LocalizedText,
         editDescription :: Maybe T.Text,
+        editLocalizedDescription :: Maybe LocalizedText,
         editOptions :: Maybe Options,
         editDefaultPermission :: Maybe Bool
       }
   | EditApplicationCommandUser
       { editName :: Maybe T.Text,
+        editLocalizedName :: Maybe LocalizedText,
         editDefaultPermission :: Maybe Bool
       }
   | EditApplicationCommandMessage
       { editName :: Maybe T.Text,
+        editLocalizedName :: Maybe LocalizedText,
         editDefaultPermission :: Maybe Bool
       }
 
 defaultEditApplicationCommand :: Int -> EditApplicationCommand
-defaultEditApplicationCommand 2 = EditApplicationCommandUser Nothing Nothing
-defaultEditApplicationCommand 3 = EditApplicationCommandMessage Nothing Nothing
-defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothing Nothing Nothing
+defaultEditApplicationCommand 2 = EditApplicationCommandUser Nothing Nothing Nothing
+defaultEditApplicationCommand 3 = EditApplicationCommandMessage Nothing Nothing Nothing
+defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON EditApplicationCommand where
   toJSON EditApplicationCommandChatInput {..} =
     objectFromMaybes
       [ "name" .=? editName,
+        "name_localization" .=? editLocalizedName,
         "description" .=? editDescription,
+        "description_localization" .=? editLocalizedDescription,
         "options" .=? editOptions,
         "default_permission" .=? editDefaultPermission,
         "type" .== Number 1
@@ -538,24 +626,36 @@ instance ToJSON EditApplicationCommand where
   toJSON EditApplicationCommandUser {..} =
     objectFromMaybes
       [ "name" .=? editName,
+        "name_localization" .=? editLocalizedName,
         "default_permission" .=? editDefaultPermission,
         "type" .== Number 2
       ]
   toJSON EditApplicationCommandMessage {..} =
     objectFromMaybes
       [ "name" .=? editName,
+        "name_localization" .=? editLocalizedName,
         "default_permission" .=? editDefaultPermission,
         "type" .== Number 3
       ]
 
-data Choice a = Choice {choiceName :: T.Text, choiceValue :: a}
+data Choice a = Choice
+  { -- | The name of the choice
+    choiceName :: T.Text,
+    -- | The localized name of the choice
+    choiceLocalizedName :: Maybe LocalizedText,
+    -- | The value of the choice
+    choiceValue :: a
+  }
   deriving (Show, Read, Eq, Ord)
 
 instance Functor Choice where
-  fmap f (Choice s a) = Choice s (f a)
+  fmap f (Choice s l a) = Choice s l (f a)
 
 instance (ToJSON a) => ToJSON (Choice a) where
-  toJSON Choice {..} = object [("name", toJSON choiceName), ("value", toJSON choiceValue)]
+  toJSON Choice {..} = object [
+    ("name", toJSON choiceName),
+    ("value", toJSON choiceValue),
+    ("name_localizations", toJSON choiceLocalizedName)]
 
 instance (FromJSON a) => FromJSON (Choice a) where
   parseJSON =
@@ -564,6 +664,7 @@ instance (FromJSON a) => FromJSON (Choice a) where
       ( \v ->
           Choice
             <$> v .: "name"
+            <*> v .:? "name_localizations"
             <*> v .: "value"
       )
 
@@ -696,3 +797,74 @@ instance ToJSON ApplicationCommandPermissions where
         "type" .== applicationCommandPermissionsType,
         "permission" .== applicationCommandPermissionsPermission
       ]
+
+data Locale
+  = Da | De | EnGB | EnUS | EsES | Fr | Hr | It | Lt | Hu | Nl | No | Pl | PtBR
+  | Ro | Fi | SvSE | Vi | Tr | Cs | El | Bg | Ru | Uk | Hi | Th | ZhCN | Ja
+  | ZhTW | Ko
+  deriving (Show, Read, Eq, Ord)
+
+type TextTranslation = (Locale, T.Text)
+
+newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq, Ord)
+
+instance ToJSON LocalizedText where
+  toJSON (LocalizedText lt) = object . map (\(l,t) -> (localeString l, toJSON t)) $ lt
+    where
+      localeString l = case l of
+        Da -> "da"
+        De -> "de"
+        EnGB -> "en-GB"
+        EnUS -> "en-US"
+        EsES -> "es-ES"
+        Fr -> "fr"
+        Hr -> "hr"
+        It -> "it"
+        Lt -> "lt"
+        Hu -> "hu"
+        Nl -> "nl"
+        No -> "no"
+        Pl -> "pl"
+        PtBR -> "pt-BR"
+        Ro -> "ro"
+        Fi -> "fi"
+        SvSE -> "sv-SE"
+        Vi -> "vi"
+        Tr -> "tr"
+        Cs -> "cs"
+        El -> "el"
+        Bg -> "bg"
+        Ru -> "ru"
+        Uk -> "uk"
+        Hi -> "hi"
+        Th -> "th"
+        ZhCN -> "zh-CN"
+        Ja -> "ja"
+        ZhTW -> "zh-TW"
+        Ko -> "ko"
+  
+instance FromJSON LocalizedText where
+  parseJSON = withObject "LocalizedText"
+    (\o -> do
+        maybeTranslations <- sequenceSecond
+                             . map (\(l, t) -> (l, o .:? t))
+                             $ [ (Da, "da"), (De, "de"), (EnGB, "en-GB")
+                               , (EnUS, "en-US"), (EsES, "es-ES"), (Fr, "fr")
+                               , (Hr, "hr"), (It, "it"), (Lt, "lt"), (Hu, "hu")
+                               , (Nl, "nl"), (No, "no"), (Pl, "pl")
+                               , (PtBR, "pt-BR"), (Ro, "ro"), (Fi, "fi")
+                               , (SvSE, "sv-SE"), (Vi, "vi"), (Tr, "tr")
+                               , (Cs, "cs"), (El, "el"), (Bg, "bg"), (Ru, "ru")
+                               , (Uk, "uk"), (Hi, "hi"), (Th, "th")
+                               , (ZhCN, "zh-CN"), (Ja, "ja"), (ZhTW, "zh-TW")
+                               , (Ko, "ko")
+                               ]
+        let translations = map (\(l, Just t) -> (l, t)) $filter (\x -> (snd x) /= Nothing) maybeTranslations
+        return $ LocalizedText translations
+    ) where
+      sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]
+      sequenceSecond l = fmap (zip locales) . sequence $ translations 
+        where
+          unzipped = unzip l
+          locales = fst unzipped
+          translations = snd unzipped
