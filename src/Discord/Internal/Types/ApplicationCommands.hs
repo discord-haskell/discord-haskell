@@ -7,6 +7,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE CPP #-}
 
 module Discord.Internal.Types.ApplicationCommands
   ( ApplicationCommand (..),
@@ -31,11 +32,15 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
+#if MIN_VERSION_aeson(2, 0, 0)
+  import Data.Aeson.Key(Key(unKey))
+#endif
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, objectToList, (.==), (.=?))
+import Data.Bifunctor (Bifunctor(second))
 
 type Number = Scientific
 
@@ -798,73 +803,28 @@ instance ToJSON ApplicationCommandPermissions where
         "permission" .== applicationCommandPermissionsPermission
       ]
 
-data Locale
-  = Da | De | EnGB | EnUS | EsES | Fr | Hr | It | Lt | Hu | Nl | No | Pl | PtBR
-  | Ro | Fi | SvSE | Vi | Tr | Cs | El | Bg | Ru | Uk | Hi | Th | ZhCN | Ja
-  | ZhTW | Ko
-  deriving (Show, Read, Eq, Ord)
+type Locale = T.Text
 
 type TextTranslation = (Locale, T.Text)
 
 newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq, Ord)
 
 instance ToJSON LocalizedText where
-  toJSON (LocalizedText lt) = object . map (\(l,t) -> (localeString l, toJSON t)) $ lt
-    where
-      localeString l = case l of
-        Da -> "da"
-        De -> "de"
-        EnGB -> "en-GB"
-        EnUS -> "en-US"
-        EsES -> "es-ES"
-        Fr -> "fr"
-        Hr -> "hr"
-        It -> "it"
-        Lt -> "lt"
-        Hu -> "hu"
-        Nl -> "nl"
-        No -> "no"
-        Pl -> "pl"
-        PtBR -> "pt-BR"
-        Ro -> "ro"
-        Fi -> "fi"
-        SvSE -> "sv-SE"
-        Vi -> "vi"
-        Tr -> "tr"
-        Cs -> "cs"
-        El -> "el"
-        Bg -> "bg"
-        Ru -> "ru"
-        Uk -> "uk"
-        Hi -> "hi"
-        Th -> "th"
-        ZhCN -> "zh-CN"
-        Ja -> "ja"
-        ZhTW -> "zh-TW"
-        Ko -> "ko"
+  toJSON (LocalizedText lt) = object . map (second toJSON) $ lt
   
 instance FromJSON LocalizedText where
   parseJSON = withObject "LocalizedText"
     (\o -> do
-        maybeTranslations <- sequenceSecond
-                             . map (\(l, t) -> (l, o .:? t))
-                             $ [ (Da, "da"), (De, "de"), (EnGB, "en-GB")
-                               , (EnUS, "en-US"), (EsES, "es-ES"), (Fr, "fr")
-                               , (Hr, "hr"), (It, "it"), (Lt, "lt"), (Hu, "hu")
-                               , (Nl, "nl"), (No, "no"), (Pl, "pl")
-                               , (PtBR, "pt-BR"), (Ro, "ro"), (Fi, "fi")
-                               , (SvSE, "sv-SE"), (Vi, "vi"), (Tr, "tr")
-                               , (Cs, "cs"), (El, "el"), (Bg, "bg"), (Ru, "ru")
-                               , (Uk, "uk"), (Hi, "hi"), (Th, "th")
-                               , (ZhCN, "zh-CN"), (Ja, "ja"), (ZhTW, "zh-TW")
-                               , (Ko, "ko")
-                               ]
-        let translations = map (\(l, Just t) -> (l, t)) $filter (\x -> (snd x) /= Nothing) maybeTranslations
+        parsed <- sequenceSecond
+                         . map (second parseJSON) . objectToList $ o
+#if MIN_VERSION_aeson(2, 0, 0)
+        let translations = map (first unKey) parsed
+#else
+        let translations = parsed
+#endif
         return $ LocalizedText translations
     ) where
       sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]
-      sequenceSecond l = fmap (zip locales) . sequence $ translations 
+      sequenceSecond l = fmap (zip a) . sequence $ b 
         where
-          unzipped = unzip l
-          locales = fst unzipped
-          translations = snd unzipped
+          (a, b) = unzip l
