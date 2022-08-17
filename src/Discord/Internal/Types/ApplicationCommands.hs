@@ -815,13 +815,10 @@ instance ToJSON LocalizedText where
 instance FromJSON LocalizedText where
   parseJSON = withObject "LocalizedText"
     (\o -> do
-        parsed <- sequenceSecond
-                         . map (second parseJSON) . objectToList $ o
-#if MIN_VERSION_aeson(2, 0, 0)
-        let translations = map (first unKey) parsed
-#else
-        let translations = parsed
-#endif
+        translations <- sequenceSecond
+                        . map (second parseJSON)
+                        . objectToList
+                        $ o
         return $ LocalizedText translations
     ) where
       sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]

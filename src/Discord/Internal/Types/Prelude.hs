@@ -258,12 +258,14 @@ class Data a => InternalDiscordEnum a where
 -- AesonKey as an alias.
 #if MIN_VERSION_aeson(2, 0, 0)
 type AesonKey = Key.Key
+objectToList :: Object -> [(T.Text, Value)]
+objectToList = map (\(k, v) -> (Key.unKey k, v)) . toList
 #else
 type AesonKey = T.Text
+objectToList :: Object -> [(T.Text, Value)]
+objectToList = toList
 #endif
 
-objectToList :: Object -> [(AesonKey, Value)]
-objectToList = toList
 
 (.==) :: ToJSON a => AesonKey -> a -> Maybe Pair
 k .== v = Just (k .= v)
