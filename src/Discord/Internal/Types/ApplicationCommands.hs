@@ -84,7 +84,7 @@ data ApplicationCommand
         -- | The name of the application command.
         applicationCommandName :: T.Text,
         -- | The localized names of the application command.
-        applicationLocalizedName :: Maybe LocalizedText,
+        applicationCommandLocalizedName :: Maybe LocalizedText,
         -- | The description of the application command.
         applicationCommandDescription :: T.Text,
         -- | The localized descriptions of the application command.
