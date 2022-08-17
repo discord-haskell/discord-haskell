@@ -31,12 +31,12 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
+import Data.Bifunctor (Bifunctor (second))
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, objectToList, (.==), (.=?))
-import Data.Bifunctor (Bifunctor(second))
 
 type Number = Scientific
 
@@ -663,10 +663,12 @@ instance Functor Choice where
   fmap f (Choice s l a) = Choice s l (f a)
 
 instance (ToJSON a) => ToJSON (Choice a) where
-  toJSON Choice {..} = object [
-    ("name", toJSON choiceName),
-    ("value", toJSON choiceValue),
-    ("name_localizations", toJSON choiceLocalizedName)]
+  toJSON Choice {..} =
+    object
+      [ ("name", toJSON choiceName),
+        ("value", toJSON choiceValue),
+        ("name_localizations", toJSON choiceLocalizedName)
+      ]
 
 instance (FromJSON a) => FromJSON (Choice a) where
   parseJSON =
@@ -817,17 +819,21 @@ newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq
 
 instance ToJSON LocalizedText where
   toJSON (LocalizedText lt) = object . map (second toJSON) $ lt
-  
+
 instance FromJSON LocalizedText where
-  parseJSON = withObject "LocalizedText"
-    (\o -> do
-        translations <- sequenceSecond
-                        . map (second parseJSON)
-                        . objectToList
-                        $ o
-        return $ LocalizedText translations
-    ) where
+  parseJSON =
+    withObject
+      "LocalizedText"
+      ( \o -> do
+          translations <-
+            sequenceSecond
+              . map (second parseJSON)
+              . objectToList
+              $ o
+          return $ LocalizedText translations
+      )
+    where
       sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]
-      sequenceSecond l = fmap (zip a) . sequence $ b 
+      sequenceSecond l = fmap (zip a) . sequence $ b
         where
           (a, b) = unzip l
