@@ -109,4 +109,5 @@ library
     mtl >=2.2 && <2.3,
     unliftio >=0.2 && <0.3,
     scientific >=0.3 && <0.4,
-    http-api-data >=0.4 && <0.6
+    http-api-data >=0.4 && <0.6,
+    unordered-containers >=0.2.10.0 && <0.3
