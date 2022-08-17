@@ -7,7 +7,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE CPP #-}
 
 module Discord.Internal.Types.ApplicationCommands
   ( ApplicationCommand (..),
@@ -32,9 +31,6 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
-#if MIN_VERSION_aeson(2, 0, 0)
-  import Data.Aeson.Key(Key(unKey))
-#endif
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)

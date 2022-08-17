@@ -259,7 +259,7 @@ class Data a => InternalDiscordEnum a where
 #if MIN_VERSION_aeson(2, 0, 0)
 type AesonKey = Key.Key
 objectToList :: Object -> [(T.Text, Value)]
-objectToList = map (\(k, v) -> (Key.unKey k, v)) . toList
+objectToList = map (first Key.unKey) . toList
 #else
 type AesonKey = T.Text
 objectToList :: Object -> [(T.Text, Value)]
