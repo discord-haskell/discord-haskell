@@ -802,11 +802,16 @@ instance ToJSON ApplicationCommandPermissions where
         "permission" .== applicationCommandPermissionsPermission
       ]
 
+
 type Locale = T.Text
 
+-- | A traslation is a (`Locale', translated text) pair
 type TextTranslation = (Locale, T.Text)
 
-newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq, Ord)
+-- | Translations for a test
+newtype LocalizedText = LocalizedText
+  [TextTranslation] -- ^ The list of all provided tranlations
+  deriving (Show, Read, Eq, Ord)
 
 instance ToJSON LocalizedText where
   toJSON (LocalizedText lt) = object . map (second toJSON) $ lt
