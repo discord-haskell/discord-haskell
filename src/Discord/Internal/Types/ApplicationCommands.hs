@@ -802,13 +802,12 @@ instance ToJSON ApplicationCommandPermissions where
         "permission" .== applicationCommandPermissionsPermission
       ]
 
-
 type Locale = T.Text
 
--- | A traslation is a (`Locale', translated text) pair
+-- | A translation is a (`Locale', translated text) pair
 type TextTranslation = (Locale, T.Text)
 
--- | Translations for a test
+-- | Translations for a text
 newtype LocalizedText = LocalizedText
   [TextTranslation] -- ^ The list of all provided tranlations
   deriving (Show, Read, Eq, Ord)
