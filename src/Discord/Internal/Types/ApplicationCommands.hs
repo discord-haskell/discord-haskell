@@ -26,6 +26,8 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandPermissions (..),
     Number,
     AutocompleteOrChoice,
+    LocalizedText,
+    Locale
   )
 where
 
@@ -35,8 +37,8 @@ import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, objectToList, (.==), (.=?))
-import Data.Bifunctor (Bifunctor(second))
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
+import Data.Map.Strict (Map)
 
 type Number = Scientific
 
@@ -799,25 +801,9 @@ instance ToJSON ApplicationCommandPermissions where
         "permission" .== applicationCommandPermissionsPermission
       ]
 
+-- | A discord locale. See
+-- <https://discord.com/developers/docs/reference#locales> for available locales
 type Locale = T.Text
 
-type TextTranslation = (Locale, T.Text)
-
-newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq, Ord)
-
-instance ToJSON LocalizedText where
-  toJSON (LocalizedText lt) = object . map (second toJSON) $ lt
-  
-instance FromJSON LocalizedText where
-  parseJSON = withObject "LocalizedText"
-    (\o -> do
-        translations <- sequenceSecond
-                        . map (second parseJSON)
-                        . objectToList
-                        $ o
-        return $ LocalizedText translations
-    ) where
-      sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]
-      sequenceSecond l = fmap (zip a) . sequence $ b 
-        where
-          (a, b) = unzip l
+-- | Translations for a text
+type LocalizedText = Map Locale T.Text
