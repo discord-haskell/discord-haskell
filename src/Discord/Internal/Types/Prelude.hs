@@ -48,7 +48,6 @@ module Discord.Internal.Types.Prelude
   , (.=?)
   , AesonKey
   , objectFromMaybes
-  , objectToList
   )
 
  where
@@ -70,9 +69,6 @@ import qualified Data.Text as T
 
 #if MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.Aeson.Key as Key
-import Data.Aeson.KeyMap(toList)
-#else
-import Data.HashMap.Strict (toList)
 #endif
 
 -- | Authorization token for the Discord API
@@ -258,12 +254,8 @@ class Data a => InternalDiscordEnum a where
 -- AesonKey as an alias.
 #if MIN_VERSION_aeson(2, 0, 0)
 type AesonKey = Key.Key
-objectToList :: Object -> [(T.Text, Value)]
-objectToList = map (first Key.unKey) . toList
 #else
 type AesonKey = T.Text
-objectToList :: Object -> [(T.Text, Value)]
-objectToList = toList
 #endif
 
 
