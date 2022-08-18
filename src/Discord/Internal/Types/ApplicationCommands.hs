@@ -55,8 +55,10 @@ data ApplicationCommand
         applicationCommandName :: T.Text,
         -- | The localized names of the application command.
         applicationCommandLocalizedName :: Maybe LocalizedText,
-        -- | Whether the command is enabled by default when the app is added to a guild.
-        applicationCommandDefaultPermission :: Bool,
+        -- | What permissions are required to use this command by default.
+        applicationCommandDefaultMemberPermissions :: Maybe T.Text,
+        -- | Whether the command is available in DMs.
+        applicationCommandDMPermission :: Maybe Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
@@ -71,8 +73,10 @@ data ApplicationCommand
         applicationCommandName :: T.Text,
         -- | The localized names of the application command.
         applicationCommandLocalizedName :: Maybe LocalizedText,
-        -- | Whether the command is enabled by default when the app is added to a guild.
-        applicationCommandDefaultPermission :: Bool,
+        -- | What permissions are required to use this command by default.
+        applicationCommandDefaultMemberPermissions :: Maybe T.Text,
+        -- | Whether the command is available in DMs.
+        applicationCommandDMPermission :: Maybe Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
@@ -93,8 +97,10 @@ data ApplicationCommand
         applicationCommandLocalizedDescription :: Maybe LocalizedText,
         -- | The parameters for the command.
         applicationCommandOptions :: Maybe Options,
-        -- | Whether the command is enabled by default when the app is added to a guild.
-        applicationCommandDefaultPermission :: Bool,
+        -- | What permissions are required to use this command by default.
+        applicationCommandDefaultMemberPermissions :: Maybe T.Text,
+        -- | Whether the command is available in DMs.
+        applicationCommandDMPermission :: Maybe Bool,
         -- | Autoincrementing version identifier updated during substantial record changes.
         applicationCommandVersion :: Snowflake
       }
@@ -110,17 +116,18 @@ instance FromJSON ApplicationCommand where
           gid <- v .:? "guild_id"
           name <- v .: "name"
           lname <- v .:? "name_localizations"
-          defPerm <- v .:? "default_permission" .!= True
+          defPerm <- v .:? "default_member_permissions"
+          dmPerm <- v .:? "dm_permission"
           version <- v .: "version"
           t <- v .:? "type" :: Parser (Maybe Int)
           case t of
-            (Just 2) -> return $ ApplicationCommandUser acid aid gid name lname defPerm version
-            (Just 3) -> return $ ApplicationCommandMessage acid aid gid name lname defPerm version
+            (Just 2) -> return $ ApplicationCommandUser acid aid gid name lname defPerm dmPerm version
+            (Just 3) -> return $ ApplicationCommandMessage acid aid gid name lname defPerm dmPerm version
             _ -> do
               desc <- v .: "description"
               options <- v .:? "options"
               ldesc <- v .: "description_localizations"
-              return $ ApplicationCommandChatInput acid aid gid name lname desc ldesc options defPerm version
+              return $ ApplicationCommandChatInput acid aid gid name lname desc ldesc options defPerm dmPerm version
       )
 
 -- | Either subcommands and groups, or values.
@@ -495,9 +502,8 @@ data CreateApplicationCommand
         -- in a guild.
         -- Set of permissions represented as a bit set.
         createDefaultMemberPermissions :: Maybe T.Text,
-        -- | Whether the command is enabled by default when the application is added
-        -- to a guild.
-        createDefaultPermission :: Bool
+        -- | Whether the command is available in DMs.
+        createDMPermission :: Maybe Bool
       }
   | CreateApplicationCommandUser
       { -- | The application command name (1-32 chars).
@@ -508,9 +514,8 @@ data CreateApplicationCommand
         -- in a guild.
         -- Set of permissions represented as a bit set.
         createDefaultMemberPermissions :: Maybe T.Text,
-        -- | Whether the command is enabled by default when the application is added
-        -- to a guild.
-        createDefaultPermission :: Bool
+        -- | Whether the command is available in DMs.
+        createDMPermission :: Maybe Bool
       }
   | CreateApplicationCommandMessage
       { -- | The application command name (1-32 chars).
@@ -521,9 +526,8 @@ data CreateApplicationCommand
         -- in a guild.
         -- Set of permissions represented as a bit set.
         createDefaultMemberPermissions :: Maybe T.Text,
-        -- | Whether the command is enabled by default when the application is added
-        -- to a guild.
-        createDefaultPermission :: Bool
+        -- | Whether the command is available in DMs.
+        createDMPermission :: Maybe Bool
       }
   deriving (Show, Eq, Read)
 
@@ -536,7 +540,7 @@ instance ToJSON CreateApplicationCommand where
         "description_localizations" .=? createLocalizedDescription,
         "options" .=? createOptions,
         "default_member_permissions" .== createDefaultMemberPermissions,
-        "default_permission" .== createDefaultPermission,
+        "dm_permission" .== createDMPermission,
         "type" .== Number 1
       ]
   toJSON CreateApplicationCommandUser {..} =
@@ -544,7 +548,7 @@ instance ToJSON CreateApplicationCommand where
       [ "name" .== createName,
         "name_localizations" .=? createLocalizedName,
         "default_member_permissions" .== createDefaultMemberPermissions,
-        "default_permission" .== createDefaultPermission,
+        "dm_permission" .== createDMPermission,
         "type" .== Number 2
       ]
   toJSON CreateApplicationCommandMessage {..} =
@@ -552,7 +556,7 @@ instance ToJSON CreateApplicationCommand where
       [ "name" .== createName,
         "name_localizations" .=? createLocalizedName,
         "default_member_permissions" .== createDefaultMemberPermissions,
-        "default_permission" .== createDefaultPermission,
+        "dm_permission" .== createDMPermission,
         "type" .== Number 3
       ]
 
@@ -568,21 +572,21 @@ nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (`elem`
 -- than or equal to 100 characters.
 createChatInput :: T.Text -> T.Text -> Maybe CreateApplicationCommand
 createChatInput name desc
-  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name Nothing desc Nothing Nothing Nothing True
+  | nameIsValid True name && not (T.null desc) && T.length desc <= 100 = Just $ CreateApplicationCommandChatInput name Nothing desc Nothing Nothing Nothing Nothing
   | otherwise = Nothing
 
 -- | Create the basics for a user command. Use record overwriting to enter the
 -- other values. The name needs to be between 1 and 32 characters.
 createUser :: T.Text -> Maybe CreateApplicationCommand
 createUser name
-  | nameIsValid False name = Just $ CreateApplicationCommandUser name Nothing Nothing True
+  | nameIsValid False name = Just $ CreateApplicationCommandUser name Nothing Nothing Nothing
   | otherwise = Nothing
 
 -- | Create the basics for a message command. Use record overwriting to enter
 -- the other values. The name needs to be between 1 and 32 characters.
 createMessage :: T.Text -> Maybe CreateApplicationCommand
 createMessage name
-  | nameIsValid False name = Just $ CreateApplicationCommandMessage name Nothing Nothing True
+  | nameIsValid False name = Just $ CreateApplicationCommandMessage name Nothing Nothing Nothing
   | otherwise = Nothing
 
 -- | Data type to be used when editing application commands. The specification
@@ -597,23 +601,26 @@ data EditApplicationCommand
         editDescription :: Maybe T.Text,
         editLocalizedDescription :: Maybe LocalizedText,
         editOptions :: Maybe Options,
-        editDefaultPermission :: Maybe Bool
+        editDefaultMemberPermissions :: Maybe T.Text,
+        editDMPermission :: Maybe Bool
       }
   | EditApplicationCommandUser
       { editName :: Maybe T.Text,
         editLocalizedName :: Maybe LocalizedText,
-        editDefaultPermission :: Maybe Bool
+        editDefaultMemberPermissions :: Maybe T.Text,
+        editDMPermission :: Maybe Bool
       }
   | EditApplicationCommandMessage
       { editName :: Maybe T.Text,
         editLocalizedName :: Maybe LocalizedText,
-        editDefaultPermission :: Maybe Bool
+        editDefaultMemberPermissions :: Maybe T.Text,
+        editDMPermission :: Maybe Bool
       }
 
 defaultEditApplicationCommand :: Int -> EditApplicationCommand
-defaultEditApplicationCommand 2 = EditApplicationCommandUser Nothing Nothing Nothing
-defaultEditApplicationCommand 3 = EditApplicationCommandMessage Nothing Nothing Nothing
-defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothing Nothing Nothing Nothing Nothing
+defaultEditApplicationCommand 2 = EditApplicationCommandUser Nothing Nothing Nothing Nothing
+defaultEditApplicationCommand 3 = EditApplicationCommandMessage Nothing Nothing Nothing Nothing
+defaultEditApplicationCommand _ = EditApplicationCommandChatInput Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON EditApplicationCommand where
   toJSON EditApplicationCommandChatInput {..} =
@@ -623,21 +630,24 @@ instance ToJSON EditApplicationCommand where
         "description" .=? editDescription,
         "description_localization" .=? editLocalizedDescription,
         "options" .=? editOptions,
-        "default_permission" .=? editDefaultPermission,
+        "default_member_permissions" .=? editDefaultMemberPermissions,
+        "dm_permission" .=? editDMPermission,
         "type" .== Number 1
       ]
   toJSON EditApplicationCommandUser {..} =
     objectFromMaybes
       [ "name" .=? editName,
         "name_localization" .=? editLocalizedName,
-        "default_permission" .=? editDefaultPermission,
+        "default_member_permissions" .=? editDefaultMemberPermissions,
+        "dm_permission" .=? editDMPermission,
         "type" .== Number 2
       ]
   toJSON EditApplicationCommandMessage {..} =
     objectFromMaybes
       [ "name" .=? editName,
         "name_localization" .=? editLocalizedName,
-        "default_permission" .=? editDefaultPermission,
+        "default_member_permissions" .=? editDefaultMemberPermissions,
+        "dm_permission" .=? editDMPermission,
         "type" .== Number 3
       ]
 
@@ -655,10 +665,12 @@ instance Functor Choice where
   fmap f (Choice s l a) = Choice s l (f a)
 
 instance (ToJSON a) => ToJSON (Choice a) where
-  toJSON Choice {..} = object [
-    ("name", toJSON choiceName),
-    ("value", toJSON choiceValue),
-    ("name_localizations", toJSON choiceLocalizedName)]
+  toJSON Choice {..} =
+    object
+      [ ("name", toJSON choiceName),
+        ("value", toJSON choiceValue),
+        ("name_localizations", toJSON choiceLocalizedName)
+      ]
 
 instance (FromJSON a) => FromJSON (Choice a) where
   parseJSON =
