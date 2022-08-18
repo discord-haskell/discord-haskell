@@ -1,12 +1,28 @@
 # Changelog
 
-View on github for newest version: https://github.com/discord-haskell/discord-haskell/blob/master/changelog.md
+View on GitHub for the newest ChangeLog: https://github.com/discord-haskell/discord-haskell/blob/master/changelog.md
 
-Discord API changes, so use the most recent version at all times
+The Discord API constantly changes. This library issues updates when we implement new features added to the API or remove outdated functionalities. In order to interact with the Discord API safely and predictably, please update the library whenever there is a new version released.
 
-## master
+## Unreleased changes
+
+## 1.15.0
+
+[Annwan](https://github.com/discord-haskell/discord-haskell/pull/137) Implemented optional localization for application commands. `[..]LocalizedName` and `[..]LocalizedDescription` fields have been added to many ADTs ([Discord documentation](https://discord.com/developers/docs/interactions/application-commands#localization))
+
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/136) Removed `applicationCommandDefaultPermission` from `ApplicationCommand`, replaced it with `applicationCommandDefaultMemberPermissions` and `applicationCommandDMPermission` ([Discord changelog](https://discord.com/developers/docs/change-log#updated-command-permissions))
+
+[yutotakano](https://github.com/discord-haskell/discord-haskell/pull/135) Implemented session-specific Resume URLs for the Gateway internally, which will prevent disconnects in the future ([Discord changelog](https://discord.com/developers/docs/change-log#sessionspecific-gateway-resume-urls)). Also removed the deprecated list of private channels received in Ready event.
+
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/133) Implemented maximum and minimum string lengths for application command options ([Discord changelog](https://discord.com/developers/docs/change-log#min-and-max-length-for-command-options)). Also implemented calculated context permissions for interaction payloads ([Discord changelog](https://discord.com/developers/docs/change-log#calculated-permissions-in-interaction-payloads))
+
+[L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/132) Simplified internals of JSON creation using `objectFromMaybes` and `.=?`. Support `aeson-2.0`
+
+[yutotakano](https://github.com/discord-haskell/discord-haskell/pull/134) Loosened some acceptable version bounds for `http-client`, `req` and `http-api-data`, that were added with 1.14.0
 
 ## 1.14.0
+
+[degustaf](https://github.com/discord-haskell/discord-haskell/pull/131) Add `Exception` instance for `RestCallErrorCode`
 
 [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/124) Replace JuicyPixels image parsing with a mimetype check. Make image handling consistent: use `parseStickerImage` fro sticker images. Use `parseAvatarImage` for avatars.
 
