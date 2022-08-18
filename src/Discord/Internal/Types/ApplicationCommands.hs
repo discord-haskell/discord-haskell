@@ -26,17 +26,19 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandPermissions (..),
     Number,
     AutocompleteOrChoice,
+    LocalizedText,
+    Locale
   )
 where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
-import Data.Bifunctor (Bifunctor (second))
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, objectToList, (.==), (.=?))
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
+import Data.Map.Strict (Map)
 
 type Number = Scientific
 
@@ -88,7 +90,7 @@ data ApplicationCommand
         -- | The name of the application command.
         applicationCommandName :: T.Text,
         -- | The localized names of the application command.
-        applicationLocalizedName :: Maybe LocalizedText,
+        applicationCommandLocalizedName :: Maybe LocalizedText,
         -- | The description of the application command.
         applicationCommandDescription :: T.Text,
         -- | The localized descriptions of the application command.
@@ -811,29 +813,9 @@ instance ToJSON ApplicationCommandPermissions where
         "permission" .== applicationCommandPermissionsPermission
       ]
 
+-- | A discord locale. See
+-- <https://discord.com/developers/docs/reference#locales> for available locales
 type Locale = T.Text
 
-type TextTranslation = (Locale, T.Text)
-
-newtype LocalizedText = LocalizedText [TextTranslation] deriving (Show, Read, Eq, Ord)
-
-instance ToJSON LocalizedText where
-  toJSON (LocalizedText lt) = object . map (second toJSON) $ lt
-
-instance FromJSON LocalizedText where
-  parseJSON =
-    withObject
-      "LocalizedText"
-      ( \o -> do
-          translations <-
-            sequenceSecond
-              . map (second parseJSON)
-              . objectToList
-              $ o
-          return $ LocalizedText translations
-      )
-    where
-      sequenceSecond :: Monad m => [(a, m b)] -> m [(a, b)]
-      sequenceSecond l = fmap (zip a) . sequence $ b
-        where
-          (a, b) = unzip l
+-- | Translations for a text
+type LocalizedText = Map Locale T.Text
