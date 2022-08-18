@@ -26,6 +26,9 @@ module Discord.Internal.Types.ApplicationCommands
     ApplicationCommandPermissions (..),
     Number,
     AutocompleteOrChoice,
+    LocalizedText(..),
+    Locale,
+    TextTranslation
   )
 where
 
