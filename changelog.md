@@ -4,9 +4,13 @@ View on GitHub for the newest ChangeLog: https://github.com/discord-haskell/disc
 
 The Discord API constantly changes. This library issues updates when we implement new features added to the API or remove outdated functionalities. In order to interact with the Discord API safely and predictably, please update the library whenever there is a new version released.
 
-## Unreleased changes
+## Unreleased 
 
 -
+
+# 1.15.1
+
+- [Geometer1729](https://github.com/discord-haskell/discord-haskell/pull/141) Fixing a bug in localization code
 
 ## 1.15.0
 
