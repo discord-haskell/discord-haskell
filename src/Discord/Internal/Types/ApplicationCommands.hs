@@ -126,7 +126,7 @@ instance FromJSON ApplicationCommand where
             _ -> do
               desc <- v .: "description"
               options <- v .:? "options"
-              ldesc <- v .: "description_localizations"
+              ldesc <- v .:? "description_localizations"
               return $ ApplicationCommandChatInput acid aid gid name lname desc ldesc options defPerm dmPerm version
       )
 
