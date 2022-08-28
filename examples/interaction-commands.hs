@@ -35,7 +35,7 @@ void =
       )
   )
 
--- | Replies "pong" to every message that starts with "ping"
+-- | Creates and manages a variety of interactions, including a tic tac toe example.
 interactionCommandExample :: IO ()
 interactionCommandExample = do
   tok <- TIO.readFile "./examples/auth-token.secret"
