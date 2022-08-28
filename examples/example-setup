@@ -3,3 +3,5 @@ https://discord.com/developers/applications/me
 
 This is the Bot token (NOT CLIENT SECRET) from developer portal under the settings tab
 
+create a file named guildid.secret and add the guild id (server id) of your test server there.
+your bot may need certain permissions to run specific examples, like the interaction-commands example.

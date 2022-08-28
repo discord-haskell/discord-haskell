@@ -1,9 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-import qualified Data.Text.IO as TIO
 import UnliftIO (liftIO)
 
 import Discord
+
+import ExampleUtils (getToken)
 
 main :: IO ()
 main = cacheExample
@@ -14,7 +15,7 @@ main = cacheExample
 -- | Print cached Gateway info
 cacheExample :: IO ()
 cacheExample = do
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok <- getToken
 
   _ <- runDiscord $ def { discordToken = tok
                         , discordOnStart = do

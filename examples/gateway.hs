@@ -9,13 +9,16 @@ import qualified Data.Text.IO as TIO
 import Discord
 import Discord.Types
 
+import ExampleUtils (getToken, getGuildId)
+
 main :: IO ()
 main = gatewayExample
 
 -- | Prints every event as it happens
 gatewayExample :: IO ()
 gatewayExample = do
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok <- getToken
+  testserverid <- getGuildId
 
   outChan <- newChan :: IO (Chan String)
 
@@ -25,7 +28,7 @@ gatewayExample = do
   threadId <- forkIO $ forever $ readChan outChan >>= putStrLn
 
   err <- runDiscord $ def { discordToken = tok
-                          , discordOnStart = startHandler
+                          , discordOnStart = startHandler testserverid
                           , discordOnEvent = eventHandler outChan
                           , discordOnEnd = killThread threadId
                           }
@@ -37,10 +40,10 @@ eventHandler :: Chan String -> Event -> DiscordHandler ()
 eventHandler out event = liftIO $ writeChan out (show event <> "\n")
 
 
-startHandler :: DiscordHandler ()
-startHandler = do
+startHandler :: GuildId -> DiscordHandler ()
+startHandler testserverid = do
   let opts = RequestGuildMembersOpts
-        { requestGuildMembersOptsGuildId = 453207241294610442
+        { requestGuildMembersOptsGuildId = testserverid
         , requestGuildMembersOptsLimit = 100
         , requestGuildMembersOptsNamesStartingWith = ""
         }

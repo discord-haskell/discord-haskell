@@ -13,6 +13,8 @@ import Discord
 import Discord.Types
 import qualified Discord.Requests as R
 
+import ExampleUtils (getToken)
+
 main :: IO ()
 main = stateExample
 
@@ -22,7 +24,7 @@ data State = State { pingCount :: Integer }
 -- | Counts how many pings we've seen across sessions
 stateExample :: IO ()
 stateExample = do
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok <- getToken
 
   -- eventHandler is called concurrently, need to sync stdout
   printQueue <- newChan :: IO (Chan T.Text)
