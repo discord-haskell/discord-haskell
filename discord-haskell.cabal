@@ -34,17 +34,61 @@ executable ping-pong
                      , unliftio
                      , discord-haskell
 
--- executable interaction-commands
---   main-is:             examples/interaction-commands.hs
---   default-language:    Haskell2010
---   ghc-options:         -Wall
---                        -fno-warn-type-defaults -fno-warn-unused-record-wildcards
---                        -threaded
---   build-depends:       base
---                      , text
---                      , unliftio
---                      , discord-haskell
---                      , bytestring
+executable interaction-commands
+  main-is:             examples/interaction-commands.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+                       -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+                     , bytestring
+
+executable cache
+  main-is:             examples/cache.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+                       -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable gateway
+  main-is:             examples/gateway.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+                       -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable rest-without-gateway
+  main-is:             examples/rest-without-gateway.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+                       -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable state-counter
+  main-is:             examples/state-counter.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
+                       -threaded
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
 
 library
   ghc-options:         -Wall

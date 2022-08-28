@@ -5,6 +5,9 @@ import UnliftIO (liftIO)
 
 import Discord
 
+main :: IO ()
+main = cacheExample
+
 -- There's not much information in the Cache for now
 --   but this program will show you what its got
 

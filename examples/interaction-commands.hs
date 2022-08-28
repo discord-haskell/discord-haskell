@@ -49,7 +49,7 @@ interactionCommandExample = do
           discordOnEnd = liftIO $ putStrLn "Ended",
           discordOnEvent = eventHandler,
           discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn "",
-          discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses = True}
+          discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPresences = True}
         }
   TIO.putStrLn t
 
@@ -104,77 +104,107 @@ newExampleSlashCommand =
                 ( OptionsSubcommands
                     [ OptionSubcommandGroup
                         "frstsubcmdgrp"
+                        Nothing
                         "the sub command group"
+                        Nothing
                         [ OptionSubcommand
                             "frstsubcmd"
+                            Nothing
                             "the first sub sub command"
+                            Nothing
                             [ OptionValueString
                                 "onestringinput"
+                                Nothing
                                 "two options"
+                                Nothing
                                 True
                                 ( Right
-                                    [ Choice "green" "green",
-                                      Choice "red" "red"
+                                    [ Choice "green" Nothing "green",
+                                      Choice "red" Nothing "red"
                                     ]
-                                ),
-                              OptionValueInteger "oneintinput" "choices galore" False (Left False) Nothing Nothing
+                                )
+                                Nothing
+                                Nothing,
+                              OptionValueInteger "oneintinput" Nothing "choices galore" Nothing False (Left False) Nothing Nothing
                             ]
                         ],
                       OptionSubcommandOrGroupSubcommand $
                         OptionSubcommand
                           "frstsubcmd"
+                          Nothing
                           "the first subcommand"
+                          Nothing
                           [ OptionValueString
                               "onestringinput"
+                              Nothing
                               "two options"
+                              Nothing
                               True
                               ( Right
-                                  [ Choice "yellow" "yellow",
-                                    Choice "blue" "blue"
+                                  [ Choice "yellow" Nothing "yellow",
+                                    Choice "blue" Nothing "blue"
                                   ]
                               )
+                              Nothing
+                              Nothing
                           ],
                       OptionSubcommandOrGroupSubcommand $
                         OptionSubcommand
                           "sndsubcmd"
+                          Nothing
                           "the second subcommand"
+                          Nothing
                           [ OptionValueBoolean
                               "trueorfalse"
+                              Nothing
                               "true or false"
+                              Nothing
                               True,
                             OptionValueNumber
                               "numbercomm"
+                              Nothing
                               "number option"
+                              Nothing
                               False
                               (Left True)
                               (Just 3.1415)
                               (Just 101),
                             OptionValueInteger
                               "numbercomm2"
+                              Nothing
                               "another number option"
+                              Nothing
                               False
-                              (Right [Choice "one" 1, Choice "two" 2, Choice "minus 1" (-1)])
+                              (Right [Choice "one" Nothing 1, Choice "two" Nothing 2, Choice "minus 1" Nothing (-1)])
                               (Just $ -1)
                               (Just $ -2),
                             OptionValueInteger
                               "numbercomm3"
+                              Nothing
                               "another another number option"
+                              Nothing
                               False
                               (Left True)
                               (Just $ -50)
                               (Just 50),
                             OptionValueUser
                               "user"
+                              Nothing
                               "testing asking for a user"
+                              Nothing
                               False,
                             OptionValueChannel
                               "channel"
+                              Nothing
                               "testing asking for a channel"
+                              Nothing
                               False
                               (Just [ApplicationCommandChannelTypeGuildVoice]),
                             OptionValueMentionable
                               "mentionable"
+                              Nothing
                               "testing asking for a mentionable"
+                              Nothing
                               False
                           ]
                     ]
@@ -195,9 +225,13 @@ exampleSlashCommand =
                 OptionsValues
                   [ OptionValueString
                       "randominput"
+                      Nothing
                       "I shall not"
+                      Nothing
                       True
-                      (Right [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
+                      (Right [Choice "firstOpt" Nothing "yay", Choice "secondOpt" Nothing "nay"])
+                      Nothing
+                      Nothing
                   ]
           }
 
@@ -374,7 +408,7 @@ eventHandler event = case event of
                   }
             )
       )
-  InteractionCreate InteractionApplicationCommandAutocomplete {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
+  InteractionCreate InteractionApplicationCommandAutocomplete {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" Nothing 5])))
   InteractionCreate i@InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "modal"}} ->
     void $
       restCall

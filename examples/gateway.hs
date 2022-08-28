@@ -9,6 +9,9 @@ import qualified Data.Text.IO as TIO
 import Discord
 import Discord.Types
 
+main :: IO ()
+main = gatewayExample
+
 -- | Prints every event as it happens
 gatewayExample :: IO ()
 gatewayExample = do
@@ -45,5 +48,3 @@ startHandler = do
   -- gateway commands are enumerated in the discord docs
   -- https://discord.com/developers/docs/topics/gateway#commands-and-events-gateway-commands
   sendCommand (RequestGuildMembers opts)
-
-

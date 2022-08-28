@@ -13,6 +13,9 @@ import Discord
 import Discord.Types
 import qualified Discord.Requests as R
 
+main :: IO ()
+main = stateExample
+
 data State = State { pingCount :: Integer }
   deriving (Show, Read, Eq, Ord)
 
