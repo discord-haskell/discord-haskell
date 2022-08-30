@@ -139,8 +139,8 @@ library
     , Discord.Internal.Types.ScheduledEvents
   build-depends:
   -- https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/libraries/version-history
-  -- below also sets the GHC version effectively. set to == 8.10.* alone for now.
-    base == 4.14.*,
+  -- below also sets the GHC version effectively. set to == 8.10.*, == 9.0.*.
+    base == 4.14.* || == 4.15.*,
     aeson >= 1.5 && < 1.6 || >= 2.0 && < 2.2,
     async >=2.2 && <2.3,
     bytestring >=0.10 && <0.11,
