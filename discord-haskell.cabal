@@ -26,9 +26,7 @@ source-repository head
 executable ping-pong
   main-is:             ping-pong.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -40,9 +38,7 @@ executable ping-pong
 executable interaction-commands
   main-is:             interaction-commands.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -55,9 +51,7 @@ executable interaction-commands
 executable cache
   main-is:             cache.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -69,9 +63,7 @@ executable cache
 executable gateway
   main-is:             gateway.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -83,9 +75,7 @@ executable gateway
 executable rest-without-gateway
   main-is:             rest-without-gateway.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -97,9 +87,7 @@ executable rest-without-gateway
 executable state-counter
   main-is:             state-counter.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
   hs-source-dirs:      examples
   other-modules:
     ExampleUtils
@@ -109,8 +97,7 @@ executable state-counter
                      , discord-haskell
 
 library
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards -Wunused-packages
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards
   hs-source-dirs:      src
   default-language:    Haskell2010
   other-modules:
