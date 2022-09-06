@@ -8,7 +8,11 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
-# 1.15.1
+## 1.15.2
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/143) Adding some utility and fixing some versions in place
+
+## 1.15.1
 
 - [Geometer1729](https://github.com/discord-haskell/discord-haskell/pull/141) Fixing a bug in localization code
 
