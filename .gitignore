@@ -15,7 +15,7 @@ _site
 
 cachedState
 the-log-of-discord-haskell.txt
-examples/auth-token.secret
+examples/*.secret
 upload-haddock.sh
 dist*
 

@@ -1,6 +1,5 @@
 cabal-version:       2.0
 name:                discord-haskell
--- library version is also noted at src/Discord/Rest/Prelude.hs
 version:             1.15.1
 description:         Functions and data types to write discord bots.
                      Official discord docs <https://discord.com/developers/docs/reference>.
@@ -25,33 +24,84 @@ source-repository head
   location:            https://github.com/discord-haskell/discord-haskell.git
 
 executable ping-pong
-  main-is:             examples/ping-pong.hs
+  main-is:             ping-pong.hs
   default-language:    Haskell2010
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards
-                       -threaded
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
   build-depends:       base
                      , text
                      , unliftio
                      , discord-haskell
 
--- executable interaction-commands
---   main-is:             examples/interaction-commands.hs
---   default-language:    Haskell2010
---   ghc-options:         -Wall
---                        -fno-warn-type-defaults -fno-warn-unused-record-wildcards
---                        -threaded
---   build-depends:       base
---                      , text
---                      , unliftio
---                      , discord-haskell
---                      , bytestring
+executable interaction-commands
+  main-is:             interaction-commands.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+                     , bytestring
+
+executable cache
+  main-is:             cache.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable gateway
+  main-is:             gateway.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable rest-without-gateway
+  main-is:             rest-without-gateway.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
+
+executable state-counter
+  main-is:             state-counter.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , text
+                     , unliftio
+                     , discord-haskell
 
 library
-  ghc-options:         -Wall
-                       -fno-warn-type-defaults -fno-warn-unused-record-wildcards -Wunused-packages
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards
   hs-source-dirs:      src
   default-language:    Haskell2010
+  other-modules:
+    Paths_discord_haskell
   exposed-modules:   
       Discord
     , Discord.Types
@@ -88,7 +138,9 @@ library
     , Discord.Internal.Types.Emoji
     , Discord.Internal.Types.ScheduledEvents
   build-depends:
-    base ==4.*,
+  -- https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/libraries/version-history
+  -- below also sets the GHC version effectively. set to == 8.10.*, == 9.0.*.
+    base == 4.14.* || == 4.15.*,
     aeson >= 1.5 && < 1.6 || >= 2.0 && < 2.2,
     async >=2.2 && <2.3,
     bytestring >=0.10 && <0.11,

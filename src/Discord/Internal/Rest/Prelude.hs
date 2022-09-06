@@ -9,6 +9,7 @@ module Discord.Internal.Rest.Prelude where
 import Prelude hiding (log)
 import Control.Exception.Safe (throwIO)
 import Control.Monad.IO.Class (MonadIO, liftIO)
+import Data.String (IsString(fromString))
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 
@@ -16,6 +17,9 @@ import qualified Network.HTTP.Req as R
 import Web.Internal.HttpApiData (ToHttpApiData)
 
 import Discord.Internal.Types
+
+import Paths_discord_haskell (version)
+import Data.Version (showVersion)
 
 -- | The api version to use.
 apiVersion :: T.Text
@@ -34,7 +38,7 @@ authHeader auth =
   where
   -- | https://discord.com/developers/docs/reference#user-agent
   -- Second place where the library version is noted
-  agent = "DiscordBot (https://github.com/discord-haskell/discord-haskell, 1.15.1)"
+  agent = fromString $ "DiscordBot (https://github.com/discord-haskell/discord-haskell, " <> showVersion version <> ")"
 
 -- Possibly append to an URL
 infixl 5 /?

@@ -3,7 +3,7 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ViewPatterns #-}
 
-import Control.Monad (forM_, when)
+import Control.Monad (when)
 import qualified Data.ByteString as B
 import Data.Char (isDigit)
 import Data.Functor ((<&>))
@@ -17,14 +17,10 @@ import Discord.Types
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
 
-main :: IO ()
-main =
-  if testserverid == -1
-    then TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
-    else interactionCommandExample
+import ExampleUtils (getToken, getGuildId, actionWithChannelId)
 
-testserverid :: GuildId
-testserverid = -1
+main :: IO ()
+main = interactionCommandExample
 
 void :: DiscordHandler (Either RestCallErrorCode b) -> DiscordHandler ()
 void =
@@ -35,28 +31,29 @@ void =
       )
   )
 
--- | Replies "pong" to every message that starts with "ping"
+-- | Creates and manages a variety of interactions, including a tic tac toe example.
 interactionCommandExample :: IO ()
 interactionCommandExample = do
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok <- getToken
+  testserverid <- getGuildId
 
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
   t <-
     runDiscord $
       def
         { discordToken = tok,
-          discordOnStart = startHandler,
+          discordOnStart = startHandler testserverid,
           discordOnEnd = liftIO $ putStrLn "Ended",
-          discordOnEvent = eventHandler,
+          discordOnEvent = eventHandler testserverid,
           discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn "",
-          discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPrecenses = True}
+          discordGatewayIntent = def {gatewayIntentMembers = True, gatewayIntentPresences = True}
         }
   TIO.putStrLn t
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
 --     Use place to execute commands you know you want to complete
-startHandler :: DiscordHandler ()
-startHandler = do
+startHandler :: GuildId -> DiscordHandler ()
+startHandler testserverid = do
   let activity =
         def
           { activityName = "ping-pong",
@@ -71,20 +68,12 @@ startHandler = do
           }
   sendCommand (UpdateStatus opts)
 
-  chans' <- restCall $ R.GetGuildChannels testserverid
-  either
-    (const (return ()))
-    ( \chans ->
-        forM_
-          (take 1 (filter isTextChannel chans))
-          ( \channel ->
-              restCall $
-                R.CreateMessage
-                  (channelId channel)
-                  "Hello! I will reply to pings with pongs"
-          )
-    )
-    chans'
+  actionWithChannelId testserverid $ \cid ->
+    void $
+      restCall $
+        R.CreateMessage
+          cid
+          "Hello! I will reply to pings with pongs"
 
 -- | Example user command
 exampleUserCommand :: Maybe CreateApplicationCommand
@@ -104,77 +93,107 @@ newExampleSlashCommand =
                 ( OptionsSubcommands
                     [ OptionSubcommandGroup
                         "frstsubcmdgrp"
+                        Nothing
                         "the sub command group"
+                        Nothing
                         [ OptionSubcommand
                             "frstsubcmd"
+                            Nothing
                             "the first sub sub command"
+                            Nothing
                             [ OptionValueString
                                 "onestringinput"
+                                Nothing
                                 "two options"
+                                Nothing
                                 True
                                 ( Right
-                                    [ Choice "green" "green",
-                                      Choice "red" "red"
+                                    [ Choice "green" Nothing "green",
+                                      Choice "red" Nothing "red"
                                     ]
-                                ),
-                              OptionValueInteger "oneintinput" "choices galore" False (Left False) Nothing Nothing
+                                )
+                                Nothing
+                                Nothing,
+                              OptionValueInteger "oneintinput" Nothing "choices galore" Nothing False (Left False) Nothing Nothing
                             ]
                         ],
                       OptionSubcommandOrGroupSubcommand $
                         OptionSubcommand
                           "frstsubcmd"
+                          Nothing
                           "the first subcommand"
+                          Nothing
                           [ OptionValueString
                               "onestringinput"
+                              Nothing
                               "two options"
+                              Nothing
                               True
                               ( Right
-                                  [ Choice "yellow" "yellow",
-                                    Choice "blue" "blue"
+                                  [ Choice "yellow" Nothing "yellow",
+                                    Choice "blue" Nothing "blue"
                                   ]
                               )
+                              Nothing
+                              Nothing
                           ],
                       OptionSubcommandOrGroupSubcommand $
                         OptionSubcommand
                           "sndsubcmd"
+                          Nothing
                           "the second subcommand"
+                          Nothing
                           [ OptionValueBoolean
                               "trueorfalse"
+                              Nothing
                               "true or false"
+                              Nothing
                               True,
                             OptionValueNumber
                               "numbercomm"
+                              Nothing
                               "number option"
+                              Nothing
                               False
                               (Left True)
                               (Just 3.1415)
                               (Just 101),
                             OptionValueInteger
                               "numbercomm2"
+                              Nothing
                               "another number option"
+                              Nothing
                               False
-                              (Right [Choice "one" 1, Choice "two" 2, Choice "minus 1" (-1)])
+                              (Right [Choice "one" Nothing 1, Choice "two" Nothing 2, Choice "minus 1" Nothing (-1)])
                               (Just $ -1)
                               (Just $ -2),
                             OptionValueInteger
                               "numbercomm3"
+                              Nothing
                               "another another number option"
+                              Nothing
                               False
                               (Left True)
                               (Just $ -50)
                               (Just 50),
                             OptionValueUser
                               "user"
+                              Nothing
                               "testing asking for a user"
+                              Nothing
                               False,
                             OptionValueChannel
                               "channel"
+                              Nothing
                               "testing asking for a channel"
+                              Nothing
                               False
                               (Just [ApplicationCommandChannelTypeGuildVoice]),
                             OptionValueMentionable
                               "mentionable"
+                              Nothing
                               "testing asking for a mentionable"
+                              Nothing
                               False
                           ]
                     ]
@@ -195,9 +214,13 @@ exampleSlashCommand =
                 OptionsValues
                   [ OptionValueString
                       "randominput"
+                      Nothing
                       "I shall not"
+                      Nothing
                       True
-                      (Right [Choice "firstOpt" "yay", Choice "secondOpt" "nay"])
+                      (Right [Choice "firstOpt" Nothing "yay", Choice "secondOpt" Nothing "nay"])
+                      Nothing
+                      Nothing
                   ]
           }
 
@@ -213,8 +236,8 @@ getImage = return "\137PNG\r\n\SUB\n\NUL\NUL\NUL\rIHDR\NUL\NUL\NUL\SOH\NUL\NUL\N
 
 
 -- If an event handler throws an exception, discord-haskell will continue to run
-eventHandler :: Event -> DiscordHandler ()
-eventHandler event = case event of
+eventHandler :: GuildId -> Event -> DiscordHandler ()
+eventHandler testserverid event = case event of
   MessageCreate m -> when (not (fromBot m) && isPing m) $ do
     void $ restCall (R.CreateReaction (messageChannelId m, messageId m) "eyes")
     threadDelay (2 * 10 ^ (6 :: Int))
@@ -374,7 +397,7 @@ eventHandler event = case event of
                   }
             )
       )
-  InteractionCreate InteractionApplicationCommandAutocomplete {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" 5])))
+  InteractionCreate InteractionApplicationCommandAutocomplete {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "subtest", optionsData = Just _, ..}, ..} -> void (restCall $ R.CreateInteractionResponse interactionId interactionToken (InteractionResponseAutocompleteResult (InteractionResponseAutocompleteInteger [Choice "five" Nothing 5])))
   InteractionCreate i@InteractionApplicationCommand {applicationCommandData = ApplicationCommandDataChatInput {applicationCommandDataName = "modal"}} ->
     void $
       restCall
@@ -434,10 +457,6 @@ updateTicTacToe (Just (tttxy, isFirst)) car
       | checkIsValid buttonCustomId && getxy tttxy == getxy buttonCustomId = cb {buttonDisabled = True, buttonStyle = style, buttonLabel = Just symbol}
       | otherwise = cb
     changeIf cb = cb
-
-isTextChannel :: Channel -> Bool
-isTextChannel ChannelText {} = True
-isTextChannel _ = False
 
 fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor

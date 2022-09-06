@@ -1,7 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}  -- allows "strings" to be Data.Text
 
-import System.Exit (exitSuccess)
-import Control.Monad (when, forM_, void)
+import Control.Monad (when, void)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
@@ -12,30 +11,21 @@ import Discord
 import Discord.Types
 import qualified Discord.Requests as R
 
+import ExampleUtils (getToken, getGuildId, actionWithChannelId)
+
 -- Allows this code to be an executable. See discord-haskell.cabal
 main :: IO ()
 main = pingpongExample
 
-
-
--- check the url in a discord server
---                                <server id>           <channel id>
--- https://discord.com/channels/2385235298674262408/4286572469284672046
-testserverid :: GuildId
-testserverid = -1
-
 -- | Replies "pong" to every message that starts with "ping"
 pingpongExample :: IO ()
 pingpongExample = do
-  when (testserverid == (-1 :: GuildId)) $ do
-      TIO.putStrLn "ERROR: modify the source and set testserverid to your serverid"
-      exitSuccess
-
-  tok <- TIO.readFile "./examples/auth-token.secret"
+  tok <- getToken
+  testserverid <- getGuildId
 
   -- open ghci and run  [[ :info RunDiscordOpts ]] to see available fields
   err <- runDiscord $ def { discordToken = tok
-                          , discordOnStart = startHandler
+                          , discordOnStart = startHandler testserverid
                           , discordOnEnd = liftIO $ threadDelay (round (0.4 * 10^6)) >>  putStrLn "Ended"
                           , discordOnEvent = eventHandler
                           , discordOnLog = \s -> TIO.putStrLn s >> TIO.putStrLn ""
@@ -48,8 +38,8 @@ pingpongExample = do
 
 -- If the start handler throws an exception, discord-haskell will gracefully shutdown
 --     Use place to execute commands you know you want to complete
-startHandler :: DiscordHandler ()
-startHandler = do
+startHandler :: GuildId -> DiscordHandler ()
+startHandler testserverid = do
   liftIO $ putStrLn "Started ping-pong bot"
 
   let activity = def { activityName = "ping-pong"
@@ -62,10 +52,12 @@ startHandler = do
                               }
   sendCommand (UpdateStatus opts)
 
-  Right chans <- restCall $ R.GetGuildChannels testserverid
-  forM_ (take 1 (filter isTextChannel chans))
-        (\channel -> restCall $ R.CreateMessage (channelId channel)
-                        "Hello! I will reply to pings with pongs")
+  actionWithChannelId testserverid $ \cid ->
+    void $
+      restCall $
+        R.CreateMessage
+          cid
+          "Hello! I will reply to pings with pongs"
 
 
 -- If an event handler throws an exception, discord-haskell will continue to run
@@ -94,10 +86,6 @@ eventHandler event = case event of
                        }
         void $ restCall (R.CreateMessageDetailed (messageChannelId m) opts)
       _ -> return ()
-
-isTextChannel :: Channel -> Bool
-isTextChannel (ChannelText {}) = True
-isTextChannel _ = False
 
 fromBot :: Message -> Bool
 fromBot = userIsBot . messageAuthor
