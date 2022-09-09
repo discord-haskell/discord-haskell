@@ -8,6 +8,10 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.15.3
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/145) Fixing behind the scenes for hackage
+
 ## 1.15.2
 
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/143) Adding some utility and fixing some versions in place
