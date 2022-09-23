@@ -36,6 +36,7 @@ import Data.Aeson.Types (Pair, Parser)
 import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
+import           Data.Char (isLower)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
 import Data.Map.Strict (Map)
@@ -561,10 +562,10 @@ instance ToJSON CreateApplicationCommand where
       ]
 
 nameIsValid :: Bool -> T.Text -> Bool
-nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (`elem` validChars) name
+nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (validChar) name
   where
     l = T.length name
-    validChars = '-' : ['a' .. 'z']
+    validChar c = c == '-' || c == '_' || isLower c
 
 -- | Create the basics for a chat input (slash command). Use record overwriting
 -- to enter the other values. The name needs to be all lower case letters, and
