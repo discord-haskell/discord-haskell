@@ -562,7 +562,7 @@ instance ToJSON CreateApplicationCommand where
       ]
 
 nameIsValid :: Bool -> T.Text -> Bool
-nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all (validChar) name
+nameIsValid isChatInput name = l >= 1 && l <= 32 && isChatInput <= T.all validChar name
   where
     l = T.length name
     validChar c = c == '-' || c == '_' || isLower c
