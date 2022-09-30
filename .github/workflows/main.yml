@@ -19,7 +19,7 @@ jobs:
   build-1:
     env:
       VERSION: 8.10.7
-    name: Build-${{ env.VERSION }}
+    name: Build-${{ VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
@@ -43,7 +43,7 @@ jobs:
   build-2:
     env:
       VERSION: 9.0.2
-    name: Build-${{ env.VERSION }}
+    name: Build-${{ VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
@@ -66,7 +66,7 @@ jobs:
   build-3:
     env:
       VERSION: 9.2.4
-    name: Build-${{ env.VERSION }}
+    name: Build-${{ VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
