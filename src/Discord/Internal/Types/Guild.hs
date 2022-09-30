@@ -309,13 +309,8 @@ data Permissions =
   deriving (Enum,Show)
 -- | Formatting seems to be like that. fromEnum would otherwise return only 1
 
-
-getHexFromPermission :: Permissions -> Int
-getHexFromPermission p = shift 1 $ fromEnum p
--- | shift index of permission in enum left from 1
-
 hasRolePermission :: Role -> Permissions -> Bool
-hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (getHexFromPermission p) > 0
+hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (shift 1 $ fromEnum p) > 0
 -- | Check if a given role has the permission
 --   RolePerms need to be an int to be converted into its bits
 --   Bitwise & checks if rolePermission contains the perm
