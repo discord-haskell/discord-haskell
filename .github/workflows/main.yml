@@ -19,16 +19,14 @@ jobs:
   build-1:
     env:
       VERSION: 8.10.7
-    # name: Build-${{ VERSION }}
+    name: Build-${{ env.VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
-      env:
-        VERSION: 8.10.7
       - uses: actions/checkout@v2
       - uses: haskell/actions/setup@v1
         with:
-          ghc-version: 'ghc-${{ VERSION }}'
+          ghc-version: 'ghc-${{ env.VERSION }}'
           enable-stack: true
           stack-version: 'latest'
       - name: Cache .stack
@@ -40,21 +38,19 @@ jobs:
           restore-keys: |
               ${{ runner.os }}-stack
               ${{ runner.os }}
-      - run: stack build --compiler ghc-${{ VERSION }} --work-dir=.stack-work-${{ VERSION }}
+      - run: stack build --compiler ghc-${{ env.VERSION }} --work-dir=.stack-work-${{ env.VERSION }}
 
   build-2:
     env:
       VERSION: 9.0.2
-    name: Build-${{ VERSION }}
+    name: Build-${{ env.VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
-      env:
-        VERSION: 9.0.2
       - uses: actions/checkout@v2
       - uses: haskell/actions/setup@v1
         with:
-          ghc-version: 'ghc-${{ VERSION }}'
+          ghc-version: 'ghc-${{ env.VERSION }}'
           enable-stack: true
           stack-version: 'latest'
       - name: Cache .stack
@@ -66,20 +62,18 @@ jobs:
           restore-keys: |
               ${{ runner.os }}-stack
               ${{ runner.os }}
-      - run: stack build --compiler ghc-${{ VERSION }} --work-dir=.stack-work-${{ VERSION }}
+      - run: stack build --compiler ghc-${{ env.VERSION }} --work-dir=.stack-work-${{ env.VERSION }}
   build-3:
     env:
       VERSION: 9.2.4
-    name: Build-${{ VERSION }}
+    name: Build-${{ env.VERSION }}
     runs-on: ubuntu-latest
     #needs: ormolu
     steps:
-      env:
-        VERSION: 9.2.4
       - uses: actions/checkout@v2
       - uses: haskell/actions/setup@v1
         with:
-          ghc-version: 'ghc-${{ VERSION }}'
+          ghc-version: 'ghc-${{ env.VERSION }}'
           enable-stack: true
           stack-version: 'latest'
       - name: Cache .stack
@@ -91,4 +85,4 @@ jobs:
           restore-keys: |
               ${{ runner.os }}-stack
               ${{ runner.os }}
-      - run: stack build --compiler ghc-${{ VERSION }} --work-dir=.stack-work-${{ VERSION }}
+      - run: stack build --compiler ghc-${{ env.VERSION }} --work-dir=.stack-work-${{ env.VERSION }}
