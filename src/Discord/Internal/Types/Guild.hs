@@ -18,6 +18,8 @@ import Discord.Internal.Types.Channel (Channel)
 import Discord.Internal.Types.User (User, GuildMember (memberRoles))
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.Bits
+import Data.Maybe (isNothing)
+import Data.Bool (bool)
 
 
 
@@ -299,25 +301,76 @@ instance FromJSON Role where
          <*> o .: "managed"
          <*> o .: "mentionable"
 
-roleIdToRole :: Guild -> RoleId -> [Role]
-roleIdToRole  g r = filter(\x -> roleId x == r) $ guildRoles g
--- | Return list of Roles, which should only be the length of 1
+-- | If there is no such role on the guild return nothing
+--   otherwise return the role. Take the head of the list. List should always be one, because the ID is unique
+roleIdToRole :: Guild -> RoleId -> Maybe Role
+roleIdToRole  g r = bool (Just $ head f) Nothing ( null f)
+  where
+    f = filter(\x -> roleId x == r) $  guildRoles g
 
 
-data Permissions =
-    CREATE_INSTANT_INVITE | KICK_MEMBERS | BAN_MEMBERS | ADMINISTRATOR | MANAGE_CHANNELS |MANAGE_GUILD |ADD_REACTIONS |VIEW_AUDIT_LOG |PRIORITY_SPEAKER |STREAM |VIEW_CHANNEL |SEND_MESSAGES  |SEND_TTS_MESSAGES |MANAGE_MESSAGES|EMBED_LINKS |ATTACH_FILES  |READ_MESSAGE_HISTORY|MENTION_EVERYONE |USE_EXTERNAL_EMOJIS |VIEW_GUILD_INSIGHT|CONNECT |SPEAK |MUTE_MEMBERS |DEAFEN_MEMBERS |MOVE_MEMBERS |USE_VAD |CHANGE_NICKNAME  |MANAGE_NICKNAMES |MANAGE_ROLES  |MANAGE_WEBHOOKS  |MANAGE_EMOJIS_AND_STICKERS  |USE_APPLICATION_COMMANDS    |REQUEST_TO_SPEAK      |MANAGE_EVENTS         |MANAGE_THREADS        |CREATE_PUBLIC_THREADS |CREATE_PRIVATE_THREADS|USE_EXTERNAL_STICKERS |SEND_MESSAGES_IN_THREADS    |USE_EMBEDDED_ACTIVITIES
+data PermissionFlag =
+    CREATE_INSTANT_INVITE
+  | KICK_MEMBERS
+  | BAN_MEMBERS
+  | ADMINISTRATOR
+  | MANAGE_CHANNELS
+  | MANAGE_GUILD
+  | ADD_REACTIONS
+  | VIEW_AUDIT_LOG
+  | PRIORITY_SPEAKER
+  | STREAM
+  | VIEW_CHANNEL
+  | SEND_MESSAGES
+  | SEND_TTS_MESSAGES
+  | MANAGE_MESSAGES
+  | EMBED_LINKS
+  | ATTACH_FILES
+  | READ_MESSAGE_HISTORY
+  | MENTION_EVERYONE
+  | USE_EXTERNAL_EMOJIS
+  | VIEW_GUILD_INSIGHT
+  | CONNECT
+  | SPEAK
+  | MUTE_MEMBERS
+  | DEAFEN_MEMBERS
+  | MOVE_MEMBERS
+  | USE_VAD
+  | CHANGE_NICKNAME
+  | MANAGE_NICKNAMES
+  | MANAGE_ROLES
+  | MANAGE_WEBHOOKS
+  | MANAGE_EMOJIS_AND_STICKERS
+  | USE_APPLICATION_COMMANDS
+  | REQUEST_TO_SPEAK
+  | MANAGE_EVENTS
+  | MANAGE_THREADS
+  | CREATE_PUBLIC_THREADS
+  | CREATE_PRIVATE_THREADS
+  | USE_EXTERNAL_STICKERS
+  | SEND_MESSAGES_IN_THREADS
+  | USE_EMBEDDED_ACTIVITIES
   deriving (Enum,Show)
--- | Formatting seems to be like that. fromEnum would otherwise return only 1
 
-hasRolePermission :: Role -> Permissions -> Bool
-hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (shift 1 $ fromEnum p) > 0
+
 -- | Check if a given role has the permission
 --   RolePerms need to be an int to be converted into its bits
 --   Bitwise & checks if rolePermission contains the perm
+hasRolePermission :: Role -> PermissionFlag -> Bool
+hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (shift 1 $ fromEnum p) > 0
 
-hasGuildMemberPermission :: Guild -> GuildMember -> Permissions -> Bool
-hasGuildMemberPermission g gm p = or $ (`hasRolePermission` p) <$> concatMap (roleIdToRole g) (memberRoles gm)
--- | Iterate over all roles an user has. Every user has at least one role (@everyone)
+
+-- | Check if any Role of an GuildMember has the needed permission
+--   If the result of roleIdToRole is Nothing, it appends an "False"
+--   Otherwise it checks for the needed permission
+hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
+hasGuildMemberPermission g gm p = or $ go (memberRoles gm) g
+  where
+    go [] _ = []
+    go (x:xs) gl = case roleIdToRole gl x of
+                    Nothing ->  [False] <> go xs gl
+                    Just a ->   [a `hasRolePermission` p] <> go xs gl
+
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion = VoiceRegion
