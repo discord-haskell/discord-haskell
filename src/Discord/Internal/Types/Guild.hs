@@ -15,8 +15,9 @@ import Data.Default (Default(..))
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.Channel (Channel)
-import Discord.Internal.Types.User (User, GuildMember)
+import Discord.Internal.Types.User (User, GuildMember (memberRoles))
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
+import Data.Bits
 
 
 
@@ -160,7 +161,7 @@ instance FromJSON PresenceInfo where
 --
 -- When setting a bot's activity, only the name, url, and type are sent - and
 -- it seems that not many types are permitted either.
-data Activity = 
+data Activity =
   Activity
     { activityName :: T.Text -- ^ Name of activity
     , activityType :: ActivityType -- ^ Type of activity
@@ -233,7 +234,7 @@ instance FromJSON ActivityButton where
 
 -- | To see what these look like, go to here: 
 -- https://discord.com/developers/docs/topics/gateway#activity-object-activity-types
-data ActivityType = 
+data ActivityType =
     ActivityTypeGame
   | ActivityTypeStreaming
   | ActivityTypeListening
@@ -297,6 +298,31 @@ instance FromJSON Role where
          <*> o .: "permissions"
          <*> o .: "managed"
          <*> o .: "mentionable"
+
+roleIdToRole :: Guild -> RoleId -> [Role]
+roleIdToRole  g r = filter(\x -> roleId x == r) $ guildRoles g
+-- | Return list of Roles, which should only be the length of 1
+
+
+data Permissions =
+    CREATE_INSTANT_INVITE | KICK_MEMBERS | BAN_MEMBERS | ADMINISTRATOR | MANAGE_CHANNELS |MANAGE_GUILD |ADD_REACTIONS |VIEW_AUDIT_LOG |PRIORITY_SPEAKER |STREAM |VIEW_CHANNEL |SEND_MESSAGES  |SEND_TTS_MESSAGES |MANAGE_MESSAGES|EMBED_LINKS |ATTACH_FILES  |READ_MESSAGE_HISTORY|MENTION_EVERYONE |USE_EXTERNAL_EMOJIS |VIEW_GUILD_INSIGHT|CONNECT |SPEAK |MUTE_MEMBERS |DEAFEN_MEMBERS |MOVE_MEMBERS |USE_VAD |CHANGE_NICKNAME  |MANAGE_NICKNAMES |MANAGE_ROLES  |MANAGE_WEBHOOKS  |MANAGE_EMOJIS_AND_STICKERS  |USE_APPLICATION_COMMANDS    |REQUEST_TO_SPEAK      |MANAGE_EVENTS         |MANAGE_THREADS        |CREATE_PUBLIC_THREADS |CREATE_PRIVATE_THREADS|USE_EXTERNAL_STICKERS |SEND_MESSAGES_IN_THREADS    |USE_EMBEDDED_ACTIVITIES
+  deriving (Enum,Show)
+-- | Formatting seems to be like that. fromEnum would otherwise return only 1
+
+
+getHexFromPermission :: Permissions -> Int
+getHexFromPermission p = shift 1 $ fromEnum p
+-- | shift index of permission in enum left from 1
+
+hasRolePermission :: Role -> Permissions -> Bool
+hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (getHexFromPermission p) > 0
+-- | Check if a given role has the permission
+--   RolePerms need to be an int to be converted into its bits
+--   Bitwise & checks if rolePermission contains the perm
+
+hasGuildMemberPermission :: Guild -> GuildMember -> Permissions -> Bool
+hasGuildMemberPermission g gm p = or $ (`hasRolePermission` p) <$> concatMap (roleIdToRole g) (memberRoles gm)
+-- | Iterate over all roles an user has. Every user has at least one role (@everyone)
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
 data VoiceRegion = VoiceRegion
