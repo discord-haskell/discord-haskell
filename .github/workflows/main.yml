@@ -36,4 +36,6 @@ jobs:
           restore-keys: |
               ${{ runner.os }}-stack
               ${{ runner.os }}
-      - run: stack build
+      - run: stack build --compiler 8.10.7 --work-dir=.stack-work-8.10.7
+      - run: stack build --compiler 9.0.2  --work-dir=.stack-work-9.0.2
+      - run: stack build --compiler 0.2.4  --work-dir=.stack-work-9.2.4
