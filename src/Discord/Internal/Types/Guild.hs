@@ -18,8 +18,6 @@ import Discord.Internal.Types.Channel (Channel)
 import Discord.Internal.Types.User (User, GuildMember (memberRoles))
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.Bits
-import Data.Maybe (isNothing)
-import Data.Bool (bool)
 import Data.List
 
 
