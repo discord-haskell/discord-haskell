@@ -20,6 +20,7 @@ import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.Bits
 import Data.Maybe (isNothing)
 import Data.Bool (bool)
+import Data.List
 
 
 
@@ -304,10 +305,7 @@ instance FromJSON Role where
 -- | If there is no such role on the guild return nothing
 --   otherwise return the role. Take the head of the list. List should always be one, because the ID is unique
 roleIdToRole :: Guild -> RoleId -> Maybe Role
-roleIdToRole  g r = bool (Just $ head f) Nothing ( null f)
-  where
-    f = filter(\x -> roleId x == r) $  guildRoles g
-
+roleIdToRole  g r = find(\x -> roleId x == r) $ guildRoles g
 
 data PermissionFlag =
     CREATE_INSTANT_INVITE
