@@ -56,10 +56,10 @@ jobs:
           enable-stack: true
 
       # First run cabal, since it is generally quicker
-      - name: "Cabal: Update cabal package database"
+      - name: "Cabal: Update cabal package database, generate build plan"
         run: |
           cabal update
-          cabal configure
+          cabal build --dry-run
 
       - name: "Cabal: Cache Dependencies"
         id: cache
