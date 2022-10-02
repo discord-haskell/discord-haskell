@@ -25,7 +25,7 @@ jobs:
       - name: Parse the cabal tested-with stanza
         id: parse
         run: |
-          echo "::set-output name=tested-with-versions::$(runghc .github/workflows/parseVersions.hs)\n"
+          echo "::set-output name=tested-with-versions::$(runghc .github/workflows/parseVersions.hs)"
 
       - name: Set the GHC matrix for the next job
         id: set-ghc-matrix
