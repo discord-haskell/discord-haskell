@@ -22,12 +22,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: haskell/actions/setup@v2
-        id: setup-haskell
-        with:
-          # This can be some arbitrary GHC version that supports the Cabal library
-          ghc-version: 8.10.7
-
       - name: Parse the cabal tested-with stanza
         id: parse
         run: |
