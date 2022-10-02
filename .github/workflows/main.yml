@@ -29,7 +29,10 @@ jobs:
 
       - name: Set the GHC matrix for the next job
         id: set-ghc-matrix
-        run: echo "::set-output name=versions::{\"ghc-version\":${{ steps.parse.outputs.tested-with-versions }}}"
+        # We use single quotes here, since the output from the previous step
+        # will not have escaped double quotes, and it's just easier to use single
+        # quotes on the outside than try to escape the inner double quotes.
+        run: echo '::set-output name=versions::{"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}'
 
   build:
     name: Build Check
