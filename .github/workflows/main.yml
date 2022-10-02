@@ -10,23 +10,31 @@ on:
   workflow_dispatch:
 
 jobs:
-  # TODO: autoformatting
-  #ormolu:
-  #  runs-on: ubuntu-latest
-  #  steps:
-  #    - uses: actions/checkout@v2
-  #    - uses: mrkkrp/ormolu-action@v4
-  build:
-    name: Build
+  generate-matrix:
+    name: Generate GHC build matrix
     runs-on: ubuntu-latest
-    #needs: ormolu
+    outputs:
+      ghc-matrix: ${{ steps.set-ghc-matrix.outputs.versions }}
+    steps:
+      - id: set-ghc-matrix
+        run: echo "::set-output name=versions::{\"ghc-version\":[\"8.10.7\", \"9.2\", \"9.4\"]}"
+
+  build:
+    name: Build Check
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.generate-matrix.outputs.ghc-matrix) }}
     steps:
       - uses: actions/checkout@v2
-      - uses: haskell/actions/setup@v1
+      - uses: haskell/actions/setup@v2
         with:
-          ghc-version: 'latest'
+          # The system GHC version
+          ghc-version: ${{ matrix.ghc-version }}
+          cabal-version: 'latest'
           enable-stack: true
           stack-version: 'latest'
+          stack-setup-ghc: true
       - name: Cache .stack
         id: cache-stack
         uses: actions/cache@v2
