@@ -366,7 +366,7 @@ hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
 hasGuildMemberPermission g gm p = or $ go (memberRoles gm) g
   where
     go [] _ = []
-    go (x:xs) g = case roleIdToRole g x of
+    go (x:xs) _ = case roleIdToRole g x of
                     Nothing ->  [False] <> go xs g
                     Just a ->   [readMaybe (T.unpack (rolePerms a)) `hasRolePermission` p] <> go xs g
 
