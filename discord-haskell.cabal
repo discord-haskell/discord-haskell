@@ -18,7 +18,7 @@ category:            Network
 build-type:          Simple
 tested-with:         GHC == 8.10.7
                    , GHC == 9.2
-                   , GHC == 9.4.1
+                   , GHC == 9.4
 extra-doc-files:     README.md
                    , changelog.md
 
