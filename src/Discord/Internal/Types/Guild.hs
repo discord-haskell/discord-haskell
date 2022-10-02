@@ -363,12 +363,12 @@ hasRolePermission r p = (.&.) (fromMaybe 0 r) (shift 1 $ fromEnum p) > 0
 --   If the result of roleIdToRole is Nothing, it appends an "False"
 --   Otherwise it checks for the needed permission
 hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
-hasGuildMemberPermission g gm p = or $ go (memberRoles gm) g
+hasGuildMemberPermission g gm p = or $ go (memberRoles gm)
   where
-    go [] _ = []
-    go (x:xs) _ = case roleIdToRole g x of
-                    Nothing ->  [False] <> go xs g
-                    Just a ->   [readMaybe (T.unpack (rolePerms a)) `hasRolePermission` p] <> go xs g
+    go [] = []
+    go (x:xs)  = case roleIdToRole g x of
+                    Nothing ->  [False] <> go xs
+                    Just a ->  [readMaybe (T.unpack (rolePerms a)) `hasRolePermission` p] <> go xs
 
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
