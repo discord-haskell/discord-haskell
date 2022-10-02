@@ -19,6 +19,8 @@ import Discord.Internal.Types.User (User, GuildMember (memberRoles))
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.Bits
 import Data.List
+import Data.Maybe (fromMaybe)
+import Text.Read (readMaybe)
 
 
 
@@ -352,8 +354,9 @@ data PermissionFlag =
 -- | Check if a given role has the permission
 --   RolePerms need to be an int to be converted into its bits
 --   Bitwise & checks if rolePermission contains the perm
-hasRolePermission :: Role -> PermissionFlag -> Bool
-hasRolePermission r p = (.&.) (read (T.unpack $ rolePerms r) :: Int) (shift 1 $ fromEnum p) > 0
+hasRolePermission :: Maybe Int -> PermissionFlag -> Bool
+hasRolePermission r p = (.&.) (fromMaybe 0 r) (shift 1 $ fromEnum p) > 0
+
 
 
 -- | Check if any Role of an GuildMember has the needed permission
@@ -363,9 +366,9 @@ hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
 hasGuildMemberPermission g gm p = or $ go (memberRoles gm) g
   where
     go [] _ = []
-    go (x:xs) gl = case roleIdToRole gl x of
-                    Nothing ->  [False] <> go xs gl
-                    Just a ->   [a `hasRolePermission` p] <> go xs gl
+    go (x:xs) g = case roleIdToRole g x of
+                    Nothing ->  [False] <> go xs g
+                    Just a ->   [readMaybe (T.unpack (rolePerms a)) `hasRolePermission` p] <> go xs g
 
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
