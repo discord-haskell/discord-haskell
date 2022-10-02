@@ -20,6 +20,8 @@ jobs:
     outputs:
       ghc-matrix: ${{ steps.set-ghc-matrix.outputs.versions }}
     steps:
+      - uses: actions/checkout@v2
+
       - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
