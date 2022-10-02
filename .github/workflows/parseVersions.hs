@@ -4,7 +4,7 @@ module Main where
 
 import Prelude hiding (readFile)
 import Data.ByteString (readFile)
-import Data.List (intercalate)
+import Data.List (intersperse)
 import Data.Maybe (maybeToList)
 import Distribution.Compiler (CompilerFlavor(GHC))
 import Distribution.PackageDescription.Parsec (parseGenericPackageDescriptionMaybe)
@@ -13,7 +13,7 @@ import Distribution.Types.GenericPackageDescription (GenericPackageDescription(p
 import Distribution.Types.PackageDescription (PackageDescription(testedWith))
 import Distribution.Types.Version (versionNumbers)
 import Distribution.Types.VersionRange.Internal (VersionRange(ThisVersion))
-import Text.PrettyPrint (render)
+import Text.PrettyPrint (render, brackets, comma, doubleQuotes)
 
 main = do
     bs <- readFile "discord-haskell.cabal"
@@ -30,6 +30,5 @@ main = do
             , let (ThisVersion ghcVersion) = versionRange
             ]
     -- e.g. ghcVersions = [mkVersion [8,10,7],mkVersion [9,2],mkVersion [9,4,1]]
-    let prettyVersions = map (render . pretty) ghcVersions
-    -- e.g. prettyVersions = ["8.10.7","9.2","9.4.1"]
-    putStrLn $ (<> "]") $ ("[" <>) $ intercalate ", " prettyVersions
+    let prettyVersions = brackets $ mconcat $ intersperse comma $ map (doubleQuotes . pretty) ghcVersions
+    putStrLn $ render prettyVersions
