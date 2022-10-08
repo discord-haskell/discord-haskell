@@ -128,6 +128,7 @@ library
     , Discord.Internal.Rest.Webhook
     , Discord.Internal.Rest.ApplicationCommands
     , Discord.Internal.Rest.Interactions
+    , Discord.Internal.Rest.ScheduledEvents
     , Discord.Internal.Types
     , Discord.Internal.Types.Prelude
     , Discord.Internal.Types.Channel
