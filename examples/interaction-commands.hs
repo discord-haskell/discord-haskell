@@ -302,6 +302,15 @@ eventHandler testserverid event = case event of
                           (Just "this is a place holder")
                           (Just 3)
                           (Just 3)
+                      ),
+                    ActionRowSelectMenu
+                      ( SelectMenu
+                          "channel select menu"
+                          False
+                          (SelectMenuDataChannels [ChannelTypeOptionGuildText,ChannelTypeOptionGuildPublicThread,ChannelTypeOptionGuildCategory])
+                          (Just "this is a place holder")
+                          (Just 1)
+                          (Just 1)
                       )
                   ],
               R.messageDetailedEmbeds =
