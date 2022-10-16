@@ -188,7 +188,7 @@ newExampleSlashCommand =
                               "testing asking for a channel"
                               Nothing
                               False
-                              (Just [ApplicationCommandChannelTypeGuildVoice]),
+                              (Just [ChannelTypeOptionGuildVoice]),
                             OptionValueMentionable
                               "mentionable"
                               Nothing
@@ -284,15 +284,24 @@ eventHandler testserverid event = case event of
                       ( SelectMenu
                           "action select menu"
                           False
-                          [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
+                          (SelectMenuDataText [ SelectOption "First option" "opt1" (Just "the only desc") Nothing Nothing,
                             SelectOption "Second option" "opt2" Nothing (Just (mkEmoji "😭")) (Just True),
                             SelectOption "third option" "opt3" Nothing Nothing Nothing,
                             SelectOption "fourth option" "opt4" Nothing Nothing Nothing,
                             SelectOption "fifth option" "opt5" Nothing Nothing Nothing
-                          ]
+                          ])
                           (Just "this is a place holder")
                           (Just 2)
                           (Just 5)
+                      ),
+                    ActionRowSelectMenu
+                      ( SelectMenu
+                          "user select menu"
+                          False
+                          (SelectMenuDataUser)
+                          (Just "this is a place holder")
+                          (Just 3)
+                          (Just 3)
                       )
                   ],
               R.messageDetailedEmbeds =

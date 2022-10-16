@@ -253,7 +253,7 @@ instance FromJSON ComponentData where
           t <- v .: "component_type" :: Parser Int
           case t of
             2 -> return $ ButtonData cid
-            3 ->
+            _ | t `elem` [3, 5, 6, 7, 8] ->
               SelectMenuData cid
                 <$> v .: "values"
             _ -> fail "unknown interaction data component type"

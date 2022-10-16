@@ -3,7 +3,29 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Data structures pertaining to Discord Channels
-module Discord.Internal.Types.Channel where
+module Discord.Internal.Types.Channel (
+    Channel (..)
+  , channelIsInGuild
+  , Overwrite (..)
+  , ThreadMetadata (..)
+  , ThreadMember (..)
+  , ThreadListSyncFields (..)
+  , ThreadMembersUpdateFields (..)
+  , Message (..)
+  , AllowedMentions (..)
+  , MessageReaction (..)
+  , Attachment (..)
+  , Nonce (..)
+  , MessageReference (..)
+  , MessageType (..)
+  , MessageActivity (..)
+  , MessageActivityType (..)
+  , MessageFlag (..)
+  , MessageFlags (..)
+  , MessageInteraction (..)
+
+  , ChannelTypeOption (..)
+  ) where
 
 import Control.Applicative (empty)
 import Data.Aeson
@@ -848,7 +870,6 @@ instance ToJSON MessageInteraction where
               , "name" .== messageInteractionName
               , "user" .== messageInteractionUser
               ]
-
 
 instance FromJSON MessageInteraction where
   parseJSON = withObject "MessageInteraction" $ \o ->

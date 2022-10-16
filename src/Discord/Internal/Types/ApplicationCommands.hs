@@ -21,7 +21,7 @@ module Discord.Internal.Types.ApplicationCommands
     EditApplicationCommand (..),
     defaultEditApplicationCommand,
     Choice (..),
-    ApplicationCommandChannelType (..),
+    ChannelTypeOption (..),
     GuildApplicationCommandPermissions (..),
     ApplicationCommandPermissions (..),
     Number,
@@ -33,13 +33,14 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), Value (Number, Object), object, withArray, withObject, (.!=), (.:), (.:!), (.:?))
 import Data.Aeson.Types (Pair, Parser)
-import Data.Data (Data)
 import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
-import           Data.Char (isLower, isNumber)
-import qualified Data.Text as T
-import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, InternalDiscordEnum (..), Snowflake, discordTypeParseJSON, objectFromMaybes, (.==), (.=?))
+import Data.Char (isLower, isNumber)
+import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, GuildId, Snowflake, objectFromMaybes, (.==), (.=?))
 import Data.Map.Strict (Map)
+import Discord.Internal.Types.Channel ( ChannelTypeOption(..) )
+
+import qualified Data.Text as T
 
 type Number = Scientific
 
@@ -325,7 +326,7 @@ data OptionValue
         -- | Whether this option is required
         optionValueRequired :: Bool,
         -- | What type of channel can be put in here
-        optionValueChannelTypes :: Maybe [ApplicationCommandChannelType]
+        optionValueChannelTypes :: Maybe [ChannelTypeOption]
       }
   | OptionValueRole
       { -- | The name of the value
@@ -700,55 +701,6 @@ instance {-# OVERLAPPING #-} (FromJSON a) => FromJSON (AutocompleteOrChoice a) w
 choiceOrAutocompleteToJSON :: (ToJSON a) => AutocompleteOrChoice a -> Pair
 choiceOrAutocompleteToJSON (Left b) = ("autocomplete", toJSON b)
 choiceOrAutocompleteToJSON (Right cs) = ("choices", toJSON cs)
-
--- | The different channel types.
---
--- https://discord.com/developers/docs/resources/channel#channel-object-channel-types
-data ApplicationCommandChannelType
-  = -- | A text channel in a server.
-    ApplicationCommandChannelTypeGuildText
-  | -- | A direct message between users.
-    ApplicationCommandChannelTypeDM
-  | -- | A voice channel in a server.
-    ApplicationCommandChannelTypeGuildVoice
-  | -- | A direct message between multiple users.
-    ApplicationCommandChannelTypeGroupDM
-  | -- | An organizational category that contains up to 50 channels.
-    ApplicationCommandChannelTypeGuildCategory
-  | -- | A channel that users can follow and crosspost into their own server.
-    ApplicationCommandChannelTypeGuildNews
-  | -- | A channel in which game developers can sell their game on discord.
-    ApplicationCommandChannelTypeGuildStore
-  | -- | A temporary sub-channel within a guild_news channel.
-    ApplicationCommandChannelTypeGuildNewsThread
-  | -- | A temporary sub-channel within a guild_text channel.
-    ApplicationCommandChannelTypeGuildPublicThread
-  | -- | A temporary sub-channel within a GUILD_TEXT channel that is only
-    -- viewable by those invited and those with the MANAGE_THREADS permission
-    ApplicationCommandChannelTypeGuildPrivateThread
-  | -- | A voice channel for hosting events with an audience.
-    ApplicationCommandChannelTypeGuildStageVoice
-  deriving (Show, Read, Data, Eq)
-
-instance InternalDiscordEnum ApplicationCommandChannelType where
-  discordTypeStartValue = ApplicationCommandChannelTypeGuildText
-  fromDiscordType ApplicationCommandChannelTypeGuildText = 0
-  fromDiscordType ApplicationCommandChannelTypeDM = 1
-  fromDiscordType ApplicationCommandChannelTypeGuildVoice = 2
-  fromDiscordType ApplicationCommandChannelTypeGroupDM = 3
-  fromDiscordType ApplicationCommandChannelTypeGuildCategory = 4
-  fromDiscordType ApplicationCommandChannelTypeGuildNews = 5
-  fromDiscordType ApplicationCommandChannelTypeGuildStore = 6
-  fromDiscordType ApplicationCommandChannelTypeGuildNewsThread = 10
-  fromDiscordType ApplicationCommandChannelTypeGuildPublicThread = 11
-  fromDiscordType ApplicationCommandChannelTypeGuildPrivateThread = 12
-  fromDiscordType ApplicationCommandChannelTypeGuildStageVoice = 13
-
-instance ToJSON ApplicationCommandChannelType where
-  toJSON = toJSON . fromDiscordType
-
-instance FromJSON ApplicationCommandChannelType where
-  parseJSON = discordTypeParseJSON "ApplicationCommandChannelType"
 
 data GuildApplicationCommandPermissions = GuildApplicationCommandPermissions
   { -- | The id of the command.

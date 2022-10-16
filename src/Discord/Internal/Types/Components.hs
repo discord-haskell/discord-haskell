@@ -14,6 +14,7 @@ module Discord.Internal.Types.Components
     mkButton,
     SelectMenu (..),
     mkSelectMenu,
+    SelectMenuData (..),
     SelectOption (..),
     mkSelectOption,
     TextInput (..),
@@ -27,7 +28,7 @@ import Data.Foldable (Foldable (toList))
 import Data.Scientific (Scientific)
 import qualified Data.Text as T
 import Discord.Internal.Types.Emoji (Emoji)
-import Discord.Internal.Types.Prelude (objectFromMaybes, (.==), (.=?))
+import Discord.Internal.Types.Prelude (objectFromMaybes, (.==), (.=?), ChannelTypeOption)
 
 -- | Container for other message Components
 data ActionRow = ActionRowButtons [Button] | ActionRowSelectMenu SelectMenu
@@ -52,8 +53,8 @@ instance FromJSON ActionRow where
                         t' <- v .: "type" :: Parser Int
                         case t' of
                           2 -> ActionRowButtons <$> mapM parseJSON a'
-                          3 -> ActionRowSelectMenu <$> parseJSON c
-                          _ -> fail $ "unknown component type: " ++ show t
+                          _ | t' `elem` [3, 5, 6, 7, 8] -> ActionRowSelectMenu <$> parseJSON c
+                          _ -> fail $ "unknown component type: " ++ show t'
                     )
                     c
             _ -> fail $ "expected action row type (1), got: " ++ show t
@@ -183,8 +184,8 @@ data SelectMenu = SelectMenu
     selectMenuCustomId :: T.Text,
     -- | Whether the select menu is disabled
     selectMenuDisabled :: Bool,
-    -- | What options are in this select menu (up to 25)
-    selectMenuOptions :: [SelectOption],
+    -- | What type this select menu is, and the data it can hold
+    selectMenuData :: SelectMenuData,
     -- | Placeholder text if nothing is selected
     selectMenuPlaceholder :: Maybe T.Text,
     -- | Minimum number of values to select (def 1, min 0, max 25)
@@ -197,38 +198,58 @@ data SelectMenu = SelectMenu
 -- | Takes the custom id and the options of the select menu that is to be
 -- generated.
 mkSelectMenu :: T.Text -> [SelectOption] -> SelectMenu
-mkSelectMenu customId sos = SelectMenu customId False sos Nothing Nothing Nothing
+mkSelectMenu customId sos = SelectMenu customId False (SelectMenuDataText sos) Nothing Nothing Nothing
 
 instance FromJSON SelectMenu where
   parseJSON =
     withObject
       "SelectMenu"
-      ( \v ->
+      $ \v ->
           do
-            t <- v .: "type" :: Parser Int
-            case t of
-              3 ->
                 SelectMenu
                   <$> v .: "custom_id"
                   <*> v .:? "disabled" .!= False
-                  <*> v .: "options"
+                  <*> parseJSON (Object v)
                   <*> v .:? "placeholder"
                   <*> v .:? "min_values"
                   <*> v .:? "max_values"
-              _ -> fail "expected select menu type, got different component"
-      )
+      
 
 instance ToJSON SelectMenu where
   toJSON SelectMenu {..} =
-    objectFromMaybes
-      [ "type" .== Number 3,
-        "custom_id" .== selectMenuCustomId,
+    objectFromMaybes $
+      [ "custom_id" .== selectMenuCustomId,
         "disabled" .== selectMenuDisabled,
-        "options" .== selectMenuOptions,
         "placeholder" .=? selectMenuPlaceholder,
         "min_values" .=? selectMenuMinValues,
         "max_values" .=? selectMenuMaxValues
-      ]
+      ] <> case selectMenuData of
+            SelectMenuDataText sos -> ["type" .== Number 3, "options" .== sos]
+            SelectMenuDataUser -> ["type" .== Number 5]
+            SelectMenuDataRole -> ["type" .== Number 6]
+            SelectMenuDataMentionable -> ["type" .== Number 7]
+            SelectMenuDataChannels ctos -> ["type" .== Number 8, "channel_types" .== ctos]
+
+data SelectMenuData = 
+    SelectMenuDataText [SelectOption]
+  | SelectMenuDataUser
+  | SelectMenuDataRole
+  | SelectMenuDataMentionable
+  | SelectMenuDataChannels [ChannelTypeOption]
+  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON SelectMenuData where
+  parseJSON =
+    withObject "SelectMenuData" $ \v ->
+      do
+        t <- v .: "type"
+        case t::Int of
+          3 -> SelectMenuDataText <$> v .: "options"
+          5 -> pure SelectMenuDataUser
+          6 -> pure SelectMenuDataRole
+          7 -> pure SelectMenuDataMentionable
+          8 -> SelectMenuDataChannels <$> v .: "channel_types"
+          _ -> fail ("unknown select menu data type: " <> show t)
 
 -- | A single option in a select menu.
 data SelectOption = SelectOption
