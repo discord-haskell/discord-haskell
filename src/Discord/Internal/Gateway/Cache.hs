@@ -1,13 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 -- | Query info about connected Guilds and Channels
 module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
-import Control.Monad (forever)
+import Control.Monad (forever, join)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
-import Data.Maybe (fromMaybe)
+import Data.Foldable (foldl')
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -17,7 +18,7 @@ import Discord.Internal.Gateway.EventLoop
 data Cache = Cache
      { cacheCurrentUser :: !User
      , cacheDMChannels :: !(M.Map ChannelId Channel)
-     , cacheGuilds :: !(M.Map GuildId Guild)
+     , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData)))
      , cacheChannels :: !(M.Map ChannelId Channel)
      , cacheApplication :: !PartialApplication
      } deriving (Show)
@@ -57,23 +58,26 @@ cacheLoop isEnabled cacheHandle log = do
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  InternalGuildCreate guild ->
-    let newChans = fromMaybe [] (guildChannels guild)
-        g = M.insert (guildId guild) (guild { guildChannels = Just newChans }) (cacheGuilds minfo)
+  InternalReady _ _ gus _ _ _ pa -> minfo { cacheApplication = pa, cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
+
+  InternalGuildCreate guild guildData ->
+    let newChans = guildCreateChannels guildData
+        g = M.insert (guildId guild) (Just (guild, Just guildData)) (cacheGuilds minfo)
         c = M.union
               (M.fromList [ (channelId ch, ch) | ch <- newChans ])
               (cacheChannels minfo)
     in minfo { cacheGuilds = g, cacheChannels = c }
-  --InternalGuildUpdate guild -> do
-  --  let g = M.insert (guildId guild) guild (cacheGuilds minfo)
-  --      m2 = minfo { cacheGuilds = g }
-  --  putMVar cache m2
+  InternalGuildUpdate guild ->
+    let gs = M.alter (\case Just (Just (_, mCD)) -> Just (Just (guild, mCD)) ; _ -> Just (Just (guild, Nothing)); ) (guildId guild) $ cacheGuilds minfo
+    in minfo { cacheGuilds = gs }
   InternalGuildDelete guild ->
-    let g = M.delete (idOnceAvailable guild) (cacheGuilds minfo)
-       -- not currently updating channels cache due to not being able to guarantee prescence of guild id
-      --  c = M.filter (\(c) _ ->  keyGuildId /= idOnceAvailable guild) (cacheChannels minfo)
-    in minfo { cacheGuilds = g }
-  InternalReady _ _ _ _ _ _ pa -> minfo { cacheApplication = pa }
+    let
+      toDelete = join $ cacheGuilds minfo M.!? idOnceAvailable guild
+      extraData = snd =<< toDelete
+      channels = maybe [] (fmap channelId . guildCreateChannels) extraData
+      g = M.delete (idOnceAvailable guild) (cacheGuilds minfo)
+      c = foldl' (flip M.delete) (cacheChannels minfo) channels
+    in minfo { cacheGuilds = g, cacheChannels = c }
   InternalChannelCreate c ->
     let cm = M.insert (channelId c) c (cacheChannels minfo)
     in minfo { cacheChannels = cm }

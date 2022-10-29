@@ -20,6 +20,7 @@ import Discord.Internal.Types.Guild
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
+import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
@@ -47,7 +48,7 @@ data Event =
   -- | message was pinned or unpinned
   | ChannelPinsUpdate          ChannelId (Maybe UTCTime)
   -- | lazy-load for unavailable guild, guild became available, or user joined a new guild
-  | GuildCreate                Guild
+  | GuildCreate                Guild GuildCreateData
   -- | guild was updated
   | GuildUpdate                Guild
   -- | guild became unavailable, or user left/was removed from a guild
@@ -119,7 +120,7 @@ data EventInternalParse =
   | InternalThreadListSync             ThreadListSyncFields 
   | InternalThreadMembersUpdate        ThreadMembersUpdateFields 
   | InternalChannelPinsUpdate          ChannelId (Maybe UTCTime)
-  | InternalGuildCreate                Guild
+  | InternalGuildCreate                Guild GuildCreateData
   | InternalGuildUpdate                Guild
   | InternalGuildDelete                GuildUnavailable
   | InternalGuildBanAdd                GuildId User
@@ -158,6 +159,32 @@ data PartialApplication = PartialApplication
 
 instance FromJSON PartialApplication where
   parseJSON = withObject "PartialApplication" (\v -> PartialApplication <$> v .: "id" <*> v .: "flags")
+
+data GuildCreateData = GuildCreateData
+  { guildCreateJoinedAt :: !UTCTime
+  , guildCreateLarge :: !Bool
+  , guildCreateUnavailable :: !(Maybe Bool)
+  , guildCreateMemberCount :: !Int
+  -- , guildCreateVoiceStates
+  , guildCreateMembers :: ![GuildMember]
+  , guildCreateChannels :: ![Channel]
+  , guildCreateThreads :: ![Channel]
+  , guildCreatePresences :: ![PresenceInfo]
+  -- , guildStageInstances :: [StageI]
+  , guildCreateScheduledEvents :: ![ScheduledEvent]
+  } deriving (Show, Eq, Read)
+
+instance FromJSON GuildCreateData where
+  parseJSON = withObject "GuildCreateData" $ \o ->
+    GuildCreateData <$> o .:  "joined_at"
+                    <*> o .:  "large"
+                    <*> o .:? "unavailable"
+                    <*> o .:  "member_count"
+                    <*> o .:  "members"
+                    <*> o .:  "channels"
+                    <*> o .:  "threads"
+                    <*> o .:  "presences"
+                    <*> o .:  "guild_scheduled_events"
 
 -- | Structure containing information about a reaction
 data ReactionInfo = ReactionInfo
@@ -248,7 +275,7 @@ eventParse t o = case t of
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
                                       pure (InternalChannelPinsUpdate id utc)
-    "GUILD_CREATE"              -> InternalGuildCreate               <$> reparse o
+    "GUILD_CREATE"              -> InternalGuildCreate <$> reparse o <*> reparse o
     "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"

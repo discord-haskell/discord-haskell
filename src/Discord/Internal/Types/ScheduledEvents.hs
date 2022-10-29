@@ -93,6 +93,7 @@ data ScheduledEvent
       , scheduledEventExternalUserCount :: Maybe Integer
       , scheduledEventExternalImage :: Maybe ScheduledEventImageHash
       }
+  deriving (Show, Eq, Read)
 
 instance ToJSON ScheduledEvent where
   toJSON ScheduledEventStage {..} = objectFromMaybes
