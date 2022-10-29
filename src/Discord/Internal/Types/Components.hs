@@ -231,11 +231,11 @@ instance ToJSON SelectMenu where
             SelectMenuDataChannels ctos -> ["type" .== Number 8, "channel_types" .== ctos]
 
 data SelectMenuData = 
-    SelectMenuDataText [SelectOption]
-  | SelectMenuDataUser
-  | SelectMenuDataRole
-  | SelectMenuDataMentionable
-  | SelectMenuDataChannels [ChannelTypeOption]
+    SelectMenuDataText [SelectOption] -- ^ Text options
+  | SelectMenuDataUser -- ^ Users
+  | SelectMenuDataRole -- ^ Roles
+  | SelectMenuDataMentionable -- ^ Anything mentionable (users and roles)
+  | SelectMenuDataChannels [ChannelTypeOption] -- ^ Channels (of certain types)
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON SelectMenuData where
