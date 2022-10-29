@@ -218,8 +218,8 @@ reparse val = case parseEither parseJSON $ toJSON val of
 -- the hostname portion of the URL that we can connect to.
 extractHostname :: String -> HostName
 extractHostname ('w':'s':'s':':':'/':'/':rest) = extractHostname rest
-extractHostname ('/':[]) = []
-extractHostname (a:b) = a:(extractHostname b)
+extractHostname "/" = []
+extractHostname (a:b) = a:extractHostname b
 extractHostname [] = []
 
 -- | Parse an event from name and JSON data
