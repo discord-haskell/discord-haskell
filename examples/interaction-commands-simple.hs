@@ -7,14 +7,18 @@ import Discord.Interactions
 import UnliftIO (liftIO)
 import Data.List (find)
 import Control.Monad (forM_)
-import ExampleUtils (getToken, getGuildId, actionWithChannelId)
+import ExampleUtils (getToken, getGuildId)
+import Data.Text (Text)
+import Control.Monad (void)
+import Control.Monad.IO.Class (MonadIO)
 import qualified Discord.Requests as R
+import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
 
 
 -- MAIN
 
-main :: Text
+main :: IO ()
 main = do
   tok <- getToken
   testGuildId <- getGuildId
@@ -34,6 +38,9 @@ main = do
 
 echo :: MonadIO m => Text -> m ()
 echo = liftIO . TIO.putStrLn
+
+showT :: Show a => a -> Text
+showT = T.pack . show
 
 
 -- COMMANDS
@@ -76,10 +83,10 @@ onReady appId testGuildId = do
 
   case sequence appCmdRegistrations of
     Left err ->
-      echo $ "[!] Failed to register some commands" <> show err
+      echo $ "[!] Failed to register some commands" <> showT err
 
     Right cmds -> do
-      echo $ "Registered " <> show (length cmds) <> " command(s)."
+      echo $ "Registered " <> showT (length cmds) <> " command(s)."
       unregisterOutdatedCmds cmds
 
   where
@@ -91,7 +98,7 @@ onReady appId testGuildId = do
     registered <- restCall $ R.GetGuildApplicationCommands appId testGuildId
     case registered of
       Left err ->
-        echo $ "Failed to get registered slash commands: " <> show err
+        echo $ "Failed to get registered slash commands: " <> showT err
 
       Right cmds ->
         let validIds    = map applicationCommandId validCmds
