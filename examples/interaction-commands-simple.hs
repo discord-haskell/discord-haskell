@@ -6,7 +6,8 @@ import Discord.Types
 import Discord.Interactions
 import UnliftIO (liftIO)
 import Data.List (find)
-import ExampleUtils (getToken)
+import Control.Monad (forM_)
+import ExampleUtils (getToken, getGuildId, actionWithChannelId)
 import qualified Discord.Requests as R
 import qualified Data.Text.IO as TIO
 
@@ -16,10 +17,11 @@ import qualified Data.Text.IO as TIO
 main :: Text
 main = do
   tok <- getToken
+  testGuildId <- getGuildId
 
   botTerminationError <- runDiscord $ def
     { discordToken = tok
-    , discordOnEvent = onDiscordEvent
+    , discordOnEvent = onDiscordEvent testGuildId
     -- If you are using application commands, you might not need
     -- message contents at all
     , discordGatewayIntent = def { gatewayIntentMessageContent = False }
@@ -60,14 +62,14 @@ ping = SlashCommand
 
 -- EVENTS
 
-onDiscordEvent :: Event -> DiscordHandler ()
-onDiscordEvent = \case
-  Ready _ _ _ _ _ _ (PartialApplication appId _) -> onReady appId
+onDiscordEvent :: GuildId -> Event -> DiscordHandler ()
+onDiscordEvent testGuildId = \case
+  Ready _ _ _ _ _ _ (PartialApplication appId _) -> onReady appId testGuildId
   InteractionCreate intr                         -> onInteractionCreate intr
   _                                              -> pure ()
 
-onReady :: ApplicationId -> DiscordHandler ()
-onReady appId = do
+onReady :: ApplicationId -> GuildId -> DiscordHandler ()
+onReady appId testGuildId = do
   echo "Bot ready!"
 
   appCmdRegistrations <- mapM tryRegistering mySlashCommands
@@ -82,19 +84,22 @@ onReady appId = do
 
   where
   tryRegistering cmd = case registration cmd of
-    Just reg -> restCall    $ R.CreateGlobalApplicationCommand appId reg
+    Just reg -> restCall $ R.CreateGuildApplicationCommand appId testGuildId reg
     Nothing  -> pure . Left $ RestCallErrorCode 0 "" ""
 
   unregisterOutdatedCmds validCmds = do
-    registered <- restCall $ R.GetGlobalApplicationCommands appId
+    registered <- restCall $ R.GetGuildApplicationCommands appId testGuildId
     case registered of
-      Left err -> echo $ "Failed to get registered slash commands: " <> show err
-      Right cmds -> do
+      Left err ->
+        echo $ "Failed to get registered slash commands: " <> show err
+
+      Right cmds ->
         let validIds    = map applicationCommandId validCmds
             outdatedIds = filter (`notElem` validIds)
                         . map applicationCommandId
                         $ cmds
-        mapM_ (restCall . R.DeleteGlobalApplicationCommand appId) outdatedIds
+         in forM_ outdatedIds $
+              restCall . R.DeleteGuildApplicationCommand appId testGuildId
 
 onInteractionCreate :: Interaction -> DiscordHandler ()
 onInteractionCreate = \case
