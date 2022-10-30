@@ -240,7 +240,7 @@ data ComponentData
       { -- | The unique id of the component (up to 100 characters).
         componentDataCustomId :: T.Text,
         -- | Values for the select menu.
-        componentDataValues :: [T.Text]
+        componentDataValues :: SelectMenuData
       }
   deriving (Show, Read, Eq, Ord)
 
@@ -253,11 +253,35 @@ instance FromJSON ComponentData where
           t <- v .: "component_type" :: Parser Int
           case t of
             2 -> return $ ButtonData cid
-            3 ->
+            _ | t `elem` [3, 5, 6, 7, 8] ->
               SelectMenuData cid
-                <$> v .: "values"
-            _ -> fail "unknown interaction data component type"
+                <$> parseJSON (toJSON v)
+            _ -> fail $ "unknown interaction data component type: " <> show t
       )
+
+data SelectMenuData
+  = SelectMenuDataText [T.Text] -- ^ The values of text chosen options
+  | SelectMenuDataUser [UserId] -- ^ The users selected
+  | SelectMenuDataRole [RoleId] -- ^ The roles selected
+  | SelectMenuDataMentionable [Snowflake] -- ^ The users or roles selected
+  | SelectMenuDataChannels [ChannelId] -- ^ The channels selected
+  deriving (Show, Read, Eq, Ord)
+
+instance FromJSON SelectMenuData where
+  parseJSON =
+    withObject
+      "SelectMenuData"
+      $ \v -> do
+          t <- v .: "component_type" :: Parser Int
+          let cons :: forall a. FromJSON a => ([a] -> SelectMenuData) -> Parser SelectMenuData
+              cons f = f <$> v .: "values"
+          case t of
+            3 -> cons SelectMenuDataText
+            5 -> cons SelectMenuDataUser
+            6 -> cons SelectMenuDataRole
+            7 -> cons SelectMenuDataMentionable
+            8 -> cons SelectMenuDataChannels
+            _ -> fail $ "unknown SelectMenuData type: " <> show t
 
 data ApplicationCommandData
   = ApplicationCommandDataUser

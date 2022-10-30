@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE RankNTypes  #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude
@@ -48,6 +49,8 @@ module Discord.Internal.Types.Prelude
   , (.=?)
   , AesonKey
   , objectFromMaybes
+
+  , ChannelTypeOption (..)
   )
 
  where
@@ -308,3 +311,52 @@ getMimeType bs
   | B.take 4 bs == "RIFF" && B.take 4 (B.drop 8 bs) == "WEBP"
   = Just "image/webp"
   | otherwise = Nothing
+
+-- | The different channel types. Used for application commands and components.
+--
+-- https://discord.com/developers/docs/resources/channel#channel-object-channel-types
+data ChannelTypeOption
+  = -- | A text channel in a server.
+    ChannelTypeOptionGuildText
+  | -- | A direct message between users.
+    ChannelTypeOptionDM
+  | -- | A voice channel in a server.
+    ChannelTypeOptionGuildVoice
+  | -- | A direct message between multiple users.
+    ChannelTypeOptionGroupDM
+  | -- | An organizational category that contains up to 50 channels.
+    ChannelTypeOptionGuildCategory
+  | -- | A channel that users can follow and crosspost into their own server.
+    ChannelTypeOptionGuildNews
+  | -- | A channel in which game developers can sell their game on discord.
+    ChannelTypeOptionGuildStore
+  | -- | A temporary sub-channel within a guild_news channel.
+    ChannelTypeOptionGuildNewsThread
+  | -- | A temporary sub-channel within a guild_text channel.
+    ChannelTypeOptionGuildPublicThread
+  | -- | A temporary sub-channel within a GUILD_TEXT channel that is only
+    -- viewable by those invited and those with the MANAGE_THREADS permission
+    ChannelTypeOptionGuildPrivateThread
+  | -- | A voice channel for hosting events with an audience.
+    ChannelTypeOptionGuildStageVoice
+  deriving (Show, Read, Data, Eq, Ord)
+
+instance InternalDiscordEnum ChannelTypeOption where
+  discordTypeStartValue = ChannelTypeOptionGuildText
+  fromDiscordType ChannelTypeOptionGuildText = 0
+  fromDiscordType ChannelTypeOptionDM = 1
+  fromDiscordType ChannelTypeOptionGuildVoice = 2
+  fromDiscordType ChannelTypeOptionGroupDM = 3
+  fromDiscordType ChannelTypeOptionGuildCategory = 4
+  fromDiscordType ChannelTypeOptionGuildNews = 5
+  fromDiscordType ChannelTypeOptionGuildStore = 6
+  fromDiscordType ChannelTypeOptionGuildNewsThread = 10
+  fromDiscordType ChannelTypeOptionGuildPublicThread = 11
+  fromDiscordType ChannelTypeOptionGuildPrivateThread = 12
+  fromDiscordType ChannelTypeOptionGuildStageVoice = 13
+
+instance ToJSON ChannelTypeOption where
+  toJSON = toJSON . fromDiscordType
+
+instance FromJSON ChannelTypeOption where
+  parseJSON = discordTypeParseJSON "ChannelTypeOption"
