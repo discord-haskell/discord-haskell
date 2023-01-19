@@ -23,12 +23,12 @@ import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), Ga
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 -- | Starts a thread for the cache
-startCacheThread :: Chan T.Text -> IO (CacheHandle, ThreadId)
-startCacheThread log = do
+startCacheThread :: Bool -> Chan T.Text -> IO (CacheHandle, ThreadId)
+startCacheThread isEnabled log = do
   events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
   cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
   let cacheHandle = CacheHandle events cache
-  tid <- forkIO $ cacheLoop cacheHandle log
+  tid <- forkIO $ cacheLoop isEnabled cacheHandle log
   pure (cacheHandle, tid)
 
 -- | Create a Chan for websockets. This creates a thread that
@@ -40,7 +40,7 @@ startGatewayThread auth intent cacheHandle log = do
   status <- newIORef Nothing
   seqid <- newIORef 0
   seshid <- newIORef ""
-  host <- newIORef $ "gateway.discord.gg"
+  host <- newIORef "gateway.discord.gg"
   let gatewayHandle = GatewayHandle events sends status seqid seshid host
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)

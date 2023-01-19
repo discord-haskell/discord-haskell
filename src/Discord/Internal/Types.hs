@@ -43,7 +43,7 @@ userFacingEvent event = case event of
   InternalThreadListSync a -> ThreadListSync a
   InternalThreadMembersUpdate a -> ThreadMembersUpdate a
   InternalChannelPinsUpdate a b -> ChannelPinsUpdate a b
-  InternalGuildCreate a -> GuildCreate a
+  InternalGuildCreate a b -> GuildCreate a b
   InternalGuildUpdate a -> GuildUpdate a
   InternalGuildDelete a -> GuildDelete a
   InternalGuildBanAdd a b -> GuildBanAdd a b

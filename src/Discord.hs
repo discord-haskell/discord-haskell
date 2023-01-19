@@ -66,6 +66,8 @@ data RunDiscordOpts = RunDiscordOpts
     discordForkThreadForEvents :: Bool
   , -- | The gateway intents the bot is asking for
     discordGatewayIntent :: GatewayIntent
+  , -- | Whether to use the cache (may use a lot of memory, only enable if it will be used!)
+    discordEnableCache :: Bool
   }
 
 -- | Default values for `RunDiscordOpts`
@@ -77,6 +79,7 @@ instance Default RunDiscordOpts where
                        , discordOnLog = \_ -> pure ()
                        , discordForkThreadForEvents = True
                        , discordGatewayIntent = def
+                       , discordEnableCache = False
                        }
 
 -- | Entrypoint to the library 
@@ -84,7 +87,7 @@ runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
-  (cache, cacheId) <- liftIO $ startCacheThread log
+  (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
   (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 

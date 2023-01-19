@@ -1,5 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Types relating to Discord Guilds (servers)
@@ -14,15 +13,12 @@ import Data.Default (Default(..))
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
-import Discord.Internal.Types.Channel (Channel)
 import Discord.Internal.Types.User (User, GuildMember (memberRoles))
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.Bits
 import Data.List
 import Data.Maybe (fromMaybe)
 import Text.Read (readMaybe)
-
-
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
@@ -53,15 +49,6 @@ data Guild = Guild
       , guildSystemChannelId      :: Maybe ChannelId      -- ^ Channel where guild notices such as welcome messages and boost events
       , guildSystemChannelFlags   :: Integer              -- ^ Flags on the system channel
       , guildRulesChannelId       :: Maybe ChannelId      -- ^ Id of channel with rules/guidelines
-      , guildJoinedAt             :: Maybe UTCTime        -- ^ When this guild was joined at
-      , guildLarge                :: Maybe Bool           -- ^ True if this guild is considered large
-      , guildUnavailable          :: Maybe Bool           -- ^ True if the guild is unavailable due to outage
-      , guildMemberCount          :: Maybe Integer        -- ^ Total number of members in the guild
-      -- voice_states
-      , guildMembers              :: Maybe [GuildMember]  -- ^ Users in the guild
-      , guildChannels             :: Maybe [Channel]      -- ^ Channels in the guild
-      , guildThreads              :: Maybe [Channel]      -- ^ All active threads in the guild that the current user has permission to view
-      , guildPresences            :: Maybe [PresenceInfo] -- ^ Presences of the members in the guild
       , guildMaxPresences         :: Maybe Integer        -- ^ Maximum number of prescences in the guild
       , guildMaxMembers           :: Maybe Integer        -- ^ Maximum number of members in the guild
       , guildVanityURL            :: Maybe T.Text         -- ^ Vanity url code for the guild
@@ -72,8 +59,8 @@ data Guild = Guild
       , guildPreferredLocale      :: T.Text               -- ^ Preferred locale of a community server
       , guildPublicUpdatesChannel :: Maybe ChannelId      -- ^ Id of channel where admins and mods get updates
       , guildMaxVideoUsers        :: Maybe Integer        -- ^ Maximum number of users in video channel
-      , guildApproxMemberCount    :: Maybe Integer        -- ^ Approximate number of members in the guild
-      , guildApproxPresenceCount  :: Maybe Integer        -- ^ Approximate number of non-offline members in the guild
+      , guildApproxMemberCount    :: Maybe Integer        -- ^ Approximate number of members in the guild (GET /guilds/<id> endpoint when with_counts is true)
+      , guildApproxPresenceCount  :: Maybe Integer        -- ^ Approximate number of non-offline members in the guild (GET /guilds/<id> endpoint when with_counts is true)
       -- welcome_screen
       , guildNSFWLevel            :: Integer              -- ^ Guild NSFW level
       -- stage_instances
@@ -108,15 +95,6 @@ instance FromJSON Guild where
           <*> o .:? "system_channel_id"
           <*> o .:  "system_channel_flags"
           <*> o .:? "rules_channel_id"
-          <*> o .:? "joined_at"
-          <*> o .:? "large"
-          <*> o .:? "unavailable"
-          <*> o .:? "member_count"
-          -- voice_states
-          <*> o .:? "members"
-          <*> o .:? "channels"
-          <*> o .:? "threads"
-          <*> o .:? "presences"
           <*> o .:? "max_presences"
           <*> o .:? "max_members"
           <*> o .:? "vanity_url_code"
