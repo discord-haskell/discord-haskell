@@ -154,6 +154,7 @@ library
     , Discord.Internal.Types.Components
     , Discord.Internal.Types.Color
     , Discord.Internal.Types.Emoji
+    , Discord.Internal.Types.RolePermissions
     , Discord.Internal.Types.ScheduledEvents
   build-depends:
   -- https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/libraries/version-history

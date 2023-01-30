@@ -177,7 +177,7 @@ instance ToJSON CreateGuildBanOpts where
 -- | Options for `ModifyGuildRole`
 data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   { modifyGuildRoleOptsName            :: Maybe T.Text
-  , modifyGuildRoleOptsPermissions     :: Maybe T.Text
+  , modifyGuildRoleOptsPermissions     :: Maybe RolePermissions
   , modifyGuildRoleOptsColor           :: Maybe DiscordColor
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
@@ -186,7 +186,7 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
 instance ToJSON ModifyGuildRoleOpts where
   toJSON ModifyGuildRoleOpts{..} = objectFromMaybes
                        ["name" .=? modifyGuildRoleOptsName,
-                        "permissions" .=? modifyGuildRoleOptsPermissions,
+                        "permissions" .=? fmap (T.pack . show) modifyGuildRoleOptsPermissions,
                         "color" .=? modifyGuildRoleOptsColor,
                         "hoist" .=? modifyGuildRoleOptsSeparateSidebar,
                         "mentionable" .=? modifyGuildRoleOptsMentionable]
