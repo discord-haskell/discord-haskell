@@ -108,12 +108,12 @@ combinePermissions :: [PermissionFlag] -> RolePermissions
 combinePermissions = foldr ((.|.) . permissionBits) 0
 
 -- | Check if any Role of an GuildMember has the needed permission
---   If the result of roleIdToRole is Nothing, it appends an "False"
+--   If the result of roleIdToRole is Nothing, it prepends a "False"
 --   Otherwise it checks for the needed permission
 hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
-hasGuildMemberPermission g gm p = or $ go (memberRoles gm)
+hasGuildMemberPermission g gm p = go (memberRoles gm)
   where
-    go [] = []
+    go [] = False
     go (x : xs) = case roleIdToRole g x of
-      Nothing -> [False] <> go xs
-      Just a -> [p `hasRolePermission` rolePerms a] <> go xs
+      Nothing -> go xs
+      Just a -> p `hasRolePermission` rolePerms a || go xs

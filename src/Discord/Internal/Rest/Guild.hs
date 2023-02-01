@@ -186,7 +186,7 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
 instance ToJSON ModifyGuildRoleOpts where
   toJSON ModifyGuildRoleOpts{..} = objectFromMaybes
                        ["name" .=? modifyGuildRoleOptsName,
-                        "permissions" .=? fmap (T.pack . show) modifyGuildRoleOptsPermissions,
+                        "permissions" .=? modifyGuildRoleOptsPermissions,
                         "color" .=? modifyGuildRoleOptsColor,
                         "hoist" .=? modifyGuildRoleOptsSeparateSidebar,
                         "mentionable" .=? modifyGuildRoleOptsMentionable]

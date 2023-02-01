@@ -119,6 +119,12 @@ newtype RolePermissions = RolePermissions { getRolePermissions :: Integer }
 instance Read RolePermissions where
   readsPrec p = fmap (first RolePermissions) . readsPrec p
 
+instance ToJSON RolePermissions where
+  toJSON = toJSON . getRolePermissions
+
+instance FromJSON RolePermissions where
+  parseJSON = fmap RolePermissions . parseJSON
+
 instance Show RolePermissions where
   show = show . getRolePermissions
 

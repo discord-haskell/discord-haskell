@@ -16,7 +16,6 @@ import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.User (User)
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 import Data.List
-import Text.Read (readMaybe)
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
@@ -274,7 +273,7 @@ instance FromJSON Role where
          <*> o .: "color"
          <*> o .: "hoist"
          <*> o .: "position"
-         <*> fmap (readMaybe . T.unpack) (o .: "permissions") .!= RolePermissions 0
+         <*> o .: "permissions"
          <*> o .: "managed"
          <*> o .: "mentionable"
 
