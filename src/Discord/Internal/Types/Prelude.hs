@@ -13,6 +13,8 @@ module Discord.Internal.Types.Prelude
 
   , Snowflake (..)
   , snowflakeCreationDate
+
+  , RolePermissions (..)
   
   , DiscordId (..)
   , ChannelId
@@ -110,6 +112,21 @@ instance FromJSON Snowflake where
 
 instance ToHttpApiData Snowflake where
   toUrlPiece = T.pack . show
+
+newtype RolePermissions = RolePermissions { getRolePermissions :: Integer } 
+  deriving (Eq, Ord, Num, Bits, Enum, Real, Integral)
+
+instance Read RolePermissions where
+  readsPrec p = fmap (first RolePermissions) . readsPrec p
+
+instance ToJSON RolePermissions where
+  toJSON = toJSON . getRolePermissions
+
+instance FromJSON RolePermissions where
+  parseJSON = fmap RolePermissions . parseJSON
+
+instance Show RolePermissions where
+  show = show . getRolePermissions
 
 newtype DiscordId a = DiscordId { unId :: Snowflake }
   deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)

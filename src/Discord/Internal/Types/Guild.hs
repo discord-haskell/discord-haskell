@@ -13,19 +13,16 @@ import Data.Default (Default(..))
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
-import Discord.Internal.Types.User (User, GuildMember (memberRoles))
+import Discord.Internal.Types.User (User)
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
-import Data.Bits
 import Data.List
-import Data.Maybe (fromMaybe)
-import Text.Read (readMaybe)
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
 --
 -- https://discord.com/developers/docs/resources/guild#guild-object
 data Guild = Guild
-      { guildId                   :: GuildId              -- ^ Gulid id
+      { guildId                   :: GuildId              -- ^ Guild id
       , guildName                 :: T.Text               -- ^ Guild name (2 - 100 chars)
       , guildIcon                 :: Maybe T.Text         -- ^ Icon hash
       , guildIconHash             :: Maybe T.Text         -- ^ Icon hash, when returned in template object
@@ -264,7 +261,7 @@ data Role =
       , roleColor   :: DiscordColor              -- ^ Integer representation of color code
       , roleHoist   :: Bool                      -- ^ If the role is pinned in the user listing
       , rolePos     :: Integer                   -- ^ Position of this role
-      , rolePerms   :: T.Text                    -- ^ Permission bit set
+      , rolePerms   :: RolePermissions           -- ^ Permission bit set
       , roleManaged :: Bool                      -- ^ Whether this role is managed by an integration
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
     } deriving (Show, Read, Eq, Ord)
@@ -280,73 +277,11 @@ instance FromJSON Role where
          <*> o .: "managed"
          <*> o .: "mentionable"
 
+
 -- | If there is no such role on the guild return nothing
 --   otherwise return the role. Take the head of the list. List should always be one, because the ID is unique
 roleIdToRole :: Guild -> RoleId -> Maybe Role
 roleIdToRole  g r = find(\x -> roleId x == r) $ guildRoles g
-
-data PermissionFlag =
-    CREATE_INSTANT_INVITE
-  | KICK_MEMBERS
-  | BAN_MEMBERS
-  | ADMINISTRATOR
-  | MANAGE_CHANNELS
-  | MANAGE_GUILD
-  | ADD_REACTIONS
-  | VIEW_AUDIT_LOG
-  | PRIORITY_SPEAKER
-  | STREAM
-  | VIEW_CHANNEL
-  | SEND_MESSAGES
-  | SEND_TTS_MESSAGES
-  | MANAGE_MESSAGES
-  | EMBED_LINKS
-  | ATTACH_FILES
-  | READ_MESSAGE_HISTORY
-  | MENTION_EVERYONE
-  | USE_EXTERNAL_EMOJIS
-  | VIEW_GUILD_INSIGHT
-  | CONNECT
-  | SPEAK
-  | MUTE_MEMBERS
-  | DEAFEN_MEMBERS
-  | MOVE_MEMBERS
-  | USE_VAD
-  | CHANGE_NICKNAME
-  | MANAGE_NICKNAMES
-  | MANAGE_ROLES
-  | MANAGE_WEBHOOKS
-  | MANAGE_EMOJIS_AND_STICKERS
-  | USE_APPLICATION_COMMANDS
-  | REQUEST_TO_SPEAK
-  | MANAGE_EVENTS
-  | MANAGE_THREADS
-  | CREATE_PUBLIC_THREADS
-  | CREATE_PRIVATE_THREADS
-  | USE_EXTERNAL_STICKERS
-  | SEND_MESSAGES_IN_THREADS
-  | USE_EMBEDDED_ACTIVITIES
-  deriving (Enum,Show)
-
-
--- | Check if a given role has the permission
---   RolePerms need to be an int to be converted into its bits
---   Bitwise & checks if rolePermission contains the perm
-hasRolePermission :: Maybe Int -> PermissionFlag -> Bool
-hasRolePermission r p = (.&.) (fromMaybe 0 r) (shift 1 $ fromEnum p) > 0
-
-
-
--- | Check if any Role of an GuildMember has the needed permission
---   If the result of roleIdToRole is Nothing, it appends an "False"
---   Otherwise it checks for the needed permission
-hasGuildMemberPermission :: Guild -> GuildMember -> PermissionFlag -> Bool
-hasGuildMemberPermission g gm p = or $ go (memberRoles gm)
-  where
-    go [] = []
-    go (x:xs)  = case roleIdToRole g x of
-                    Nothing ->  [False] <> go xs
-                    Just a ->  [readMaybe (T.unpack (rolePerms a)) `hasRolePermission` p] <> go xs
 
 
 -- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
