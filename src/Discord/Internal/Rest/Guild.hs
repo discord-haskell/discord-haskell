@@ -181,6 +181,7 @@ data ModifyGuildRoleOpts = ModifyGuildRoleOpts
   , modifyGuildRoleOptsColor           :: Maybe DiscordColor
   , modifyGuildRoleOptsSeparateSidebar :: Maybe Bool
   , modifyGuildRoleOptsMentionable     :: Maybe Bool
+  , modifyGuildRoleOptsIcon            :: Maybe T.Text
   } deriving (Show, Read, Eq, Ord)
 
 instance ToJSON ModifyGuildRoleOpts where
@@ -189,7 +190,8 @@ instance ToJSON ModifyGuildRoleOpts where
                         "permissions" .=? modifyGuildRoleOptsPermissions,
                         "color" .=? modifyGuildRoleOptsColor,
                         "hoist" .=? modifyGuildRoleOptsSeparateSidebar,
-                        "mentionable" .=? modifyGuildRoleOptsMentionable]
+                        "mentionable" .=? modifyGuildRoleOptsMentionable,
+                        "icon" .=? modifyGuildRoleOptsIcon]
 
 -- | Options for `AddGuildMember`
 data AddGuildMemberOpts = AddGuildMemberOpts
