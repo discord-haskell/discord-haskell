@@ -122,8 +122,13 @@ instance Read RolePermissions where
 instance ToJSON RolePermissions where
   toJSON = toJSON . getRolePermissions
 
+-- In v8 and above, all permissions are serialized as strings.
+-- See https://discord.com/developers/docs/topics/permissions#permissions.
 instance FromJSON RolePermissions where
-  parseJSON = fmap RolePermissions . parseJSON
+  parseJSON = withText "RolePermissions" $
+      \text -> case readMaybe (T.unpack text) of
+              Just perms -> pure $ RolePermissions perms
+              Nothing    -> fail "invalid role permissions integer string"
 
 instance Show RolePermissions where
   show = show . getRolePermissions
