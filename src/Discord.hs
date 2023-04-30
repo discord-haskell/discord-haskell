@@ -11,6 +11,7 @@ module Discord
   , readCache
   , stopDiscord
   , getGatewayLatency
+  , measureLatency
 
   , DiscordHandler
 
@@ -31,7 +32,7 @@ import Data.Default (Default, def)
 import Data.IORef (writeIORef)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
-import Data.Time (NominalDiffTime, diffUTCTime)
+import Data.Time (NominalDiffTime, diffUTCTime, getCurrentTime)
 
 import UnliftIO (race, try, finally, SomeException, IOException, readIORef)
 import UnliftIO.Concurrent
@@ -214,6 +215,8 @@ startLogger handle logC = forkIO $ forever $
          -- writeChan logC "Log handler failed"
          pure ()
 
+-- | Read the gateway latency from the last time we sent and received a 
+-- Heartbeat. From Europe tends to give ~110ms
 getGatewayLatency :: DiscordHandler NominalDiffTime
 getGatewayLatency = do
   gw <- asks discordHandleGateway
@@ -225,3 +228,18 @@ getGatewayLatency = do
     if ack > send1 -- if the ack is before the send just gone, use the previous send
       then send1
       else send2
+
+-- | Measure the current latency by making a request and measuring the time 
+-- taken. From Europe tends to give 200ms-800ms.
+--
+-- The request is getting the bot's user, which requires the `identify` scope.
+measureLatency :: DiscordHandler NominalDiffTime
+measureLatency = do
+  startTime <- liftIO getCurrentTime
+  _ <- restCall GetCurrentUser
+  endTime <- liftIO getCurrentTime
+  pure $ diffUTCTime endTime startTime
+
+-- internal note: it seems bad that it's taking 2x-8x as much time to perform 
+-- this specific request, considering that the latency we expect is much less.
+-- might be worth looking into efficiencies or a better event to use.
