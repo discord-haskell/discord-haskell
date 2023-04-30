@@ -3,7 +3,6 @@
 import Control.Monad (when, void)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
-import Data.Time as Time
 
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent

@@ -35,7 +35,6 @@ executable ping-pong
     ExampleUtils
   build-depends:       base
                      , text
-                     , time
                      , unliftio
                      , discord-haskell
 
