@@ -3,6 +3,7 @@
 import Control.Monad (when, void)
 import qualified Data.Text as T
 import qualified Data.Text.IO as TIO
+import Data.Time as Time
 
 import UnliftIO (liftIO)
 import UnliftIO.Concurrent
@@ -71,11 +72,13 @@ eventHandler event = case event of
         Right m' <- restCall (R.CreateMessage (messageChannelId m) "Pong")
         void $ restCall (R.EditMessage (messageChannelId m, messageId m') (def {R.messageDetailedContent=messageContent m' <> "!"}))
 
+        latency <- getGatewayLatency
+
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
         -- Use ":info" in ghci to explore the type
         let opts :: R.MessageDetailedOpts
-            opts = def { R.messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!"
+            opts = def { R.messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!. Here's the current gateway latency: " <> (T.pack . show) (Time.nominalDiffTimeToSeconds latency)
                        , R.messageDetailedTTS = True
                        , R.messageDetailedAllowedMentions = Just $
                           def { R.mentionEveryone = False

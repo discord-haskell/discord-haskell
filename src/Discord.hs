@@ -10,6 +10,7 @@ module Discord
   , sendCommand
   , readCache
   , stopDiscord
+  , getGatewayLatency
 
   , DiscordHandler
 
@@ -24,14 +25,15 @@ module Discord
 
 import Prelude hiding (log)
 import Control.Exception (Exception)
-import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever)
+import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever, asks)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import Data.IORef (writeIORef)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
+import Data.Time (NominalDiffTime, diffUTCTime)
 
-import UnliftIO (race, try, finally, SomeException, IOException)
+import UnliftIO (race, try, finally, SomeException, IOException, readIORef)
 import UnliftIO.Concurrent
 
 import Discord.Handle
@@ -212,3 +214,14 @@ startLogger handle logC = forkIO $ forever $
          -- writeChan logC "Log handler failed"
          pure ()
 
+getGatewayLatency :: DiscordHandler NominalDiffTime
+getGatewayLatency = do
+  gw <- asks discordHandleGateway
+  (send1, send2) <- readIORef (gatewayHandleHeartbeatTimes gw)
+
+  ack <- readIORef (gatewayHandleHeartbeatAckTimes gw)
+
+  pure . diffUTCTime ack $ 
+    if ack > send1 -- if the ack is before the send just gone, use the previous send
+      then send1
+      else send2
