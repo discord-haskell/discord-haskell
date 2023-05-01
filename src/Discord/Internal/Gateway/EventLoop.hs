@@ -194,8 +194,8 @@ runEventLoop thehandle sendablesData log = do loop
       Right Reconnect        -> pure LoopReconnect
       Right HeartbeatAck     -> do
         currTime <- getCurrentTime
-        result <- atomicModifyIORef' (gatewayHandleHeartbeatAckTimes thehandle) (dupe . const currTime)
-        result `seq` loop
+        _ <- atomicModifyIORef' (gatewayHandleHeartbeatAckTimes thehandle) (dupe . const currTime)
+        loop
       Right (ParseError _)   -> loop  -- getPayload logs the parse error. nothing to do here
 
       Left (CloseRequest code str) -> case code of
@@ -251,8 +251,8 @@ heartbeat sendablesData sendTimes seqKey = do
 sendHeartbeat :: SendablesData -> IORef (UTCTime, UTCTime) -> Integer -> IO ()
 sendHeartbeat sendablesData sendTimes seqKey = do
   currTime <- getCurrentTime
-  result <- atomicModifyIORef' sendTimes (dupe . (currTime,) . fst)
-  result `seq` writeChan (librarySendables sendablesData) (Heartbeat seqKey)
+  _ <- atomicModifyIORef' sendTimes (dupe . (currTime,) . fst)
+  writeChan (librarySendables sendablesData) (Heartbeat seqKey)
 
 -- | Infinite loop to send library/user events to discord with the actual websocket connection
 sendableLoop :: Connection -> GatewayHandle -> SendablesData -> Chan T.Text -> IO ()
