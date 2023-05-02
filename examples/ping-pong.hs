@@ -71,11 +71,14 @@ eventHandler event = case event of
         Right m' <- restCall (R.CreateMessage (messageChannelId m) "Pong")
         void $ restCall (R.EditMessage (messageChannelId m, messageId m') (def {R.messageDetailedContent=messageContent m' <> "!"}))
 
+        latency <- getGatewayLatency
+        mLatency <- measureLatency
+
         -- A more complex message. Text-to-speech, does not mention everyone nor
         -- the user, and uses Discord native replies.
         -- Use ":info" in ghci to explore the type
         let opts :: R.MessageDetailedOpts
-            opts = def { R.messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!"
+            opts = def { R.messageDetailedContent = "Here's a more complex message, but doesn't ping @everyone!. Here's the current gateway latency: " <> (T.pack . show) ([latency, mLatency])
                        , R.messageDetailedTTS = True
                        , R.messageDetailedAllowedMentions = Just $
                           def { R.mentionEveryone = False

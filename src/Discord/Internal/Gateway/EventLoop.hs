@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections #-}
 
 -- | Provides logic code for interacting with the Discord websocket
 --   gateway. Realistically, this is probably lower level than most
@@ -18,6 +19,7 @@ import Data.Aeson (eitherDecode, encode)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString.Lazy as BL
+import Data.Time (getCurrentTime)
 
 import Wuss (runSecureClient)
 import Network.Socket (HostName)
@@ -45,14 +47,18 @@ data GatewayHandle = GatewayHandle
     -- may contain a different value. This should never contain trailing slashes,
     -- or any "wss://" prefixes, since HostNames of this kind are not supported
     -- by the websockets library.
-    gatewayHandleHostname       :: IORef HostName
+    gatewayHandleHostname       :: IORef HostName,
+    -- | The last time a heartbeatack was received
+    gatewayHandleHeartbeatAckTimes    :: IORef UTCTime,
+    -- | The last two times a heartbeat was sent
+    gatewayHandleHeartbeatTimes       :: IORef (UTCTime, UTCTime)
   }
 
 -- | Ways the gateway connection can fail with no possibility of recovery.
 newtype GatewayException = GatewayExceptionIntent T.Text
   deriving (Show)
 
- 
+
 -- | State of the eventloop
 data LoopState = LoopStart
                | LoopClosed
@@ -140,7 +146,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                                                             }
                                 -- start websocket sending loop
                                 sendsId <- forkIO $ sendableLoop conn gatewayHandle sending log
-                                heart <- forkIO $ heartbeat sending (gatewayHandleLastSequenceId gatewayHandle)
+                                heart <- forkIO $ heartbeat sending (gatewayHandleHeartbeatTimes gatewayHandle) (gatewayHandleLastSequenceId gatewayHandle)
                                 writeChan internal message
 
                                 -- run connection eventloop
@@ -182,11 +188,14 @@ runEventLoop thehandle sendablesData log = do loop
       Right (Hello _interval) -> do writeChan log "eventloop - unexpected hello"
                                     loop
       Right (HeartbeatRequest sq) -> do writeIORef (gatewayHandleLastSequenceId thehandle) sq
-                                        writeChan (librarySendables sendablesData) (Heartbeat sq)
+                                        sendHeartbeat sendablesData (gatewayHandleHeartbeatTimes thehandle) sq
                                         loop
       Right (InvalidSession retry) -> pure $ if retry then LoopReconnect else LoopStart
       Right Reconnect        -> pure LoopReconnect
-      Right HeartbeatAck     -> loop
+      Right HeartbeatAck     -> do
+        currTime <- getCurrentTime
+        _ <- atomicModifyIORef' (gatewayHandleHeartbeatAckTimes thehandle) (dupe . const currTime)
+        loop
       Right (ParseError _)   -> loop  -- getPayload logs the parse error. nothing to do here
 
       Left (CloseRequest code str) -> case code of
@@ -231,14 +240,19 @@ getPayload conn log = try $ do
                     pure (ParseError (T.pack err))
 
 -- | Infinite loop to send heartbeats to the chan
-heartbeat :: SendablesData -> IORef Integer -> IO ()
-heartbeat sendablesData seqKey = do
+heartbeat :: SendablesData -> IORef (UTCTime, UTCTime) -> IORef Integer -> IO ()
+heartbeat sendablesData sendTimes seqKey = do
   threadDelay (3 * 10^(6 :: Int))
   forever $ do
     num <- readIORef seqKey
-    writeChan (librarySendables sendablesData) (Heartbeat num)
+    sendHeartbeat sendablesData sendTimes num
     threadDelay (fromInteger (heartbeatInterval sendablesData * 1000))
 
+sendHeartbeat :: SendablesData -> IORef (UTCTime, UTCTime) -> Integer -> IO ()
+sendHeartbeat sendablesData sendTimes seqKey = do
+  currTime <- getCurrentTime
+  _ <- atomicModifyIORef' sendTimes (dupe . (currTime,) . fst)
+  writeChan (librarySendables sendablesData) (Heartbeat seqKey)
 
 -- | Infinite loop to send library/user events to discord with the actual websocket connection
 sendableLoop :: Connection -> GatewayHandle -> SendablesData -> Chan T.Text -> IO ()
@@ -249,7 +263,6 @@ sendableLoop conn ghandle sendablesData _log = sendLoop
       threadDelay $ round ((10^(6 :: Int)) * (62 / 120) :: Double)
    -- payload :: Either GatewaySendableInternal GatewaySendable
       payload <- race nextLibrary nextUser
-   -- writeChan _log ("gateway - sending " <> TE.decodeUtf8 (BL.toStrict (either encode encode payload)))
       sendTextData conn (either encode encode payload)
       sendLoop
 
@@ -264,4 +277,5 @@ sendableLoop conn ghandle sendablesData _log = sendLoop
                 then readChan (gatewayHandleUserSendables ghandle)
                 else threadDelay (4 * (10^(6::Int))) >> nextUser
 
-
+dupe :: a -> (a, a)
+dupe a = (a, a)

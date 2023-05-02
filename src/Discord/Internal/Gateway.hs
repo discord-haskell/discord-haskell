@@ -17,6 +17,7 @@ import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
+import Data.Time (getCurrentTime)
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
@@ -41,9 +42,9 @@ startGatewayThread auth intent cacheHandle log = do
   seqid <- newIORef 0
   seshid <- newIORef ""
   host <- newIORef "gateway.discord.gg"
-  let gatewayHandle = GatewayHandle events sends status seqid seshid host
+  currTime <- getCurrentTime
+  hbAcks <- newIORef currTime
+  hbSends <- newIORef (currTime, currTime)
+  let gatewayHandle = GatewayHandle events sends status seqid seshid host hbAcks hbSends
   tid <- forkIO $ connectionLoop auth intent gatewayHandle log
   pure (gatewayHandle, tid)
-
-
-
