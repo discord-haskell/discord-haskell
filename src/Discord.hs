@@ -94,6 +94,7 @@ runDiscord opts = do
   logId <- liftIO $ startLogger (discordOnLog opts) log
   (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
+  -- TODO: run GetGatewayBot rest call and select sharding here
   (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
   libE <- newEmptyMVar

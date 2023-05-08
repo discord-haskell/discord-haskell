@@ -115,12 +115,12 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
     firstmessage :: LoopState -> IO (Maybe GatewaySendableInternal)
     firstmessage state =
       case state of
-        LoopStart -> pure $ Just $ Identify auth intent (0, 1)
+        LoopStart -> pure $ Just $ Identify auth intent (0, 1) -- TODO: select shard
         LoopReconnect -> do seqId  <- readIORef (gatewayHandleLastSequenceId gatewayHandle)
                             seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
                             if seshId == ""
                             then do writeChan log "gateway - WARNING seshID was not set by READY?"
-                                    pure $ Just $ Identify auth intent (0, 1)
+                                    pure $ Just $ Identify auth intent (0, 1) -- TODO
                             else pure $ Just $ Resume auth seshId seqId
         LoopClosed -> pure Nothing
 
@@ -207,6 +207,10 @@ runEventLoop thehandle sendablesData log = do loop
           4000 -> pure LoopReconnect
           4006 -> pure LoopStart
           4007 -> pure LoopStart
+          4010 -> do writeChan eventChan (Left (GatewayExceptionIntent $
+                           "Invalid Shards. See documentation " <>
+                           "https://github.com/discord-haskell/discord-haskell/blob/master/docs/sharding.md"))
+                     pure LoopClosed
           4014 -> do writeChan eventChan (Left (GatewayExceptionIntent $
                            "Tried to declare an unauthorized GatewayIntent. " <>
                            "Use the discord app manager to authorize by following: " <>
