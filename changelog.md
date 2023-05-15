@@ -8,6 +8,32 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.15.4
+
+- [matobet](https://github.com/discord-haskell/discord-haskell/pull/148) Adding GHC 9.2.* support
+
+- [aquarial](https://github.com/discord-haskell/discord-haskell/pull/149) Slash command validation extends to numbers
+
+- [0x3alex](https://github.com/discord-haskell/discord-haskell/pull/152) Permissions bit flags
+
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/153) Extending CI testing
+
+- [1Computer1](https://github.com/discord-haskell/discord-haskell/pull/154) Exporting some internal types
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/155) Select menu additions
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/158) Caching more information
+
+- [tam-carre](https://github.com/discord-haskell/discord-haskell/pull/159) New example for interactions
+
+- [XanderDJ](https://github.com/discord-haskell/discord-haskell/pull/164) New role permissions setup
+
+- [chuahao](https://github.com/discord-haskell/discord-haskell/pull/168) Fixing parsing of permissions
+
+- [chuahao](https://github.com/discord-haskell/discord-haskell/pull/169) Adding role icon to `ModifyGuildRoleOpts`
+
+- [chuahao](https://github.com/discord-haskell/discord-haskell/pull/170) Add utilities to measure the latency to discord
+
 ## 1.15.3
 
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/145) Fixing behind the scenes for hackage
