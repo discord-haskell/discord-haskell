@@ -111,6 +111,32 @@ compileGatewayIntent GatewayIntent{..} =
                        ]
        ]
 
+
+data GatewayBot = GatewayBot
+                { gatewayBotWSSUrl :: T.Text
+                , gatewayBotRecommendedShards :: Integer
+                , gatewayBotSessionStartLimit :: SessionStartLimit
+                } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON GatewayBot where
+  parseJSON = withObject "gatewaybot" $ \o ->
+    GatewayBot <$> o .: "url"
+               <*> o .: "shards"
+               <*> o .: "session_start_limit"
+
+data SessionStartLimit = SessionStartLimit
+                       { sessionStartLimitTotal :: Integer
+                       , sessionStartLimitRemainingStarts :: Integer
+                       , sessionStartLimitResetAfter :: Integer
+                       , sessionStartLimitMaxConcurrency :: Integer
+                       } deriving (Show, Read, Eq, Ord)
+instance FromJSON SessionStartLimit where
+  parseJSON = withObject "sessionstartlimit" $ \o ->
+    SessionStartLimit <$> o .: "total"
+                      <*> o .: "remaining"
+                      <*> o .: "reset_after"
+                      <*> o .: "max_concurrency"
+
 -- | Sent to gateway by a user
 data GatewaySendable
   = RequestGuildMembers RequestGuildMembersOpts
