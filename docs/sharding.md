@@ -13,3 +13,12 @@ discord-haskell will handle sharding across multiple processess on the same comp
   
 - https://discord.com/developers/docs/topics/gateway#sharding
   - Discord docs on sharding
+
+- https://github.com/jberryman/chan-benchmarks
+  - adding and removing items from a chan is not a performance bottleneck for events.
+
+
+Some research questions:
+- How do ratelimits work with multiple shards?
+- If the library is locally sharded into multiple connections, can it send websocket commands to any one? Any reason to allow preferences?
+- what happens with overlapping shards: say `[0,2][1,2]` and `[0,3][1,3][2,3]`. Would an event be sent to both copies? One of them randomly?
