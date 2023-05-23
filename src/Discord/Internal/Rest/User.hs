@@ -47,6 +47,7 @@ data UserRequest a where
   CreateDM             :: UserId -> UserRequest Channel
 
   GetUserConnections   :: UserRequest [ConnectionObject]
+  GetGatewayBot        :: UserRequest GatewayBot
 
 -- | @parseAvatarImage bs@ will attempt to convert the given image bytestring
 -- @bs@ to the base64 format expected by the Discord API. It may return Left
@@ -70,6 +71,7 @@ userMajorRoute c = case c of
   (GetUserDMs) ->                       "get_dms "
   (CreateDM _) ->                       "make_dm "
   (GetUserConnections) ->           "connections "
+  (GetGatewayBot) ->                 "gatewaybot "
 
 users :: R.Url 'R.Https
 users = baseUrl /: "users"
@@ -96,3 +98,6 @@ userJsonRequest c = case c of
 
   (GetUserConnections) ->
     Get (users /: "@me" /: "connections") mempty
+
+  (GetGatewayBot) ->
+    Get (baseUrl /: "gateway" /: "bot") mempty
