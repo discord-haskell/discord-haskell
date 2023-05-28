@@ -20,7 +20,7 @@ import Data.IORef (newIORef)
 import qualified Data.Text as T
 import Data.Time (getCurrentTime)
 
-import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
+import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent, GatewayBot(..), extractHostname)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), initializeCache)
 
@@ -35,14 +35,14 @@ startCacheThread isEnabled log = do
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, ThreadId)
-startGatewayThread auth intent cacheHandle log = do
+startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> GatewayBot -> Chan T.Text -> IO (GatewayHandle, ThreadId)
+startGatewayThread auth intent cacheHandle gatewaybot log = do
   events <- dupChan (cacheHandleEvents cacheHandle)
   sends <- newChan
   status <- newIORef Nothing
   seqid <- newIORef 0
   seshid <- newIORef ""
-  host <- newIORef "gateway.discord.gg"
+  host <- newIORef (extractHostname (T.unpack (gatewayBotWSSUrl gatewaybot)))
   currTime <- getCurrentTime
   hbAcks <- newIORef currTime
   hbSends <- newIORef (currTime, currTime)

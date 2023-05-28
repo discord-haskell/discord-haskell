@@ -92,28 +92,35 @@ runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
-  (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
-  -- TODO: run GetGatewayBot rest call and select sharding here
-  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
-  libE <- newEmptyMVar
+  mbGateway <- writeRestCall rest R.GetGatewayBot
+  case mbGateway of
+    Left err -> do
+      discordOnEnd opts
+      killThread restId
+      pure $ T.pack $ "Library could not start a rest call to discord. Error: " <> show err
+    Right gatewaybot -> do
+      (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
+      (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache gatewaybot log
 
-  let handle = DiscordHandle { discordHandleRestChan = rest
-                             , discordHandleGateway = gate
-                             , discordHandleCache = cache
-                             , discordHandleLog = log
-                             , discordHandleLibraryError = libE
-                             , discordHandleThreads =
-                                 [ HandleThreadIdLogger logId
-                                 , HandleThreadIdRest restId
-                                 , HandleThreadIdCache cacheId
-                                 , HandleThreadIdGateway gateId
-                                 ]
-                             }
+      libE <- newEmptyMVar
 
-  finally (runDiscordLoop handle opts)
-          (discordOnEnd opts >> runReaderT stopDiscord handle)
+      let handle = DiscordHandle { discordHandleRestChan = rest
+                                 , discordHandleGateway = gate
+                                 , discordHandleCache = cache
+                                 , discordHandleLog = log
+                                 , discordHandleLibraryError = libE
+                                 , discordHandleThreads =
+                                     [ HandleThreadIdLogger logId
+                                     , HandleThreadIdRest restId
+                                     , HandleThreadIdCache cacheId
+                                     , HandleThreadIdGateway gateId
+                                     ]
+                                 }
+
+      finally (runDiscordLoop handle opts)
+              (discordOnEnd opts >> runReaderT stopDiscord handle)
 
 -- | Runs the main loop 
 runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
