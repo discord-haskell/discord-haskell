@@ -41,6 +41,11 @@ data GatewaySendableInternal
   deriving (Show, Read, Eq, Ord)
 
 
+-- | How to shard the gateway process
+--  https://github.com/discord-haskell/discord-haskell/blob/master/docs/sharding.md
+data DiscordSharding = DiscordShardingAuto
+                     | DiscordShardingSpecific [(Int, Int)]
+
 -- | Gateway intents to subrscribe to
 -- 
 -- Details of which intent englobs what data is avalilable at
