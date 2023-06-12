@@ -15,12 +15,12 @@ module Discord.Internal.Gateway
 
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
+import Control.Concurrent (threadDelay, forkIO, ThreadId, newEmptyMVar, MVar)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
 import Data.Time (getCurrentTime)
 
-import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent, GatewayBot(..), extractHostname)
+import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent, DiscordSharding(..), GatewayBot(..), extractHostname)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), initializeCache)
 
@@ -35,8 +35,8 @@ startCacheThread isEnabled log = do
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> GatewayBot -> Chan T.Text -> IO (GatewayHandle, ThreadId)
-startGatewayThread auth intent cacheHandle gatewaybot log = do
+startGatewayThread :: Auth -> GatewayIntent -> DiscordSharding -> GatewayBot -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, [ThreadId])
+startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
   events <- dupChan (cacheHandleEvents cacheHandle)
   sends <- newChan
   status <- newIORef Nothing
@@ -47,5 +47,17 @@ startGatewayThread auth intent cacheHandle gatewaybot log = do
   hbAcks <- newIORef currTime
   hbSends <- newIORef (currTime, currTime)
   let gatewayHandle = GatewayHandle events sends status seqid seshid host hbAcks hbSends
-  tid <- forkIO $ connectionLoop auth intent gatewayHandle log
-  pure (gatewayHandle, tid)
+  tids <- connectEventLoops (\shard -> connectionLoop auth shard intent gatewayHandle log) (decideSharding sharding gatewaybot)
+  pure (gatewayHandle, tids)
+
+decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
+decideSharding sharding gatewaybot = case sharding of
+                                       DiscordShardingSpecific shards -> shards
+                                       DiscordShardingAuto -> let n = fromIntegral $ gatewayBotRecommendedShards gatewaybot
+                                                              in [(x, n) | x <- [0..(n-1)]]
+
+connectEventLoops :: ((Int, Int) -> IO ()) -> [(Int, Int)] -> IO [ThreadId]
+connectEventLoops eventLoop shards = mapM startConnection (zip [0..] shards)
+  where
+  startConnection :: (Int, (Int, Int)) -> IO ThreadId
+  startConnection (delay, shard) = forkIO $ threadDelay (delay * 5*10^6) >> eventLoop shard
