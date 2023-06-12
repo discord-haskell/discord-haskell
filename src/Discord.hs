@@ -73,6 +73,8 @@ data RunDiscordOpts = RunDiscordOpts
     discordGatewayIntent :: GatewayIntent
   , -- | Whether to use the cache (may use a lot of memory, only enable if it will be used!)
     discordEnableCache :: Bool
+    -- | How to shard the gateway process
+  , discordSharding :: DiscordSharding
   }
 
 -- | Default values for `RunDiscordOpts`
@@ -85,6 +87,7 @@ instance Default RunDiscordOpts where
                        , discordForkThreadForEvents = True
                        , discordGatewayIntent = def
                        , discordEnableCache = False
+                       , discordSharding = DiscordShardingAuto
                        }
 
 -- | Entrypoint to the library 
@@ -102,7 +105,7 @@ runDiscord opts = do
       pure $ T.pack $ "Library could not start a rest call to discord. Error: " <> show err
     Right gatewaybot -> do
       (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
-      (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache gatewaybot log
+      (gate, gateIds) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) (discordSharding opts) gatewaybot cache log
 
       libE <- newEmptyMVar
 
@@ -115,8 +118,7 @@ runDiscord opts = do
                                      [ HandleThreadIdLogger logId
                                      , HandleThreadIdRest restId
                                      , HandleThreadIdCache cacheId
-                                     , HandleThreadIdGateway gateId
-                                     ]
+                                     ] ++ map HandleThreadIdGateway gateIds
                                  }
 
       finally (runDiscordLoop handle opts)

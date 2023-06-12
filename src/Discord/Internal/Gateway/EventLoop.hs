@@ -78,6 +78,7 @@ data SendablesData = SendablesData
 --
 -- @
 --  Auth                                                         needed to connect
+--  Shard                                                        needed to connect
 --  GatewayIntent                                                needed to connect
 --  GatewayHandle (eventsGives,status,usersends,seq,sesh)        needed all over
 --  log :: Chan (T.Text)                                         needed all over
@@ -89,8 +90,8 @@ data SendablesData = SendablesData
 --  sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
 --  sessionId :: Text                                  set by Ready,  need reconnect
 -- @
-connectionLoop :: Auth -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
-connectionLoop auth intent gatewayHandle log = outerloop LoopStart
+connectionLoop :: Auth -> (Int, Int) -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
+connectionLoop auth shard intent gatewayHandle log = outerloop LoopStart
     where
 
     -- | Main connection loop. Catch exceptions and reconnect.
@@ -115,7 +116,7 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
     firstmessage :: LoopState -> IO (Maybe GatewaySendableInternal)
     firstmessage state =
       case state of
-        LoopStart -> pure $ Just $ Identify auth intent (0, 1) -- TODO: select shard
+        LoopStart -> pure $ Just $ Identify auth intent shard
         LoopReconnect -> do seqId  <- readIORef (gatewayHandleLastSequenceId gatewayHandle)
                             seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
                             if seshId == ""
