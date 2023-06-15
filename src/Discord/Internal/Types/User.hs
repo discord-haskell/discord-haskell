@@ -15,6 +15,7 @@ data User = User
   { userId          :: UserId             -- ^ The user's id.
   , userName        :: T.Text             -- ^ The user's username (not unique)
   , userDiscrim     :: Maybe T.Text       -- ^ The user's 4-digit discord-tag.
+  , userGlobalName  :: Maybe T.Text       -- ^ The user's display name.
   , userAvatar      :: Maybe T.Text       -- ^ The user's avatar hash.
   , userIsBot       :: Bool               -- ^ User is an OAuth2 application.
   , userIsWebhook   :: Bool               -- ^ User is a webhook.
@@ -36,6 +37,7 @@ instance FromJSON User where
     User <$> o .:  "id"
          <*> o .:  "username"
          <*> o .:? "discriminator" -- possibly not there in the case of webhooks
+         <*> o .:? "global_name"
          <*> o .:? "avatar"
          <*> o .:? "bot" .!= False
          <*> pure False -- webhook
@@ -56,6 +58,7 @@ instance ToJSON User where
               [ "id" .== userId
               , "username" .== userName
               , "discriminator" .=? userDiscrim
+              , "global_name" .=? userGlobalName
               , "avatar" .=? userAvatar
               , "bot" .== userIsBot
               , "system" .=? userIsSystem
