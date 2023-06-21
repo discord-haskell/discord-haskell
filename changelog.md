@@ -8,6 +8,10 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.15.5
+
+- [Gregory1234](https://github.com/discord-haskell/discord-haskell/pull/173) Adding `global_name` field to the User object
+
 ## 1.15.4
 
 - [matobet](https://github.com/discord-haskell/discord-haskell/pull/148) Adding GHC 9.2.* support
