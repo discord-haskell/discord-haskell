@@ -22,7 +22,7 @@ module Discord.Internal.Rest.Channel
 
 import Data.Aeson
 import Data.Default (Default, def)
-import Data.Emoji (unicodeByName)
+import Text.Emoji (emojiFromAlias)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
@@ -401,11 +401,25 @@ channelMajorRoute c = case c of
 cleanupEmoji :: T.Text -> T.Text
 cleanupEmoji emoji =
   let noAngles = T.replace "<" "" (T.replace ">" "" emoji)
-      byName = T.pack <$> unicodeByName (T.unpack (T.replace ":" "" emoji))
-  in case (byName, T.stripPrefix ":" noAngles) of
-    (Just e, _) -> e
-    (_, Just a) -> "custom:" <> a
-    (_, Nothing) -> noAngles
+      noColons = T.replace ":" "" emoji
+      toneModifier s = case s of
+        "tone1" -> Just "\x1f3fb"
+        "tone2" -> Just "\x1f3fc"
+        "tone3" -> Just "\x1f3fd"
+        "tone4" -> Just "\x1f3fe"
+        "tone5" -> Just "\x1f3ff"
+        _ -> Nothing
+      byName = case emojiFromAlias noColons of
+        Just e -> Just e
+        Nothing ->
+          let (prefix, tone) = T.breakOnEnd "_" noColons
+           in case ((fst <$> T.unsnoc prefix) >>= emojiFromAlias, toneModifier tone) of
+                (Just p, Just t) -> Just (p <> t)
+                _ -> Nothing
+   in case (byName, T.stripPrefix ":" noAngles) of
+        (Just e, _) -> e
+        (_, Just a) -> "custom:" <> a
+        (_, Nothing) -> noAngles
 
 channels :: R.Url 'R.Https
 channels = baseUrl /: "channels"
