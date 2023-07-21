@@ -26,7 +26,8 @@ module Discord
 
 import Prelude hiding (log)
 import Control.Exception (Exception)
-import Control.Monad.Reader (ReaderT, runReaderT, void, ask, liftIO, forever, asks)
+import Control.Monad (void, forever)
+import Control.Monad.Reader (ReaderT, runReaderT, ask, liftIO, asks)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import Data.IORef (writeIORef)
