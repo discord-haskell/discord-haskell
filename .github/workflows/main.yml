@@ -53,7 +53,6 @@ jobs:
         with:
           # We install a global GHC and use Stack with --system-ghc
           ghc-version: ${{ matrix.ghc-version }}
-          enable-stack: true
 
       # First run cabal, since it is generally quicker
       - name: "Cabal: Update cabal package database, generate build plan"
@@ -76,16 +75,3 @@ jobs:
 
       - name: "Cabal: Build"
         run: cabal build
-
-      # Now run stack
-      - name: "Stack: Cache ~/.stack"
-        id: cache-stack
-        uses: actions/cache@v2
-        with:
-          path: ~/.stack
-          key: stack-${{ runner.os }}-${{ matrix.ghc-version }}-${{ hashFiles('stack.yaml') }}
-          restore-keys: |
-            stack-${{ runner.os }}-${{ matrix.ghc-version }}
-
-      - name: "Stack: Build"
-        run: stack build --system-ghc
