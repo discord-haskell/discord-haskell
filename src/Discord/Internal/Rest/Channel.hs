@@ -580,7 +580,7 @@ channelJsonRequest c = case c of
            mempty
 
   (StartThreadNoMessage chan sto) ->
-      Post (channels /~ chan /: "messages" /: "threads")
+      Post (channels /~ chan /: "threads")
            (pure $ R.ReqBodyJson $ toJSON sto)
            mempty
 
