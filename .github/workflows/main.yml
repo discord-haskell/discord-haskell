@@ -28,14 +28,14 @@ jobs:
       - name: Parse the cabal tested-with stanza
         id: parse
         run: |
-          echo "::set-output name=tested-with-versions::$(runghc .github/workflows/parseVersions.hs)"
+          echo "tested-with-versions=$(runghc .github/workflows/parseVersions.hs)" >> $GITHUB_OUTPUT
 
       - name: Set the GHC matrix for the next job
         id: set-ghc-matrix
         # We use single quotes here, since the output from the previous step
         # will not have escaped double quotes, and it's just easier to use single
         # quotes on the outside than try to escape the inner double quotes.
-        run: echo '::set-output name=versions::{"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}'
+        run: echo 'versions={"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}' >> $GITHUB_OUTPUT
 
   build:
     name: Cabal Build Check
