@@ -37,7 +37,7 @@ jobs:
         # quotes on the outside than try to escape the inner double quotes.
         run: echo 'versions={"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}' >> $GITHUB_OUTPUT
 
-  build:
+  build-cabal:
     name: Cabal Build Check
     needs: generate-matrix
     runs-on: ubuntu-latest
