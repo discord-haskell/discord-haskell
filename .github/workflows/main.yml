@@ -14,8 +14,11 @@ jobs:
   # and use fromJson in the next job to construct the matrix.
   # This dynamic approach means we don't have to update the CI file when we
   # change supported GHC versions.
+  #
+  # Only the Cabal build job will use the generated matrix, since Stack has a
+  # pinned GHC version in the stack.yaml file.
   generate-matrix:
-    name: Generate GHC build matrix
+    name: Generate GHC build matrix for Cabal
     runs-on: ubuntu-latest
     outputs:
       ghc-matrix: ${{ steps.set-ghc-matrix.outputs.versions }}
@@ -25,17 +28,17 @@ jobs:
       - name: Parse the cabal tested-with stanza
         id: parse
         run: |
-          echo "::set-output name=tested-with-versions::$(runghc .github/workflows/parseVersions.hs)"
+          echo "tested-with-versions=$(runghc .github/workflows/parseVersions.hs)" >> $GITHUB_OUTPUT
 
       - name: Set the GHC matrix for the next job
         id: set-ghc-matrix
         # We use single quotes here, since the output from the previous step
         # will not have escaped double quotes, and it's just easier to use single
         # quotes on the outside than try to escape the inner double quotes.
-        run: echo '::set-output name=versions::{"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}'
+        run: echo 'versions={"ghc-version":${{ steps.parse.outputs.tested-with-versions }}}' >> $GITHUB_OUTPUT
 
-  build:
-    name: Build Check
+  build-cabal:
+    name: Cabal Build Check
     needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
@@ -48,14 +51,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      # Although the GitHub Action Runner comes with pre-installed Cabal and GHC,
+      # we'll only use Cabal out of the box since that is independent of
+      # the GHC version. For GHC, we'll use the Haskell setup action to install
+      # the correct version needed for the build.
       - uses: haskell/actions/setup@v2
         id: setup-haskell
         with:
-          # We install a global GHC and use Stack with --system-ghc
+          # We install a global GHC
           ghc-version: ${{ matrix.ghc-version }}
-          enable-stack: true
 
-      # First run cabal, since it is generally quicker
       - name: "Cabal: Update cabal package database, generate build plan"
         run: |
           cabal update
@@ -77,15 +82,29 @@ jobs:
       - name: "Cabal: Build"
         run: cabal build
 
-      # Now run stack
+  build-stack:
+    name: Stack Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # Since the GitHub Action Runner comes with a pre-installed Stack, we'll
+      # use that instead of installing our own through the Haskell setup action,
+      # since all we need to test the stack build is Stack itself.
+
       - name: "Stack: Cache ~/.stack"
         id: cache-stack
         uses: actions/cache@v2
         with:
           path: ~/.stack
-          key: stack-${{ runner.os }}-${{ matrix.ghc-version }}-${{ hashFiles('stack.yaml') }}
+          key: stack-${{ runner.os }}-${{ hashFiles('stack.yaml') }}
           restore-keys: |
-            stack-${{ runner.os }}-${{ matrix.ghc-version }}
+            stack-${{ runner.os }}
+
+      - name: "Print GHC version resolved from stack.yaml"
+        run: |
+          stack ghc -- --version
+          stack path --compiler-exe
 
       - name: "Stack: Build"
-        run: stack build --system-ghc
+        run: stack build
