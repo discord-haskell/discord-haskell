@@ -8,6 +8,16 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.15.6
+
+- [penelopeysm](https://github.com/discord-haskell/discord-haskell/pull/176) GHC 9.6 dependencies
+
+- [penelopeysm](https://github.com/discord-haskell/discord-haskell/pull/179) and [penelopeysm](https://github.com/discord-haskell/discord-haskell/pull/181) Improving emoji support
+
+- [penelopeysm](https://github.com/discord-haskell/discord-haskell/pull/182) Fix StartThreadNoMessage endpoint
+
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/183) Slim down stack matrix build
+
 ## 1.15.5
 
 - [Gregory1234](https://github.com/discord-haskell/discord-haskell/pull/173) Adding `global_name` field to the User object
