@@ -129,9 +129,10 @@ data UpdateStatusVoiceOpts = UpdateStatusVoiceOpts
   deriving (Show, Read, Eq, Ord)
 
 -- | Options for `UpdateStatus`
+-- Presence Update - https://discord.com/developers/docs/topics/gateway-events#update-presence
 data UpdateStatusOpts = UpdateStatusOpts
                       { updateStatusOptsSince :: Maybe UTCTime
-                      , updateStatusOptsGame :: Maybe Activity
+                      , updateStatusOptsActivities :: [Activity]
                       , updateStatusOptsNewStatus :: UpdateStatusType
                       , updateStatusOptsAFK :: Bool
                       }
@@ -214,17 +215,13 @@ instance ToJSON GatewaySendableInternal where
     ]
 
 instance ToJSON GatewaySendable where
-  toJSON (UpdateStatus (UpdateStatusOpts since game status afk)) = object [
+  toJSON (UpdateStatus (UpdateStatusOpts since activities status afk)) = object [
       "op" .= (3 :: Int)
     , "d"  .= object [
         "since" .= (since <&> \s -> 1000 * utcTimeToPOSIXSeconds s) -- takes UTCTime and returns unix time (in milliseconds)
       , "afk" .= afk
       , "status" .= statusString status
-      , "game" .= (game <&> \a -> object [
-                                "name" .= activityName a
-                              , "type" .= fromDiscordType (activityType a)
-                              , "url" .= activityUrl a
-                              ])
+      , "activities" .= activities
       ]
     ]
   toJSON (UpdateStatusVoice (UpdateStatusVoiceOpts guild channel mute deaf)) =

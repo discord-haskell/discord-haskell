@@ -1,5 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE CPP #-}
 
 -- | Types relating to Discord Guilds (servers)
 module Discord.Internal.Types.Guild where
@@ -7,15 +10,23 @@ module Discord.Internal.Types.Guild where
 import Data.Time.Clock
 
 import Data.Aeson
+import Data.Aeson.Types (Parser)
 import qualified Data.Text as T
 import Data.Data (Data)
-import Data.Default (Default(..))
+import Data.List
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.User (User)
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
-import Data.List
+
+-- we support aesons before and after 2, so we have to play around with this
+-- to make sure we import the right module
+#if MIN_VERSION_aeson(2, 0, 0)
+import qualified Data.Aeson.KeyMap as KM
+#else
+import qualified Data.HashMap.Strict as KM
+#endif
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
@@ -119,19 +130,33 @@ instance FromJSON GuildUnavailable where
        GuildUnavailable <$> o .: "id"
 
 data PresenceInfo = PresenceInfo
-  { presenceUserId     :: UserId
+  { presenceUserId     :: Maybe UserId
   -- , presenceRoles   :: [RoleId]
-  , presenceActivities :: Maybe [Activity]
+  -- | Activities and the names of their buttons. The buttons field of Activity
+  -- will be blank, as the additional maybe field will have the button names it
+  -- would contain.
+  , presenceActivities :: Maybe [(Activity, Maybe [T.Text])]
   , presenceGuildId    :: Maybe GuildId
-  , presenceStatus     :: T.Text
+  , presenceStatus     :: Maybe T.Text
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
-    PresenceInfo <$> (o .: "user" >>= (.: "id"))
-                 <*> o .:  "activities"
+    PresenceInfo <$> (o .:? "user" >>= mapM (.: "id"))
+                 <*> (o .:? "activities" >>= parseActivities)
                  <*> o .:? "guild_id"
-                 <*> o .:  "status"
+                 <*> o .:? "status"
+    where
+    parseActivities :: Maybe [Value] -> Parser (Maybe [(Activity, Maybe [T.Text])])
+    parseActivities = \case
+      Nothing -> pure Nothing
+      Just vs -> Just <$> mapM parseIncomingActivity vs
+    parseIncomingActivity :: Value -> Parser (Activity, Maybe [T.Text])
+    parseIncomingActivity = withObject "PI Activity w/ BtnNames" $ \o -> do
+      let o' = KM.delete "buttons" o
+      act <- parseJSON (Object o')
+      buttonNames <- o .:? "buttons"
+      pure (act, buttonNames)
 
 -- | Object for a single activity
 --
@@ -139,6 +164,8 @@ instance FromJSON PresenceInfo where
 --
 -- When setting a bot's activity, only the name, url, and type are sent - and
 -- it seems that not many types are permitted either.
+--
+-- Only youtube and twitch urls will work.
 data Activity =
   Activity
     { activityName :: T.Text -- ^ Name of activity
@@ -155,12 +182,15 @@ data Activity =
     -- secrets
     , activityInstance :: Maybe Bool -- ^ Whether or not the activity is an instanced game session
     , activityFlags :: Maybe Integer -- ^ The flags https://discord.com/developers/docs/topics/gateway#activity-object-activity-flags
-    , activityButtons :: Maybe [ActivityButton] -- ^ Custom buttons shown in Rich Presence
+    , activityButtons :: Maybe [ActivityButton] -- ^ Custom buttons shown in Rich Presence. When received, always Nothing!
     }
   deriving (Show, Read, Eq, Ord)
 
-instance Default Activity where
-  def = Activity "discord-haskell" ActivityTypeGame Nothing 0 Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+-- | The quick and easy way to make an activity for a discord bot. 
+--
+-- To set the `activityState` or `activityUrl`, please use record field syntax.
+mkActivity :: T.Text -> ActivityType -> Activity
+mkActivity name typ = Activity name typ Nothing (-1) Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance FromJSON Activity where
   parseJSON = withObject "Activity" $ \o -> do
@@ -179,6 +209,14 @@ instance FromJSON Activity where
              <*> o .:? "instance"
              <*> o .:? "flags"
              <*> o .:? "buttons"
+
+instance ToJSON Activity where
+  toJSON Activity {..} = objectFromMaybes
+    [ "name" .== activityName
+    , "state" .=? activityState
+    , "type" .== fromDiscordType activityType
+    , if activityType == ActivityTypeStreaming then "url" .=? activityUrl else Nothing
+    ]
 
 data ActivityTimestamps = ActivityTimestamps
   { activityTimestampsStart :: Maybe Integer -- ^ unix time in milliseconds
