@@ -18,7 +18,7 @@ import Discord.Internal.Types.Guild
     Role (rolePerms),
     roleIdToRole,
   )
-import Discord.Internal.Types.Prelude (RolePermissions)
+import Discord.Internal.Types.Prelude (RolePermissions (..))
 import Discord.Internal.Types.User (GuildMember (memberRoles))
 
 data PermissionFlag
@@ -66,7 +66,7 @@ data PermissionFlag
   deriving (Eq, Ord, Enum, Show)
 
 permissionBits :: PermissionFlag -> RolePermissions
-permissionBits p = shift 1 (fromEnum p)
+permissionBits p = shift (RolePermissions 1) (fromEnum p)
 
 -- | Check if a given role has all the permissions
 hasRolePermissions :: [PermissionFlag] -> RolePermissions -> Bool
@@ -76,7 +76,7 @@ hasRolePermissions permissions rolePermissions = (.&.) combinedPermissions roleP
 
 -- | Check if a given role has the permission
 hasRolePermission :: PermissionFlag -> RolePermissions -> Bool
-hasRolePermission p r = (.&.) (permissionBits p) r > 0
+hasRolePermission p r = getRolePermissions (permissionBits p .&. r) > 0
 
 -- | Replace a users rolePerms
 --   with a complete new set of permissions
