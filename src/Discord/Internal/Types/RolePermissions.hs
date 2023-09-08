@@ -20,6 +20,7 @@ import Discord.Internal.Types.Guild
   )
 import Discord.Internal.Types.Prelude (RolePermissions (..))
 import Discord.Internal.Types.User (GuildMember (memberRoles))
+import Data.Foldable (foldl')
 
 data PermissionFlag
   = CREATE_INSTANT_INVITE
@@ -105,7 +106,7 @@ clearRolePermission :: PermissionFlag -> RolePermissions -> RolePermissions
 clearRolePermission p = (.&.) (complement . permissionBits $ p)
 
 combinePermissions :: [PermissionFlag] -> RolePermissions
-combinePermissions = foldr ((.|.) . permissionBits) 0
+combinePermissions = foldl' (\rp -> (rp .|.) . permissionBits) (RolePermissions 0)
 
 -- | Check if any Role of an GuildMember has the needed permission
 --   If the result of roleIdToRole is Nothing, it prepends a "False"
