@@ -15,7 +15,6 @@ import Data.Aeson
 import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 
@@ -58,7 +57,7 @@ data UserRequest a where
 -- This function accepts all file types accepted by 'getMimeType'.
 parseAvatarImage :: B.ByteString -> Either T.Text (Base64Image User)
 parseAvatarImage bs
-  | Just mime <- getMimeType bs = Right (Base64Image mime (TE.decodeUtf8 (B64.encode bs)))
+  | Just mime <- getMimeType bs = Right (Base64Image mime (B64.encode bs))
   | otherwise                   = Left "Unsupported image format provided"
 
 userMajorRoute :: UserRequest a -> String

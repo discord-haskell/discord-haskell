@@ -70,6 +70,7 @@ import Web.Internal.HttpApiData
 import qualified Data.ByteString as B
 import qualified Data.Text as T
 import qualified Data.Aeson.Key as Key
+import qualified Data.Text.Encoding as T.E
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -284,7 +285,7 @@ objectFromMaybes = object . catMaybes
 --
 -- Public creation of this datatype should be done using the relevant smart
 -- constructors for Emoji, Sticker, or Avatar.
-data Base64Image a = Base64Image T.Text T.Text
+data Base64Image a = Base64Image { mimeType :: T.Text, base64Data :: B.StrictByteString }
   deriving (Show, Read, Eq, Ord)
 
 -- | The ToJSON instance for Base64Image creates a string representation of the
@@ -292,7 +293,7 @@ data Base64Image a = Base64Image T.Text T.Text
 --
 -- The format is: @data:%MIME%;base64,%DATA%@.
 instance ToJSON (Base64Image a) where
-  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> im
+  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> T.E.decodeUtf8 im
 
 -- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
 -- based on the first few magic bytes. It may return any of PNG/JPEG/GIF or WEBP
@@ -308,13 +309,13 @@ instance ToJSON (Base64Image a) where
 getMimeType :: B.ByteString -> Maybe T.Text
 getMimeType bs
   | B.take 8 bs == "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
-  = Just "image/png"
+      = Just "image/png"
   | B.take 3 bs == "\xff\xd8\xff" || B.take 4 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
-  = Just "image/jpeg"
+      = Just "image/jpeg"
   | B.take 6 bs == "\x47\x49\x46\x38\x37\x61" || B.take 6 bs == "\x47\x49\x46\x38\x39\x61"
-  = Just "image/gif"
+      = Just "image/gif"
   | B.take 4 bs == "RIFF" && B.take 4 (B.drop 8 bs) == "WEBP"
-  = Just "image/webp"
+      = Just "image/webp"
   | otherwise = Nothing
 
 -- | The different channel types. Used for application commands and components.
