@@ -84,7 +84,7 @@ authToken (Auth tok) = let token = T.strip tok
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
@@ -109,7 +109,7 @@ instance ToHttpApiData Snowflake where
   toUrlPiece = T.pack . show
 
 newtype RolePermissions = RolePermissions { getRolePermissions :: Integer } 
-  deriving (Eq, Ord, Num, Bits, Enum, Real, Integral)
+  deriving (Eq, Ord, Bits)
 
 instance Read RolePermissions where
   readsPrec p = fmap (first RolePermissions) . readsPrec p
@@ -129,7 +129,7 @@ instance Show RolePermissions where
   show = show . getRolePermissions
 
 newtype DiscordId a = DiscordId { unId :: Snowflake }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq)
 
 instance Show (DiscordId a) where
   show = show . unId
@@ -223,7 +223,7 @@ type Shard = (Int, Int)
 
 -- | Gets a creation date from a snowflake.
 snowflakeCreationDate :: Snowflake -> UTCTime
-snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
+snowflakeCreationDate (Snowflake x) = posixSecondsToUTCTime . realToFrac
   $ 1420070400 + quot (shiftR x 22) 1000
 
 -- | Default timestamp
