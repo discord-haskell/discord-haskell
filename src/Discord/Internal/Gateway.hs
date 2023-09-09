@@ -50,6 +50,7 @@ startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
   tids <- connectEventLoops (\shard -> connectionLoop auth shard intent gatewayHandle log) (decideSharding sharding gatewaybot)
   pure (gatewayHandle, tids)
 
+-- | Based on user specified sharding, return the list of shards to connect
 decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
 decideSharding sharding gatewaybot = case sharding of
                                        DiscordShardingSpecific shards -> shards
