@@ -285,7 +285,7 @@ objectFromMaybes = object . catMaybes
 --
 -- Public creation of this datatype should be done using the relevant smart
 -- constructors for Emoji, Sticker, or Avatar.
-data Base64Image a = Base64Image { mimeType :: T.Text, base64Data :: B.StrictByteString }
+data Base64Image a = Base64Image { mimeType :: T.Text, base64Data :: B.ByteString }
   deriving (Show, Read, Eq, Ord)
 
 -- | The ToJSON instance for Base64Image creates a string representation of the
