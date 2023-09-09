@@ -21,7 +21,7 @@ import qualified Data.Text as T
 import Data.Time (getCurrentTime)
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
-import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
+import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..), EventChannel)
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 -- | Starts a thread for the cache
@@ -29,17 +29,17 @@ startCacheThread :: Bool -> Chan T.Text -> Chan (Either GatewayException EventIn
 startCacheThread isEnabled log events = do
   events' <- dupChan events
   cache <- newTVarIO (error "discord-haskell: cache has not been enabled or initialised after a Ready event")
-  let cacheHandle = CacheHandle events' cache
+  let cacheHandle = CacheHandle cache
   mTid <- if isEnabled
-    then fmap Just $ forkIO $ cacheLoop cacheHandle log
+    then fmap Just $ forkIO $ cacheLoop cacheHandle events' log
     else pure Nothing
   pure (cacheHandle, mTid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
-startGatewayThread :: Auth -> GatewayIntent -> CacheHandle -> Chan T.Text -> IO (GatewayHandle, ThreadId)
-startGatewayThread auth intent cacheHandle log = do
-  events <- dupChan (cacheHandleEvents cacheHandle)
+startGatewayThread :: Auth -> GatewayIntent -> EventChannel -> Chan T.Text -> IO (GatewayHandle, ThreadId)
+startGatewayThread auth intent eventChan log = do
+  events <- dupChan eventChan
   sends <- newChan
   status <- newIORef Nothing
   seqid <- newIORef 0

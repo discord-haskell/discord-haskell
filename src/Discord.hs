@@ -96,7 +96,7 @@ runDiscord opts = do
   events <- newChan :: IO EventChannel
   (cache, mCacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log events
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
-  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
+  (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) events log
 
   libE <- newEmptyMVar
 

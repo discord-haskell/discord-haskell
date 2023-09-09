@@ -23,13 +23,12 @@ data Cache = Cache
      , cacheApplication :: !PartialApplication
      } deriving (Show)
 
-data CacheHandle = CacheHandle
-  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: TVar Cache -- ^ May be an error value if the cache is disabled or the Ready event has not arrived.
+newtype CacheHandle = CacheHandle
+  { cacheHandleCache  :: TVar Cache -- ^ May be an error value if the cache is disabled or the Ready event has not arrived.
   }
 
-cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
-cacheLoop cacheHandle log = do
+cacheLoop :: CacheHandle -> EventChannel -> Chan T.Text -> IO ()
+cacheLoop cacheHandle eventChan log = do
       atomically $ writeTVar cache (error "discord-haskell: cache enabled, still waiting for Ready event")
       ready <- readChan eventChan
       case ready of
@@ -43,7 +42,6 @@ cacheLoop cacheHandle log = do
           writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
   where
   cache     = cacheHandleCache cacheHandle
-  eventChan = cacheHandleEvents cacheHandle
 
   loop :: IO ()
   loop = forever $ do
