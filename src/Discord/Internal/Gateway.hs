@@ -22,13 +22,15 @@ import Data.Time (getCurrentTime)
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..), EventChannel)
-import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
+import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), CacheStatus (CacheDisabled))
 
--- | Starts a thread for the cache
+-- | Starts a thread for the cache.
+--
+-- Only does so if the boolean is True.
 startCacheThread :: Bool -> Chan T.Text -> Chan (Either GatewayException EventInternalParse) -> IO (CacheHandle, Maybe ThreadId)
 startCacheThread isEnabled log events = do
   events' <- dupChan events
-  cache <- newTVarIO (error "discord-haskell: cache has not been enabled or initialised after a Ready event")
+  cache <- newTVarIO CacheDisabled
   let cacheHandle = CacheHandle cache
   mTid <- if isEnabled
     then fmap Just $ forkIO $ cacheLoop cacheHandle events' log

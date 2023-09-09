@@ -9,6 +9,8 @@ module Discord
   , restCall
   , sendCommand
   , readCache
+  , readCacheEither
+  , getCacheReference
   , stopDiscord
   , getGatewayLatency
   , measureLatency
@@ -27,6 +29,7 @@ module Discord
 import Prelude hiding (log)
 import Control.Exception (Exception)
 import Control.Monad (void, forever)
+import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, liftIO, asks)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
@@ -36,7 +39,8 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time (NominalDiffTime, diffUTCTime, getCurrentTime)
 
-import UnliftIO (race, try, finally, SomeException, IOException, readIORef, readTVarIO)
+import UnliftIO (race, try, finally, SomeException, IOException, readIORef)
+import UnliftIO.STM (readTVarIO)
 import UnliftIO.Concurrent
 
 import Discord.Handle
@@ -44,6 +48,7 @@ import Discord.Internal.Gateway
 import Discord.Internal.Gateway.EventLoop
 import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
+import Discord.Internal.Gateway.Cache (CacheStatus(..))
 
 -- | A `ReaderT` wrapper around `DiscordHandle` and `IO`. Most functions act in
 -- this monad
@@ -187,17 +192,31 @@ sendCommand e = do
     UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
     _ -> pure ()
 
--- | Access the current state of the gateway cache
+-- | Access the current state of the gateway cache.
 --
--- If the flag to enable the cache has not been set then this value is an error.
---
--- If the Ready event has not been sent by discord yet then the cache is also
--- an error. 
-readCache :: DiscordHandler Cache
-readCache = do
-  h <- ask
-  readTVarIO (cacheHandleCache (discordHandleCache h))
+-- If the cache has not been initialised then an error text is returned in Left.
+readCacheEither :: DiscordHandler (Either T.Text Cache)
+readCacheEither = getCacheReference >>= either (pure . Left) (fmap Right)
 
+-- | Access the current state of the gateway cache.
+--
+-- If the cache has not been initialised, then an error is thrown.
+--
+-- Kind of unsafe but provided for backwards compatibility reasons.
+readCache :: DiscordHandler Cache
+readCache = readCacheEither >>= either (error . ("discord-haskell: " <>) . T.unpack) pure
+
+-- | Get either the error text for the cache or an action that reads the cache.
+--
+-- Can be used to repeatedly read the cache without having to worry about errors.
+getCacheReference :: MonadIO io => DiscordHandler (Either T.Text (io Cache))
+getCacheReference = do
+  h <- ask
+  cacheStatus <- readTVarIO (cacheHandleCache (discordHandleCache h))
+  pure $ case cacheStatus of
+    CacheDisabled -> Left "cache enabled but waiting for ready event"
+    CacheWaiting -> Left "cache not enabled"
+    CacheReady c -> Right $ readTVarIO c
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandler ()

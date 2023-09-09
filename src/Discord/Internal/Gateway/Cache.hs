@@ -8,7 +8,7 @@ import Prelude hiding (log)
 import Control.Monad (forever, join)
 import Control.Concurrent.Chan
 import Data.Foldable (foldl')
-import UnliftIO.STM (TVar, writeTVar, atomically, modifyTVar')
+import UnliftIO.STM (TVar, writeTVar, atomically, modifyTVar', newTVarIO)
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -24,18 +24,22 @@ data Cache = Cache
      } deriving (Show)
 
 newtype CacheHandle = CacheHandle
-  { cacheHandleCache  :: TVar Cache -- ^ May be an error value if the cache is disabled or the Ready event has not arrived.
+  { cacheHandleCache  :: TVar CacheStatus -- ^ The status of the cache and cache itself
   }
+
+data CacheStatus = CacheDisabled | CacheWaiting | CacheReady (TVar Cache)
 
 cacheLoop :: CacheHandle -> EventChannel -> Chan T.Text -> IO ()
 cacheLoop cacheHandle eventChan log = do
-      atomically $ writeTVar cache (error "discord-haskell: cache enabled, still waiting for Ready event")
+      atomically $ writeTVar cache CacheWaiting
       ready <- readChan eventChan
       case ready of
         Right (InternalReady _ user gids _ _ _ pApp) -> do
           let guildMap = M.fromList $ fmap (\ugid -> (idOnceAvailable ugid, Nothing)) gids
-          atomically $ writeTVar cache (Cache user M.empty guildMap M.empty pApp)
-          loop
+              newCache = Cache user M.empty guildMap M.empty pApp
+          theCache <- newTVarIO newCache
+          atomically $ writeTVar cache (CacheReady theCache)
+          loop theCache
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
         Left e ->
@@ -43,13 +47,12 @@ cacheLoop cacheHandle eventChan log = do
   where
   cache     = cacheHandleCache cacheHandle
 
-  loop :: IO ()
-  loop = forever $ do
+  loop :: TVar Cache -> IO ()
+  loop theCache = forever $ do
     eventOrExcept <- readChan eventChan
-    atomically $
-      case eventOrExcept of
-        Left _ -> pure () -- nothing to do on exceptions
-        Right event -> modifyTVar' cache (`adjustCache` event)
+    case eventOrExcept of
+      Left _ -> pure () -- nothing to do on exceptions
+      Right event -> atomically $ modifyTVar' theCache (`adjustCache` event)
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
