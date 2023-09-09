@@ -214,8 +214,8 @@ getCacheReference = do
   h <- ask
   cacheStatus <- readTVarIO (cacheHandleCache (discordHandleCache h))
   pure $ case cacheStatus of
-    CacheDisabled -> Left "cache enabled but waiting for ready event"
-    CacheWaiting -> Left "cache not enabled"
+    CacheDisabled -> Left "cache not enabled"
+    CacheWaiting -> Left "cache enabled but waiting for ready event"
     CacheReady c -> Right $ readTVarIO c
 
 -- | Stop all the background threads
