@@ -160,7 +160,7 @@ instance FromJSON PresenceInfo where
 
 -- | Object for a single activity
 --
--- https://discord.com/developers/docs/topics/gateway#activity-object
+-- https://discord.com/developers/docs/topics/gateway-events#activity-object
 --
 -- When setting a bot's activity, only the name, url, and type are sent - and
 -- it seems that not many types are permitted either.
