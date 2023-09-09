@@ -163,12 +163,13 @@ connectionLoop auth intent gatewayHandle log = outerloop LoopStart
                                 threadDelay (3 * (10^(6 :: Int)))
                                 pure LoopStart
 
+type EventChannel = Chan (Either GatewayException EventInternalParse)
 
 -- | Process events from discord and write them to the onDiscordEvent Channel
 runEventLoop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
 runEventLoop thehandle sendablesData log = do loop
   where
-  eventChan :: Chan (Either GatewayException EventInternalParse)
+  eventChan :: EventChannel
   eventChan = gatewayHandleEvents thehandle
 
   -- | Keep receiving Dispatch events until a reconnect or a restart

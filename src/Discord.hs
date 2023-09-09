@@ -31,17 +31,19 @@ import Control.Monad.Reader (ReaderT, runReaderT, ask, liftIO, asks)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
 import Data.IORef (writeIORef)
+import Data.Maybe (catMaybes)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import Data.Time (NominalDiffTime, diffUTCTime, getCurrentTime)
 
-import UnliftIO (race, try, finally, SomeException, IOException, readIORef)
+import UnliftIO (race, try, finally, SomeException, IOException, readIORef, readTVarIO)
 import UnliftIO.Concurrent
 
 import Discord.Handle
+import Discord.Internal.Gateway
+import Discord.Internal.Gateway.EventLoop
 import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
-import Discord.Internal.Gateway
 
 -- | A `ReaderT` wrapper around `DiscordHandle` and `IO`. Most functions act in
 -- this monad
@@ -91,7 +93,8 @@ runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
   log <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
-  (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
+  events <- newChan :: IO EventChannel
+  (cache, mCacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log events
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
   (gate, gateId) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) cache log
 
@@ -103,9 +106,9 @@ runDiscord opts = do
                              , discordHandleLog = log
                              , discordHandleLibraryError = libE
                              , discordHandleThreads =
+                                 catMaybes [HandleThreadIdCache <$> mCacheId] <>
                                  [ HandleThreadIdLogger logId
                                  , HandleThreadIdRest restId
-                                 , HandleThreadIdCache cacheId
                                  , HandleThreadIdGateway gateId
                                  ]
                              }
@@ -185,13 +188,15 @@ sendCommand e = do
     _ -> pure ()
 
 -- | Access the current state of the gateway cache
+--
+-- If the flag to enable the cache has not been set then this value is an error.
+--
+-- If the Ready event has not been sent by discord yet then the cache is also
+-- an error. 
 readCache :: DiscordHandler Cache
 readCache = do
   h <- ask
-  merr <- readMVar (cacheHandleCache (discordHandleCache h))
-  case merr of
-    Left (c, _) -> pure c
-    Right c -> pure c
+  readTVarIO (cacheHandleCache (discordHandleCache h))
 
 
 -- | Stop all the background threads
@@ -225,7 +230,7 @@ getGatewayLatency = do
 
   ack <- readIORef (gatewayHandleHeartbeatAckTimes gw)
 
-  pure . diffUTCTime ack $ 
+  pure . diffUTCTime ack $
     if ack > send1 -- if the ack is before the send just gone, use the previous send
       then send1
       else send2

@@ -6,9 +6,9 @@ module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
 import Control.Monad (forever, join)
-import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Foldable (foldl')
+import UnliftIO.STM (TVar, writeTVar, atomically, modifyTVar')
 import qualified Data.Map.Strict as M
 import qualified Data.Text as T
 
@@ -25,15 +25,17 @@ data Cache = Cache
 
 data CacheHandle = CacheHandle
   { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  , cacheHandleCache  :: TVar Cache -- ^ May be an error value if the cache is disabled or the Ready event has not arrived.
   }
 
-cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
-cacheLoop isEnabled cacheHandle log = do
+cacheLoop :: CacheHandle -> Chan T.Text -> IO ()
+cacheLoop cacheHandle log = do
+      atomically $ writeTVar cache (error "discord-haskell: cache enabled, still waiting for Ready event")
       ready <- readChan eventChan
       case ready of
-        Right (InternalReady _ user _ _ _ _ pApp) -> do
-          putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
+        Right (InternalReady _ user gids _ _ _ pApp) -> do
+          let guildMap = M.fromList $ fmap (\ugid -> (idOnceAvailable ugid, Nothing)) gids
+          atomically $ writeTVar cache (Cache user M.empty guildMap M.empty pApp)
           loop
         Right r ->
           writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
@@ -46,15 +48,10 @@ cacheLoop isEnabled cacheHandle log = do
   loop :: IO ()
   loop = forever $ do
     eventOrExcept <- readChan eventChan
-    if not isEnabled
-      then return ()
-      else do
-        minfo <- takeMVar cache
-        case minfo of
-          Left nope -> putMVar cache (Left nope)
-          Right info -> case eventOrExcept of
-                          Left e -> putMVar cache (Left (info, e))
-                          Right event -> putMVar cache $! Right $! adjustCache info event
+    atomically $
+      case eventOrExcept of
+        Left _ -> pure () -- nothing to do on exceptions
+        Right event -> modifyTVar' cache (`adjustCache` event)
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of

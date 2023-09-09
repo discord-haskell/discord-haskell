@@ -14,7 +14,8 @@ module Discord.Internal.Gateway
 
 import Prelude hiding (log)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (forkIO, ThreadId, newEmptyMVar, MVar)
+import Control.Concurrent (forkIO, ThreadId)
+import UnliftIO.STM (newTVarIO)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
 import Data.Time (getCurrentTime)
@@ -24,13 +25,15 @@ import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), Ga
 import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..))
 
 -- | Starts a thread for the cache
-startCacheThread :: Bool -> Chan T.Text -> IO (CacheHandle, ThreadId)
-startCacheThread isEnabled log = do
-  events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
-  cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
-  let cacheHandle = CacheHandle events cache
-  tid <- forkIO $ cacheLoop isEnabled cacheHandle log
-  pure (cacheHandle, tid)
+startCacheThread :: Bool -> Chan T.Text -> Chan (Either GatewayException EventInternalParse) -> IO (CacheHandle, Maybe ThreadId)
+startCacheThread isEnabled log events = do
+  events' <- dupChan events
+  cache <- newTVarIO (error "discord-haskell: cache has not been enabled or initialised after a Ready event")
+  let cacheHandle = CacheHandle events' cache
+  mTid <- if isEnabled
+    then fmap Just $ forkIO $ cacheLoop cacheHandle log
+    else pure Nothing
+  pure (cacheHandle, mTid)
 
 -- | Create a Chan for websockets. This creates a thread that
 --   writes all the received EventsInternalParse to the Chan
