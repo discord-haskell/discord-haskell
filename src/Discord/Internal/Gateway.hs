@@ -28,7 +28,7 @@ import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), in
 startCacheThread :: Bool -> Chan T.Text -> IO (CacheHandle, ThreadId)
 startCacheThread isEnabled log = do
   events <- newChan :: IO (Chan (Either GatewayException EventInternalParse))
-  cache <- newEmptyMVar :: IO (MVar (Either (Cache, GatewayException) Cache))
+  cache <- newEmptyMVar :: IO (MVar Cache)
   let cacheHandle = CacheHandle events cache
   tid <- forkIO $ cacheLoop isEnabled cacheHandle log
   pure (cacheHandle, tid)
