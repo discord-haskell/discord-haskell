@@ -20,7 +20,7 @@ data Cache = Cache
      , cacheDMChannels :: !(M.Map ChannelId Channel)
      , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData)))
      , cacheChannels :: !(M.Map ChannelId Channel)
-     , cacheApplication :: !PartialApplication
+     , cacheApplication :: !FullApplication
      } deriving (Show)
 
 data CacheHandle = CacheHandle
@@ -28,17 +28,11 @@ data CacheHandle = CacheHandle
   , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
   }
 
+createCache :: User -> FullApplication -> Cache
+createCache user app = Cache user M.empty M.empty M.empty app
+
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
-cacheLoop isEnabled cacheHandle log = do
-      ready <- readChan eventChan
-      case ready of
-        Right (InternalReady _ user _ _ _ _ pApp) -> do
-          putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
-          loop
-        Right r ->
-          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
-        Left e ->
-          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
+cacheLoop isEnabled cacheHandle _log = loop
   where
   cache     = cacheHandleCache cacheHandle
   eventChan = cacheHandleEvents cacheHandle
@@ -58,7 +52,8 @@ cacheLoop isEnabled cacheHandle log = do
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  InternalReady _ _ gus _ _ _ pa -> minfo { cacheApplication = pa, cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
+  -- note: ready only sends a partial app. we could upate the info stored in the full app
+  InternalReady _ _ gus _ _ _ _partialApp -> minfo { cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
 
   InternalGuildCreate guild guildData ->
     let newChans = guildCreateChannels guildData

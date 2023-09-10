@@ -42,6 +42,7 @@ import Discord.Handle
 import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
 import Discord.Internal.Gateway
+import qualified Discord.Requests as R
 
 -- | A `ReaderT` wrapper around `DiscordHandle` and `IO`. Most functions act in
 -- this monad
@@ -116,18 +117,29 @@ runDiscord opts = do
 -- | Runs the main loop 
 runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
 runDiscordLoop handle opts = do
-  resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
+  resp <- startupRestCalls
   case resp of
     Left (RestCallInternalErrorCode c e1 e2) -> libError $
              "HTTP Error Code " <> T.pack (show c) <> " " <> TE.decodeUtf8 e1
                                                    <> " " <> TE.decodeUtf8 e2
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
-    _ -> do me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
-            case me of
-              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
-              Right _ -> loop
+    Right (user, app) -> do putMVar (cacheHandleCache (discordHandleCache handle)) (Right (createCache user app))
+                            me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
+                            case me of
+                              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
+                              Right _ -> loop
  where
+   startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication))
+   startupRestCalls = do resp <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
+                         case resp of
+                           Left e -> pure (Left e)
+                           Right user -> do
+                             resp2 <- writeRestCall (discordHandleRestChan handle) R.GetCurrentApplication
+                             case resp2 of
+                               Left e -> pure (Left e)
+                               Right app -> pure (Right (user, app))
+
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
