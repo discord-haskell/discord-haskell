@@ -5,7 +5,7 @@
 module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
-import Control.Monad (forever, join)
+import Control.Monad (forever, join, when)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Foldable (foldl')
@@ -32,27 +32,22 @@ createCache :: User -> FullApplication -> Cache
 createCache user app = Cache user M.empty M.empty M.empty app
 
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
-cacheLoop isEnabled cacheHandle _log = loop
+cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
+    eventOrExcept <- readChan eventChan
+    minfo <- takeMVar cache
+    case minfo of
+      Left nope -> putMVar cache (Left nope)
+      Right info -> case eventOrExcept of
+                      Left e -> putMVar cache (Left (info, e))
+                      Right event -> putMVar cache $! Right $! adjustCache info event
   where
   cache     = cacheHandleCache cacheHandle
   eventChan = cacheHandleEvents cacheHandle
 
-  loop :: IO ()
-  loop = forever $ do
-    eventOrExcept <- readChan eventChan
-    if not isEnabled
-      then return ()
-      else do
-        minfo <- takeMVar cache
-        case minfo of
-          Left nope -> putMVar cache (Left nope)
-          Right info -> case eventOrExcept of
-                          Left e -> putMVar cache (Left (info, e))
-                          Right event -> putMVar cache $! Right $! adjustCache info event
 
 adjustCache :: Cache -> EventInternalParse -> Cache
 adjustCache minfo event = case event of
-  -- note: ready only sends a partial app. we could upate the info stored in the full app
+  -- note: ready only sends a partial app. we could update the info stored in the full app
   InternalReady _ _ gus _ _ _ _partialApp -> minfo { cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
 
   InternalGuildCreate guild guildData ->
