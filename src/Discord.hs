@@ -131,14 +131,9 @@ runDiscordLoop handle opts = do
                               Right _ -> loop
  where
    startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication))
-   startupRestCalls = do resp <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
-                         case resp of
-                           Left e -> pure (Left e)
-                           Right user -> do
-                             resp2 <- writeRestCall (discordHandleRestChan handle) R.GetCurrentApplication
-                             case resp2 of
-                               Left e -> pure (Left e)
-                               Right app -> pure (Right (user, app))
+   startupRestCalls = do eUser <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
+                         eApp <- writeRestCall (discordHandleRestChan handle) R.GetCurrentApplication
+                         pure $ (,) <$> eUser <*> eApp
 
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
