@@ -7,7 +7,7 @@ module Discord.Internal.Gateway
   , CacheHandle(..)
   , GatewayException(..)
   , Cache(..)
-  , createCache
+  , initializeCache
   , startCacheThread
   , startGatewayThread
   , module Discord.Internal.Types
@@ -22,7 +22,7 @@ import Data.Time (getCurrentTime)
 
 import Discord.Internal.Types (Auth, EventInternalParse, GatewayIntent)
 import Discord.Internal.Gateway.EventLoop (connectionLoop, GatewayHandle(..), GatewayException(..))
-import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), createCache)
+import Discord.Internal.Gateway.Cache (cacheLoop, Cache(..), CacheHandle(..), initializeCache)
 
 -- | Starts a thread for the cache
 startCacheThread :: Bool -> Chan T.Text -> IO (CacheHandle, ThreadId)

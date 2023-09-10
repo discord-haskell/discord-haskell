@@ -124,7 +124,7 @@ runDiscordLoop handle opts = do
                                                    <> " " <> TE.decodeUtf8 e2
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
-    Right (user, app) -> do putMVar (cacheHandleCache (discordHandleCache handle)) (Right (createCache user app))
+    Right (user, app) -> do initializeCache user app (discordHandleCache handle)
                             me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
                             case me of
                               Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))

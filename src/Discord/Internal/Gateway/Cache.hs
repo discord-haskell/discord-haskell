@@ -28,8 +28,8 @@ data CacheHandle = CacheHandle
   , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
   }
 
-createCache :: User -> FullApplication -> Cache
-createCache user app = Cache user M.empty M.empty M.empty app
+initializeCache :: User -> FullApplication -> CacheHandle -> IO ()
+initializeCache user app cacheHandle = putMVar (cacheHandleCache cacheHandle) (Right (Cache user M.empty M.empty M.empty app))
 
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
 cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
