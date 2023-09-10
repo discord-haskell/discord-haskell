@@ -3,7 +3,6 @@
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE RankNTypes  #-}
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
@@ -49,7 +48,6 @@ module Discord.Internal.Types.Prelude
 
   , (.==)
   , (.=?)
-  , AesonKey
   , objectFromMaybes
 
   , ChannelTypeOption (..)
@@ -71,10 +69,8 @@ import Web.Internal.HttpApiData
 
 import qualified Data.ByteString as B
 import qualified Data.Text as T
-
-#if MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.Aeson.Key as Key
-#endif
+import qualified Data.Text.Encoding as T.E
 
 -- | Authorization token for the Discord API
 newtype Auth = Auth T.Text
@@ -89,7 +85,7 @@ authToken (Auth tok) = let token = T.strip tok
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
@@ -114,7 +110,7 @@ instance ToHttpApiData Snowflake where
   toUrlPiece = T.pack . show
 
 newtype RolePermissions = RolePermissions { getRolePermissions :: Integer } 
-  deriving (Eq, Ord, Num, Bits, Enum, Real, Integral)
+  deriving (Eq, Ord, Bits)
 
 instance Read RolePermissions where
   readsPrec p = fmap (first RolePermissions) . readsPrec p
@@ -134,7 +130,7 @@ instance Show RolePermissions where
   show = show . getRolePermissions
 
 newtype DiscordId a = DiscordId { unId :: Snowflake }
-  deriving (Ord, Eq, Num, Integral, Enum, Real, Bits)
+  deriving (Ord, Eq)
 
 instance Show (DiscordId a) where
   show = show . unId
@@ -228,7 +224,7 @@ type Shard = (Int, Int)
 
 -- | Gets a creation date from a snowflake.
 snowflakeCreationDate :: Snowflake -> UTCTime
-snowflakeCreationDate x = posixSecondsToUTCTime . realToFrac
+snowflakeCreationDate (Snowflake x) = posixSecondsToUTCTime . realToFrac
   $ 1420070400 + quot (shiftR x 22) 1000
 
 -- | Default timestamp
@@ -272,22 +268,10 @@ class Data a => InternalDiscordEnum a where
         | fromIntegral (round i) == i = Just $ round i
         | otherwise = Nothing
 
--- Aeson 2.0 uses KeyMaps with a defined Key type for its objects. Aeson up to
--- 1.5 uses HashMaps with Text for the key. Both types have an IsString instance.
--- To keep our version bounds as loose as possible while the Haskell ecosystem
--- (and thus our users) switch over to Aeson 2.0, we use some CPP to define a
--- AesonKey as an alias.
-#if MIN_VERSION_aeson(2, 0, 0)
-type AesonKey = Key.Key
-#else
-type AesonKey = T.Text
-#endif
-
-
-(.==) :: ToJSON a => AesonKey -> a -> Maybe Pair
+(.==) :: ToJSON a => Key.Key -> a -> Maybe Pair
 k .== v = Just (k .= v)
 
-(.=?) :: ToJSON a => AesonKey -> Maybe a -> Maybe Pair
+(.=?) :: ToJSON a => Key.Key -> Maybe a -> Maybe Pair
 k .=? (Just v) = Just (k .= v)
 _ .=? Nothing = Nothing
 
@@ -301,7 +285,7 @@ objectFromMaybes = object . catMaybes
 --
 -- Public creation of this datatype should be done using the relevant smart
 -- constructors for Emoji, Sticker, or Avatar.
-data Base64Image a = Base64Image T.Text T.Text
+data Base64Image a = Base64Image { mimeType :: T.Text, base64Data :: B.ByteString }
   deriving (Show, Read, Eq, Ord)
 
 -- | The ToJSON instance for Base64Image creates a string representation of the
@@ -309,7 +293,7 @@ data Base64Image a = Base64Image T.Text T.Text
 --
 -- The format is: @data:%MIME%;base64,%DATA%@.
 instance ToJSON (Base64Image a) where
-  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> im
+  toJSON (Base64Image mime im) = String $ "data:" <> mime <> ";base64," <> T.E.decodeUtf8 im
 
 -- | @getMimeType bs@ returns a possible mimetype for the given bytestring,
 -- based on the first few magic bytes. It may return any of PNG/JPEG/GIF or WEBP
@@ -325,13 +309,13 @@ instance ToJSON (Base64Image a) where
 getMimeType :: B.ByteString -> Maybe T.Text
 getMimeType bs
   | B.take 8 bs == "\x89\x50\x4E\x47\x0D\x0A\x1A\x0A"
-  = Just "image/png"
+      = Just "image/png"
   | B.take 3 bs == "\xff\xd8\xff" || B.take 4 (B.drop 6 bs) `elem` ["JFIF", "Exif"]
-  = Just "image/jpeg"
+      = Just "image/jpeg"
   | B.take 6 bs == "\x47\x49\x46\x38\x37\x61" || B.take 6 bs == "\x47\x49\x46\x38\x39\x61"
-  = Just "image/gif"
+      = Just "image/gif"
   | B.take 4 bs == "RIFF" && B.take 4 (B.drop 8 bs) == "WEBP"
-  = Just "image/webp"
+      = Just "image/webp"
   | otherwise = Nothing
 
 -- | The different channel types. Used for application commands and components.

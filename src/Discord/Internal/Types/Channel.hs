@@ -170,7 +170,7 @@ instance FromJSON Channel where
     case type' of
       0 ->
         ChannelText  <$> o .:  "id"
-                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "guild_id"
                      <*> o .:  "name"
                      <*> o .:  "position"
                      <*> o .:  "permission_overwrites"
@@ -185,7 +185,7 @@ instance FromJSON Channel where
                              <*> o .:? "last_message_id"
       2 ->
         ChannelVoice <$> o .:  "id"
-                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "guild_id"
                      <*> o .:  "name"
                      <*> o .:  "position"
                      <*> o .:  "permission_overwrites"
@@ -199,13 +199,13 @@ instance FromJSON Channel where
                        <*> o .:? "last_message_id"
       4 ->
         ChannelGuildCategory <$> o .: "id"
-                             <*> o .:? "guild_id" .!= 0
+                             <*> o .:  "guild_id"
                              <*> o .:  "name"
                              <*> o .:  "position"
                              <*> o .:  "permission_overwrites"
       5 ->
         ChannelNews <$> o .:  "id"
-                    <*> o .:? "guild_id" .!= 0
+                    <*> o .:  "guild_id"
                     <*> o .:  "name"
                     <*> o .:  "position"
                     <*> o .:  "permission_overwrites"
@@ -215,14 +215,14 @@ instance FromJSON Channel where
                     <*> o .:? "parent_id"
       6 ->
         ChannelStorePage <$> o .:  "id"
-                         <*> o .:? "guild_id" .!= 0
+                         <*> o .:  "guild_id"
                          <*> o .:  "name"
                          <*> o .:  "position"
                          <*> o .:? "nsfw" .!= False
                          <*> o .:  "permission_overwrites"
                          <*> o .:? "parent_id"
       10 -> ChannelNewsThread <$> o.: "id"
-                              <*> o .:? "guild_id" .!= 0
+                              <*> o .:  "guild_id"
                               <*> o .:? "name"
                               <*> o .:? "rate_limit_per_user"
                               <*> o .:? "last_message_id"
@@ -230,7 +230,7 @@ instance FromJSON Channel where
                               <*> o .:? "thread_metadata"
                               <*> o .:? "member"
       11 -> ChannelPublicThread <$> o.: "id"
-                                <*> o .:? "guild_id" .!= 0
+                                <*> o .:  "guild_id"
                                 <*> o .:? "name"
                                 <*> o .:? "rate_limit_per_user"
                                 <*> o .:? "last_message_id"
@@ -238,7 +238,7 @@ instance FromJSON Channel where
                                 <*> o .:? "thread_metadata"
                                 <*> o .:? "member"
       12 -> ChannelPrivateThread <$> o.: "id"
-                                 <*> o .:? "guild_id" .!= 0
+                                 <*> o .:  "guild_id"
                                  <*> o .:? "name"
                                  <*> o .:? "rate_limit_per_user"
                                  <*> o .:? "last_message_id"
@@ -247,7 +247,7 @@ instance FromJSON Channel where
                                  <*> o .:? "member"
       13 ->
         ChannelStage <$> o .:  "id"
-                     <*> o .:? "guild_id" .!= 0
+                     <*> o .:  "guild_id"
                      <*> o .:  "id"
                      <*> o .:? "topic" .!= ""
       _ -> ChannelUnknownType <$> o .:  "id"

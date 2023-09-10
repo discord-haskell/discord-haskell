@@ -2,7 +2,7 @@ extra-package-dbs: []
 packages:
 - '.'
 
-resolver: lts-18.28
+resolver: lts-20.26
 
 extra-deps:
   - emojis-0.1.3

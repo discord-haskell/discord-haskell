@@ -20,7 +20,6 @@ import Data.Aeson
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 import qualified Data.Text as T
-import qualified Data.Text.Encoding as TE
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Network.HTTP.Req ((/:), (/~))
@@ -65,7 +64,7 @@ instance ToJSON ModifyGuildEmojiOpts where
 parseEmojiImage :: B.ByteString -> Either T.Text (Base64Image Emoji)
 parseEmojiImage bs
   | B.length bs > 256000        = Left "Cannot create emoji - File is larger than 256kb"
-  | Just mime <- getMimeType bs = Right (Base64Image mime (TE.decodeUtf8 (B64.encode bs)))
+  | Just mime <- getMimeType bs = Right (Base64Image mime (B64.encode bs))
   | otherwise                   = Left "Unsupported image format provided"
 
 emojiMajorRoute :: EmojiRequest a -> String
@@ -112,13 +111,13 @@ emojiJsonRequest c = case c of
 parseStickerImage :: B.ByteString -> Either T.Text (Base64Image Sticker)
 parseStickerImage bs
   | B.length bs > 512000
-  = Left "Cannot create sticker - File is larger than 512kb"
+      = Left "Cannot create sticker - File is larger than 512kb"
   | Just "image/png" <- getMimeType bs
-  = Right (Base64Image "image/png" (TE.decodeUtf8 (B64.encode bs)))
+      = Right (Base64Image "image/png" (B64.encode bs))
   | not (B.null bs) && B.head bs == 0x7b -- '{'
-  = Right (Base64Image "application/json" (TE.decodeUtf8 (B64.encode bs)))
+      = Right (Base64Image "application/json" (B64.encode bs))
   | otherwise
-  = Left "Unsupported image format provided"
+      = Left "Unsupported image format provided"
 
 -- | Options for `CreateGuildSticker`
 data CreateGuildStickerOpts = CreateGuildStickerOpts

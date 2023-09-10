@@ -13,6 +13,7 @@ module Discord.Internal.Rest.Webhook
   ) where
 
 import           Data.Aeson
+import qualified Data.Aeson.Key as Key
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
@@ -124,7 +125,7 @@ data WebhookContent = WebhookContentText T.Text
                     | WebhookContentEmbeds [CreateEmbed]
   deriving (Show, Read, Eq, Ord)
 
-webhookContentJson :: WebhookContent -> [(AesonKey, Value)]
+webhookContentJson :: WebhookContent -> [(Key.Key, Value)]
 webhookContentJson c = case c of
                       WebhookContentText t -> [("content", toJSON t)]
                       WebhookContentFile _ _  -> []
