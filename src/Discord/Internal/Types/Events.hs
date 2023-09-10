@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 -- | Data structures pertaining to gateway dispatch 'Event's
 module Discord.Internal.Types.Events where
@@ -12,6 +13,7 @@ import Network.Socket (HostName)
 
 import Data.Aeson
 import Data.Aeson.Types
+import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Text as T
 
 import Discord.Internal.Types.Prelude
@@ -174,17 +176,25 @@ data GuildCreateData = GuildCreateData
   , guildCreateScheduledEvents :: ![ScheduledEvent]
   } deriving (Show, Eq, Read)
 
-instance FromJSON GuildCreateData where
-  parseJSON = withObject "GuildCreateData" $ \o ->
+parseGuildCreate :: Object -> Parser EventInternalParse
+parseGuildCreate o = do
+  guild :: Guild <- reparse o
+  let gid = guildId guild
+  channelValues :: [Object] <- o .: "channels"
+  threadValues :: [Object] <- o .: "threads"
+  let wellFormedChannels = fmap (Object . KM.insert "guild_id" (toJSON gid)) channelValues
+      wellFormedThreads = fmap (Object . KM.insert "guild_id" (toJSON gid)) threadValues
+  guildCreateData <-
     GuildCreateData <$> o .:  "joined_at"
                     <*> o .:  "large"
                     <*> o .:? "unavailable"
                     <*> o .:  "member_count"
                     <*> o .:  "members"
-                    <*> o .:  "channels"
-                    <*> o .:  "threads"
+                    <*> traverse parseJSON wellFormedChannels
+                    <*> traverse parseJSON wellFormedThreads
                     <*> o .:  "presences"
                     <*> o .:  "guild_scheduled_events"
+  pure $ InternalGuildCreate guild guildCreateData
 
 -- | Structure containing information about a reaction
 data ReactionInfo = ReactionInfo
@@ -275,7 +285,7 @@ eventParse t o = case t of
                                       stamp <- o .:? "last_pin_timestamp"
                                       let utc = stamp >>= parseISO8601
                                       pure (InternalChannelPinsUpdate id utc)
-    "GUILD_CREATE"              -> InternalGuildCreate <$> reparse o <*> reparse o
+    "GUILD_CREATE"              -> parseGuildCreate o
     "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
