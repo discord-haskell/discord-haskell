@@ -25,28 +25,21 @@ data Cache = Cache
 
 data CacheHandle = CacheHandle
   { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  , cacheHandleCache  :: MVar Cache
   }
 
 initializeCache :: User -> FullApplication -> CacheHandle -> IO ()
-initializeCache user app cacheHandle = putMVar (cacheHandleCache cacheHandle) (Right (Cache user M.empty M.empty M.empty app))
+initializeCache user app cacheHandle = putMVar (cacheHandleCache cacheHandle) (Cache user M.empty M.empty M.empty app)
 
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
 cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
-    eventOrExcept <- readChan eventChan
-    minfo <- takeMVar cache
-    case minfo of
-      Left nope -> putMVar cache (Left nope)
-      Right info -> case eventOrExcept of
-                      Left e -> putMVar cache (Left (info, e))
-                      Right event -> putMVar cache $! Right $! adjustCache info event
-  where
-  cache     = cacheHandleCache cacheHandle
-  eventChan = cacheHandleEvents cacheHandle
+    eventOrExcept <- readChan (cacheHandleEvents cacheHandle)
+    case eventOrExcept of
+      Left _ -> pure ()
+      Right event -> modifyMVar_ (cacheHandleCache cacheHandle) $! pure . adjustCache event
 
-
-adjustCache :: Cache -> EventInternalParse -> Cache
-adjustCache minfo event = case event of
+adjustCache :: EventInternalParse -> Cache -> Cache
+adjustCache event minfo = case event of
   -- note: ready only sends a partial app. we could update the info stored in the full app
   InternalReady _ _ gus _ _ _ _partialApp -> minfo { cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
 
