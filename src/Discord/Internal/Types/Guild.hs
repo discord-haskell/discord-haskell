@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE CPP #-}
 
 -- | Types relating to Discord Guilds (servers)
 module Discord.Internal.Types.Guild where
@@ -20,13 +19,7 @@ import Discord.Internal.Types.Color (DiscordColor)
 import Discord.Internal.Types.User (User)
 import Discord.Internal.Types.Emoji (Emoji, StickerItem)
 
--- we support aesons before and after 2, so we have to play around with this
--- to make sure we import the right module
-#if MIN_VERSION_aeson(2, 0, 0)
 import qualified Data.Aeson.KeyMap as KM
-#else
-import qualified Data.HashMap.Strict as KM
-#endif
 
 -- | Guilds in Discord represent a collection of users and channels into an isolated
 --   "Server"
