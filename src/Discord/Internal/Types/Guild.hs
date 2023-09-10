@@ -123,7 +123,7 @@ instance FromJSON GuildUnavailable where
        GuildUnavailable <$> o .: "id"
 
 data PresenceInfo = PresenceInfo
-  { presenceUserId     :: Maybe UserId
+  { presenceUserId     :: UserId
   -- , presenceRoles   :: [RoleId]
   -- | Activities and the names of their buttons. The buttons field of Activity
   -- will be blank, as the additional maybe field will have the button names it
@@ -135,7 +135,7 @@ data PresenceInfo = PresenceInfo
 
 instance FromJSON PresenceInfo where
   parseJSON = withObject "PresenceInfo" $ \o ->
-    PresenceInfo <$> (o .:? "user" >>= mapM (.: "id"))
+    PresenceInfo <$> (o .: "user" >>= (.: "id"))
                  <*> (o .:? "activities" >>= parseActivities)
                  <*> o .:? "guild_id"
                  <*> o .:? "status"
