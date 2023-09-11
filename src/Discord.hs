@@ -42,6 +42,7 @@ import Discord.Handle
 import Discord.Internal.Rest
 import Discord.Internal.Rest.User (UserRequest(GetCurrentUser))
 import Discord.Internal.Gateway
+import qualified Discord.Requests as R
 
 -- | A `ReaderT` wrapper around `DiscordHandle` and `IO`. Most functions act in
 -- this monad
@@ -116,18 +117,24 @@ runDiscord opts = do
 -- | Runs the main loop 
 runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
 runDiscordLoop handle opts = do
-  resp <- liftIO $ writeRestCall (discordHandleRestChan handle) GetCurrentUser
+  resp <- startupRestCalls
   case resp of
     Left (RestCallInternalErrorCode c e1 e2) -> libError $
              "HTTP Error Code " <> T.pack (show c) <> " " <> TE.decodeUtf8 e1
                                                    <> " " <> TE.decodeUtf8 e2
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
-    Left (RestCallInternalNoParse _ _) -> libError "Couldn't parse GetCurrentUser"
-    _ -> do me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
-            case me of
-              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
-              Right _ -> loop
+    Left (RestCallInternalNoParse e _) -> libError ("Couldn't parse initial bot info - " <> T.pack e)
+    Right (user, app) -> do initializeCache user app (discordHandleCache handle)
+                            me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
+                            case me of
+                              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
+                              Right _ -> loop
  where
+   startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication))
+   startupRestCalls = do eUser <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
+                         eApp <- writeRestCall (discordHandleRestChan handle) R.GetCurrentApplication
+                         pure $ (,) <$> eUser <*> eApp
+
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
 
@@ -188,11 +195,7 @@ sendCommand e = do
 readCache :: DiscordHandler Cache
 readCache = do
   h <- ask
-  merr <- readMVar (cacheHandleCache (discordHandleCache h))
-  case merr of
-    Left (c, _) -> pure c
-    Right c -> pure c
-
+  readMVar (cacheHandleCache (discordHandleCache h))
 
 -- | Stop all the background threads
 stopDiscord :: DiscordHandler ()

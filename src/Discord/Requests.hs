@@ -1,5 +1,6 @@
 module Discord.Requests
   ( module Discord.Internal.Rest.Channel
+  , module Discord.Internal.Rest.ApplicationInfo
   , module Discord.Internal.Rest.Emoji
   , module Discord.Internal.Rest.Guild
   , module Discord.Internal.Rest.Invite
@@ -11,6 +12,7 @@ module Discord.Requests
   , module Discord.Internal.Rest.ScheduledEvents
   ) where
 
+import Discord.Internal.Rest.ApplicationInfo
 import Discord.Internal.Rest.Channel
 import Discord.Internal.Rest.Emoji
 import Discord.Internal.Rest.Guild

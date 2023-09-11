@@ -5,7 +5,7 @@
 module Discord.Internal.Gateway.Cache where
 
 import Prelude hiding (log)
-import Control.Monad (forever, join)
+import Control.Monad (forever, join, when)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
 import Data.Foldable (foldl')
@@ -15,50 +15,38 @@ import qualified Data.Text as T
 import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
 
+-- |  Cached data from gateway. Set RunDiscordOpts.discordEnableCache=true to enable all the fields
 data Cache = Cache
-     { cacheCurrentUser :: !User
-     , cacheDMChannels :: !(M.Map ChannelId Channel)
-     , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData)))
-     , cacheChannels :: !(M.Map ChannelId Channel)
-     , cacheApplication :: !PartialApplication
+     { cacheCurrentUser :: !User -- ^ Filled before onStart handler
+     , cacheDMChannels :: !(M.Map ChannelId Channel) -- ^ Filled over time
+     , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData))) -- ^ Filled over time
+     , cacheChannels :: !(M.Map ChannelId Channel) -- ^ Filled over time
+     , cacheApplication :: !FullApplication -- ^ Filled before onStart handler
      } deriving (Show)
 
+-- | Internal handle for cacheLoop to manage the cache
 data CacheHandle = CacheHandle
-  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar (Either (Cache, GatewayException) Cache)
+  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse) -- ^ Read gateway events
+  , cacheHandleCache  :: MVar Cache -- ^ Current cache.
   }
 
+-- | Internally used to setup the first cache
+initializeCache :: User -> FullApplication -> CacheHandle -> IO ()
+initializeCache user app cacheHandle = putMVar (cacheHandleCache cacheHandle) (Cache user M.empty M.empty M.empty app)
+
+-- | IO loop to update cache on each gateway event
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
-cacheLoop isEnabled cacheHandle log = do
-      ready <- readChan eventChan
-      case ready of
-        Right (InternalReady _ user _ _ _ _ pApp) -> do
-          putMVar cache (Right (Cache user M.empty M.empty M.empty pApp))
-          loop
-        Right r ->
-          writeChan log ("cache - stopping cache - expected Ready event, but got " <> T.pack (show r))
-        Left e ->
-          writeChan log ("cache - stopping cache - gateway exception " <> T.pack (show e))
-  where
-  cache     = cacheHandleCache cacheHandle
-  eventChan = cacheHandleEvents cacheHandle
+cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
+    eventOrExcept <- readChan (cacheHandleEvents cacheHandle)
+    case eventOrExcept of
+      Left _ -> pure ()
+      Right event -> modifyMVar_ (cacheHandleCache cacheHandle) $! pure . adjustCache event
 
-  loop :: IO ()
-  loop = forever $ do
-    eventOrExcept <- readChan eventChan
-    if not isEnabled
-      then return ()
-      else do
-        minfo <- takeMVar cache
-        case minfo of
-          Left nope -> putMVar cache (Left nope)
-          Right info -> case eventOrExcept of
-                          Left e -> putMVar cache (Left (info, e))
-                          Right event -> putMVar cache $! Right $! adjustCache info event
-
-adjustCache :: Cache -> EventInternalParse -> Cache
-adjustCache minfo event = case event of
-  InternalReady _ _ gus _ _ _ pa -> minfo { cacheApplication = pa, cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
+-- | Apply gateway event to cache
+adjustCache :: EventInternalParse -> Cache -> Cache
+adjustCache event minfo = case event of
+  -- note: ready only sends a partial app. we could update the info stored in the full app
+  InternalReady _ _ gus _ _ _ _partialApp -> minfo { cacheGuilds = M.union (cacheGuilds minfo) (M.fromList $ (\gu -> (idOnceAvailable gu, Nothing)) <$> gus) }
 
   InternalGuildCreate guild guildData ->
     let newChans = guildCreateChannels guildData

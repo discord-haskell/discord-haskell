@@ -390,7 +390,7 @@ eventHandler testserverid event = case event of
     void
       ( do
           exampleImage <- liftIO getImage
-          aid <- readCache <&> cacheApplication <&> partialApplicationID
+          aid <- readCache <&> cacheApplication <&> fullApplicationID
           _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
           restCall
             ( R.CreateFollowupInteractionMessage

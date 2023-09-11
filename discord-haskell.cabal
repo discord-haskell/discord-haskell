@@ -140,6 +140,7 @@ library
     , Discord.Internal.Rest.Voice
     , Discord.Internal.Rest.Webhook
     , Discord.Internal.Rest.ApplicationCommands
+    , Discord.Internal.Rest.ApplicationInfo
     , Discord.Internal.Rest.Interactions
     , Discord.Internal.Rest.ScheduledEvents
     , Discord.Internal.Types
@@ -151,6 +152,7 @@ library
     , Discord.Internal.Types.User
     , Discord.Internal.Types.Embed
     , Discord.Internal.Types.ApplicationCommands
+    , Discord.Internal.Types.ApplicationInfo
     , Discord.Internal.Types.Interactions
     , Discord.Internal.Types.Components
     , Discord.Internal.Types.Color
