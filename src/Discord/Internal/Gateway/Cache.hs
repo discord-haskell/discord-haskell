@@ -15,6 +15,7 @@ import qualified Data.Text as T
 import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
 
+-- |  Cached data from gateway. Set RunDiscordOpts.discordEnableCache=true to enable all the fields
 data Cache = Cache
      { cacheCurrentUser :: !User -- ^ Filled before onStart handler
      , cacheDMChannels :: !(M.Map ChannelId Channel) -- ^ Filled over time
@@ -23,14 +24,17 @@ data Cache = Cache
      , cacheApplication :: !FullApplication -- ^ Filled before onStart handler
      } deriving (Show)
 
+-- | Internal handle for cacheLoop to manage the cache
 data CacheHandle = CacheHandle
-  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse)
-  , cacheHandleCache  :: MVar Cache
+  { cacheHandleEvents :: Chan (Either GatewayException EventInternalParse) -- ^ Read gateway events
+  , cacheHandleCache  :: MVar Cache -- ^ Current cache.
   }
 
+-- | Internally used to setup the first cache
 initializeCache :: User -> FullApplication -> CacheHandle -> IO ()
 initializeCache user app cacheHandle = putMVar (cacheHandleCache cacheHandle) (Cache user M.empty M.empty M.empty app)
 
+-- | IO loop to update cache on each gateway event
 cacheLoop :: Bool -> CacheHandle -> Chan T.Text -> IO ()
 cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
     eventOrExcept <- readChan (cacheHandleEvents cacheHandle)
@@ -38,6 +42,7 @@ cacheLoop isEnabled cacheHandle _log = when isEnabled $ forever $ do
       Left _ -> pure ()
       Right event -> modifyMVar_ (cacheHandleCache cacheHandle) $! pure . adjustCache event
 
+-- | Apply gateway event to cache
 adjustCache :: EventInternalParse -> Cache -> Cache
 adjustCache event minfo = case event of
   -- note: ready only sends a partial app. we could update the info stored in the full app
