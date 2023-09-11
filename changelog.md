@@ -4,9 +4,20 @@ View on GitHub for the newest ChangeLog: https://github.com/discord-haskell/disc
 
 The Discord API constantly changes. This library issues updates when we implement new features added to the API or remove outdated functionalities. In order to interact with the Discord API safely and predictably, please update the library whenever there is a new version released.
 
-## Unreleased 
+## Unreleased
 
 -
+
+## 1.16.0
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/187) Switched StatusOpts to a list of activities
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/188) Dropped support for Aeson < 2.0.0 (see [here for migration guid](https://github.com/haskell/aeson/issues/881) and [here for why](https://frasertweedale.github.io/blog-fp/posts/2021-10-12-aeson-hash-flooding-protection.html))
+
+- [aquarial](https://github.com/discord-haskell/discord-haskell/pull/190) Populate cache before onStart handler. Cache includes more app info
+
+- [aquarial](https://github.com/discord-haskell/discord-haskell/pull/194) Export `ModalData` ADT internals
+
 
 ## 1.15.6
 
