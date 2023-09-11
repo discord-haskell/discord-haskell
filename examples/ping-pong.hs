@@ -42,11 +42,9 @@ startHandler :: GuildId -> DiscordHandler ()
 startHandler testserverid = do
   liftIO $ putStrLn "Started ping-pong bot"
 
-  let activity = def { activityName = "ping-pong"
-                     , activityType = ActivityTypeGame
-                     }
+  let activity = (mkActivity "ping-pong" ActivityTypeStreaming) { activityUrl = Just "https://www.youtube.com/watch?v=dQw4w9WgXcQ", activityState = Just "rolling down a hill" }
   let opts = UpdateStatusOpts { updateStatusOptsSince = Nothing
-                              , updateStatusOptsGame = Just activity
+                              , updateStatusOptsActivities = [activity]
                               , updateStatusOptsNewStatus = UpdateStatusOnline
                               , updateStatusOptsAFK = False
                               }
