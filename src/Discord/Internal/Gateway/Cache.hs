@@ -16,11 +16,11 @@ import Discord.Internal.Types
 import Discord.Internal.Gateway.EventLoop
 
 data Cache = Cache
-     { cacheCurrentUser :: !User
-     , cacheDMChannels :: !(M.Map ChannelId Channel)
-     , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData)))
-     , cacheChannels :: !(M.Map ChannelId Channel)
-     , cacheApplication :: !FullApplication
+     { cacheCurrentUser :: !User -- ^ Filled before onStart handler
+     , cacheDMChannels :: !(M.Map ChannelId Channel) -- ^ Filled over time
+     , cacheGuilds :: !(M.Map GuildId (Maybe (Guild, Maybe GuildCreateData))) -- ^ Filled over time
+     , cacheChannels :: !(M.Map ChannelId Channel) -- ^ Filled over time
+     , cacheApplication :: !FullApplication -- ^ Filled before onStart handler
      } deriving (Show)
 
 data CacheHandle = CacheHandle
