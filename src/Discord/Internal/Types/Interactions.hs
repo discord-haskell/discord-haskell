@@ -18,6 +18,7 @@ module Discord.Internal.Types.Interactions
     InteractionToken,
     ResolvedData (..),
     MemberOrUser (..),
+    ModalData (..),
     InteractionResponse (..),
     interactionResponseBasic,
     InteractionResponseAutocomplete (..),
