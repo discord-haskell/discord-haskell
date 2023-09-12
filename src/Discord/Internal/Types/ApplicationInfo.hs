@@ -5,11 +5,8 @@
 module Discord.Internal.Types.ApplicationInfo where
 
 import Data.Aeson
-import Data.Text (Text)
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude
-import Data.Time (UTCTime)
-
 
 -- | Structure containing partial information about an Application
 data FullApplication = FullApplication
