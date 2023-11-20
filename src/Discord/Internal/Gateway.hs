@@ -47,8 +47,12 @@ startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
   hbAcks <- newIORef currTime
   hbSends <- newIORef (currTime, currTime)
   let gatewayHandle = GatewayHandle events sends status seqid seshid host hbAcks hbSends
-  tids <- connectEventLoops (\shard -> connectionLoop auth shard intent gatewayHandle log) (decideSharding sharding gatewaybot)
+
+  tids <- forkIO $ gatewayManagerLoop gatewayHandle
   pure (gatewayHandle, tids)
+
+gatewayManagerLoop :: GatewayHandle -> IO ()
+gatewayManagerLoop = undefined -- connectEventLoops (\shard -> connectionLoop auth shard intent gatewayHandle log) (decideSharding sharding gatewaybot)
 
 -- | Based on user specified sharding, return the list of shards to connect
 decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
