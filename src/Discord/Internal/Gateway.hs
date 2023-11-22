@@ -14,8 +14,9 @@ module Discord.Internal.Gateway
   ) where
 
 import Prelude hiding (log)
+import Control.Monad (forever)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
-import Control.Concurrent (threadDelay, forkIO, ThreadId, newEmptyMVar, MVar)
+import Control.Concurrent (threadDelay, forkIO, ThreadId, newEmptyMVar, tryPutMVar, MVar)
 import Data.IORef (newIORef)
 import qualified Data.Text as T
 import Data.Time (getCurrentTime)
@@ -48,21 +49,22 @@ startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
   hbSends <- newIORef (currTime, currTime)
   let gatewayHandle = GatewayHandle events sends status seqid seshid host hbAcks hbSends
 
-  tids <- forkIO $ gatewayManagerLoop gatewayHandle
-  pure (gatewayHandle, tids)
+  readyToConnect <- newEmptyMVar :: IO (MVar ())
+  readytid <- forkIO $ forever $ tryPutMVar readyToConnect () >> threadDelay (5*10^6)
 
-gatewayManagerLoop :: GatewayHandle -> IO ()
-gatewayManagerLoop = undefined -- connectEventLoops (\shard -> connectionLoop auth shard intent gatewayHandle log) (decideSharding sharding gatewaybot)
+  tids <- mapM (\shard -> forkIO $ connectionLoop auth shard intent gatewayHandle readyToConnect log)
+               (decideSharding sharding gatewaybot)
 
--- | Based on user specified sharding, return the list of shards to connect
+  pure (gatewayHandle, [readytid]++tids)
+
+  -- | Based on user specified sharding, return the list of shards to connect
 decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
 decideSharding sharding gatewaybot = case sharding of
                                        DiscordShardingSpecific shards -> shards
                                        DiscordShardingAuto -> let n = fromIntegral $ gatewayBotRecommendedShards gatewaybot
                                                               in [(x, n) | x <- [0..(n-1)]]
 
-connectEventLoops :: ((Int, Int) -> IO ()) -> [(Int, Int)] -> IO [ThreadId]
-connectEventLoops eventLoop shards = mapM startConnection (zip [0..] shards)
-  where
-  startConnection :: (Int, (Int, Int)) -> IO ThreadId
-  startConnection (delay, shard) = forkIO $ threadDelay (delay * 5*10^6) >> eventLoop shard
+
+
+shardManager :: GatewayBot -> MVar Int -> IO ()
+shardManager
