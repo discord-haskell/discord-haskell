@@ -14,3 +14,9 @@ If a bot is running into these scaling limits here are some things to look into:
 - startup another computer and run half the shards on one (by specifying `RunDiscordOpts.discordSharding`)
 
 For information on how to specify sharding use https://discord.com/developers/docs/topics/gateway#sharding
+
+--------------------------
+
+For library review: note that connection order doesn't matter. even though the docs say thi in bold, twicw.
+
+link to employee saying this https://discord.com/channels/81384788765712384/381887113391505410/923709602342764604
