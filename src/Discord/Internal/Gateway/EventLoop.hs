@@ -121,7 +121,7 @@ connectionLoop auth shard intent gatewayHandle log = outerloop LoopStart
                             seshId <- readIORef (gatewayHandleSessionId gatewayHandle)
                             if seshId == ""
                             then do writeChan log "gateway - WARNING seshID was not set by READY?"
-                                    pure $ Just $ Identify auth intent (0, 1) -- TODO
+                                    pure $ Just $ Identify auth intent shard
                             else pure $ Just $ Resume auth seshId seqId
         LoopClosed -> pure Nothing
 
