@@ -85,7 +85,7 @@ authToken (Auth tok) = let token = T.strip tok
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
-  deriving (Ord, Eq)
+  deriving (Ord, Eq, Num)
 
 instance Show Snowflake where
   show (Snowflake a) = show a
