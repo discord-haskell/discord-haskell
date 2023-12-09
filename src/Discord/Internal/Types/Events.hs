@@ -42,7 +42,7 @@ data Event =
   -- | thread was updated
   | ThreadUpdate               Channel
   -- | thread member for the current user was updated
-  | ThreadMemberUpdate         GuildId
+  | ThreadMemberUpdate         ThreadMemberUpdateFields
   -- | thread was deleted
   | ThreadDelete               Channel
   -- | sent when gaining access to a channel, contains all active threads in that channel
@@ -120,7 +120,7 @@ data EventInternalParse =
   | InternalChannelDelete              Channel
   | InternalThreadCreate               Channel
   | InternalThreadUpdate               Channel
-  | InternalThreadMemberUpdate         GuildId
+  | InternalThreadMemberUpdate         ThreadMemberUpdateFields
   | InternalThreadDelete               Channel
   | InternalThreadListSync             ThreadListSyncFields 
   | InternalThreadMembersUpdate        ThreadMembersUpdateFields 

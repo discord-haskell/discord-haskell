@@ -309,7 +309,7 @@ instance ToJSON StartThreadOpts where
       ]
 
 instance Default StartThreadOpts where
-  def = StartThreadOpts { startThreadName        = ""
+  def = StartThreadOpts { startThreadName        = "New Thread"
                         , startThreadAutoArchive = Nothing
                         , startThreadRateLimit   = Nothing
                         }
