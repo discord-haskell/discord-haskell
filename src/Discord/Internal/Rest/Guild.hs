@@ -250,23 +250,6 @@ data CreateGuildChannelOpts
   | CreateGuildChannelOptsCategory
   deriving (Show, Read, Eq, Ord)
 
--- | result for `ListGuildActiveThreads`
-data ListActiveThreads = ListActiveThreads
-  { listActiveThreadsThreads :: [Channel]
-  , listActiveThreadsMembers :: [ThreadMember]
-  } deriving (Show, Read, Eq, Ord)
-
-instance ToJSON ListActiveThreads where
-  toJSON ListActiveThreads{..} = object
-    [ ("threads", toJSON listActiveThreadsThreads)
-    , ("members", toJSON listActiveThreadsMembers)
-    ]
-
-instance FromJSON ListActiveThreads where
-  parseJSON = withObject "ListActiveThreads" $ \o ->
-    ListActiveThreads <$> o .: "threads"
-                      <*> o .: "members"
-
 -- | Converts a channel name, a list of permissions and other channel options into a JSON Value 
 createChannelOptsToJSON :: T.Text -> [Overwrite] -> CreateGuildChannelOpts -> Value
 createChannelOptsToJSON name perms opts = objectFromMaybes optsJSON
