@@ -24,7 +24,6 @@ module Discord.Internal.Types.Channel (
   , MessageFlag (..)
   , MessageFlags (..)
   , MessageInteraction (..)
-  , ListActiveThreads (..)
   
   , ChannelTypeOption (..)
   ) where
@@ -903,20 +902,3 @@ instance FromJSON MessageInteraction where
                        <*> o .: "type"
                        <*> o .: "name"
                        <*> o .: "user"
-
--- | result for `ListGuildActiveThreads`
-data ListActiveThreads = ListActiveThreads
-  { listActiveThreadsThreads :: [Channel]
-  , listActiveThreadsMembers :: [ThreadMember]
-  } deriving (Show, Read, Eq, Ord)
-
-instance ToJSON ListActiveThreads where
-  toJSON ListActiveThreads{..} = object
-    [ ("threads", toJSON listActiveThreadsThreads)
-    , ("members", toJSON listActiveThreadsMembers)
-    ]
-
-instance FromJSON ListActiveThreads where
-  parseJSON = withObject "ListActiveThreads" $ \o ->
-    ListActiveThreads <$> o .: "threads"
-                      <*> o .: "members"

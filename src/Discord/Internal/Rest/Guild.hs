@@ -15,6 +15,7 @@ module Discord.Internal.Rest.Guild
   , ModifyGuildRoleOpts(..)
   , CreateGuildIntegrationOpts(..)
   , ModifyGuildIntegrationOpts(..)
+  , ListActiveThreads (..)
   ) where
 
 
@@ -301,6 +302,23 @@ data GuildMembersTiming = GuildMembersTiming
                           { guildMembersTimingLimit :: Maybe Int
                           , guildMembersTimingAfter :: Maybe UserId
                           } deriving (Show, Read, Eq, Ord)
+
+-- | result for `ListGuildActiveThreads`
+data ListActiveThreads = ListActiveThreads
+  { listActiveThreadsThreads :: [Channel]
+  , listActiveThreadsMembers :: [ThreadMember]
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON ListActiveThreads where
+  toJSON ListActiveThreads{..} = object
+    [ ("threads", toJSON listActiveThreadsThreads)
+    , ("members", toJSON listActiveThreadsMembers)
+    ]
+
+instance FromJSON ListActiveThreads where
+  parseJSON = withObject "ListActiveThreads" $ \o ->
+    ListActiveThreads <$> o .: "threads"
+                      <*> o .: "members"
 
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
