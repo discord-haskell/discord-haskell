@@ -41,11 +41,13 @@ data Event =
   | ThreadCreate               Channel
   -- | thread was updated
   | ThreadUpdate               Channel
+  -- | thread member for the current user was updated
+  | ThreadMemberUpdate         ThreadMemberUpdateFields
   -- | thread was deleted
   | ThreadDelete               Channel
   -- | sent when gaining access to a channel, contains all active threads in that channel
   | ThreadListSync             ThreadListSyncFields
-  -- | thread member for the current user was updated
+  -- | member or the current user was added or removed from a thread
   | ThreadMembersUpdate        ThreadMembersUpdateFields
   -- | message was pinned or unpinned
   | ChannelPinsUpdate          ChannelId (Maybe UTCTime)
@@ -118,6 +120,7 @@ data EventInternalParse =
   | InternalChannelDelete              Channel
   | InternalThreadCreate               Channel
   | InternalThreadUpdate               Channel
+  | InternalThreadMemberUpdate         ThreadMemberUpdateFields
   | InternalThreadDelete               Channel
   | InternalThreadListSync             ThreadListSyncFields 
   | InternalThreadMembersUpdate        ThreadMembersUpdateFields 
@@ -278,6 +281,7 @@ eventParse t o = case t of
     "CHANNEL_DELETE"            -> InternalChannelDelete             <$> reparse o
     "THREAD_CREATE"             -> InternalThreadCreate              <$> reparse o
     "THREAD_UPDATE"             -> InternalThreadUpdate              <$> reparse o
+    "THREAD_MEMBER_UPDATE"      -> InternalThreadMemberUpdate        <$> reparse o
     "THREAD_DELETE"             -> InternalThreadDelete              <$> reparse o
     "THREAD_LIST_SYNC"          -> InternalThreadListSync            <$> reparse o
     "THREAD_MEMBERS_UPDATE"     -> InternalThreadMembersUpdate       <$> reparse o

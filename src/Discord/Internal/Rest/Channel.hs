@@ -308,6 +308,12 @@ instance ToJSON StartThreadOpts where
       , "rate_limit_per_user" .=? startThreadRateLimit
       ]
 
+instance Default StartThreadOpts where
+  def = StartThreadOpts { startThreadName        = "New Thread"
+                        , startThreadAutoArchive = Nothing
+                        , startThreadRateLimit   = Nothing
+                        }
+
 -- | Options for `StartThreadNoMessage` request
 data StartThreadNoMessageOpts = StartThreadNoMessageOpts
   { -- | Base options for the thread

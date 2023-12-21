@@ -15,6 +15,7 @@ module Discord.Internal.Rest.Guild
   , ModifyGuildRoleOpts(..)
   , CreateGuildIntegrationOpts(..)
   , ModifyGuildIntegrationOpts(..)
+  , ListActiveThreads (..)
   ) where
 
 
@@ -53,6 +54,8 @@ data GuildRequest a where
   --   'MANAGE_CHANNELS' permission. Returns a list of all of the guild's 'Channel'
   --   objects on success. Fires multiple Channel Update 'Event's.
   ModifyGuildChannelPositions      :: GuildId -> [(ChannelId,Int)] -> GuildRequest [Channel]
+  -- | Returns a list of active threads in a guild
+  ListActiveGuildThreads   :: GuildId -> GuildRequest ListActiveThreads
   -- | Returns a guild 'Member' object for the specified user
   GetGuildMember           :: GuildId -> UserId -> GuildRequest GuildMember
   -- | Returns a list of guild 'Member' objects that are members of the guild.
@@ -61,14 +64,13 @@ data GuildRequest a where
   --   for the user with the guilds.join scope. Returns the guild 'Member' as the body.
   --   Fires a Guild Member Add 'Event'. Requires the bot to have the
   --   CREATE_INSTANT_INVITE permission.
-  AddGuildMember           :: GuildId -> UserId -> AddGuildMemberOpts
-                                      -> GuildRequest ()
+  AddGuildMember           :: GuildId -> UserId -> AddGuildMemberOpts -> GuildRequest ()
   -- | Modify attributes of a guild 'Member'. Fires a Guild Member Update 'Event'.
   ModifyGuildMember        :: GuildId -> UserId -> ModifyGuildMemberOpts -> GuildRequest GuildMember
   -- | Modify the nickname of the current user
   ModifyCurrentUserNick    :: GuildId -> T.Text -> GuildRequest ()
   -- | Add a member to a guild role. Requires 'MANAGE_ROLES' permission.
-  AddGuildMemberRole    :: GuildId -> UserId -> RoleId -> GuildRequest ()
+  AddGuildMemberRole       :: GuildId -> UserId -> RoleId -> GuildRequest ()
   -- | Remove a member from a guild role. Requires 'MANAGE_ROLES' permission.
   RemoveGuildMemberRole    :: GuildId -> UserId -> RoleId -> GuildRequest ()
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
@@ -132,11 +134,11 @@ data GuildRequest a where
   -- | Sync an 'Integration'. Requires the 'MANAGE_GUILD' permission.
   SyncGuildIntegration     :: GuildId -> IntegrationId -> GuildRequest ()
   -- | Returns the 'GuildWidget' object. Requires the 'MANAGE_GUILD' permission.
-  GetGuildWidget            :: GuildId -> GuildRequest GuildWidget
+  GetGuildWidget           :: GuildId -> GuildRequest GuildWidget
   -- | Modify a 'GuildWidget' object for the guild. All attributes may be passed in with
   --   JSON and modified. Requires the 'MANAGE_GUILD' permission. Returns the updated
   --   'GuildWidget' object.
-  ModifyGuildWidget         :: GuildId -> GuildWidget -> GuildRequest GuildWidget
+  ModifyGuildWidget        :: GuildId -> GuildWidget -> GuildRequest GuildWidget
   -- | Vanity URL
   GetGuildVanityURL        :: GuildId -> GuildRequest T.Text
 
@@ -301,6 +303,23 @@ data GuildMembersTiming = GuildMembersTiming
                           , guildMembersTimingAfter :: Maybe UserId
                           } deriving (Show, Read, Eq, Ord)
 
+-- | result for `ListGuildActiveThreads`
+data ListActiveThreads = ListActiveThreads
+  { listActiveThreadsThreads :: [Channel]
+  , listActiveThreadsMembers :: [ThreadMember]
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON ListActiveThreads where
+  toJSON ListActiveThreads{..} = object
+    [ ("threads", toJSON listActiveThreadsThreads)
+    , ("members", toJSON listActiveThreadsMembers)
+    ]
+
+instance FromJSON ListActiveThreads where
+  parseJSON = withObject "ListActiveThreads" $ \o ->
+    ListActiveThreads <$> o .: "threads"
+                      <*> o .: "members"
+
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
   let limit = case mLimit of
@@ -319,6 +338,7 @@ guildMajorRoute c = case c of
   (GetGuildChannels g) ->            "guild_chan " <> show g
   (CreateGuildChannel g _ _ _) ->    "guild_chan " <> show g
   (ModifyGuildChannelPositions g _) -> "guild_chan " <> show g
+  (ListActiveGuildThreads g) ->      "guild_chan " <> show g
   (GetGuildMember g _) ->            "guild_memb " <> show g
   (ListGuildMembers g _) ->         "guild_membs " <> show g
   (AddGuildMember g _ _) ->         "guild_membs " <> show g
@@ -375,6 +395,9 @@ guildJsonRequest c = case c of
       let patch = map (\(a, b) -> object [("id", toJSON a)
                                          ,("position", toJSON b)]) newlocs
       in Patch (guilds /~ guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+
+  (ListActiveGuildThreads guild) ->
+      Get (guilds /~ guild /: "threads" /: "active") mempty
 
   (GetGuildMember guild member) ->
       Get (guilds /~ guild /: "members" /~ member) mempty

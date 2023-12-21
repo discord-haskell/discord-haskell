@@ -43,6 +43,7 @@ userFacingEvent event = case event of
   InternalChannelDelete a -> ChannelDelete a
   InternalThreadCreate a -> ThreadCreate a
   InternalThreadUpdate a -> ThreadUpdate a
+  InternalThreadMemberUpdate a -> ThreadMemberUpdate a
   InternalThreadDelete a -> ThreadDelete a
   InternalThreadListSync a -> ThreadListSync a
   InternalThreadMembersUpdate a -> ThreadMembersUpdate a

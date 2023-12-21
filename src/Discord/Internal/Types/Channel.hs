@@ -9,6 +9,7 @@ module Discord.Internal.Types.Channel (
   , Overwrite (..)
   , ThreadMetadata (..)
   , ThreadMember (..)
+  , ThreadMemberUpdateFields (..)
   , ThreadListSyncFields (..)
   , ThreadMembersUpdateFields (..)
   , Message (..)
@@ -23,7 +24,7 @@ module Discord.Internal.Types.Channel (
   , MessageFlag (..)
   , MessageFlags (..)
   , MessageInteraction (..)
-
+  
   , ChannelTypeOption (..)
   ) where
 
@@ -453,6 +454,30 @@ instance ToJSON ThreadMember where
               , "flags" .== threadMemberFlags
               ]
 
+data ThreadMemberUpdateFields = ThreadMemberUpdateFields
+  { threadMemberUpdateFieldsThreadId :: Maybe ChannelId -- ^ id of the thread
+  , threadMemberUpdateFieldsUserId   :: Maybe UserId    -- ^ id of the user
+  , threadMemberUpdateFieldsJoinTime :: UTCTime         -- ^ time the current user last joined the thread
+  , threadMemberUpdateFieldsFlags    :: Integer         -- ^ user-thread settings
+  , threadMemberUpdateFieldsGuildId  :: GuildId         -- ^ id of the guild
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ThreadMemberUpdateFields where
+  parseJSON = withObject "ThreadMemberUpdateFields" $ \o ->
+    ThreadMemberUpdateFields <$> o .:? "id"
+                             <*> o .:? "user_id"
+                             <*> o .:  "join_timestamp"
+                             <*> o .:  "flags"
+                             <*> o .:  "guild_id"
+
+instance ToJSON ThreadMemberUpdateFields where
+  toJSON ThreadMemberUpdateFields{..} = objectFromMaybes
+              [ "id" .=? threadMemberUpdateFieldsThreadId
+              , "user_id" .=? threadMemberUpdateFieldsUserId
+              , "join_timestamp" .== threadMemberUpdateFieldsJoinTime
+              , "flags" .== threadMemberUpdateFieldsFlags
+              , "guild_id" .== threadMemberUpdateFieldsGuildId
+              ]
 
 data ThreadListSyncFields = ThreadListSyncFields
   { threadListSyncFieldsGuildId :: GuildId
