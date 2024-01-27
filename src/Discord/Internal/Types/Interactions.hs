@@ -604,6 +604,8 @@ instance ToJSON InteractionResponseAutocomplete where
   toJSON (InteractionResponseAutocompleteNumber cs) = object [("choices", toJSON cs)]
 
 -- | A cut down message structure.
+-- The 'Default' instance of this type yields a 'def' value whose fields are all empty.
+-- As such, the 'def' value is not a valid response message and needs to be adjusted before being used.
 data InteractionResponseMessage = InteractionResponseMessage
   { interactionResponseMessageTTS :: Maybe Bool,
     interactionResponseMessageContent :: Maybe T.Text,
