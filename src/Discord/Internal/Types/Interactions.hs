@@ -32,6 +32,7 @@ where
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (join)
+import Data.Default
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
@@ -618,6 +619,9 @@ data InteractionResponseMessage = InteractionResponseMessage
 -- effectively a helper function.
 interactionResponseMessageBasic :: T.Text -> InteractionResponseMessage
 interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing
+
+instance Default InteractionResponseMessage where
+  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON InteractionResponseMessage where
   toJSON InteractionResponseMessage {..} =
