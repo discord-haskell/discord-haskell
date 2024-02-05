@@ -32,6 +32,7 @@ where
 
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (join)
+import Data.Default
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
@@ -603,6 +604,8 @@ instance ToJSON InteractionResponseAutocomplete where
   toJSON (InteractionResponseAutocompleteNumber cs) = object [("choices", toJSON cs)]
 
 -- | A cut down message structure.
+-- The 'Default' instance of this type yields a 'def' value whose fields are all empty.
+-- As such, the 'def' value is not a valid response message and needs to be adjusted before being used.
 data InteractionResponseMessage = InteractionResponseMessage
   { interactionResponseMessageTTS :: Maybe Bool,
     interactionResponseMessageContent :: Maybe T.Text,
@@ -618,6 +621,9 @@ data InteractionResponseMessage = InteractionResponseMessage
 -- effectively a helper function.
 interactionResponseMessageBasic :: T.Text -> InteractionResponseMessage
 interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing
+
+instance Default InteractionResponseMessage where
+  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing
 
 instance ToJSON InteractionResponseMessage where
   toJSON InteractionResponseMessage {..} =

@@ -56,6 +56,8 @@ createEmbed CreateEmbed{..} =
            , embedProvider    = Nothing
            }
 
+-- | The 'Default' instance of this type yields a 'def' value whose fields are all empty.
+-- As such, the 'def' value is not a valid embed and needs to be adjusted before being used.
 data CreateEmbed = CreateEmbed
   { createEmbedAuthorName  :: T.Text
   , createEmbedAuthorUrl   :: T.Text
