@@ -8,6 +8,12 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.16.1
+
+- [julmb](https://github.com/discord-haskell/discord-haskell/pull/200) Default instance for InteractionResponseMessage
+
+- [S3NP41-v](https://github.com/discord-haskell/discord-haskell/pull/199) Adding ThreadMemberUpdate event, and a StartThreadOpts Default instance
+
 ## 1.16.0
 
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/187) Switched StatusOpts to a list of activities
