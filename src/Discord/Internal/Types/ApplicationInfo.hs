@@ -22,11 +22,10 @@ data FullApplication = FullApplication
   , fullApplicationPrivacyPolicyUrl :: T.Text
   -- , fullApplicationOwner :: User -- ^ partial user, test what it has?
   , fullApplicationVerifyKey :: T.Text -- ^ Hex encoded key for verification in interactions and the GameSDK's GetTicket
-  -- , fullApplicationTeam :: Team -- ^ 
+  -- , fullApplicationTeam :: Team -- ^
 
 instance FromJSON FullApplication where
   parseJSON = withObject "FullApplication" $ \o ->
     FullApplication <$> o .: "id"
                     <*> o .: "name"
                     <*> o .: "flags"
-
