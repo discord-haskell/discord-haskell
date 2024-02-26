@@ -5,6 +5,8 @@
 module Discord.Internal.Types.ApplicationInfo where
 
 import Data.Aeson
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KM
 import qualified Data.Text as T
 import Discord.Internal.Types.Prelude
 
@@ -51,10 +53,10 @@ instance FromJSON FullApplication where
                     <*> o .:? "rpc_origins"
                     <*> o .: "bot_public"
                     <*> o .: "bot_require_code_grant"
-                    <*> o .:? "bot" -- (o .:? "bot" >>= (\b -> b .: "id"))
+                    <*> ((\mbBot -> mbBot >>= KM.lookup (Key.fromText "id")) <$> (o .:? "bot"))
                     <*> o .:? "terms_of_service_url"
                     <*> o .:? "privacy_policy_url"
-                    <*> o .:? "owner" -- (o .:? "owner" >>= (\b -> b .: "id"))
+                    <*> ((\mbOwner -> mbOwner >>= KM.lookup (Key.fromText "id")) <$> (o .:? "owner"))
                     <*> o .: "verify_key"
                     <*> o .:? "team"
                     <*> o .:? "guild_id"
@@ -70,10 +72,6 @@ instance FromJSON FullApplication where
                     <*> o .:? "tags"
                     <*> o .:? "install_params"
                     <*> o .:? "custom_install_url"
-
-
-zz = undefined
-zzb = undefined
 
 data DiscordTeam = DiscordTeam
   { discordTeamIcon :: Maybe T.Text
