@@ -24,6 +24,7 @@ module Discord.Internal.Types.Prelude
   , EmojiId
   , StickerId
   , UserId
+  , DiscordTeamId
   , RoleId
   , IntegrationId
   , WebhookId
