@@ -23,7 +23,7 @@ data FullApplication = FullApplication
   , fullApplicationPrivacyPolicyUrl :: Maybe T.Text
   -- , fullApplicationOwner :: User -- ^ partial user, test what it has?
   , fullApplicationVerifyKey :: T.Text -- ^ Hex encoded key for verification in interactions and the GameSDK's GetTicket
-  -- , fullApplicationTeam :: Team -- ^
+  , fullApplicationTeam :: Maybe DiscordTeam -- ^ Included if the app belongs to a team
   , fullApplicationGuildID :: Maybe GuildId -- ^ Guild ID associated with the App. 
   -- fullApplicationGuild :: PartialGuild
   -- , fullApplicationPrimaryGameSKU
@@ -54,7 +54,7 @@ instance FromJSON FullApplication where
                     <*> o .:? "privacy_policy_url"
                     -- <*> o .:? "owner"
                     <*> o .: "verify_key"
-                    -- <*> o .:? "team"
+                    <*> o .:? "team"
                     <*> o .:? "guild_id"
                     -- <*> o .:? "guild"
                     -- <*> o .:? "primary_sku_id"
@@ -71,7 +71,6 @@ instance FromJSON FullApplication where
 
 
 
-
 data DiscordTeam = DiscordTeam
   { discordTeamIcon :: Maybe T.Text
   , discordTeamId :: DiscordTeamId
@@ -82,8 +81,32 @@ data DiscordTeam = DiscordTeam
 
 instance FromJSON DiscordTeam where
   parseJSON = withObject "DiscordTeam" $ \o ->
-    DiscordTeam <$> o .:? "icon"
+    DiscordTeam <$> o .:? "icon" -- ^ Hash of the image of the team's icon
                 <*> o .:  "id"
                 <*> o .:  "members"
                 <*> o .:  "name"
-                <*> o .:  "owner_user_id"
+                <*> o .:  "owner_user_id" -- ^ User ID of the current team owner
+
+data DiscordTeamMember = DiscordTeamMember
+  { discordTeamMemberState :: DiscordTeamMemberState
+  , discordTeamMemberParentTeam :: DiscordTeamId
+  , discordTeamMemberUserId :: UserId
+  , discordTeamMemberOwnerRole :: T.Text
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON DiscordTeamMember where
+  parseJSON = withObject "DiscordTeamMember" $ \o ->
+    DiscordTeamMember <$> (parseState <$> (o .: "membership_state"))
+                      <*> o .: "team_id"
+                      <*> (o .: "user" >>= (.: "id"))
+                      <*> o .: "role"
+    where
+      parseState :: Integer -> DiscordTeamMemberState
+      parseState 1 = DiscordTeamMemberStateInvited
+      parseState 2 = DiscordTeamMemberStateAccepted
+      parseState _ = DiscordTeamMemberStateUnknown
+
+data DiscordTeamMemberState = DiscordTeamMemberStateInvited
+                            | DiscordTeamMemberStateAccepted
+                            | DiscordTeamMemberStateUnknown
+  deriving (Show, Read, Eq, Ord)
