@@ -174,6 +174,9 @@ type UserId = DiscordId UserIdType
 data RoleIdType
 type RoleId = DiscordId RoleIdType
 
+data DiscordTeamIdType
+type DiscordTeamId = DiscordId DiscordTeamIdType
+
 data IntegrationIdType
 type IntegrationId = DiscordId IntegrationIdType
 

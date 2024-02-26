@@ -70,3 +70,20 @@ instance FromJSON FullApplication where
                     <*> o .:? "custom_install_url"
 
 
+
+
+data DiscordTeam = DiscordTeam
+  { discordTeamIcon :: Maybe T.Text
+  , discordTeamId :: DiscordTeamId
+  , discordTeamMembers :: [DiscordTeamMember]
+  , discordTeamName :: T.Text
+  , discordTeamOwnerUserId :: UserId
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON DiscordTeam where
+  parseJSON = withObject "DiscordTeam" $ \o ->
+    DiscordTeam <$> o .:? "icon"
+                <*> o .:  "id"
+                <*> o .:  "members"
+                <*> o .:  "name"
+                <*> o .:  "owner_user_id"
