@@ -24,6 +24,8 @@ module Discord.Internal.Types.Prelude
   , EmojiId
   , StickerId
   , UserId
+  , DiscordTeamId
+  , GameSKUId
   , RoleId
   , IntegrationId
   , WebhookId
@@ -173,6 +175,12 @@ type UserId = DiscordId UserIdType
 
 data RoleIdType
 type RoleId = DiscordId RoleIdType
+
+data DiscordTeamIdType
+type DiscordTeamId = DiscordId DiscordTeamIdType
+
+data GameSKUIdType
+type GameSKUId = DiscordId GameSKUIdType
 
 data IntegrationIdType
 type IntegrationId = DiscordId IntegrationIdType
