@@ -53,10 +53,10 @@ instance FromJSON FullApplication where
                     <*> o .:? "rpc_origins"
                     <*> o .: "bot_public"
                     <*> o .: "bot_require_code_grant"
-                    <*> ((\mbBot -> mbBot >>= KM.lookup (Key.fromText "id")) <$> (o .:? "bot"))
+                    <*> (extractUserId <$> (o .:? "bot"))
                     <*> o .:? "terms_of_service_url"
                     <*> o .:? "privacy_policy_url"
-                    <*> ((\mbOwner -> mbOwner >>= KM.lookup (Key.fromText "id")) <$> (o .:? "owner"))
+                    <*> (extractUserId <$> (o .:? "owner"))
                     <*> o .: "verify_key"
                     <*> o .:? "team"
                     <*> o .:? "guild_id"
@@ -72,6 +72,14 @@ instance FromJSON FullApplication where
                     <*> o .:? "tags"
                     <*> o .:? "install_params"
                     <*> o .:? "custom_install_url"
+    where
+    extractUserId :: FromJSON a => Maybe Object -> Maybe a
+    extractUserId maybeBot = do
+      bot <- maybeBot
+      v <- KM.lookup (Key.fromText "id") bot
+      case fromJSON v of
+          Success a -> Just a
+          _         -> Nothing
 
 data DiscordTeam = DiscordTeam
   { discordTeamIcon :: Maybe T.Text
