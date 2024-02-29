@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE RankNTypes  #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DerivingStrategies #-}
 
 -- | Provides base types and utility functions needed for modules in Discord.Internal.Types
 module Discord.Internal.Types.Prelude
@@ -57,17 +58,17 @@ module Discord.Internal.Types.Prelude
 
  where
 
-import Data.Bifunctor (first)
 import Data.Bits (Bits(shiftR))
 import Data.Data (Data (dataTypeOf), dataTypeConstrs, fromConstr)
 import Data.Word (Word64)
 import Data.Maybe (catMaybes)
 import Text.Read (readMaybe)
+import Data.Hashable (Hashable)
 
 import Data.Aeson.Types
 import Data.Time.Clock
 import Data.Time.Clock.POSIX
-import Web.Internal.HttpApiData
+import Web.HttpApiData
 
 import qualified Data.ByteString as B
 import qualified Data.Text as T
@@ -87,16 +88,10 @@ authToken (Auth tok) = let token = T.strip tok
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
-  deriving (Ord, Eq)
-
-instance Show Snowflake where
-  show (Snowflake a) = show a
-
-instance Read Snowflake where
-  readsPrec p = fmap (first Snowflake) . readsPrec p
+  deriving newtype (Ord, Eq, Hashable, Show, Read, ToJSONKey, FromJSONKey, ToHttpApiData)
 
 instance ToJSON Snowflake where
-  toJSON (Snowflake snowflake) = String . T.pack $ show snowflake
+  toJSON = String . T.pack . show
 
 instance FromJSON Snowflake where
   parseJSON =
@@ -104,27 +99,12 @@ instance FromJSON Snowflake where
       "Snowflake"
       ( \snowflake ->
           case readMaybe (T.unpack snowflake) of
-            Nothing -> fail "null snowflake"
+            Nothing -> fail $ "invalid snowflake: " <> show snowflake
             (Just i) -> pure i
       )
 
-instance ToJSONKey Snowflake where
-  toJSONKey = contramapToJSONKeyFunction unSnowflake toJSONKey
-
-instance FromJSONKey Snowflake where
-  fromJSONKey = fmap Snowflake fromJSONKey
-
-instance ToHttpApiData Snowflake where
-  toUrlPiece = T.pack . show
-
 newtype RolePermissions = RolePermissions { getRolePermissions :: Integer } 
-  deriving (Eq, Ord, Bits)
-
-instance Read RolePermissions where
-  readsPrec p = fmap (first RolePermissions) . readsPrec p
-
-instance ToJSON RolePermissions where
-  toJSON = toJSON . getRolePermissions
+  deriving newtype (Eq, Ord, Bits, Read, Show, ToJSON)
 
 -- In v8 and above, all permissions are serialized as strings.
 -- See https://discord.com/developers/docs/topics/permissions#permissions.
@@ -132,34 +112,10 @@ instance FromJSON RolePermissions where
   parseJSON = withText "RolePermissions" $
       \text -> case readMaybe (T.unpack text) of
               Just perms -> pure $ RolePermissions perms
-              Nothing    -> fail "invalid role permissions integer string"
-
-instance Show RolePermissions where
-  show = show . getRolePermissions
+              Nothing    -> fail $ "invalid role permissions: " <> show text
 
 newtype DiscordId a = DiscordId { unId :: Snowflake }
-  deriving (Ord, Eq)
-
-instance Show (DiscordId a) where
-  show = show . unId
-
-instance Read (DiscordId a) where
-  readsPrec p = fmap (first DiscordId) . readsPrec p
-
-instance ToJSON (DiscordId a) where
-  toJSON = toJSON . unId
-
-instance FromJSON (DiscordId a) where
-  parseJSON = fmap DiscordId . parseJSON
-
-instance ToJSONKey (DiscordId a) where
-  toJSONKey = contramapToJSONKeyFunction unId toJSONKey
-
-instance FromJSONKey (DiscordId a) where
-  fromJSONKey = fmap DiscordId fromJSONKey
-
-instance ToHttpApiData (DiscordId a) where
-  toUrlPiece = T.pack . show
+  deriving newtype (Ord, Eq, Hashable, Show, Read, ToJSON, ToJSONKey, FromJSON, FromJSONKey, ToHttpApiData)
 
 data ChannelIdType
 type ChannelId = DiscordId ChannelIdType
@@ -219,22 +175,7 @@ data ScheduledEventEntityIdType
 type ScheduledEventEntityId = DiscordId ScheduledEventEntityIdType
 
 newtype DiscordToken a = DiscordToken { unToken :: T.Text }
-  deriving (Ord, Eq)
-
-instance Show (DiscordToken a) where
-  show = show . unToken
-
-instance Read (DiscordToken a) where
-  readsPrec p = fmap (first DiscordToken) . readsPrec p
-
-instance ToJSON (DiscordToken a) where
-  toJSON = toJSON . unToken
-
-instance FromJSON (DiscordToken a) where
-  parseJSON = fmap DiscordToken . parseJSON
-
-instance ToHttpApiData (DiscordToken a) where
-  toUrlPiece = unToken
+  deriving newtype (Ord, Eq, Show, Read, ToJSON, FromJSON, ToHttpApiData)
 
 type InteractionToken = DiscordToken InteractionIdType
 
