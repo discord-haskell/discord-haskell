@@ -108,6 +108,12 @@ instance FromJSON Snowflake where
             (Just i) -> pure i
       )
 
+instance ToJSONKey Snowflake where
+  toJSONKey = contramapToJSONKeyFunction unSnowflake toJSONKey
+
+instance FromJSONKey Snowflake where
+  fromJSONKey = fmap Snowflake fromJSONKey
+
 instance ToHttpApiData Snowflake where
   toUrlPiece = T.pack . show
 
@@ -145,6 +151,12 @@ instance ToJSON (DiscordId a) where
 
 instance FromJSON (DiscordId a) where
   parseJSON = fmap DiscordId . parseJSON
+
+instance ToJSONKey (DiscordId a) where
+  toJSONKey = contramapToJSONKeyFunction unId toJSONKey
+
+instance FromJSONKey (DiscordId a) where
+  fromJSONKey = fmap DiscordId fromJSONKey
 
 instance ToHttpApiData (DiscordId a) where
   toUrlPiece = T.pack . show
