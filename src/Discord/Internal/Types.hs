@@ -12,6 +12,7 @@ module Discord.Internal.Types
     module Discord.Internal.Types.Components,
     module Discord.Internal.Types.Emoji,
     module Discord.Internal.Types.RolePermissions,
+    module Discord.Internal.Types.AutoModeration,
     module Data.Aeson,
     module Data.Time.Clock,
     userFacingEvent,
@@ -32,6 +33,7 @@ import Discord.Internal.Types.Guild
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
 import Discord.Internal.Types.RolePermissions
+import Discord.Internal.Types.AutoModeration
 
 -- | Converts an internal event to its user facing counterpart
 userFacingEvent :: EventInternalParse -> Event

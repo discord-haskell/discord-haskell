@@ -143,6 +143,7 @@ library
     , Discord.Internal.Rest.ApplicationInfo
     , Discord.Internal.Rest.Interactions
     , Discord.Internal.Rest.ScheduledEvents
+    , Discord.Internal.Rest.AutoModeration
     , Discord.Internal.Types
     , Discord.Internal.Types.Prelude
     , Discord.Internal.Types.Channel
@@ -159,6 +160,7 @@ library
     , Discord.Internal.Types.Emoji
     , Discord.Internal.Types.RolePermissions
     , Discord.Internal.Types.ScheduledEvents
+    , Discord.Internal.Types.AutoModeration
   build-depends:
   -- https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/libraries/version-history
   -- below also sets the GHC version effectively. set to == 8.10.*, == 9.0.*., == 9.2.*, == 9.4.*, == 9.6.*

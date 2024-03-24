@@ -10,6 +10,7 @@ module Discord.Requests
   , module Discord.Internal.Rest.ApplicationCommands
   , module Discord.Internal.Rest.Interactions
   , module Discord.Internal.Rest.ScheduledEvents
+  , module Discord.Internal.Rest.AutoModeration
   ) where
 
 import Discord.Internal.Rest.ApplicationInfo
@@ -23,3 +24,4 @@ import Discord.Internal.Rest.Webhook
 import Discord.Internal.Rest.ApplicationCommands
 import Discord.Internal.Rest.Interactions
 import Discord.Internal.Rest.ScheduledEvents
+import Discord.Internal.Rest.AutoModeration

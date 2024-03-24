@@ -16,6 +16,8 @@ module Discord.Internal.Rest.Guild
   , CreateGuildIntegrationOpts(..)
   , ModifyGuildIntegrationOpts(..)
   , ListActiveThreads (..)
+  , GetAuditLogOpts (..)
+  , toAuditLogEvent
   ) where
 
 
@@ -27,6 +29,9 @@ import qualified Data.Text as T
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Data.Default (Default(..))
+
+import Discord.Internal.Types.ApplicationCommands (ApplicationCommand)
+import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
 
 instance Request (GuildRequest a) where
   majorRoute = guildMajorRoute
@@ -108,6 +113,10 @@ data GuildRequest a where
   --   that would be removed in a prune operation. Requires the 'KICK_MEMBERS'
   --   permission.
   GetGuildPruneCount       :: GuildId -> Integer -> GuildRequest Object
+  -- | Returns an AuditLog object. includes options about time, action type,
+  --   user that took the action and amount of entries to fetch.
+  --   Requires 'VIEW_AUDIT_LOG' permission
+  GetGuildAuditLog         :: GuildId -> GetAuditLogOpts -> GuildRequest AuditLog
   -- | Begin a prune operation. Requires the 'KICK_MEMBERS' permission. Returns an
   --   object with one 'pruned' key indicating the number of members that were removed
   --   in the prune operation. Fires multiple Guild Member Remove 'Events'.
@@ -320,6 +329,137 @@ instance FromJSON ListActiveThreads where
     ListActiveThreads <$> o .: "threads"
                       <*> o .: "members"
 
+-- | Audit log object, along with the entries it also contains referenced users, integrations [...] and so on
+data AuditLog = AuditLog
+  { auditLogEntries             :: [AuditLogEntry]
+  , auditLogUsers               :: [User]
+  , auditLogIntegrations        :: [Integration]
+  , auditLogWebhooks            :: [Webhook]
+  , auditlogScheduledEvents     :: [ScheduledEvent]
+  , auditLogThreads             :: [Channel]
+  , auditLogApplicationCommands :: [ApplicationCommand]
+  , auditLogAutoModerationRules :: [AutoModerationRule]
+  } deriving ( Show, Read )
+
+
+instance FromJSON AuditLog where
+  parseJSON = withObject "AuditLog" $ \o ->
+    AuditLog <$> o .: "audit_log_entries"
+             <*> o .: "users"
+             <*> o .: "integrations"
+             <*> o .: "webhooks"
+             <*> o .: "guild_scheduled_events"
+             <*> o .: "threads"
+             <*> o .: "application_commands"
+             <*> o .: "auto_moderation_rules"
+
+-- | An audit log entry object, so to speak the actual event that took place
+data AuditLogEntry = AuditLogEntry
+  { auditLogEntryId         :: AuditLogEntryId
+  , auditLogEntryActionType :: AuditLogEvent
+  , auditLogEntryUserId     :: Maybe UserId
+  , auditLogEntryTargetId   :: Maybe Snowflake
+  , auditLogEntryChanges    :: Maybe [AuditLogChange]
+  , auditLogEntryOptions    :: Maybe AuditLogEntryOptions
+  , auditLogEntryReasons    :: Maybe String
+  } deriving ( Show, Read)
+
+instance FromJSON AuditLogEntry where
+  parseJSON = withObject "AuditLogEntry" $ \o ->
+    AuditLogEntry <$> o .:  "id"
+                  <*> o .:  "action_type"
+                  <*> o .:? "user_id"
+                  <*> o .:? "target_id"
+                  <*> o .:? "changes"
+                  <*> o .:? "options"
+                  <*> o .:? "reasons"
+
+newtype AuditLogEvent = MkAuditLogEvent Int
+  deriving ( Show, Read )
+
+instance FromJSON AuditLogEvent where
+  parseJSON = fmap MkAuditLogEvent . parseJSON
+
+-- | A change object, it is only partially implemented (see 'AuditLogChangeValue')
+data AuditLogChange = AuditLogChange
+  { auditLogChangeKey      :: String
+  , auditLogChangeNewValue :: Maybe AuditLogChangeValue
+  , auditLogChangeOldValue :: Maybe AuditLogChangeValue
+  } deriving ( Show, Read )
+
+
+instance FromJSON AuditLogChange where
+  parseJSON = withObject "AuditLogChange" $ \o ->
+    AuditLogChange <$> o .:  "key"
+                   <*> o .:? "new_value"
+                   <*> o .:? "old_value"
+
+
+-- | This is a temporary solution, i really hope.
+--   Discord did NOT think this through, read more at <https://discord.com/developers/docs/resources/audit-log#audit-log-change-object>
+data AuditLogChangeValue = AuditLogChangeValue String
+  deriving ( Show, Read )
+
+instance FromJSON AuditLogChangeValue where
+  parseJSON o = return $ AuditLogChangeValue (show o)
+
+-- | Optional data for the Audit Log Entry object
+data AuditLogEntryOptions = AuditLogEntryOptions
+  { auditLogEntryOptionApplicationId                  :: Maybe ApplicationId
+  , auditLogEntryOptionAutoModerationRuleName         :: Maybe String
+  , auditLogEntryOptionAutoModerationRuleTriggerType  :: Maybe String
+  , auditLogEntryOptionChannelId                      :: Maybe ChannelId
+  , auditLogEntryOptionCount                          :: Maybe String
+  , auditLogEntryOptionDeleteMemberDays               :: Maybe String
+  , auditLogEntryOptionId                             :: Maybe Snowflake
+  , auditLogEntryOptionMembersRemoved                 :: Maybe String
+  , auditLogEntryOptionMessageId                      :: Maybe MessageId
+  , auditLogEntryOptionRoleName                       :: Maybe String
+  , auditLogEntryOptionType                           :: Maybe String
+  , auditLogEntryOptionIntegrationType                :: Maybe String
+  } deriving ( Show, Read )
+
+instance FromJSON AuditLogEntryOptions where
+  parseJSON = withObject "AuditLogEntryOption" $ \o ->
+    AuditLogEntryOptions <$> o .:? "application_id"
+                         <*> o .:? "auto_moderation_rule_name"
+                         <*> o .:? "auto_moderation_rule_trigger_type"
+                         <*> o .:? "channel_id"
+                         <*> o .:? "count"
+                         <*> o .:? "delete_member_days"
+                         <*> o .:? "id"
+                         <*> o .:? "members_removed"
+                         <*> o .:? "message_id"
+                         <*> o .:? "role_name"
+                         <*> o .:? "type"
+                         <*> o .:? "integration_type"
+
+-- | Options for `GetAuditLog` request
+data GetAuditLogOpts = GetAuditLogOpts
+  { getAuditLogUserId     :: Maybe UserId
+  , getAuditLogActionType :: Maybe AuditLogEvent
+  , getAuditLogTiming     :: Maybe AuditLogTiming
+  , getAuditLogLimit      :: Maybe Int
+  } deriving ( Show, Read)
+
+instance Default GetAuditLogOpts where
+  def = GetAuditLogOpts { getAuditLogUserId     = Nothing
+                        , getAuditLogActionType = Nothing
+                        , getAuditLogTiming     = Nothing
+                        , getAuditLogLimit      = Nothing
+                        }
+
+data AuditLogTiming = BeforeLogEntry AuditLogEntryId
+                    | AfterLogEntry AuditLogEntryId
+                    | LatestLogEntries
+  deriving (Show, Read, Eq, Ord)
+
+-- | See <https://discord.com/developers/docs/resources/audit-log#audit-log-entry-object-audit-log-events> for more information on Events
+toAuditLogEvent :: Int -> Maybe AuditLogEvent
+toAuditLogEvent i = if i `elem` (1 : 121 : [10..15] <> [20..42] <> [50..52] <> [60..62] <> [72..75] <> [80..85] <> [90..92] <> [100..102] <> [110..112] <> [140..145] <> [150, 151])
+  then Just (MkAuditLogEvent i) else Nothing
+
+
 guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
   let limit = case mLimit of
@@ -357,6 +497,7 @@ guildMajorRoute c = case c of
   (ModifyGuildRole g _ _) ->         "guild_role " <> show g
   (DeleteGuildRole g _) ->           "guild_role " <> show g
   (GetGuildPruneCount g _) ->       "guild_prune " <> show g
+  (GetGuildAuditLog g _) ->               "guild " <> show g
   (BeginGuildPrune g _) ->          "guild_prune " <> show g
   (GetGuildVoiceRegions g) ->       "guild_voice " <> show g
   (GetGuildInvites g) ->            "guild_invit " <> show g
@@ -453,6 +594,27 @@ guildJsonRequest c = case c of
 
   (GetGuildPruneCount guild days) ->
       Get (guilds /~ guild /: "prune") ("days" R.=: days)
+
+  (GetGuildAuditLog guild auditOpts) ->
+      let user_id = case getAuditLogUserId auditOpts of
+            Nothing  -> mempty
+            Just uid -> "user_id" R.=: uid
+          action_type = case getAuditLogActionType auditOpts of
+            Nothing                  -> mempty
+            Just (MkAuditLogEvent n) -> "action_type" R.=: n
+
+          timing = case getAuditLogTiming auditOpts of
+            Nothing                    -> mempty
+            Just LatestLogEntries      -> mempty
+            Just (BeforeLogEntry snow) -> "before" R.=: snow
+            Just (AfterLogEntry snow)  -> "after"  R.=: snow
+
+          limit = case getAuditLogLimit auditOpts of
+            Nothing -> mempty
+            Just n  -> "limit" R.=: max 1 (min 100 n)
+      
+          body = user_id <> action_type <> timing <> limit
+      in Get (guilds /~ guild /: "audit-logs") body
 
   (BeginGuildPrune guild days) ->
       Post (guilds /~ guild /: "prune") (pure R.NoReqBody) ("days" R.=: days)
