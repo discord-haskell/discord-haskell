@@ -113,7 +113,7 @@ data GuildRequest a where
   --   that would be removed in a prune operation. Requires the 'KICK_MEMBERS'
   --   permission.
   GetGuildPruneCount       :: GuildId -> Integer -> GuildRequest Object
-  -- | Returns an AuditLog object. includes options about time, action type,
+  -- | Returns an AuditLog object, includes options about time, action type,
   --   user that took the action and amount of entries to fetch.
   --   Requires 'VIEW_AUDIT_LOG' permission
   GetGuildAuditLog         :: GuildId -> GetAuditLogOpts -> GuildRequest AuditLog
@@ -380,28 +380,19 @@ newtype AuditLogEvent = MkAuditLogEvent Int
 instance FromJSON AuditLogEvent where
   parseJSON = fmap MkAuditLogEvent . parseJSON
 
--- | A change object, it is only partially implemented (see 'AuditLogChangeValue')
+-- | A change object, new value and old value fields are of Aesons `Value` type,
+--   because it can be pretty much any value from discord api
 data AuditLogChange = AuditLogChange
   { auditLogChangeKey      :: String
-  , auditLogChangeNewValue :: Maybe AuditLogChangeValue
-  , auditLogChangeOldValue :: Maybe AuditLogChangeValue
+  , auditLogChangeNewValue :: Maybe Value
+  , auditLogChangeOldValue :: Maybe Value
   } deriving ( Show, Read )
-
 
 instance FromJSON AuditLogChange where
   parseJSON = withObject "AuditLogChange" $ \o ->
     AuditLogChange <$> o .:  "key"
                    <*> o .:? "new_value"
                    <*> o .:? "old_value"
-
-
--- | This is a temporary solution, i really hope.
---   Discord did NOT think this through, read more at <https://discord.com/developers/docs/resources/audit-log#audit-log-change-object>
-data AuditLogChangeValue = AuditLogChangeValue String
-  deriving ( Show, Read )
-
-instance FromJSON AuditLogChangeValue where
-  parseJSON o = return $ AuditLogChangeValue (show o)
 
 -- | Optional data for the Audit Log Entry object
 data AuditLogEntryOptions = AuditLogEntryOptions
