@@ -45,6 +45,7 @@ data GatewaySendableInternal
 --  https://github.com/discord-haskell/discord-haskell/blob/master/docs/sharding.md
 data DiscordSharding = DiscordShardingAuto
                      | DiscordShardingSpecific [(Int, Int)]
+  deriving (Show, Read, Eq, Ord)
 
 -- | Gateway intents to subrscribe to
 -- 
