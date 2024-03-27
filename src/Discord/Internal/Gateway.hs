@@ -60,7 +60,8 @@ startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
   -- | Based on user specified sharding, return the list of shards to connect
 decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
 decideSharding sharding gatewaybot =
-  case sharding of DiscordShardingSpecific shards -> shards
+  case sharding of DiscordShardingSpecific [] -> deceideSharding DiscordShardingAuto gatewaybot
+                   DiscordShardingSpecific shards -> shards
                    DiscordShardingAuto -> let n = fromIntegral $ gatewayBotRecommendedShards gatewaybot
                                           in [(x, n) | x <- [0..(n-1)]]
 
