@@ -35,6 +35,8 @@ module Discord.Internal.Types.Prelude
   , InteractionId
   , ScheduledEventId
   , ScheduledEventEntityId
+  , AuditLogEntryId
+  , AutoModerationRuleId
 
   , DiscordToken (..)
   , InteractionToken
@@ -217,6 +219,12 @@ type ScheduledEventId = DiscordId ScheduledEventIdType
 
 data ScheduledEventEntityIdType
 type ScheduledEventEntityId = DiscordId ScheduledEventEntityIdType
+
+data AuditLogEntryIdType
+type AuditLogEntryId = DiscordId AuditLogEntryIdType
+
+data AutoModerationRuleIdType
+type AutoModerationRuleId = DiscordId AutoModerationRuleIdType
 
 newtype DiscordToken a = DiscordToken { unToken :: T.Text }
   deriving (Ord, Eq)
