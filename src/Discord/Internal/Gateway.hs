@@ -15,6 +15,7 @@ module Discord.Internal.Gateway
 
 import Prelude hiding (log)
 import Control.Monad (forever)
+import Data.List (nub)
 import Control.Concurrent.Chan (newChan, dupChan, Chan)
 import Control.Concurrent (threadDelay, forkIO, ThreadId, newEmptyMVar, tryPutMVar, MVar)
 import Data.IORef (newIORef)
@@ -57,12 +58,12 @@ startGatewayThread auth intent sharding gatewaybot cacheHandle log = do
 
   pure (gatewayHandle, [readytid]++tids)
 
-  -- | Based on user specified sharding, return the list of shards to connect
+-- | Based on user specified sharding, return the list of shards to connect.
+--   Given a specific list, it will remove duplicates. If the specific list is empty, the recommended shards are used.
 decideSharding :: DiscordSharding -> GatewayBot -> [(Int, Int)]
 decideSharding sharding gatewaybot =
-  case sharding of DiscordShardingSpecific [] -> deceideSharding DiscordShardingAuto gatewaybot
-                   DiscordShardingSpecific shards -> shards
+  case sharding of DiscordShardingSpecific [] -> decideSharding DiscordShardingAuto gatewaybot
+                   DiscordShardingSpecific shards -> nub shards
                    DiscordShardingAuto -> let n = fromIntegral $ gatewayBotRecommendedShards gatewaybot
                                           in [(x, n) | x <- [0..(n-1)]]
-
 
