@@ -91,14 +91,13 @@ data SendablesData = SendablesData
 --  sequenceId :: Int id of last event received        set by Resume, need heartbeat and reconnect
 --  sessionId :: Text                                  set by Ready,  need reconnect
 -- @
-connectionLoop :: Auth -> (Int, Int) -> GatewayIntent -> GatewayHandle -> MVar () -> Chan T.Text -> IO ()
-connectionLoop auth shard intent gatewayHandle readyToConnect log = outerloop LoopStart
+connectionLoop :: Auth -> (Int, Int) -> GatewayIntent -> GatewayHandle -> Chan T.Text -> IO ()
+connectionLoop auth shard intent gatewayHandle log = outerloop LoopStart
     where
 
     -- | Main connection loop. Catch exceptions and reconnect.
     outerloop :: LoopState -> IO ()
     outerloop state = do
-        _ <- takeMVar readyToConnect
         writeChan log $ "gateway - shard " <> (T.pack (show shard)) <> " connected"
         gatewayHost <- readIORef (gatewayHandleHostname gatewayHandle)
         mfirst <- firstmessage state -- construct first message
