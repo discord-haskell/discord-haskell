@@ -17,6 +17,14 @@ For information on how to specify sharding use https://discord.com/developers/do
 
 --------------------------
 
-For library review: note that connection order doesn't matter. even though the docs say thi in bold, twicw.
+Note: discord sends an event to all shards that meet the shard-formula criteria.
+So if a user manually specifies shards [(0,1), (2,3)] and an event happens to match both
+(because the guilid rshift 22 mod 3 happens to be 2) then the
+event is sent to both websocket connections.
 
-link to employee saying this https://discord.com/channels/81384788765712384/381887113391505410/923709602342764604
+--------------------------
+
+For library review: note that connection order doesn't matter.
+Even though the docs say this in bold, twice.
+The link to employee saying this
+https://discord.com/channels/81384788765712384/381887113391505410/923709602342764604
