@@ -35,37 +35,42 @@ startCacheThread isEnabled events log = do
   tid <- forkIO $ cacheLoop isEnabled cacheHandle log
   pure (cacheHandle, tid)
 
-
 startShardManager :: Auth -> GatewayIntent -> DiscordSharding -> GatewayBot -> GatewayEvents -> Chan T.Text -> IO ShardManager
 startShardManager auth intent sharding gatewaybot events log = do
   let gatewayCreate = GatewayCreate events auth intent log
   controlChan <- newChan
   let shardManager = ShardManager M.empty (0,1) controlChan gatewayCreate
   tid <- forkIO $ shardLoop gatewaybot shardManager
-  writeChan controlChan (ShardManagerSetSharding sharding)
+  -- writeChan controlChan (ShardManagerSetSharding sharding)
   pure (shardManager, tid)
 
 shardLoop :: ShardManager -> [(Int, Int)] -> IO ()
-shardLoop shardmanager shards = loop manager
+shardLoop shardmanager shards = loop
   where
-    loop manager  = do eith <- race (readChan metaRequest) (readChan shardThreadInfo)
+    loop gateways = do eith <- readChan (shardManagerControl manager)
                        case eith of
-                         Left Quitting -> pure ()
+                         Left ShardManagerShutdown -> killEventLoops (shardManagerGateways manager)
+                         Left ShardManagerSetSharding sharding -> pure ()
                          Right shard -> do if isBlocked buckets (shardbucket shard)
                                            then writeChan shardThreadInfo shard >> loop buckets seshlimiter
                                            else pure ()
 
-killEventLoops :: M.Map (Int, Int) GatewayHandle -> IO Int
+startEventLoops :: GatewayCreate -> [(Int, Int)] -> IO (M.Map (Int, Int) (GatewayHandle, ThreadId))
+startEventLoops create shards = fmap M.fromList $ mapM (\s -> (s, startGatewayThread create s)) shards
+
+-- | Kills the threads for gateway event loops
+killEventLoops :: M.Map (Int, Int) GatewayHandle -> IO ()
 killEventLoops loops = if M.null loops
-                       then pure 0
+                       then pure ()
                        else do forM_ (M.toList loops) (\h -> writeChan (gatewayHandleEvents h) (Right ) )
-                               pure (5 * 10^(6 :: Int))
+                               threadDelay (5 * 10^(6 :: Int)) -- wait 5 seconds for ratelimit to stop
+                               pure ()
 
 data ShardManager = ShardManager { -- | Currently connected gateways
                                    shardManagerGateways :: M.Map (Int, Int) GatewayHandle,
                                    -- | Primary gateway for user sendables and measuring delay
                                    shardManagerPrimaryGateway :: (Int, Int),
-                                   shardManagerControl :: Chan ShardManagerMessage
+                                   shardManagerControl :: Chan (Either ShardManagerMessage Int),
                                    shardManagerGatewayCreate :: GatewayCreate
                                  }
 

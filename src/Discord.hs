@@ -97,7 +97,6 @@ runDiscord opts = do
   logId <- liftIO $ startLogger (discordOnLog opts) log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
 
-  mbGateway <- writeRestCall rest R.GetGatewayBot
   case mbGateway of
     Left err -> do
       discordOnEnd opts
@@ -134,16 +133,17 @@ runDiscordLoop handle opts = do
                                                    <> " " <> TE.decodeUtf8 e2
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse e _) -> libError ("Couldn't parse initial bot info - " <> T.pack e)
-    Right (user, app) -> do initializeCache user app (discordHandleCache handle)
-                            me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
-                            case me of
-                              Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
+    Right (user, app, bot) -> do initializeCache user app (discordHandleCache handle)
+                                 me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
+                                 case me of
+                                   Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
                               Right _ -> loop
  where
-   startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication))
+   startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication, GatewayBot))
    startupRestCalls = do eUser <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
                          eApp <- writeRestCall (discordHandleRestChan handle) R.GetCurrentApplication
-                         pure $ (,) <$> eUser <*> eApp
+                         eGate <- writeRestCall (discordHandleRestChan handle) R.GetGatewayBot
+                         pure $ (,,) <$> eUser <*> eApp <*> eGate
 
    libError :: T.Text -> IO T.Text
    libError msg = tryPutMVar (discordHandleLibraryError handle) msg >> pure msg
