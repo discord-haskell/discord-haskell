@@ -7,7 +7,6 @@ module Discord.Internal.Types.AutoModeration where
 
 import Data.Aeson
 import Discord.Internal.Types.Prelude
-
 import Data.Scientific ( toBoundedInteger )
 
 
@@ -23,7 +22,7 @@ data AutoModerationRule = AutoModerationRule
   , autoModerationRuleEnabled         :: Bool
   , autoModerationRuleExemptRoles     :: [RoleId]
   , autoModerationRuleExemptChannels  :: [ChannelId]
-  } deriving ( Show, Read )
+  } deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRule where
   parseJSON = withObject "AutoModerationRule" $ \o ->
@@ -58,7 +57,7 @@ instance ToJSON AutoModerationRule where
 -- See <https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types>
 data AutoModerationRuleEventType
   = MessageSent
-  deriving ( Show, Read )
+  deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleEventType where
   parseJSON = withScientific "AutoModerationRuleEventType" $ \v -> case toBoundedInteger v :: Maybe Int of
@@ -74,7 +73,7 @@ data AutoModerationRuleTriggerType
   | Spam
   | KeywordPreset
   | MentionSpam
-  deriving ( Show, Read )
+  deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleTriggerType where
   parseJSON = withScientific "AutoModerationTriggerType" $ \v -> case toBoundedInteger v :: Maybe Int of
@@ -97,7 +96,7 @@ data AutoModerationRuleTriggerMetadata = AutoModerationRuleTriggerMetadata
   , autoModerationRuleTriggerMetadataAllowList      :: [String]
   , autoModerationRuleTriggerMetadataMentionLimit   :: Maybe Int
   , autoModerationRuleTriggerMetadataRaidProtection :: Maybe Bool
-  } deriving ( Show, Read )
+  } deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleTriggerMetadata where
   parseJSON = withObject "AutoModerationRuleTriggerMetadata" $ \o ->
@@ -123,7 +122,7 @@ data AutoModerationRuleTriggerMetadataPreset
   = Profanity
   | SexualContent
   | Slurs
-  deriving ( Show, Read )
+  deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleTriggerMetadataPreset where
   parseJSON = withScientific "AutoModerationRuleTriggerMetadataPreset" $ \v -> case toBoundedInteger v :: Maybe Int of
@@ -140,7 +139,7 @@ instance ToJSON AutoModerationRuleTriggerMetadataPreset where
 data AutoModerationRuleAction = AutoModerationRuleAction
   { autoModerationRuleActionType      :: AutoModerationRuleActionType
   , autoModerationRuleActionMetadata  :: Maybe AutoModerationRuleActionMetadata
-  } deriving ( Show, Read )
+  } deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleAction where
   parseJSON = withObject "AutoModerationRuleAction" $ \o ->
@@ -158,7 +157,7 @@ data AutoModerationRuleActionType
   = BlockMessage
   | SendAlertMessage
   | Timeout
-  deriving ( Show, Read )
+  deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleActionType where
   parseJSON = withScientific "AutoModerationRuleActionType" $ \v -> case toBoundedInteger v :: Maybe Int of
@@ -176,7 +175,7 @@ data AutoModerationRuleActionMetadata = AutoModerationRuleActionMetadata
   { autoModerationRuleActionMetadataChannelId       :: Maybe ChannelId
   , autoModerationRuleActionMetadataTimeoutDuration :: Maybe Integer
   , autoModerationRuleActionMetadataCustomMessage   :: Maybe String
-  } deriving ( Show, Read )
+  } deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleActionMetadata where
   parseJSON = withObject "AutoModerationRuleActionMetadata" $ \o ->

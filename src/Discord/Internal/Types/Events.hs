@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RecordWildCards #-}
 
 -- | Data structures pertaining to gateway dispatch 'Event's
 module Discord.Internal.Types.Events where
@@ -19,6 +20,8 @@ import qualified Data.Text as T
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.Channel
 import Discord.Internal.Types.Guild
+import Discord.Internal.Types.AuditLog (AuditLogEntry)
+import Discord.Internal.Types.AutoModeration (AutoModerationRule, AutoModerationRuleAction, AutoModerationRuleTriggerType)
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
@@ -31,6 +34,14 @@ data Event =
     Ready                      Int User [GuildUnavailable] T.Text HostName (Maybe Shard) PartialApplication
   -- | Response to a @Resume@ gateway command
   | Resumed                    [T.Text]
+  -- | New auto moderation rule was created
+  | AutoModerationRuleCreate   AutoModerationRule
+  -- | Auto moderation rule was changed
+  | AutoModerationRuleUpdate   AutoModerationRule
+  -- | Auto moderation rule was deleted
+  | AutoModerationRuleDelete   AutoModerationRule
+  -- | Action from an auto moderation rule was executed
+  | AutoModerationActionExecution  AutoModerationActionExecuteInfo
   -- | new guild channel created
   | ChannelCreate              Channel
   -- | channel was updated
@@ -57,6 +68,8 @@ data Event =
   | GuildUpdate                Guild
   -- | guild became unavailable, or user left/was removed from a guild
   | GuildDelete                GuildUnavailable
+  -- | new entry to the audit log was added
+  | GuildAuditLogEntryCreate   AuditLogEntry
   -- | user was banned from a guild
   | GuildBanAdd                GuildId User
   -- | user was unbanned from a guild
@@ -115,6 +128,10 @@ data Event =
 data EventInternalParse =
     InternalReady                      Int User [GuildUnavailable] T.Text HostName (Maybe Shard) PartialApplication
   | InternalResumed                    [T.Text]
+  | InternalAutoModerationRuleCreate   AutoModerationRule
+  | InternalAutoModerationRuleUpdate   AutoModerationRule
+  | InternalAutoModerationRuleDelete   AutoModerationRule
+  | InternalAutoModerationActionExecution AutoModerationActionExecuteInfo
   | InternalChannelCreate              Channel
   | InternalChannelUpdate              Channel
   | InternalChannelDelete              Channel
@@ -128,6 +145,7 @@ data EventInternalParse =
   | InternalGuildCreate                Guild GuildCreateData
   | InternalGuildUpdate                Guild
   | InternalGuildDelete                GuildUnavailable
+  | InternalGuildAuditLogEntryCreate   AuditLogEntry
   | InternalGuildBanAdd                GuildId User
   | InternalGuildBanRemove             GuildId User
   | InternalGuildEmojiUpdate           GuildId [Emoji]
@@ -246,7 +264,50 @@ instance FromJSON TypingInfo where
        let utc = posixSecondsToUTCTime posix
        pure (TypingInfo uid cid utc)
 
+-- | Structure containing auto moderation action execution information
+data AutoModerationActionExecuteInfo = AutoModerationActionExecuteInfo
+  { autoModerationActionExecuteInfoGuildId        :: GuildId
+  , autoModerationActionExecuteInfoAction         :: AutoModerationRuleAction
+  , autoModerationActionExecuteInfoRuleId         :: AutoModerationRuleId
+  , autoModerationActionExecuteInfoTriggerType    :: AutoModerationRuleTriggerType
+  , autoModerationActionExecuteInfoUserId         :: UserId
+  , autoModerationActionExecuteInfoChannelId      :: Maybe ChannelId
+  , autoModerationActionExecuteInfoMessageId      :: Maybe MessageId
+  , autoModerationActionExecuteInfoAlertMessageId :: Maybe MessageId
+  , autoModerationActionExecuteInfoContent        :: String
+  , autoModerationActionExecuteInfoMatchedKeyword :: Maybe String
+  , autoModerationActionExecuteInfoMatchedContent :: Maybe String
+  } deriving ( Eq, Show, Read )
 
+instance FromJSON AutoModerationActionExecuteInfo where
+  parseJSON = withObject "AutoModerationActionExecuteInfo" $ \o ->
+    AutoModerationActionExecuteInfo
+      <$> o .:  "guild_id"
+      <*> o .:  "action"
+      <*> o .:  "rule_id"
+      <*> o .:  "rule_trigger_type"
+      <*> o .:  "user_id"
+      <*> o .:? "channel_id"
+      <*> o .:? "message_id"
+      <*> o .:? "alert_system_message_id"
+      <*> o .:  "content"
+      <*> o .:? "matched_keyword"
+      <*> o .:? "matched_content"
+
+instance ToJSON AutoModerationActionExecuteInfo where
+  toJSON AutoModerationActionExecuteInfo{..} = objectFromMaybes
+    [ "guild_id"                  .== autoModerationActionExecuteInfoGuildId
+    , "action"                    .== autoModerationActionExecuteInfoAction
+    , "rule_id"                   .== autoModerationActionExecuteInfoRuleId
+    , "rule_trigger_type"         .== autoModerationActionExecuteInfoTriggerType
+    , "user_id"                   .== autoModerationActionExecuteInfoUserId
+    , "channel_id"                .=? autoModerationActionExecuteInfoChannelId
+    , "message_id"                .=? autoModerationActionExecuteInfoMessageId
+    , "alert_system_message_id"   .=? autoModerationActionExecuteInfoAlertMessageId
+    , "content"                   .== autoModerationActionExecuteInfoContent
+    , "matched_keyword"           .=? autoModerationActionExecuteInfoMatchedKeyword
+    , "matched_content"           .=? autoModerationActionExecuteInfoMatchedContent
+    ]
 
 -- | Convert ToJSON value to FromJSON value
 reparse :: (ToJSON a, FromJSON b) => a -> Parser b
@@ -276,6 +337,10 @@ eventParse t o = case t of
                                          <*> o .: "shard"
                                          <*> o .: "application"
     "RESUMED"                   -> InternalResumed <$> o .: "_trace"
+    "AUTO_MODERATION_RULE_CREATE" -> InternalAutoModerationRuleCreate <$> reparse o
+    "AUTO_MODERATION_RULE_UPDATE" -> InternalAutoModerationRuleUpdate <$> reparse o
+    "AUTO_MODERATION_RULE_DELETE" -> InternalAutoModerationRuleDelete <$> reparse o
+    "AUTO_MODERATION_ACTION_EXECUTION" -> InternalAutoModerationActionExecution <$> reparse o
     "CHANNEL_CREATE"            -> InternalChannelCreate             <$> reparse o
     "CHANNEL_UPDATE"            -> InternalChannelUpdate             <$> reparse o
     "CHANNEL_DELETE"            -> InternalChannelDelete             <$> reparse o
@@ -292,6 +357,7 @@ eventParse t o = case t of
     "GUILD_CREATE"              -> parseGuildCreate o
     "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
+    "GUILD_AUDIT_LOG_ENTRY_CREATE" -> InternalGuildAuditLogEntryCreate <$> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
     "GUILD_BAN_REMOVE"          -> InternalGuildBanRemove <$> o .: "guild_id" <*> o .: "user"
     "GUILD_EMOJI_UPDATE"        -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
