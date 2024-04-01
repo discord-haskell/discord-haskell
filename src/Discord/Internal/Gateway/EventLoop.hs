@@ -12,7 +12,6 @@ import Control.Monad (forever, void)
 import Control.Monad.Random (getRandomR)
 import Control.Concurrent.Async (race)
 import Control.Concurrent.Chan
-import Control.Concurrent.MVar (MVar, takeMVar)
 import Control.Concurrent (threadDelay, killThread, forkIO)
 import Control.Exception.Safe (try, finally, SomeException)
 import Data.IORef
@@ -49,6 +48,8 @@ data GatewayHandle = GatewayHandle
     -- or any "wss://" prefixes, since HostNames of this kind are not supported
     -- by the websockets library.
     gatewayHandleHostname       :: IORef HostName,
+    -- | When True, an internal signal from shard manager that the gateway should close
+    gatewayHandleShouldClose    :: IORef Bool,
     -- | The last time a heartbeatack was received
     gatewayHandleHeartbeatAckTimes    :: IORef UTCTime,
     -- | The last two times a heartbeat was sent
@@ -99,12 +100,14 @@ connectionLoop auth shard intent gatewayHandle log = outerloop LoopStart
     outerloop :: LoopState -> IO ()
     outerloop state = do
         writeChan log $ "gateway - shard " <> (T.pack (show shard)) <> " connected"
-        gatewayHost <- readIORef (gatewayHandleHostname gatewayHandle)
         mfirst <- firstmessage state -- construct first message
-        case mfirst of
-          Nothing -> pure () -- close
+        shouldClose <- readIORef (gatewayHandleShouldClose gatewayHandle)
+        case (mfirst, shouldClose) of
+          (_, True) -> pure () -- internal close
+          (Nothing, _) -> pure () -- external close
 
-          Just message -> do
+          (Just message, _) -> do
+              gatewayHost <- readIORef (gatewayHandleHostname gatewayHandle)
               nextstate <- try (startOneConnection gatewayHost message)  -- connection
               case nextstate :: Either SomeException LoopState of
                 Left _ -> do t <- getRandomR (3,20)
@@ -169,13 +172,16 @@ connectionLoop auth shard intent gatewayHandle log = outerloop LoopStart
 
 -- | Process events from discord and write them to the onDiscordEvent Channel
 runEventLoop :: GatewayHandle -> SendablesData -> Chan T.Text -> IO LoopState
-runEventLoop thehandle sendablesData log = do loop
+runEventLoop thehandle sendablesData log = loop
   where
   eventChan :: Chan (Either GatewayException EventInternalParse)
   eventChan = gatewayHandleEvents thehandle
 
   -- | Keep receiving Dispatch events until a reconnect or a restart
-  loop = do
+  loop = do shouldClose <- readIORef (gatewayHandleShouldClose thehandle)
+            if shouldClose then pure LoopClosed else innerloop
+
+  innerloop = do
     eitherPayload <- getPayloadTimeout sendablesData log
     case eitherPayload :: Either ConnectionException GatewayReceivable of
 
