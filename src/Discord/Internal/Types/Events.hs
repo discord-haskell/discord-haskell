@@ -34,13 +34,13 @@ data Event =
     Ready                      Int User [GuildUnavailable] T.Text HostName (Maybe Shard) PartialApplication
   -- | Response to a @Resume@ gateway command
   | Resumed                    [T.Text]
-  -- | New auto moderation rule was created
+  -- | New auto moderation rule was created, requires the AutoModerationConfiguration intent
   | AutoModerationRuleCreate   AutoModerationRule
-  -- | Auto moderation rule was changed
+  -- | Auto moderation rule was changed, requires the AutoModerationConfiguration intent
   | AutoModerationRuleUpdate   AutoModerationRule
-  -- | Auto moderation rule was deleted
+  -- | Auto moderation rule was deleted, requires the AutoModerationConfiguration intent
   | AutoModerationRuleDelete   AutoModerationRule
-  -- | Action from an auto moderation rule was executed
+  -- | Action from an auto moderation rule was executed, requires the AutoModerationExecution intent
   | AutoModerationActionExecution  AutoModerationActionExecuteInfo
   -- | new guild channel created
   | ChannelCreate              Channel
