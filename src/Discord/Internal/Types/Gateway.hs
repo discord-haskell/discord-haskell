@@ -62,25 +62,29 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentDirectMessageReactions :: Bool
   , gatewayIntentDirectMessageTyping :: Bool
   , gatewayIntentMessageContent :: Bool
+  , gatewayIntentAutoModerationConfiguration :: Bool
+  , gatewayIntentAutoModerationExecution :: Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance Default GatewayIntent where
-  def = GatewayIntent { gatewayIntentGuilds                 = True
-                      , gatewayIntentMembers                = False -- false
-                      , gatewayIntentBans                   = True
-                      , gatewayIntentEmojis                 = True
-                      , gatewayIntentIntegrations           = True
-                      , gatewayIntentWebhooks               = True
-                      , gatewayIntentInvites                = True
-                      , gatewayIntentVoiceStates            = True
-                      , gatewayIntentPresences              = False  -- false
-                      , gatewayIntentMessageChanges         = True
-                      , gatewayIntentMessageReactions       = True
-                      , gatewayIntentMessageTyping          = True
-                      , gatewayIntentDirectMessageChanges   = True
-                      , gatewayIntentDirectMessageReactions = True
-                      , gatewayIntentDirectMessageTyping    = True
-                      , gatewayIntentMessageContent         = True
+  def = GatewayIntent { gatewayIntentGuilds                      = True
+                      , gatewayIntentMembers                     = False -- false
+                      , gatewayIntentBans                        = True
+                      , gatewayIntentEmojis                      = True
+                      , gatewayIntentIntegrations                = True
+                      , gatewayIntentWebhooks                    = True
+                      , gatewayIntentInvites                     = True
+                      , gatewayIntentVoiceStates                 = True
+                      , gatewayIntentPresences                   = False  -- false
+                      , gatewayIntentMessageChanges              = True
+                      , gatewayIntentMessageReactions            = True
+                      , gatewayIntentMessageTyping               = True
+                      , gatewayIntentDirectMessageChanges        = True
+                      , gatewayIntentDirectMessageReactions      = True
+                      , gatewayIntentDirectMessageTyping         = True
+                      , gatewayIntentMessageContent              = True
+                      , gatewayIntentAutoModerationConfiguration = True
+                      , gatewayIntentAutoModerationExecution     = True
                       }
 
 compileGatewayIntent :: GatewayIntent -> Int
@@ -102,6 +106,8 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^ 13, gatewayIntentDirectMessageReactions)
                        , (2 ^ 14, gatewayIntentDirectMessageTyping)
                        , (2 ^ 15, gatewayIntentMessageContent)
+                       , (2 ^ 20, gatewayIntentAutoModerationConfiguration)
+                       , (2 ^ 21, gatewayIntentAutoModerationExecution)
                        ]
        ]
 

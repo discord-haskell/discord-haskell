@@ -13,6 +13,7 @@ module Discord.Internal.Types
     module Discord.Internal.Types.Emoji,
     module Discord.Internal.Types.RolePermissions,
     module Discord.Internal.Types.AutoModeration,
+    module Discord.Internal.Types.AuditLog,
     module Data.Aeson,
     module Data.Time.Clock,
     userFacingEvent,
@@ -34,12 +35,17 @@ import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User
 import Discord.Internal.Types.RolePermissions
 import Discord.Internal.Types.AutoModeration
+import Discord.Internal.Types.AuditLog hiding ( MkAuditLogEvent )
 
 -- | Converts an internal event to its user facing counterpart
 userFacingEvent :: EventInternalParse -> Event
 userFacingEvent event = case event of
   InternalReady a b c d e f g -> Ready a b c d e f g
   InternalResumed a -> Resumed a
+  InternalAutoModerationRuleCreate a -> AutoModerationRuleCreate a
+  InternalAutoModerationRuleUpdate a -> AutoModerationRuleUpdate a
+  InternalAutoModerationRuleDelete a -> AutoModerationRuleDelete a
+  InternalAutoModerationActionExecution a -> AutoModerationActionExecution a
   InternalChannelCreate a -> ChannelCreate a
   InternalChannelUpdate a -> ChannelUpdate a
   InternalChannelDelete a -> ChannelDelete a
@@ -67,6 +73,7 @@ userFacingEvent event = case event of
   InternalMessageCreate a -> MessageCreate a
   InternalMessageUpdate a b -> MessageUpdate a b
   InternalMessageDelete a b -> MessageDelete a b
+  InternalGuildAuditLogEntryCreate a -> GuildAuditLogEntryCreate a
   InternalMessageDeleteBulk a b -> MessageDeleteBulk a b
   InternalMessageReactionAdd a -> MessageReactionAdd a
   InternalMessageReactionRemove a -> MessageReactionRemove a
