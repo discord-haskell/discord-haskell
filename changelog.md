@@ -8,6 +8,18 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.17.0
+
+- [S3NP41-v](https://github.com/discord-haskell/discord-haskell/pull/206) (and [2](https://github.com/discord-haskell/discord-haskell/pull/207)) Audit log and moderation types and gateway events as well as a new intent or two
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/205) Derive instances instead of defining them ourselves
+
+- [julmb](https://github.com/discord-haskell/discord-haskell/pull/204) Add ToJSONKey and FromJSONKey instances to ID types
+
+- [aquarial](https://github.com/discord-haskell/discord-haskell/pull/203) Add more fields to FullApplication
+
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/202) GHC 9.8 officially supported
+
 ## 1.16.1
 
 - [julmb](https://github.com/discord-haskell/discord-haskell/pull/200) Default instance for InteractionResponseMessage
