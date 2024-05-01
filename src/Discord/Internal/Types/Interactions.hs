@@ -325,7 +325,7 @@ instance FromJSON ApplicationCommandData where
       ( \v -> do
           aci <- v .: "id"
           name <- v .: "name"
-          rd <- v .:? "resolved_data"
+          rd <- v .:? "resolved"
           t <- v .: "type" :: Parser Int
           case t of
             1 ->
