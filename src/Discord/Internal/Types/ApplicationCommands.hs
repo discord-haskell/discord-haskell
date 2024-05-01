@@ -370,6 +370,18 @@ data OptionValue
         -- | The upper bound of values permitted. If choices are provided or autocomplete is on, this can be ignored
         optionValueNumberMaxVal :: Maybe Number
       }
+  | OptionValueAttachment
+      { -- | The name of the value
+        optionValueName :: T.Text,
+        -- | The localized name of the value
+        optionValueLocalizedName :: Maybe LocalizedText,
+        -- | The description of the value
+        optionValueDescription :: T.Text,
+        -- | The localized description of the value
+        optionValueLocalizedDescription :: Maybe LocalizedText,
+        -- | Whether this option is required
+        optionValueRequired :: Bool
+      }
   deriving (Show, Eq, Read)
 
 instance FromJSON OptionValue where
@@ -406,6 +418,7 @@ instance FromJSON OptionValue where
             6 -> return $ OptionValueUser name lname desc ldesc required
             8 -> return $ OptionValueRole name lname desc ldesc required
             9 -> return $ OptionValueMentionable name lname desc ldesc required
+            11 -> return $ OptionValueAttachment name lname desc ldesc required
             _ -> fail "unknown application command option value type"
       )
 
@@ -470,6 +483,7 @@ instance ToJSON OptionValue where
       t OptionValueUser {} = 6
       t OptionValueRole {} = 8
       t OptionValueMentionable {} = 9
+      t OptionValueAttachment {} = 11
       t _ = -1
 
 -- | Data type to be used when creating application commands. The specification

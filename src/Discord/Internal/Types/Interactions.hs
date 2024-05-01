@@ -449,6 +449,10 @@ data OptionDataValue
       { optionDataValueName :: T.Text,
         optionDataValueNumber :: Either T.Text Number
       }
+  | OptionDataValueAttachment
+      { optionDataValueName :: T.Text,
+        optionDataValueAttachment :: Snowflake
+      }
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON OptionDataValue where
@@ -483,6 +487,9 @@ instance FromJSON OptionDataValue where
                 <$> v .: "value"
             9 ->
               OptionDataValueMentionable name
+                <$> v .: "value"
+            11 ->
+              OptionDataValueAttachment name
                 <$> v .: "value"
             _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
       )
