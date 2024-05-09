@@ -451,6 +451,9 @@ data OptionDataValue
       }
   | OptionDataValueAttachment
       { optionDataValueName :: T.Text,
+        -- | This is a reference to the key in `ResolvedData`'s field resolvedDataAttachment.
+        --
+        -- `ResolvedData` is sent back as a response with a map of `Snowflake` to attachment objects.
         optionDataValueAttachment :: Snowflake
       }
   deriving (Show, Read, Eq, Ord)
