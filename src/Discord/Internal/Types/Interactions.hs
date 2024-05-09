@@ -325,7 +325,7 @@ instance FromJSON ApplicationCommandData where
       ( \v -> do
           aci <- v .: "id"
           name <- v .: "name"
-          rd <- v .:? "resolved_data"
+          rd <- v .:? "resolved"
           t <- v .: "type" :: Parser Int
           case t of
             1 ->
@@ -449,6 +449,13 @@ data OptionDataValue
       { optionDataValueName :: T.Text,
         optionDataValueNumber :: Either T.Text Number
       }
+  | OptionDataValueAttachment
+      { optionDataValueName :: T.Text,
+        -- | This is a reference to the key in `ResolvedData`'s field resolvedDataAttachment.
+        --
+        -- `ResolvedData` is sent back as a response with a map of `Snowflake` to attachment objects.
+        optionDataValueAttachment :: Snowflake
+      }
   deriving (Show, Read, Eq, Ord)
 
 instance FromJSON OptionDataValue where
@@ -483,6 +490,9 @@ instance FromJSON OptionDataValue where
                 <$> v .: "value"
             9 ->
               OptionDataValueMentionable name
+                <$> v .: "value"
+            11 ->
+              OptionDataValueAttachment name
                 <$> v .: "value"
             _ -> fail $ "unexpected interaction data application command option value type: " ++ show t
       )
