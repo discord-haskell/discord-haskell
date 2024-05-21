@@ -50,6 +50,8 @@ data GatewayHandle = GatewayHandle
     gatewayHandleHostname       :: IORef HostName,
     -- | When True, an internal signal from shard manager that the gateway should close
     gatewayHandleShouldClose    :: IORef Bool,
+    -- |
+    gatewayHandleShardControl   :: Chan (Either ShardManagerMessage Int),
     -- | The last time a heartbeatack was received
     gatewayHandleHeartbeatAckTimes    :: IORef UTCTime,
     -- | The last two times a heartbeat was sent

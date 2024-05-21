@@ -30,6 +30,7 @@ import Control.Monad (void, forever)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, liftIO, asks)
 import Data.Aeson (FromJSON)
 import Data.Default (Default, def)
+import Data.List (nub)
 import Data.IORef (writeIORef)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
@@ -93,35 +94,29 @@ instance Default RunDiscordOpts where
 -- | Entrypoint to the library 
 runDiscord :: RunDiscordOpts -> IO T.Text
 runDiscord opts = do
-  log <- newChan
+  log <- newChan :: IO (Chan T.Text)
+  events <- newChan
   logId <- liftIO $ startLogger (discordOnLog opts) log
   (rest, restId) <- liftIO $ startRestThread (Auth (discordToken opts)) log
+  (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) events log
+  (shard, gateIds) <- liftIO $ startShardManager (Auth (discordToken opts)) (discordGatewayIntent opts) events log
 
-  case mbGateway of
-    Left err -> do
-      discordOnEnd opts
-      killThread restId
-      pure $ T.pack $ "Library could not start a rest call to discord. Error: " <> show err
-    Right gatewaybot -> do
-      (cache, cacheId) <- liftIO $ startCacheThread (discordEnableCache opts) log
-      (gate, gateIds) <- liftIO $ startGatewayThread (Auth (discordToken opts)) (discordGatewayIntent opts) (discordSharding opts) gatewaybot cache log
+  libE <- newEmptyMVar
 
-      libE <- newEmptyMVar
+  let handle = DiscordHandle { discordHandleRestChan = rest
+                             , discordHandleShardManager = shard
+                             , discordHandleCache = cache
+                             , discordHandleLog = log
+                             , discordHandleLibraryError = libE
+                             , discordHandleThreads =
+                                 [ HandleThreadIdLogger logId
+                                 , HandleThreadIdRest restId
+                                 , HandleThreadIdCache cacheId
+                                 ] ++ map HandleThreadIdGateway gateIds
+                             }
 
-      let handle = DiscordHandle { discordHandleRestChan = rest
-                                 , discordHandleGateway = gate
-                                 , discordHandleCache = cache
-                                 , discordHandleLog = log
-                                 , discordHandleLibraryError = libE
-                                 , discordHandleThreads =
-                                     [ HandleThreadIdLogger logId
-                                     , HandleThreadIdRest restId
-                                     , HandleThreadIdCache cacheId
-                                     ] ++ map HandleThreadIdGateway gateIds
-                                 }
-
-      finally (runDiscordLoop handle opts)
-              (discordOnEnd opts >> runReaderT stopDiscord handle)
+  finally (runDiscordLoop handle opts)
+          (discordOnEnd opts >> runReaderT stopDiscord handle)
 
 -- | Runs the main loop 
 runDiscordLoop :: DiscordHandle -> RunDiscordOpts -> IO T.Text
@@ -134,10 +129,11 @@ runDiscordLoop handle opts = do
     Left (RestCallInternalHttpException e) -> libError ("HTTP Exception -  " <> T.pack (show e))
     Left (RestCallInternalNoParse e _) -> libError ("Couldn't parse initial bot info - " <> T.pack e)
     Right (user, app, bot) -> do initializeCache user app (discordHandleCache handle)
+                                 writeChan (discordHandleShardManager handle) (ShardManagerSetSharding (discordSharding opts) bot)
                                  me <- liftIO . runReaderT (try $ discordOnStart opts) $ handle
                                  case me of
                                    Left (e :: SomeException) -> libError ("discordOnStart handler stopped on an exception:\n\n" <> T.pack (show e))
-                              Right _ -> loop
+                                   Right _ -> loop
  where
    startupRestCalls :: IO (Either RestCallInternalException (User, FullApplication, GatewayBot))
    startupRestCalls = do eUser <- writeRestCall (discordHandleRestChan handle) R.GetCurrentUser
@@ -200,6 +196,17 @@ sendCommand e = do
   case e of
     UpdateStatus opts -> liftIO $ writeIORef (gatewayHandleLastStatus (discordHandleGateway h)) (Just opts)
     _ -> pure ()
+
+-- | Based on user specified sharding, makes the shard manager reconnect
+--   Given a specific list, it will remove duplicates. If the specific list is empty, the recommended shards are used.
+setSharding :: DiscordSharding -> DiscordHandler Bool
+setSharding sharding = do
+  egate <- restCall R.GetGatewayBot
+  case egate of
+    Left _ -> pure False
+    Right bot -> do h <- ask
+                    writeChan (discordHandleShardManager h) (ShardManagerSetSharding sharding bot)
+
 
 -- | Access the current state of the gateway cache
 readCache :: DiscordHandler Cache
