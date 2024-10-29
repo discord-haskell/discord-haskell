@@ -11,6 +11,7 @@
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
     ComponentData (..),
+    SelectMenuData (..),
     ApplicationCommandData (..),
     OptionsData (..),
     OptionDataSubcommandOrGroup (..),
