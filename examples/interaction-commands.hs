@@ -391,6 +391,8 @@ eventHandler testserverid event = case event of
       ( do
           exampleImage <- liftIO getImage
           aid <- readCache <&> cacheApplication <&> fullApplicationID
+          -- to send an ephemeral follow up, you have to send an ephemeral defer
+          -- _ <- restCall (R.CreateInteractionResponse interactionId interactionToken (InteractionResponseDeferChannelMessageOpt (def { interactionResponseMessageFlags = Just (InteractionResponseMessageFlags [InteractionResponseMessageFlagEphermeral]) })))
           _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
           restCall
             ( R.CreateFollowupInteractionMessage

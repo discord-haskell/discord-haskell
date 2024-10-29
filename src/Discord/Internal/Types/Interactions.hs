@@ -6,6 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
@@ -19,7 +20,7 @@ module Discord.Internal.Types.Interactions
     ResolvedData (..),
     MemberOrUser (..),
     ModalData (..),
-    InteractionResponse (..),
+    InteractionResponse (.., InteractionResponseDeferChannelMessage),
     interactionResponseBasic,
     InteractionResponseAutocomplete (..),
     InteractionResponseMessage (..),
@@ -568,7 +569,9 @@ data InteractionResponse
   | -- | Respond to an interaction with a message
     InteractionResponseChannelMessage InteractionResponseMessage
   | -- | ACK an interaction and edit a response later (use `CreateFollowupInteractionMessage` and `InteractionResponseMessage` to do so). User sees loading state.
-    InteractionResponseDeferChannelMessage
+    -- 
+    -- To make an ephemeral follow up message, the flags on the message here must also be ephemeral.
+    InteractionResponseDeferChannelMessageOpt InteractionResponseMessage
   | -- | for components, ACK an interaction and edit the original message later; the user does not see a loading state.
     InteractionResponseDeferUpdateMessage
   | -- | for components, edit the message the component was attached to
@@ -579,13 +582,23 @@ data InteractionResponse
     InteractionResponseModal InteractionResponseModalData
   deriving (Show, Read, Eq, Ord)
 
+-- |  ACK an interaction and edit a response later (use `CreateFollowupInteractionMessage` and `InteractionResponseMessage` to do so). User sees loading state.
+--
+-- See also `InteractionResponseDeferChannelMessageOpt`.
+--
+-- This is a separate pattern synonym to allow for backwards compatibility.
+pattern InteractionResponseDeferChannelMessage :: InteractionResponse
+pattern InteractionResponseDeferChannelMessage <- InteractionResponseDeferChannelMessageOpt _
+  where
+  InteractionResponseDeferChannelMessage = InteractionResponseDeferChannelMessageOpt def
+
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
 interactionResponseBasic t = InteractionResponseChannelMessage (interactionResponseMessageBasic t)
 
 instance ToJSON InteractionResponse where
   toJSON InteractionResponsePong = object [("type", Number 1)]
-  toJSON InteractionResponseDeferChannelMessage = object [("type", Number 5)]
+  toJSON (InteractionResponseDeferChannelMessageOpt ms) = object [("type", Number 5), ("data", toJSON ms)]
   toJSON InteractionResponseDeferUpdateMessage = object [("type", Number 6)]
   toJSON (InteractionResponseChannelMessage ms) = object [("type", Number 4), ("data", toJSON ms)]
   toJSON (InteractionResponseUpdateMessage ms) = object [("type", Number 7), ("data", toJSON ms)]
