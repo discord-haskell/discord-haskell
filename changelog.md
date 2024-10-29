@@ -8,6 +8,9 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 -
 
+## 1.17.1
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/211) Small interaction-related fixes, such as deferring ephemeral messages and exporting a necessary data structure
+
 ## 1.17.0
 
 - [S3NP41-v](https://github.com/discord-haskell/discord-haskell/pull/206) (and [2](https://github.com/discord-haskell/discord-haskell/pull/207)) Audit log and moderation types and gateway events as well as a new intent or two
