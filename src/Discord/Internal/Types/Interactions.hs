@@ -667,7 +667,7 @@ instance Enum InteractionResponseMessageFlag where
     | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
 
 instance ToJSON InteractionResponseMessageFlags where
-  toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+  toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr ((.|.) . fromEnum) 0 fs
 
 data InteractionResponseModalData = InteractionResponseModalData
   { interactionResponseModalCustomId :: T.Text,
