@@ -6,10 +6,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE PatternSynonyms #-}
 
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
     ComponentData (..),
+    SelectMenuValues (..),
     ApplicationCommandData (..),
     OptionsData (..),
     OptionDataSubcommandOrGroup (..),
@@ -19,7 +21,7 @@ module Discord.Internal.Types.Interactions
     ResolvedData (..),
     MemberOrUser (..),
     ModalData (..),
-    InteractionResponse (..),
+    InteractionResponse (.., InteractionResponseDeferChannelMessage),
     interactionResponseBasic,
     InteractionResponseAutocomplete (..),
     InteractionResponseMessage (..),
@@ -226,7 +228,7 @@ instance FromJSON Interaction where
 newtype MemberOrUser = MemberOrUser (Either GuildMember User)
   deriving (Show, Read, Eq, Ord)
 
-instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
+instance FromJSON MemberOrUser where
   parseJSON =
     withObject
       "MemberOrUser"
@@ -242,7 +244,7 @@ data ComponentData
       { -- | The unique id of the component (up to 100 characters).
         componentDataCustomId :: T.Text,
         -- | Values for the select menu.
-        componentDataValues :: SelectMenuData
+        componentDataValues :: SelectMenuValues
       }
   deriving (Show, Read, Eq, Ord)
 
@@ -261,29 +263,29 @@ instance FromJSON ComponentData where
             _ -> fail $ "unknown interaction data component type: " <> show t
       )
 
-data SelectMenuData
-  = SelectMenuDataText [T.Text] -- ^ The values of text chosen options
-  | SelectMenuDataUser [UserId] -- ^ The users selected
-  | SelectMenuDataRole [RoleId] -- ^ The roles selected
-  | SelectMenuDataMentionable [Snowflake] -- ^ The users or roles selected
-  | SelectMenuDataChannels [ChannelId] -- ^ The channels selected
+data SelectMenuValues
+  = SelectMenuValuesText [T.Text] -- ^ The values of text chosen options
+  | SelectMenuValuesUser [UserId] -- ^ The users selected
+  | SelectMenuValuesRole [RoleId] -- ^ The roles selected
+  | SelectMenuValuesMentionable [Snowflake] -- ^ The users or roles selected
+  | SelectMenuValuesChannels [ChannelId] -- ^ The channels selected
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON SelectMenuData where
+instance FromJSON SelectMenuValues where
   parseJSON =
     withObject
-      "SelectMenuData"
+      "SelectMenuValues"
       $ \v -> do
           t <- v .: "component_type" :: Parser Int
-          let cons :: forall a. FromJSON a => ([a] -> SelectMenuData) -> Parser SelectMenuData
+          let cons :: forall a. FromJSON a => ([a] -> SelectMenuValues) -> Parser SelectMenuValues
               cons f = f <$> v .: "values"
           case t of
-            3 -> cons SelectMenuDataText
-            5 -> cons SelectMenuDataUser
-            6 -> cons SelectMenuDataRole
-            7 -> cons SelectMenuDataMentionable
-            8 -> cons SelectMenuDataChannels
-            _ -> fail $ "unknown SelectMenuData type: " <> show t
+            3 -> cons SelectMenuValuesText
+            5 -> cons SelectMenuValuesUser
+            6 -> cons SelectMenuValuesRole
+            7 -> cons SelectMenuValuesMentionable
+            8 -> cons SelectMenuValuesChannels
+            _ -> fail $ "unknown SelectMenuValues type: " <> show t
 
 data ApplicationCommandData
   = ApplicationCommandDataUser
@@ -578,7 +580,9 @@ data InteractionResponse
   | -- | Respond to an interaction with a message
     InteractionResponseChannelMessage InteractionResponseMessage
   | -- | ACK an interaction and edit a response later (use `CreateFollowupInteractionMessage` and `InteractionResponseMessage` to do so). User sees loading state.
-    InteractionResponseDeferChannelMessage
+    -- 
+    -- To make an ephemeral follow up message, the flags on the message here must also be ephemeral.
+    InteractionResponseDeferChannelMessageOpt InteractionResponseMessage
   | -- | for components, ACK an interaction and edit the original message later; the user does not see a loading state.
     InteractionResponseDeferUpdateMessage
   | -- | for components, edit the message the component was attached to
@@ -589,13 +593,23 @@ data InteractionResponse
     InteractionResponseModal InteractionResponseModalData
   deriving (Show, Read, Eq, Ord)
 
+-- |  ACK an interaction and edit a response later (use `CreateFollowupInteractionMessage` and `InteractionResponseMessage` to do so). User sees loading state.
+--
+-- See also `InteractionResponseDeferChannelMessageOpt`.
+--
+-- This is a separate pattern synonym to allow for backwards compatibility.
+pattern InteractionResponseDeferChannelMessage :: InteractionResponse
+pattern InteractionResponseDeferChannelMessage <- InteractionResponseDeferChannelMessageOpt _
+  where
+  InteractionResponseDeferChannelMessage = InteractionResponseDeferChannelMessageOpt def
+
 -- | A basic interaction response, sending back the given text.
 interactionResponseBasic :: T.Text -> InteractionResponse
 interactionResponseBasic t = InteractionResponseChannelMessage (interactionResponseMessageBasic t)
 
 instance ToJSON InteractionResponse where
   toJSON InteractionResponsePong = object [("type", Number 1)]
-  toJSON InteractionResponseDeferChannelMessage = object [("type", Number 5)]
+  toJSON (InteractionResponseDeferChannelMessageOpt ms) = object [("type", Number 5), ("data", toJSON ms)]
   toJSON InteractionResponseDeferUpdateMessage = object [("type", Number 6)]
   toJSON (InteractionResponseChannelMessage ms) = object [("type", Number 4), ("data", toJSON ms)]
   toJSON (InteractionResponseUpdateMessage ms) = object [("type", Number 7), ("data", toJSON ms)]
@@ -664,7 +678,7 @@ instance Enum InteractionResponseMessageFlag where
     | otherwise = error $ "could not find InteractionCallbackDataFlag `" ++ show i ++ "`"
 
 instance ToJSON InteractionResponseMessageFlags where
-  toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr (.|.) 0 (fromEnum <$> fs)
+  toJSON (InteractionResponseMessageFlags fs) = Number $ fromInteger $ fromIntegral $ foldr ((.|.) . fromEnum) 0 fs
 
 data InteractionResponseModalData = InteractionResponseModalData
   { interactionResponseModalCustomId :: T.Text,

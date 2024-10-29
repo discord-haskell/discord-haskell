@@ -294,7 +294,7 @@ eventHandler testserverid event = case event of
                       ( SelectMenu
                           "user select menu"
                           False
-                          (SelectMenuDataUser)
+                          SelectMenuDataUser
                           (Just "this is a place holder")
                           (Just 3)
                           (Just 3)
@@ -390,7 +390,9 @@ eventHandler testserverid event = case event of
     void
       ( do
           exampleImage <- liftIO getImage
-          aid <- readCache <&> cacheApplication <&> fullApplicationID
+          aid <- fullApplicationID . cacheApplication <$> readCache
+          -- to send an ephemeral follow up, you have to send an ephemeral defer
+          -- _ <- restCall (R.CreateInteractionResponse interactionId interactionToken (InteractionResponseDeferChannelMessageOpt (def { interactionResponseMessageFlags = Just (InteractionResponseMessageFlags [InteractionResponseMessageFlagEphermeral]) })))
           _ <- restCall (R.CreateInteractionResponse interactionId interactionToken InteractionResponseDeferChannelMessage)
           restCall
             ( R.CreateFollowupInteractionMessage
