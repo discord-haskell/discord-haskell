@@ -228,7 +228,7 @@ instance FromJSON Interaction where
 newtype MemberOrUser = MemberOrUser (Either GuildMember User)
   deriving (Show, Read, Eq, Ord)
 
-instance {-# OVERLAPPING #-} FromJSON MemberOrUser where
+instance FromJSON MemberOrUser where
   parseJSON =
     withObject
       "MemberOrUser"
