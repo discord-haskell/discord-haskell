@@ -11,7 +11,7 @@
 module Discord.Internal.Types.Interactions
   ( Interaction (..),
     ComponentData (..),
-    SelectMenuData (..),
+    SelectMenuValues (..),
     ApplicationCommandData (..),
     OptionsData (..),
     OptionDataSubcommandOrGroup (..),
@@ -244,7 +244,7 @@ data ComponentData
       { -- | The unique id of the component (up to 100 characters).
         componentDataCustomId :: T.Text,
         -- | Values for the select menu.
-        componentDataValues :: SelectMenuData
+        componentDataValues :: SelectMenuValues
       }
   deriving (Show, Read, Eq, Ord)
 
@@ -263,29 +263,29 @@ instance FromJSON ComponentData where
             _ -> fail $ "unknown interaction data component type: " <> show t
       )
 
-data SelectMenuData
-  = SelectMenuDataText [T.Text] -- ^ The values of text chosen options
-  | SelectMenuDataUser [UserId] -- ^ The users selected
-  | SelectMenuDataRole [RoleId] -- ^ The roles selected
-  | SelectMenuDataMentionable [Snowflake] -- ^ The users or roles selected
-  | SelectMenuDataChannels [ChannelId] -- ^ The channels selected
+data SelectMenuValues
+  = SelectMenuValuesText [T.Text] -- ^ The values of text chosen options
+  | SelectMenuValuesUser [UserId] -- ^ The users selected
+  | SelectMenuValuesRole [RoleId] -- ^ The roles selected
+  | SelectMenuValuesMentionable [Snowflake] -- ^ The users or roles selected
+  | SelectMenuValuesChannels [ChannelId] -- ^ The channels selected
   deriving (Show, Read, Eq, Ord)
 
-instance FromJSON SelectMenuData where
+instance FromJSON SelectMenuValues where
   parseJSON =
     withObject
-      "SelectMenuData"
+      "SelectMenuValues"
       $ \v -> do
           t <- v .: "component_type" :: Parser Int
-          let cons :: forall a. FromJSON a => ([a] -> SelectMenuData) -> Parser SelectMenuData
+          let cons :: forall a. FromJSON a => ([a] -> SelectMenuValues) -> Parser SelectMenuValues
               cons f = f <$> v .: "values"
           case t of
-            3 -> cons SelectMenuDataText
-            5 -> cons SelectMenuDataUser
-            6 -> cons SelectMenuDataRole
-            7 -> cons SelectMenuDataMentionable
-            8 -> cons SelectMenuDataChannels
-            _ -> fail $ "unknown SelectMenuData type: " <> show t
+            3 -> cons SelectMenuValuesText
+            5 -> cons SelectMenuValuesUser
+            6 -> cons SelectMenuValuesRole
+            7 -> cons SelectMenuValuesMentionable
+            8 -> cons SelectMenuValuesChannels
+            _ -> fail $ "unknown SelectMenuValues type: " <> show t
 
 data ApplicationCommandData
   = ApplicationCommandDataUser
