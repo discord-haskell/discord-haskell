@@ -63,7 +63,7 @@ Ask questions, get updates, request features, etc in the project discord server:
 
 #### Official Discord Documentation
 
-This api closley matches the [official discord documentation](https://discord.com/developers/docs/intro),
+This api closely matches the [official discord documentation](https://discord.com/developers/docs/intro),
 which lists the rest requests, gateway events, and gateway sendables.
 
 You can use the docs to check the name of something you want to do. For example:
