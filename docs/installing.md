@@ -1,6 +1,6 @@
 ### Installing
 
-discord-haskell is on hosted on hackage at <https://hackage.haskell.org/package/discord-haskell>,
+discord-haskell is hosted on hackage at <https://hackage.haskell.org/package/discord-haskell>,
 
 use the latest the HACKAGE_VERSION from the changelog
 <https://github.com/discord-haskell/discord-haskell/blob/master/changelog.md>
