@@ -82,11 +82,27 @@ newtype Auth = Auth T.Text
   deriving (Show, Read, Eq, Ord)
 
 
--- | Get the raw token formatted for use with the websocket gateway
+-- | Format a token as required by the websocket gateway and HTTP requests, by
+-- prepending the "@Bot @" prefix. If the token already has a prefix, it is left
+-- unchanged.
+--
+-- Therefore:
+--
+-- * to use bot tokens, you can just pass them in as-is, or optionally prefix
+-- them with "@Bot @" yourself.
+-- * To use OAuth/User tokens, you must manually prefix them with "@Bearer @".
+--
+-- __Note that, if you use OAuth tokens, you have limited access to the API:__
+-- __you cannot use the websocket gateway or perform actions outside of the__
+-- __allowed scope__.
 authToken :: Auth -> T.Text
-authToken (Auth tok) = let token = T.strip tok
-                           bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
-                       in bot <> token
+authToken (Auth tok) =
+  let token = T.strip tok
+      -- Assume it's a Bot token if it doesn't have a prefix already
+      botPrefix = if "Bot " `T.isPrefixOf` token || "Bearer " `T.isPrefixOf` token
+        then ""
+        else "Bot "
+  in botPrefix <> token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
