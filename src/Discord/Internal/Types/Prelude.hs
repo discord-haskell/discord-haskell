@@ -85,8 +85,10 @@ newtype Auth = Auth T.Text
 -- | Get the raw token formatted for use with the websocket gateway
 authToken :: Auth -> T.Text
 authToken (Auth tok) = let token = T.strip tok
-                           bot = if "Bot " `T.isPrefixOf` token then "" else "Bot "
-                       in bot <> token
+                           botPrefix = if "Bot " `T.isPrefixOf` token || "Bearer " `T.isPrefixOf` token
+                                then ""
+                                else "Bot "
+                       in botPrefix <> token
 
 -- | A unique integer identifier. Can be used to calculate the creation date of an entity.
 newtype Snowflake = Snowflake { unSnowflake :: Word64 }
