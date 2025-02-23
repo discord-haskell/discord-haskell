@@ -4,7 +4,7 @@
 -- | Query info about connected Guilds and Channels
 module Discord.Internal.Gateway.Cache where
 
-import Prelude hiding (log)
+import Prelude hiding (log, Foldable(..))
 import Control.Monad (forever, join, when)
 import Control.Concurrent.MVar
 import Control.Concurrent.Chan
