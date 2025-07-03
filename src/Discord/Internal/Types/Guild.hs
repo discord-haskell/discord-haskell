@@ -336,12 +336,12 @@ instance FromJSON VoiceRegion where
 
 -- | Info about a Ban
 data GuildBan = GuildBan
-      { guildBanReason  :: T.Text
+      { guildBanReason  :: Maybe T.Text
       , guildBanUser    :: User
       } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON GuildBan where
-  parseJSON = withObject "GuildBan" $ \o -> GuildBan <$> o .: "reason" <*> o .: "user"
+  parseJSON = withObject "GuildBan" $ \o -> GuildBan <$> o .:? "reason" <*> o .: "user"
 
 -- | Represents a code to add a user to a guild
 data Invite = Invite
