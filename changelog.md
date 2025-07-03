@@ -6,7 +6,7 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## Unreleased
 
--
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/226) Fixes the library erroring when parsing a GuildBan object without a provided reason
 
 ## 1.17.1
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/211) Small interaction-related fixes, such as deferring ephemeral messages and exporting a necessary data structure
