@@ -768,6 +768,20 @@ data MessageType
   | MessageTypeThreadStarterMessage
   | MessageTypeGuildInviteReminder
   | MessageTypeContextMenuCommand
+  | MessageTypeAutoModerationAction
+  | MessageTypeRoleSubscriptionPurchase
+  | MessageTypeInteractionPremiumUpsell
+  | MessageTypeStageStart
+  | MessageTypeStageEnd
+  | MessageTypeStageSpeaker
+  | MessageTypeStageTopic
+  | MessageTypeGuildApplicationPremiumSubscription
+  | MessageTypeGuildIncidentAlertModeEnabled
+  | MessageTypeGuildIncidentAlertModeDisabled
+  | MessageTypeGuildIncidentReportRaid
+  | MessageTypeGuildIncidentReportFalseAlarm
+  | MessageTypePurchaseNotification
+  | MessageTypePollResult
   deriving (Show, Read, Data, Eq, Ord)
 
 instance InternalDiscordEnum MessageType where
@@ -795,6 +809,20 @@ instance InternalDiscordEnum MessageType where
   fromDiscordType MessageTypeThreadStarterMessage = 21
   fromDiscordType MessageTypeGuildInviteReminder = 22
   fromDiscordType MessageTypeContextMenuCommand = 23
+  fromDiscordType MessageTypeAutoModerationAction = 24
+  fromDiscordType MessageTypeRoleSubscriptionPurchase = 25
+  fromDiscordType MessageTypeInteractionPremiumUpsell = 26
+  fromDiscordType MessageTypeStageStart = 27
+  fromDiscordType MessageTypeStageEnd = 28
+  fromDiscordType MessageTypeStageSpeaker = 29
+  fromDiscordType MessageTypeStageTopic = 31
+  fromDiscordType MessageTypeGuildApplicationPremiumSubscription = 32
+  fromDiscordType MessageTypeGuildIncidentAlertModeEnabled = 36
+  fromDiscordType MessageTypeGuildIncidentAlertModeDisabled = 37
+  fromDiscordType MessageTypeGuildIncidentReportRaid = 38
+  fromDiscordType MessageTypeGuildIncidentReportFalseAlarm = 39
+  fromDiscordType MessageTypePurchaseNotification = 44
+  fromDiscordType MessageTypePollResult = 46
 
 instance ToJSON MessageType where
   toJSON = toJSON . fromDiscordType
