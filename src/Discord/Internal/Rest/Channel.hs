@@ -16,6 +16,8 @@ module Discord.Internal.Rest.Channel
   , GroupDMAddRecipientOpts(..)
   , StartThreadOpts(..)
   , StartThreadNoMessageOpts(..)
+  , StartThreadForumMediaOpts(..)
+  , StartThreadForumMediaMessage(..)
   , ListThreads(..)
   ) where
 
