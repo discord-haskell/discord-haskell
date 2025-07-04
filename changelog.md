@@ -6,6 +6,7 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## Unreleased
 
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/226) Fixes the library erroring when parsing a GuildBan object without a provided reason
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/217) Add support for thread creation in forum/media channels
 
 ## 1.17.1
