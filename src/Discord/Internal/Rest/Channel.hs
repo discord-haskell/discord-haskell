@@ -16,6 +16,8 @@ module Discord.Internal.Rest.Channel
   , GroupDMAddRecipientOpts(..)
   , StartThreadOpts(..)
   , StartThreadNoMessageOpts(..)
+  , StartThreadForumMediaOpts(..)
+  , StartThreadForumMediaMessage(..)
   , ListThreads(..)
   ) where
 
@@ -98,6 +100,8 @@ data ChannelRequest a where
   StartThreadFromMessage    :: ChannelId -> MessageId -> StartThreadOpts -> ChannelRequest Channel
   -- | Start a thread without a message
   StartThreadNoMessage      :: ChannelId -> StartThreadNoMessageOpts -> ChannelRequest Channel
+  -- | Start a thread in a forum or media channel
+  StartThreadForumMedia     :: ChannelId -> StartThreadForumMediaOpts -> ChannelRequest Channel
   -- | Join a thread
   JoinThread                :: ChannelId -> ChannelRequest ()
   -- | Add a thread member
@@ -337,6 +341,55 @@ instance ToJSON StartThreadNoMessageOpts where
       , "invitable" .=? startThreadNoMessageInvitable
       ]
 
+-- | Options for `StartThreadNoMessage` request
+--
+-- https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-jsonform-params
+data StartThreadForumMediaOpts = StartThreadForumMediaOpts
+  { -- | Base options for the thread
+    startThreadForumMediaBaseOpts :: StartThreadOpts
+  , -- | Whether non-moderators can add other non-moderators to a thread. Only
+    -- available when creating a private thread.
+    startThreadForumMediaMessage :: StartThreadForumMediaMessage
+  , -- the IDs of the set of tags that have been applied to a thread in a GUILD_FORUM or a GUILD_MEDIA channel
+    startThreadForumMediaAppliedTags :: Maybe [Snowflake]
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON StartThreadForumMediaOpts where
+  toJSON StartThreadForumMediaOpts{..} = objectFromMaybes
+      [ "name" .== startThreadName startThreadForumMediaBaseOpts
+      , "auto_archive_duration" .=? startThreadAutoArchive startThreadForumMediaBaseOpts
+      , "rate_limit_per_user" .=? startThreadRateLimit startThreadForumMediaBaseOpts
+      , "message" .== startThreadForumMediaMessage
+      , "applied_tags" .=? startThreadForumMediaAppliedTags
+      ]
+
+-- | Message details for `StartThreadForumMediaOpts`
+--
+-- https://discord.com/developers/docs/resources/channel#start-thread-in-forum-or-media-channel-forum-and-media-thread-message-params-object
+--
+-- Attachments left out for now.
+data StartThreadForumMediaMessage = StartThreadForumMediaMessage
+  { -- | The message contents (up to 2000 characters)
+    startThreadForumMediaMessageContent                  :: T.Text
+  , -- | embedded rich content (up to 6000 characters)
+    startThreadForumMediaMessageEmbeds                   :: Maybe [CreateEmbed]
+  , -- | allowed mentions for the message
+    startThreadForumMediaMessageAllowedMentions          :: Maybe AllowedMentions
+  , -- | Message components for the message
+    startThreadForumMediaMessageComponents               :: Maybe [ActionRow]
+  , -- | IDs of up to 3 `Sticker` in the server to send with the message
+    startThreadForumMediaMessageStickerIds               :: Maybe [StickerId]
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON StartThreadForumMediaMessage where
+  toJSON StartThreadForumMediaMessage{..} = objectFromMaybes
+    [ "content" .== startThreadForumMediaMessageContent
+    , "embeds" .=? ((createEmbed <$>) <$> startThreadForumMediaMessageEmbeds)
+    , "allowed_mentions" .=? startThreadForumMediaMessageAllowedMentions
+    , "components" .=? startThreadForumMediaMessageComponents
+    , "sticker_ids" .=? startThreadForumMediaMessageStickerIds
+    ]
+
 -- | Result type of `ListJoinedPrivateArchivedThreads`,
 -- `ListPrivateArchivedThreads` and `ListPublicArchivedThreads`
 data ListThreads = ListThreads
@@ -391,7 +444,8 @@ channelMajorRoute c = case c of
   (GroupDMAddRecipient chan _) ->             "groupdm " <> show chan
   (GroupDMRemoveRecipient chan _) ->          "groupdm " <> show chan
   (StartThreadFromMessage chan _ _) ->         "thread " <> show chan
-  (StartThreadNoMessage chan _) ->           "thread " <> show chan
+  (StartThreadNoMessage chan _) ->             "thread " <> show chan
+  (StartThreadForumMedia chan _) ->            "thread " <> show chan
   (JoinThread chan) ->                         "thread " <> show chan
   (AddThreadMember chan _) ->                  "thread " <> show chan
   (LeaveThread chan) ->                        "thread " <> show chan
@@ -587,6 +641,11 @@ channelJsonRequest c = case c of
       Post (channels /~ chan /: "threads")
            (pure $ R.ReqBodyJson $ toJSON sto)
            mempty
+
+  (StartThreadForumMedia chan opts) ->
+    Post (channels /~ chan /: "threads")
+      (pure $ R.ReqBodyJson $ toJSON opts)
+      mempty
 
   (JoinThread chan) ->
       Put (channels /~ chan /: "thread-members" /: "@me")

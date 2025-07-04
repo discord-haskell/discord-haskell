@@ -6,7 +6,7 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## Unreleased
 
--
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/217) Add support for thread creation in forum/media channels
 
 ## 1.17.1
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/211) Small interaction-related fixes, such as deferring ephemeral messages and exporting a necessary data structure
