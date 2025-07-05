@@ -12,6 +12,7 @@ module Discord.Internal.Types.RolePermissions
   )
 where
 
+import Prelude hiding (Foldable(..))
 import Data.Bits (Bits (complement, shift, (.&.), (.|.)))
 import Discord.Internal.Types.Guild
   ( Guild,
