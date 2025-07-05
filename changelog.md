@@ -6,8 +6,19 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## Unreleased
 
-- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/226) Fixes the library erroring when parsing a GuildBan object without a provided reason
+-
+
+## 1.18.0
+
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/226) [**Breaking**] Use Maybe for GuildBan reason field, fixing parse errors
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/223) [**Breaking**] Support more message types (extends `MessageType` constructors)
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/218) [**Breaking**] Allow GHC 9.10 compilation, bump dependency upper bounds to allow `containers 0.7`, `data-default 0.8`, `hashable 1.5`, `time 1.14`, `network 3.2.0.0`
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/229) [**Breaking**] Allow GHC 9.12 compilation
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/216) [**Breaking**] Use Maybe for `textInputRequired`, `textInputValue`, `textInputPlaceholder` to align with Discord API
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/217) Add support for thread creation in forum/media channels
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/215) (and [chrissound](https://github.com/discord-haskell/discord-haskell/pull/214)) Allow OAuth/User tokens to be used instead of bot tokens by optionally prefixing the token with "Bearer "
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/225) Update outdated CI dependencies which were causing CI to fail
+- [i-r-o-n](https://github.com/discord-haskell/discord-haskell/pull/212) Fixed typos in the README and in docs/installing.md
 
 ## 1.17.1
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/211) Small interaction-related fixes, such as deferring ephemeral messages and exporting a necessary data structure
