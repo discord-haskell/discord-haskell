@@ -167,7 +167,7 @@ instance FromJSON ScheduledEvent where
 
       case setype of
         1 -> do
-          sechid <- v .: "channelId"
+          sechid <- v .: "channel_id"
           seet   <- v .:? "scheduled_end_time"
           return $ ScheduledEventStage seid
                                        segid
@@ -184,7 +184,7 @@ instance FromJSON ScheduledEvent where
                                        seuc
                                        seim
         2 -> do
-          sechid <- v .: "channelId"
+          sechid <- v .: "channel_id"
           seet   <- v .:? "scheduled_end_time"
           return $ ScheduledEventVoice seid
                                        segid

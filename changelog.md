@@ -6,7 +6,7 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## Unreleased
 
--
+- [ShapeOfMatter](https://github.com/discord-haskell/discord-haskell/pull/231) Fix broken parsing of channel IDs in STAGE_INSTANCE and VOICE scheduled events
 
 ## 1.18.0
 
