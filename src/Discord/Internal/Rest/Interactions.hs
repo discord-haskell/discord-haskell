@@ -17,6 +17,7 @@ import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
 import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
+import Data.Maybe (fromMaybe)
 
 -- | Data constructor for Interaction response requests
 data InteractionResponseRequest a where
@@ -85,6 +86,5 @@ interactionResponseJsonRequest a = case a of
     convertIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
     convertIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
     convert' :: InteractionResponseMessage -> [PartM IO]
-    convert' InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
-      Nothing -> []
-      Just f -> (maybeEmbed . Just) =<< f
+    convert' InteractionResponseMessage {..} =
+      (maybeEmbed . Just) =<< fromMaybe [] interactionResponseMessageEmbeds
