@@ -287,7 +287,10 @@ embedsToAttachments seed embeds = zip [seed,seed+4..] embeds >>= \(embedInd, Cre
     , ("footer.png", createEmbedFooterIcon)
     ]
   let filename = filter (/=' ') $ T.unpack createEmbedTitle <> n
-  pure (BasicAttachment (Snowflake ind) filename, partFileRequestBody ("files[" <> T.show ind <> "]") filename (RequestBodyBS c))
+  pure 
+    ( BasicAttachment (Snowflake ind) filename
+    , partFileRequestBody ("files[" <> T.pack (show ind) <> "]") filename (RequestBodyBS c)
+    )
 
 -- | Only requires filename and a snowflake placeholder. Internally used type.
 --
