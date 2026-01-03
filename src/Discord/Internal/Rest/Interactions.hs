@@ -2,11 +2,15 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Discord.Internal.Rest.Interactions (InteractionResponseRequest(..)) where
 
 import Data.Aeson (encode)
+import qualified Data.Aeson as A
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString as BS
 import Discord.Internal.Rest.Prelude
     ( RestIO,
       Request(..),
@@ -17,7 +21,9 @@ import Discord.Internal.Types.Interactions
 import Network.HTTP.Client.MultipartFormData (PartM, partBS)
 import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
-import Data.Maybe (fromMaybe)
+import Data.Functor ((<&>))
+import qualified Data.Aeson.KeyMap as A.KM
+import Data.Bifunctor (first)
 
 -- | Data constructor for Interaction response requests
 data InteractionResponseRequest a where
@@ -80,11 +86,30 @@ interactionResponseJsonRequest a = case a of
     Delete (interaction aid it /~ mid) mempty
   where
     convert :: InteractionResponse -> RestIO R.ReqBodyMultipart
-    convert ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
-    convert ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
+    convert ir@(InteractionResponseChannelMessage irm) =
+      let (attachmentF, binaryData) = embedAttachments irm in
+      R.reqBodyMultipart (partBS "payload_json" (attachmentF ir) : binaryData)
+    convert ir@(InteractionResponseUpdateMessage irm) = 
+      let (attachmentF, binaryData) = embedAttachments irm in
+      R.reqBodyMultipart (partBS "payload_json" (attachmentF ir) : binaryData)
     convert ir = R.reqBodyMultipart [partBS "payload_json" $ BL.toStrict $ encode ir]
     convertIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
-    convertIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
-    convert' :: InteractionResponseMessage -> [PartM IO]
-    convert' InteractionResponseMessage {..} =
-      (maybeEmbed . Just) =<< fromMaybe [] interactionResponseMessageEmbeds
+    convertIRM irm = 
+      let (attachmentF, binaryData) = embedAttachments irm in
+      R.reqBodyMultipart (partBS "payload_json" (attachmentF irm) : binaryData)
+
+    -- we kinda inject the attachments list into the Value produced.
+    embedAttachments :: ToJSON a => InteractionResponseMessage -> (a -> BS.ByteString, [PartM IO])
+    embedAttachments irm = first (((BL.toStrict . encode) .) . (. toJSON)) $
+      case embedAttachments' irm of
+        Nothing -> (id, [])
+        Just (unzip -> (attachments, datas)) ->
+          (onObject (A.KM.insert "attachments" (toJSON attachments)), datas)
+      where
+      embedAttachments' :: InteractionResponseMessage -> Maybe [(BasicAttachment, PartM IO)]
+      embedAttachments' InteractionResponseMessage {..} =
+        interactionResponseMessageEmbeds <&> embedsToAttachments 0
+
+      onObject f = \case
+        A.Object o -> A.Object $ f o
+        v -> v

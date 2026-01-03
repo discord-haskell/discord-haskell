@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | Provides actions for Channel API interactions
 module Discord.Internal.Rest.Channel
@@ -35,7 +36,7 @@ import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
-import Control.Monad (join)
+import Data.Functor ((<&>))
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
@@ -636,28 +637,30 @@ channelJsonRequest c = case c of
 
 messagePayload :: MessageDetailedOpts -> RestIO R.ReqBodyMultipart
 messagePayload msgOpts =
-  let fileUpload = messageDetailedFile msgOpts
-      filePart =
-        ( case fileUpload of
-            Nothing -> []
-            Just f ->
-              [ partFileRequestBody
-                  "file"
-                  (T.unpack $ fst f)
-                  (RequestBodyBS $ snd f)
-              ]
+  let embedData = unzip . embedsToAttachments 1 <$> messageDetailedEmbeds msgOpts
+    
+      filePart = messageDetailedFile msgOpts <&> \(T.unpack -> filename, body) ->
+        ( BasicAttachment (Snowflake 0) filename
+        , partFileRequestBody
+          "files[0]"
+          filename
+          (RequestBodyBS body)
         )
-          ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
-      payloadData =  objectFromMaybes $
-                      [ "content" .== messageDetailedContent msgOpts
-                      , "tts"     .== messageDetailedTTS msgOpts ] ++
-                      [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                      , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
-                      , "message_reference" .=? messageDetailedReference msgOpts
-                      , "components" .=? messageDetailedComponents msgOpts
-                      , "sticker_ids" .=? messageDetailedStickerIds msgOpts
-                      ]
+      mAttachments = fmap (pure . fst) filePart <> fmap fst embedData
+
+      allData = maybe id ((:) . snd) filePart $ maybe [] snd embedData
+
+      payloadData = objectFromMaybes
+        [ "content" .== messageDetailedContent msgOpts
+        , "tts"     .== messageDetailedTTS msgOpts
+        , "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+        , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
+        , "message_reference" .=? messageDetailedReference msgOpts
+        , "components" .=? messageDetailedComponents msgOpts
+        , "sticker_ids" .=? messageDetailedStickerIds msgOpts
+        , "attachments" .=? mAttachments
+        ]
       payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
-  in R.reqBodyMultipart (payloadPart : filePart)
+  in R.reqBodyMultipart (payloadPart : allData)

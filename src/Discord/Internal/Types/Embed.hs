@@ -11,11 +11,13 @@ import Data.Default (Default, def)
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Functor ((<&>))
+import Data.Word (Word64)
 
 import Network.HTTP.Client.MultipartFormData (PartM, partFileRequestBody)
 import Network.HTTP.Client (RequestBody(RequestBodyBS))
 
 import Discord.Internal.Types.Color (DiscordColor)
+import Discord.Internal.Types.Prelude (Snowflake (..))
 
 createEmbed :: CreateEmbed -> Embed
 createEmbed CreateEmbed{..} =
@@ -272,13 +274,33 @@ instance FromJSON EmbedField where
                <*> o .:  "value"
                <*> o .:? "inline"
 
+-- | Turn a collection of CreateEmbed values into the basics of an attachment
+-- and the data to transfer.
+--
+-- See BasicAttachment for more details.
+embedsToAttachments :: Word64 -> [CreateEmbed] -> [(BasicAttachment, PartM IO)]
+embedsToAttachments seed embeds = zip [seed,seed+4..] embeds >>= \(embedInd, CreateEmbed {..}) -> do
+  (ind, (n, Just (CreateEmbedImageUpload c))) <- zip [embedInd..]
+    [ ("author.png", createEmbedAuthorIcon)
+    , ("thumbnail.png", createEmbedThumbnail)
+    , ("image.png", createEmbedImage)
+    , ("footer.png", createEmbedFooterIcon)
+    ]
+  let filename = filter (/=' ') $ T.unpack createEmbedTitle <> n
+  pure (BasicAttachment (Snowflake ind) filename, partFileRequestBody ("files[" <> T.show ind <> "]") filename (RequestBodyBS c))
 
-maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
-maybeEmbed =
-      let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
-          uploads CreateEmbed{..} = [(T.filter (/=' ') $ createEmbedTitle<>n,c) | (n, Just (CreateEmbedImageUpload c)) <-
-                                          [ ("author.png", createEmbedAuthorIcon)
-                                          , ("thumbnail.png", createEmbedThumbnail)
-                                          , ("image.png", createEmbedImage)
-                                          , ("footer.png", createEmbedFooterIcon) ]]
-      in maybe [] (map mkPart . uploads)
+-- | Only requires filename and a snowflake placeholder. Internally used type.
+--
+-- See https://discord.com/developers/docs/reference#uploading-files and 
+-- https://discord.com/developers/docs/resources/webhook#execute-webhook.
+data BasicAttachment = BasicAttachment
+  { basicAttachmentId :: Snowflake
+  , basicAttachmentFilename :: String
+  }
+  deriving (Show)
+
+instance ToJSON BasicAttachment where
+  toJSON BasicAttachment {..} = object
+    [ "id" .= basicAttachmentId
+    , "filename" .= basicAttachmentFilename
+    ]
