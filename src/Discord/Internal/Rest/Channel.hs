@@ -507,31 +507,7 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let fileUpload = messageDetailedFile msgOpts
-        filePart =
-          ( case fileUpload of
-              Nothing -> []
-              Just f ->
-                [ partFileRequestBody
-                    "file"
-                    (T.unpack $ fst f)
-                    (RequestBodyBS $ snd f)
-                ]
-          )
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
-
-        payloadData =  objectFromMaybes $
-                        [ "content" .== messageDetailedContent msgOpts
-                        , "tts"     .== messageDetailedTTS msgOpts ] ++
-                        [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
-                        , "message_reference" .=? messageDetailedReference msgOpts
-                        , "components" .=? messageDetailedComponents msgOpts
-                        , "sticker_ids" .=? messageDetailedStickerIds msgOpts
-                        ]
-        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
-
-        body = R.reqBodyMultipart (payloadPart : filePart)
+    let body = messagePayload msgOpts
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
@@ -560,33 +536,8 @@ channelJsonRequest c = case c of
   (DeleteAllReactions (chan, msgid)) ->
       Delete (channels /~ chan /: "messages" /~ msgid /: "reactions" ) mempty
 
-  -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let fileUpload = messageDetailedFile msgOpts
-        filePart =
-          ( case fileUpload of
-              Nothing -> []
-              Just f ->
-                [ partFileRequestBody
-                    "file"
-                    (T.unpack $ fst f)
-                    (RequestBodyBS $ snd f)
-                ]
-          )
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
-
-        payloadData =  objectFromMaybes $
-                        [ "content" .== messageDetailedContent msgOpts
-                        , "tts"     .== messageDetailedTTS msgOpts ] ++
-                        [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
-                        , "message_reference" .=? messageDetailedReference msgOpts
-                        , "components" .=? messageDetailedComponents msgOpts
-                        , "sticker_ids" .=? messageDetailedStickerIds msgOpts
-                        ]
-        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
-
-        body = R.reqBodyMultipart (payloadPart : filePart)
+    let body = messagePayload msgOpts
       in Patch (channels /~ chan /: "messages" /~ msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
@@ -682,3 +633,31 @@ channelJsonRequest c = case c of
   (ListJoinedPrivateArchivedThreads chan (time, lim)) ->
       Get (channels /~ chan /: "users" /: "@me" /: "threads" /: "archived" /: "private")
           (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+
+messagePayload :: MessageDetailedOpts -> RestIO R.ReqBodyMultipart
+messagePayload msgOpts =
+  let fileUpload = messageDetailedFile msgOpts
+      filePart =
+        ( case fileUpload of
+            Nothing -> []
+            Just f ->
+              [ partFileRequestBody
+                  "file"
+                  (T.unpack $ fst f)
+                  (RequestBodyBS $ snd f)
+              ]
+        )
+          ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+
+      payloadData =  objectFromMaybes $
+                      [ "content" .== messageDetailedContent msgOpts
+                      , "tts"     .== messageDetailedTTS msgOpts ] ++
+                      [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                      , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
+                      , "message_reference" .=? messageDetailedReference msgOpts
+                      , "components" .=? messageDetailedComponents msgOpts
+                      , "sticker_ids" .=? messageDetailedStickerIds msgOpts
+                      ]
+      payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
+
+  in R.reqBodyMultipart (payloadPart : filePart)
