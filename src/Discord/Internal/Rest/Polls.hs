@@ -12,7 +12,7 @@ module Discord.Internal.Rest.Polls
 where
 
 import Data.Aeson
-import qualified Data.Text as T (show)
+import qualified Data.Text as T ( pack )
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Network.HTTP.Req ((/:), (/~))
@@ -61,7 +61,7 @@ pollMajorRoute = \case
 
 pollJsonRequest :: PollRequest r -> JsonRequest
 pollJsonRequest = \case
-  (GetAnswerVoters (chan, msgid) aid timing) ->
-    Get (baseUrl /: "channels" /~ chan /: "polls" /~ msgid /: "answers" /: T.show aid) (pollTimingToQuery timing)
+  (GetAnswerVoters (chan, msgid) aid timing) -> -- TODO: T.show _ / T.pack (show _) / find good way to go about this
+    Get (baseUrl /: "channels" /~ chan /: "polls" /~ msgid /: "answers" /: T.pack (show aid)) (pollTimingToQuery timing)
   (EndPoll (chan, msgid)) ->
     Post (baseUrl /: "channels" /~ chan /: "polls" /~ msgid /: "expire") (pure R.NoReqBody) mempty
