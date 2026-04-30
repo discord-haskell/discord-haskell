@@ -40,7 +40,7 @@ instance FromJSON AutoModerationRule where
 
 instance ToJSON AutoModerationRule where
   toJSON AutoModerationRule{..} = object
-    [ ("id", toJSON autoModerationRuleGuildId)
+    [ ("id", toJSON autoModerationRuleId)
     , ("guild_id", toJSON autoModerationRuleGuildId)
     , ("name", toJSON autoModerationRuleName)
     , ("creator_id", toJSON autoModerationRuleCreatorId)
