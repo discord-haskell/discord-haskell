@@ -273,12 +273,12 @@ instance FromJSON EmbedField where
                <*> o .:? "inline"
 
 
-maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
-maybeEmbed =
+embedPart :: CreateEmbed -> [PartM IO]
+embedPart =
       let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
           uploads CreateEmbed{..} = [(T.filter (/=' ') $ createEmbedTitle<>n,c) | (n, Just (CreateEmbedImageUpload c)) <-
                                           [ ("author.png", createEmbedAuthorIcon)
                                           , ("thumbnail.png", createEmbedThumbnail)
                                           , ("image.png", createEmbedImage)
                                           , ("footer.png", createEmbedFooterIcon) ]]
-      in maybe [] (map mkPart . uploads)
+      in map mkPart . uploads

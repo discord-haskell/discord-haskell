@@ -518,7 +518,7 @@ channelJsonRequest c = case c of
                     (RequestBodyBS $ snd f)
                 ]
           )
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+            ++ join (maybe [] (embedPart <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
@@ -573,7 +573,7 @@ channelJsonRequest c = case c of
                     (RequestBodyBS $ snd f)
                 ]
           )
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+            ++ join (maybe [] (embedPart <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts

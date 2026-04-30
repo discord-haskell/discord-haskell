@@ -87,4 +87,4 @@ interactionResponseJsonRequest a = case a of
     convert' :: InteractionResponseMessage -> [PartM IO]
     convert' InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
       Nothing -> []
-      Just f -> (maybeEmbed . Just) =<< f
+      Just f -> embedPart =<< f
