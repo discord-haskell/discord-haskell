@@ -15,6 +15,8 @@ module Discord.Internal.Types.Channel (
   , Message (..)
   , AllowedMentions (..)
   , MessageReaction (..)
+  , CreateAttachment (..)
+  , attachmentPart
   , Attachment (..)
   , Nonce (..)
   , MessageReference (..)
@@ -32,11 +34,15 @@ import Control.Applicative (empty)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Default (Default, def)
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Bits
 import Data.Data (Data)
+import Text.Printf
+import Network.HTTP.Client
+import Network.HTTP.Client.MultipartFormData
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
@@ -668,6 +674,24 @@ instance ToJSON MessageReaction where
       , "me" .== messageReactionMeIncluded
       , "emoji" .== messageReactionEmoji
       ]
+
+data CreateAttachment = CreateAttachment
+  { createAttachmentId :: Int
+  , createAttachmentFilename :: Text
+  , createAttachmentData :: ByteString
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON CreateAttachment where
+  toJSON CreateAttachment {..} = objectFromMaybes
+    [ "id" .== createAttachmentId
+    , "filename" .== createAttachmentFilename
+    ]
+
+attachmentPart :: CreateAttachment -> PartM IO
+attachmentPart CreateAttachment {..} = partFileRequestBody name path body where
+  name = T.pack $ printf "files[%d]" createAttachmentId
+  path = T.unpack createAttachmentFilename
+  body = RequestBodyBS createAttachmentData
 
 -- | Represents an attached to a message file.
 data Attachment = Attachment
