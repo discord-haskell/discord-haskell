@@ -79,11 +79,13 @@ interactionResponseJsonRequest a = case a of
     Delete (interaction aid it /~ mid) mempty
   where
     bodyIR :: InteractionResponse -> RestIO R.ReqBodyMultipart
-    bodyIR ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : files irm)
-    bodyIR ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : files irm)
-    bodyIR ir = R.reqBodyMultipart [partBS "payload_json" $ BL.toStrict $ encode ir]
+    bodyIR ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart $ payload ir : files irm
+    bodyIR ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart $ payload ir : files irm
+    bodyIR ir = R.reqBodyMultipart [payload ir]
     bodyIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
-    bodyIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : files irm)
+    bodyIRM irm = R.reqBodyMultipart $ payload irm : files irm
+    payload :: ToJSON a => a -> PartM IO
+    payload = partBS "payload_json" . BL.toStrict . encode
     files :: InteractionResponseMessage -> [PartM IO]
     files InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
       Nothing -> []
