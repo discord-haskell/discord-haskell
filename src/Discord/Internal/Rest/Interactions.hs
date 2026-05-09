@@ -62,29 +62,29 @@ interaction aid it = baseUrl /: "webhooks" /~ aid /~ it /: "messages"
 interactionResponseJsonRequest :: InteractionResponseRequest a -> JsonRequest
 interactionResponseJsonRequest a = case a of
   (CreateInteractionResponse iid it i) ->
-    Post (baseUrl /: "interactions" /~ iid /~ it /: "callback") (convert i) mempty
+    Post (baseUrl /: "interactions" /~ iid /~ it /: "callback") (bodyIR i) mempty
   (GetOriginalInteractionResponse aid it) ->
     Get (interaction aid it /: "@original") mempty
   (EditOriginalInteractionResponse aid it i) ->
-    Patch (interaction aid it /: "@original") (convertIRM i) mempty
+    Patch (interaction aid it /: "@original") (bodyIRM i) mempty
   (DeleteOriginalInteractionResponse aid it) ->
     Delete (interaction aid it /: "@original") mempty
   (CreateFollowupInteractionMessage aid it i) ->
-    Post (baseUrl /: "webhooks" /~ aid /~ it) (convertIRM i) mempty
+    Post (baseUrl /: "webhooks" /~ aid /~ it) (bodyIRM i) mempty
   (GetFollowupInteractionMessage aid it mid) ->
     Get (interaction aid it /~ mid) mempty
   (EditFollowupInteractionMessage aid it mid i) ->
-    Patch (interaction aid it /~ mid) (convertIRM i) mempty
+    Patch (interaction aid it /~ mid) (bodyIRM i) mempty
   (DeleteFollowupInteractionMessage aid it mid) ->
     Delete (interaction aid it /~ mid) mempty
   where
-    convert :: InteractionResponse -> RestIO R.ReqBodyMultipart
-    convert ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
-    convert ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
-    convert ir = R.reqBodyMultipart [partBS "payload_json" $ BL.toStrict $ encode ir]
-    convertIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
-    convertIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
-    convert' :: InteractionResponseMessage -> [PartM IO]
-    convert' InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
+    bodyIR :: InteractionResponse -> RestIO R.ReqBodyMultipart
+    bodyIR ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : files irm)
+    bodyIR ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : files irm)
+    bodyIR ir = R.reqBodyMultipart [partBS "payload_json" $ BL.toStrict $ encode ir]
+    bodyIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
+    bodyIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : files irm)
+    files :: InteractionResponseMessage -> [PartM IO]
+    files InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
       Nothing -> []
       Just f -> embedPart =<< f
