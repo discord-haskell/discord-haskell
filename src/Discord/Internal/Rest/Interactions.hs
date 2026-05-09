@@ -5,6 +5,7 @@
 
 module Discord.Internal.Rest.Interactions (InteractionResponseRequest(..)) where
 
+import Data.Functor
 import Data.Maybe
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy as BL
@@ -88,5 +89,6 @@ interactionResponseJsonRequest a = case a of
     payload :: ToJSON a => a -> PartM IO
     payload = partBS "payload_json" . BL.toStrict . encode
     files :: InteractionResponseMessage -> [PartM IO]
-    files InteractionResponseMessage {..} = filesEmbeds where
+    files InteractionResponseMessage {..} = filesEmbeds ++ filesAttachments where
       filesEmbeds = fromMaybe [] interactionResponseMessageEmbeds >>= embedPart
+      filesAttachments = fromMaybe [] interactionResponseMessageAttachments <&> attachmentPart
