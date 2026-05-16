@@ -26,10 +26,8 @@ import Data.Aeson
 import Data.Default (Default, def)
 import Text.Emoji (emojiFromAlias)
 import qualified Data.Text as T
-import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import Network.HTTP.Client (RequestBody (RequestBodyBS))
-import Network.HTTP.Client.MultipartFormData (partFileRequestBody, partBS)
+import Network.HTTP.Client.MultipartFormData (partBS)
 import Network.HTTP.Req ((/:), (/~))
 import qualified Network.HTTP.Req as R
 
@@ -139,8 +137,10 @@ data MessageDetailedOpts = MessageDetailedOpts
     messageDetailedTTS                      :: Bool
   , -- | embedded rich content (up to 6000 characters)
     messageDetailedEmbeds                   :: Maybe [CreateEmbed]
-  , -- | the contents of the file being sent
-    messageDetailedFile                     :: Maybe (T.Text, B.ByteString)
+  , -- | metadata of existing attachments
+    messageDetailedAttachments              :: Maybe [CreateAttachment]
+  , -- | new uploads to attach to the message
+    messageDetailedUpload                   :: Maybe [CreateUpload]
   , -- | allowed mentions for the message
     messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , -- | If `Just`, reply to the message referenced
@@ -155,7 +155,8 @@ instance Default MessageDetailedOpts where
   def = MessageDetailedOpts { messageDetailedContent         = ""
                             , messageDetailedTTS             = False
                             , messageDetailedEmbeds          = Nothing
-                            , messageDetailedFile            = Nothing
+                            , messageDetailedAttachments     = Nothing
+                            , messageDetailedUpload          = Nothing
                             , messageDetailedAllowedMentions = Nothing
                             , messageDetailedReference       = Nothing
                             , messageDetailedComponents      = Nothing
@@ -507,23 +508,16 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let fileUpload = messageDetailedFile msgOpts
-        filePart =
-          ( case fileUpload of
-              Nothing -> []
-              Just f ->
-                [ partFileRequestBody
-                    "file"
-                    (T.unpack $ fst f)
-                    (RequestBodyBS $ snd f)
-                ]
-          )
+    let fileAttachments = messageDetailedAttachments msgOpts
+        fileUpload = messageDetailedUpload msgOpts
+        filePart = maybe [] uploadsParts fileUpload
             ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                        , "attachments" .=? uploadsAdd fileUpload fileAttachments
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts
@@ -562,23 +556,16 @@ channelJsonRequest c = case c of
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let fileUpload = messageDetailedFile msgOpts
-        filePart =
-          ( case fileUpload of
-              Nothing -> []
-              Just f ->
-                [ partFileRequestBody
-                    "file"
-                    (T.unpack $ fst f)
-                    (RequestBodyBS $ snd f)
-                ]
-          )
+    let fileAttachments = messageDetailedAttachments msgOpts
+        fileUpload = messageDetailedUpload msgOpts
+        filePart = maybe [] uploadsParts fileUpload
             ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
+                        , "attachments" .=? uploadsAdd fileUpload fileAttachments
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts
