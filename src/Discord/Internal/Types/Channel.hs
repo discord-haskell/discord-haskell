@@ -16,6 +16,10 @@ module Discord.Internal.Types.Channel (
   , AllowedMentions (..)
   , MessageReaction (..)
   , Attachment (..)
+  , CreateAttachment (..)
+  , CreateUpload (..)
+  , uploadsAdd
+  , uploadsParts
   , Nonce (..)
   , MessageReference (..)
   , MessageType (..)
@@ -29,14 +33,19 @@ module Discord.Internal.Types.Channel (
   ) where
 
 import Control.Applicative (empty)
+import Data.Maybe
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Default (Default, def)
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Bits
 import Data.Data (Data)
+import Text.Printf
+import Network.HTTP.Client
+import Network.HTTP.Client.MultipartFormData
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
@@ -700,6 +709,47 @@ instance ToJSON Attachment where
       , "height" .=? attachmentHeight
       , "width" .=? attachmentWidth
       ]
+
+data CreateAttachment = CreateAttachment
+  { createAttachmentId :: AttachmentId
+  , createAttachmentFilename :: Maybe Text
+  , createAttachmentTitle :: Maybe Text
+  , createAttachmentDescription :: Maybe Text
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON CreateAttachment where
+  toJSON CreateAttachment {..} = objectFromMaybes
+    [ "id" .== createAttachmentId
+    , "filename" .=? createAttachmentFilename
+    , "title" .=? createAttachmentTitle
+    , "description" .=? createAttachmentDescription
+    ]
+
+data CreateUpload = CreateUpload
+  { uploadFilename :: Text
+  , uploadTitle :: Maybe Text
+  , uploadDescription :: Maybe Text
+  , uploadContent :: ByteString
+  } deriving (Show, Read, Eq, Ord)
+
+uploadsAttachments :: [CreateUpload] -> [CreateAttachment]
+uploadsAttachments = zipWith go [0 ..] where
+  go index CreateUpload {..} = CreateAttachment identifier filename uploadTitle uploadDescription where
+    identifier = DiscordId $ Snowflake index
+    filename = Just uploadFilename
+
+uploadsAdd :: Maybe [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
+uploadsAdd uploads attachments = if null entries then Nothing else Just entries where
+  entries = entriesUploads ++ entriesAttachments
+  entriesUploads = maybe [] uploadsAttachments uploads
+  entriesAttachments = fromMaybe [] attachments
+
+uploadsParts :: [CreateUpload] -> [Part]
+uploadsParts = zipWith go [0 ..] where
+  go index CreateUpload {..} = partFileRequestBody name path body where
+    name = T.pack $ printf "files[%d]" index
+    path = T.unpack uploadFilename
+    body = RequestBodyBS uploadContent
 
 newtype Nonce = Nonce T.Text
   deriving (Show, Read, Eq, Ord)
