@@ -747,7 +747,7 @@ uploadsAdd uploads attachments = if null entries then Nothing else Just entries 
 uploadsParts :: [CreateUpload] -> [Part]
 uploadsParts = zipWith go [0 ..] where
   go index CreateUpload {..} = partFileRequestBody name path body where
-    name = T.pack $ printf "files[%d]" index
+    name = T.pack $ printf "files[%d]" (index :: Int)
     path = T.unpack uploadFilename
     body = RequestBodyBS uploadContent
 
