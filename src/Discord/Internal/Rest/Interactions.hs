@@ -85,6 +85,8 @@ interactionResponseJsonRequest a = case a of
     convertIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
     convertIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
     convert' :: InteractionResponseMessage -> [PartM IO]
-    convert' InteractionResponseMessage {..} = case interactionResponseMessageEmbeds of
-      Nothing -> []
-      Just f -> (maybeEmbed . Just) =<< f
+    convert' InteractionResponseMessage {..} = uploads ++ embeds where
+      uploads = maybe [] uploadsParts interactionResponseMessageUploads
+      embeds = case interactionResponseMessageEmbeds of
+        Nothing -> []
+        Just f -> (maybeEmbed . Just) =<< f
