@@ -508,16 +508,14 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let fileAttachments = messageDetailedAttachments msgOpts
-        fileUpload = messageDetailedUpload msgOpts
-        filePart = maybe [] uploadsParts fileUpload
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+    let uploads = uploadsAssemble $ messageDetailedUpload msgOpts
+        filePart = uploadsParts uploads ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "attachments" .=? uploadsAdd fileUpload fileAttachments
+                        , "attachments" .=? uploadsAttachments uploads (messageDetailedAttachments msgOpts)
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts
@@ -556,16 +554,14 @@ channelJsonRequest c = case c of
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let fileAttachments = messageDetailedAttachments msgOpts
-        fileUpload = messageDetailedUpload msgOpts
-        filePart = maybe [] uploadsParts fileUpload
-            ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+    let uploads = uploadsAssemble $ messageDetailedUpload msgOpts
+        filePart = uploadsParts uploads ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "attachments" .=? uploadsAdd fileUpload fileAttachments
+                        , "attachments" .=? uploadsAttachments uploads (messageDetailedAttachments msgOpts)
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts

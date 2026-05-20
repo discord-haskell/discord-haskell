@@ -18,7 +18,8 @@ module Discord.Internal.Types.Channel (
   , Attachment (..)
   , CreateAttachment (..)
   , CreateUpload (..)
-  , uploadsAdd
+  , uploadsAssemble
+  , uploadsAttachments
   , uploadsParts
   , Nonce (..)
   , MessageReference (..)
@@ -732,17 +733,17 @@ data CreateUpload = CreateUpload
   , uploadContent :: ByteString
   } deriving (Show, Read, Eq, Ord)
 
-uploadsAttachments :: [CreateUpload] -> [CreateAttachment]
-uploadsAttachments = zipWith go [0 ..] where
+uploadsAssemble :: Maybe [CreateUpload] -> [CreateUpload]
+uploadsAssemble = fromMaybe []
+
+uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
+uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where
+  entries = entriesUploads ++ entriesAttachments
+  entriesUploads = zipWith go [0 ..] uploads
+  entriesAttachments = fromMaybe [] attachments
   go index CreateUpload {..} = CreateAttachment identifier filename uploadTitle uploadDescription where
     identifier = DiscordId $ Snowflake index
     filename = Just uploadFilename
-
-uploadsAdd :: Maybe [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
-uploadsAdd uploads attachments = if null entries then Nothing else Just entries where
-  entries = entriesUploads ++ entriesAttachments
-  entriesUploads = maybe [] uploadsAttachments uploads
-  entriesAttachments = fromMaybe [] attachments
 
 uploadsParts :: [CreateUpload] -> [Part]
 uploadsParts = zipWith go [0 ..] where
