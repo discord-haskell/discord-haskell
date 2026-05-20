@@ -661,7 +661,7 @@ instance ToJSON InteractionResponseMessage where
         "components" .=? interactionResponseMessageComponents,
         "attachments" .=? uploadsAttachments uploads interactionResponseMessageAttachments
       ]
-    where uploads = uploadsAssemble interactionResponseMessageUploads
+    where uploads = uploadsAssemble interactionResponseMessageEmbeds interactionResponseMessageUploads
 
 -- | Types of flags to attach to the interaction message.
 --

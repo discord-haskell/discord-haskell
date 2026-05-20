@@ -733,8 +733,20 @@ data CreateUpload = CreateUpload
   , uploadContent :: ByteString
   } deriving (Show, Read, Eq, Ord)
 
-uploadsAssemble :: Maybe [CreateUpload] -> [CreateUpload]
-uploadsAssemble = fromMaybe []
+uploadsEmbed :: CreateEmbed -> [CreateUpload]
+uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
+  author = createEmbedAuthorIcon >>= go "author.png"
+  thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
+  image = createEmbedImage >>= go "image.png"
+  footer = createEmbedFooterIcon >>= go "footer.png"
+  go _ (CreateEmbedImageUrl _) = Nothing
+  go name (CreateEmbedImageUpload dat) = Just $ CreateUpload (prefix <> name) Nothing Nothing dat
+  prefix = T.filter (/= ' ') createEmbedTitle
+
+uploadsAssemble :: Maybe [CreateEmbed] -> Maybe [CreateUpload] -> [CreateUpload]
+uploadsAssemble embeds uploads = entriesEmbeds ++ entriesUploads where
+  entriesEmbeds = maybe [] (concatMap uploadsEmbed) embeds
+  entriesUploads = fromMaybe [] uploads
 
 uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
 uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where

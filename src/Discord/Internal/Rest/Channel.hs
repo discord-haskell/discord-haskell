@@ -33,7 +33,6 @@ import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
-import Control.Monad (join)
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
@@ -508,8 +507,8 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let uploads = uploadsAssemble $ messageDetailedUpload msgOpts
-        filePart = uploadsParts uploads ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) (messageDetailedUpload msgOpts)
+        filePart = uploadsParts uploads
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
@@ -554,8 +553,8 @@ channelJsonRequest c = case c of
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let uploads = uploadsAssemble $ messageDetailedUpload msgOpts
-        filePart = uploadsParts uploads ++ join (maybe [] (maybeEmbed . Just <$>) (messageDetailedEmbeds msgOpts))
+    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) (messageDetailedUpload msgOpts)
+        filePart = uploadsParts uploads
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
