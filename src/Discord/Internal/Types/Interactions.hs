@@ -35,6 +35,7 @@ where
 import Control.Applicative (Alternative ((<|>)))
 import Control.Monad (join)
 import Data.Default
+import Data.Map (Map)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Bits (Bits (shift, (.|.)))
@@ -542,7 +543,7 @@ data ResolvedData = ResolvedData
     resolvedDataRoles :: Maybe Value,
     resolvedDataChannels :: Maybe Value,
     resolvedDataMessages :: Maybe Value,
-    resolvedDataAttachments :: Maybe Value
+    resolvedDataAttachments :: Maybe (Map Snowflake Attachment)
   }
   deriving (Show, Read, Eq, Ord)
 
