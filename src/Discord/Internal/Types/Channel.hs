@@ -746,14 +746,17 @@ uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] whe
 uploadsAssemble :: Maybe [CreateEmbed] -> [CreateUpload] -> [CreateUpload]
 uploadsAssemble embeds = (++) $ maybe [] (concatMap uploadsEmbed) embeds
 
-uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
-uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where
-  entries = entriesUploads ++ entriesAttachments
-  entriesUploads = zipWith go [0 ..] uploads
-  entriesAttachments = fromMaybe [] attachments
+uploadsEntries :: [CreateUpload] -> [CreateAttachment]
+uploadsEntries = zipWith go [0 ..] where
   go index CreateUpload {..} = CreateAttachment identifier filename uploadTitle uploadDescription where
     identifier = DiscordId $ Snowflake index
     filename = Just uploadFilename
+
+uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
+uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where
+  entries = entriesUploads ++ entriesAttachments
+  entriesUploads = uploadsEntries uploads
+  entriesAttachments = fromMaybe [] attachments
 
 uploadsParts :: [CreateUpload] -> [Part]
 uploadsParts = zipWith go [0 ..] where
