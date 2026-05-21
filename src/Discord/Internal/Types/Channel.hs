@@ -753,10 +753,8 @@ uploadsEntries = zipWith go [0 ..] where
     filename = Just uploadFilename
 
 uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
-uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where
-  entries = entriesUploads ++ entriesAttachments
-  entriesUploads = uploadsEntries uploads
-  entriesAttachments = fromMaybe [] attachments
+uploadsAttachments [] attachments = attachments
+uploadsAttachments uploads attachments = Just $ uploadsEntries uploads ++ fromMaybe [] attachments
 
 uploadsParts :: [CreateUpload] -> [Part]
 uploadsParts = zipWith go [0 ..] where
