@@ -139,7 +139,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , -- | metadata of existing attachments
     messageDetailedAttachments              :: Maybe [CreateAttachment]
   , -- | new uploads to attach to the message
-    messageDetailedUpload                   :: Maybe [CreateUpload]
+    messageDetailedUpload                   :: [CreateUpload]
   , -- | allowed mentions for the message
     messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , -- | If `Just`, reply to the message referenced
@@ -155,7 +155,7 @@ instance Default MessageDetailedOpts where
                             , messageDetailedTTS             = False
                             , messageDetailedEmbeds          = Nothing
                             , messageDetailedAttachments     = Nothing
-                            , messageDetailedUpload          = Nothing
+                            , messageDetailedUpload          = []
                             , messageDetailedAllowedMentions = Nothing
                             , messageDetailedReference       = Nothing
                             , messageDetailedComponents      = Nothing

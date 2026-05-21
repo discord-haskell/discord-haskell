@@ -638,17 +638,17 @@ data InteractionResponseMessage = InteractionResponseMessage
     interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
     interactionResponseMessageComponents :: Maybe [ActionRow],
     interactionResponseMessageAttachments :: Maybe [CreateAttachment],
-    interactionResponseMessageUploads :: Maybe [CreateUpload]
+    interactionResponseMessageUploads :: [CreateUpload]
   }
   deriving (Show, Read, Eq, Ord)
 
 -- | A basic interaction response, sending back the given text. This is
 -- effectively a helper function.
 interactionResponseMessageBasic :: T.Text -> InteractionResponseMessage
-interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing Nothing
+interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing []
 
 instance Default InteractionResponseMessage where
-  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing []
 
 instance ToJSON InteractionResponseMessage where
   toJSON InteractionResponseMessage {..} =

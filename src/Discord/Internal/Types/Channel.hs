@@ -743,10 +743,8 @@ uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] whe
   go name (CreateEmbedImageUpload dat) = Just $ CreateUpload (prefix <> name) Nothing Nothing dat
   prefix = T.filter (/= ' ') createEmbedTitle
 
-uploadsAssemble :: Maybe [CreateEmbed] -> Maybe [CreateUpload] -> [CreateUpload]
-uploadsAssemble embeds uploads = entriesEmbeds ++ entriesUploads where
-  entriesEmbeds = maybe [] (concatMap uploadsEmbed) embeds
-  entriesUploads = fromMaybe [] uploads
+uploadsAssemble :: Maybe [CreateEmbed] -> [CreateUpload] -> [CreateUpload]
+uploadsAssemble embeds = (++) $ maybe [] (concatMap uploadsEmbed) embeds
 
 uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
 uploadsAttachments uploads attachments = if null entries then Nothing else Just entries where
