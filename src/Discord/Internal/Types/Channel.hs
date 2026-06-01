@@ -679,7 +679,10 @@ instance ToJSON MessageReaction where
       , "emoji" .== messageReactionEmoji
       ]
 
--- | Represents an attached to a message file.
+-- | Metadata of a message attachment in a response from the Discord API.
+-- This type is used when retrieving existing attachments.
+--
+-- Reference: https://docs.discord.com/developers/resources/message#attachment-object
 data Attachment = Attachment
   { attachmentId       :: AttachmentId     -- ^ Attachment id
   , attachmentFilename :: T.Text        -- ^ Name of attached file
@@ -711,6 +714,16 @@ instance ToJSON Attachment where
       , "width" .=? attachmentWidth
       ]
 
+-- | Metadata of a message attachment in a request to the Discord API.
+-- This type is used when creating or editing messages to specify attachments to be added or retained.
+--
+-- When using a `CreateUpload` value for new uploads, corresponding `CreateAttachment` values are added automatically.
+-- When referring to existing attachments, they should use the `attachmentId`
+-- of the corresponding `Attachment` value of the existing attachment.
+--
+-- Discord calls this a "partial attachment object".
+-- It is briefly mentioned at https://docs.discord.com/developers/resources/message#message-call-object.
+-- Some examples are shown at https://docs.discord.com/developers/reference#uploading-files.
 data CreateAttachment = CreateAttachment
   { createAttachmentId :: AttachmentId
   , createAttachmentFilename :: Maybe Text
@@ -726,6 +739,10 @@ instance ToJSON CreateAttachment where
     , "description" .=? createAttachmentDescription
     ]
 
+-- | Data and metadata for a file to be uploaded to Discord.
+-- This type is used when creating or editing messages to specify new files to be turned into attachments.
+--
+-- Reference: https://docs.discord.com/developers/reference#uploading-files
 data CreateUpload = CreateUpload
   { uploadFilename :: Text
   , uploadTitle :: Maybe Text
