@@ -41,7 +41,7 @@ import Data.Bits (Bits (shift, (.|.)))
 import Data.Foldable (Foldable (toList))
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands (Choice, Number)
-import Discord.Internal.Types.Channel (AllowedMentions, CreateAttachment, CreateUpload, uploadsAssemble, uploadsAttachments, Message)
+import Discord.Internal.Types.Channel (AllowedMentions, CreateAttachment, CreateUpload, uploadsEmbeds, uploadsAttachments, Message)
 import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId, objectFromMaybes, (.=?))
@@ -661,7 +661,7 @@ instance ToJSON InteractionResponseMessage where
         "components" .=? interactionResponseMessageComponents,
         "attachments" .=? uploadsAttachments uploads interactionResponseMessageAttachments
       ]
-    where uploads = uploadsAssemble interactionResponseMessageEmbeds ++ interactionResponseMessageUploads
+    where uploads = uploadsEmbeds interactionResponseMessageEmbeds ++ interactionResponseMessageUploads
 
 -- | Types of flags to attach to the interaction message.
 --
