@@ -47,6 +47,7 @@ import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId, objectFromMaybes, (.=?))
 import Discord.Internal.Types.User (GuildMember, User)
+import Discord.Internal.Types.Guild (Role)
 
 -- | An interaction received from discord.
 data Interaction
@@ -538,11 +539,11 @@ parseValue o False = Right <$> o .: "value"
 --
 -- https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-resolved-data-structure
 data ResolvedData = ResolvedData
-  { resolvedDataUsers :: Maybe Value,
-    resolvedDataMembers :: Maybe Value,
-    resolvedDataRoles :: Maybe Value,
-    resolvedDataChannels :: Maybe Value,
-    resolvedDataMessages :: Maybe Value,
+  { resolvedDataUsers :: Maybe (Map Snowflake User),
+    resolvedDataMembers :: Maybe (Map Snowflake Value),
+    resolvedDataRoles :: Maybe (Map Snowflake Role),
+    resolvedDataChannels :: Maybe (Map Snowflake Value),
+    resolvedDataMessages :: Maybe (Map Snowflake Message),
     resolvedDataAttachments :: Maybe (Map Snowflake Attachment)
   }
   deriving (Show, Read, Eq, Ord)
