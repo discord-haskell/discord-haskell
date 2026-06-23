@@ -297,6 +297,17 @@ data Role =
       , roleMention :: Bool                      -- ^ Whether this role is mentionable
     } deriving (Show, Read, Eq, Ord)
 
+instance ToJSON Role where
+  toJSON Role {..} = object
+    [ "id" .= roleId
+    , "name" .= roleName
+    , "color" .= roleColor
+    , "hoist" .= roleHoist
+    , "position" .= rolePos
+    , "permissions" .= rolePerms
+    , "managed" .= roleManaged
+    , "mentionable" .= roleMention
+    ]
 instance FromJSON Role where
   parseJSON = withObject "Role" $ \o ->
     Role <$> o .: "id"
