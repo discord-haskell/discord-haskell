@@ -750,6 +750,9 @@ data CreateUpload = CreateUpload
   , uploadContent :: ByteString
   } deriving (Show, Read, Eq, Ord)
 
+-- creates potentially ambiguous attachment urls
+-- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
+-- see https://github.com/discord-haskell/discord-haskell/issues/249
 uploadsEmbed :: CreateEmbed -> [CreateUpload]
 uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
   author = createEmbedAuthorIcon >>= go "author.png"
