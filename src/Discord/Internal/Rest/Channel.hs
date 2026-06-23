@@ -507,7 +507,7 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) (messageDetailedUpload msgOpts)
+    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
         filePart = uploadsParts uploads
 
         payloadData =  objectFromMaybes $
@@ -553,7 +553,7 @@ channelJsonRequest c = case c of
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) (messageDetailedUpload msgOpts)
+    let uploads = uploadsAssemble (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
         filePart = uploadsParts uploads
 
         payloadData =  objectFromMaybes $
