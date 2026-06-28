@@ -53,8 +53,8 @@ testHandle app interaction token = go where
     photo <- liftIO $ B.readFile "examples/embed-photo.jpg"
     -- create a new response message with two uploads that get turned into attachments
     let uploads = [
-          CreateUpload "test.txt" Nothing Nothing "this is a test file",
-          CreateUpload "test.jpg" Nothing Nothing photo]
+          Upload "test.txt" Nothing Nothing "this is a test file",
+          Upload "test.jpg" Nothing Nothing photo]
     let response = def {
       interactionResponseMessageContent = Just "test",
       interactionResponseMessageUploads = uploads }
@@ -65,7 +65,7 @@ testHandle app interaction token = go where
     -- drop the text attachment and retain the image attachment
     let attachments = [RequestAttachment imageId Nothing Nothing Nothing]
     -- upload a new file that gets added to the retained attachments
-    let uploads = [CreateUpload "test-new.txt" Nothing Nothing "this is another test file"]
+    let uploads = [Upload "test-new.txt" Nothing Nothing "this is another test file"]
     let response = def {
       interactionResponseMessageContent = Just "edited",
       interactionResponseMessageAttachments = Just attachments,

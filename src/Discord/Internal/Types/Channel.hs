@@ -17,7 +17,7 @@ module Discord.Internal.Types.Channel (
   , MessageReaction (..)
   , Attachment (..)
   , RequestAttachment (..)
-  , CreateUpload (..)
+  , Upload (..)
   , uploadsEmbeds
   , uploadsAttachments
   , uploadsParts
@@ -717,7 +717,7 @@ instance ToJSON Attachment where
 -- | Metadata of a message attachment in a request to the Discord API.
 -- This type is used when creating or editing messages to specify attachments to be added or retained.
 --
--- When using a `CreateUpload` value for new uploads, corresponding `RequestAttachment` values are added automatically.
+-- When using an `Upload` value for new uploads, corresponding `RequestAttachment` values are added automatically.
 -- When referring to existing attachments, they should use the `attachmentId`
 -- of the corresponding `Attachment` value of the existing attachment.
 --
@@ -743,7 +743,7 @@ instance ToJSON RequestAttachment where
 -- This type is used when creating or editing messages to specify new files to be turned into attachments.
 --
 -- Reference: https://docs.discord.com/developers/reference#uploading-files
-data CreateUpload = CreateUpload
+data Upload = Upload
   { uploadFilename :: Text
   , uploadTitle :: Maybe Text
   , uploadDescription :: Maybe Text
@@ -753,32 +753,32 @@ data CreateUpload = CreateUpload
 -- creates potentially ambiguous attachment urls
 -- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
 -- see https://github.com/discord-haskell/discord-haskell/issues/249
-uploadsEmbed :: CreateEmbed -> [CreateUpload]
+uploadsEmbed :: CreateEmbed -> [Upload]
 uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
   author = createEmbedAuthorIcon >>= go "author.png"
   thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
   image = createEmbedImage >>= go "image.png"
   footer = createEmbedFooterIcon >>= go "footer.png"
   go _ (CreateEmbedImageUrl _) = Nothing
-  go name (CreateEmbedImageUpload dat) = Just $ CreateUpload (prefix <> name) Nothing Nothing dat
+  go name (CreateEmbedImageUpload dat) = Just $ Upload (prefix <> name) Nothing Nothing dat
   prefix = T.filter (/= ' ') createEmbedTitle
 
-uploadsEmbeds :: Maybe [CreateEmbed] -> [CreateUpload]
+uploadsEmbeds :: Maybe [CreateEmbed] -> [Upload]
 uploadsEmbeds = maybe [] $ concatMap uploadsEmbed
 
-uploadsEntries :: [CreateUpload] -> [RequestAttachment]
+uploadsEntries :: [Upload] -> [RequestAttachment]
 uploadsEntries = zipWith go [0 ..] where
-  go index CreateUpload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
+  go index Upload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
     identifier = DiscordId $ Snowflake index
     filename = Just uploadFilename
 
-uploadsAttachments :: [CreateUpload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
+uploadsAttachments :: [Upload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
 uploadsAttachments [] attachments = attachments
 uploadsAttachments uploads attachments = Just $ uploadsEntries uploads ++ fromMaybe [] attachments
 
-uploadsParts :: [CreateUpload] -> [Part]
+uploadsParts :: [Upload] -> [Part]
 uploadsParts = zipWith go [0 ..] where
-  go index CreateUpload {..} = partFileRequestBody name path body where
+  go index Upload {..} = partFileRequestBody name path body where
     name = T.pack $ printf "files[%d]" (index :: Int)
     path = T.unpack uploadFilename
     body = RequestBodyBS uploadContent

@@ -139,7 +139,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , -- | Metadata of existing attachments. Metadata of new uploads will be added automatically.
     messageDetailedAttachments              :: Maybe [RequestAttachment]
   , -- | new uploads to attach to the message
-    messageDetailedUpload                   :: [CreateUpload]
+    messageDetailedUpload                   :: [Upload]
   , -- | allowed mentions for the message
     messageDetailedAllowedMentions          :: Maybe AllowedMentions
   , -- | If `Just`, reply to the message referenced
