@@ -137,7 +137,7 @@ data MessageDetailedOpts = MessageDetailedOpts
   , -- | embedded rich content (up to 6000 characters)
     messageDetailedEmbeds                   :: Maybe [CreateEmbed]
   , -- | Metadata of existing attachments. Metadata of new uploads will be added automatically.
-    messageDetailedAttachments              :: Maybe [CreateAttachment]
+    messageDetailedAttachments              :: Maybe [RequestAttachment]
   , -- | new uploads to attach to the message
     messageDetailedUpload                   :: [CreateUpload]
   , -- | allowed mentions for the message

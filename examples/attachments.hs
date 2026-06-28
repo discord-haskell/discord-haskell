@@ -63,7 +63,7 @@ testHandle app interaction token = go where
   edit message = do
     let [_textId, imageId] = attachmentId <$> messageAttachments message
     -- drop the text attachment and retain the image attachment
-    let attachments = [CreateAttachment imageId Nothing Nothing Nothing]
+    let attachments = [RequestAttachment imageId Nothing Nothing Nothing]
     -- upload a new file that gets added to the retained attachments
     let uploads = [CreateUpload "test-new.txt" Nothing Nothing "this is another test file"]
     let response = def {

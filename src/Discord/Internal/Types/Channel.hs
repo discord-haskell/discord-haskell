@@ -16,7 +16,7 @@ module Discord.Internal.Types.Channel (
   , AllowedMentions (..)
   , MessageReaction (..)
   , Attachment (..)
-  , CreateAttachment (..)
+  , RequestAttachment (..)
   , CreateUpload (..)
   , uploadsEmbeds
   , uploadsAttachments
@@ -717,26 +717,26 @@ instance ToJSON Attachment where
 -- | Metadata of a message attachment in a request to the Discord API.
 -- This type is used when creating or editing messages to specify attachments to be added or retained.
 --
--- When using a `CreateUpload` value for new uploads, corresponding `CreateAttachment` values are added automatically.
+-- When using a `CreateUpload` value for new uploads, corresponding `RequestAttachment` values are added automatically.
 -- When referring to existing attachments, they should use the `attachmentId`
 -- of the corresponding `Attachment` value of the existing attachment.
 --
 -- Discord calls this a "partial attachment object".
 -- It is briefly mentioned at https://docs.discord.com/developers/resources/message#message-call-object.
 -- Some examples are shown at https://docs.discord.com/developers/reference#uploading-files.
-data CreateAttachment = CreateAttachment
-  { createAttachmentId :: AttachmentId
-  , createAttachmentFilename :: Maybe Text
-  , createAttachmentTitle :: Maybe Text
-  , createAttachmentDescription :: Maybe Text
+data RequestAttachment = RequestAttachment
+  { requestAttachmentId :: AttachmentId
+  , requestAttachmentFilename :: Maybe Text
+  , requestAttachmentTitle :: Maybe Text
+  , requestAttachmentDescription :: Maybe Text
   } deriving (Show, Read, Eq, Ord)
 
-instance ToJSON CreateAttachment where
-  toJSON CreateAttachment {..} = objectFromMaybes
-    [ "id" .== createAttachmentId
-    , "filename" .=? createAttachmentFilename
-    , "title" .=? createAttachmentTitle
-    , "description" .=? createAttachmentDescription
+instance ToJSON RequestAttachment where
+  toJSON RequestAttachment {..} = objectFromMaybes
+    [ "id" .== requestAttachmentId
+    , "filename" .=? requestAttachmentFilename
+    , "title" .=? requestAttachmentTitle
+    , "description" .=? requestAttachmentDescription
     ]
 
 -- | Data and metadata for a file to be uploaded to Discord.
@@ -766,13 +766,13 @@ uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] whe
 uploadsEmbeds :: Maybe [CreateEmbed] -> [CreateUpload]
 uploadsEmbeds = maybe [] $ concatMap uploadsEmbed
 
-uploadsEntries :: [CreateUpload] -> [CreateAttachment]
+uploadsEntries :: [CreateUpload] -> [RequestAttachment]
 uploadsEntries = zipWith go [0 ..] where
-  go index CreateUpload {..} = CreateAttachment identifier filename uploadTitle uploadDescription where
+  go index CreateUpload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
     identifier = DiscordId $ Snowflake index
     filename = Just uploadFilename
 
-uploadsAttachments :: [CreateUpload] -> Maybe [CreateAttachment] -> Maybe [CreateAttachment]
+uploadsAttachments :: [CreateUpload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
 uploadsAttachments [] attachments = attachments
 uploadsAttachments uploads attachments = Just $ uploadsEntries uploads ++ fromMaybe [] attachments
 

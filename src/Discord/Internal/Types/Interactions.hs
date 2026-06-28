@@ -41,7 +41,7 @@ import Data.Bits (Bits (shift, (.|.)))
 import Data.Foldable (Foldable (toList))
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands (Choice, Number)
-import Discord.Internal.Types.Channel (AllowedMentions, CreateAttachment, CreateUpload, uploadsEmbeds, uploadsAttachments, Message)
+import Discord.Internal.Types.Channel (AllowedMentions, RequestAttachment, CreateUpload, uploadsEmbeds, uploadsAttachments, Message)
 import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId, objectFromMaybes, (.=?))
@@ -637,7 +637,7 @@ data InteractionResponseMessage = InteractionResponseMessage
     interactionResponseMessageAllowedMentions :: Maybe AllowedMentions,
     interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
     interactionResponseMessageComponents :: Maybe [ActionRow],
-    interactionResponseMessageAttachments :: Maybe [CreateAttachment],
+    interactionResponseMessageAttachments :: Maybe [RequestAttachment],
     interactionResponseMessageUploads :: [CreateUpload]
   }
   deriving (Show, Read, Eq, Ord)
