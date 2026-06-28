@@ -37,7 +37,7 @@ data InteractionResponseRequest a where
   -- | Returns a followup message for an Interaction.
   GetFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest Message
   -- | Edits a followup message for an Interaction.
-  EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponse -> InteractionResponseRequest Message
+  EditFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseMessage -> InteractionResponseRequest Message
   -- | Deletes a followup message for an Interaction.
   DeleteFollowupInteractionMessage :: ApplicationId -> InteractionToken -> MessageId -> InteractionResponseRequest ()
 
@@ -74,7 +74,7 @@ interactionResponseJsonRequest a = case a of
   (GetFollowupInteractionMessage aid it mid) ->
     Get (interaction aid it /~ mid) mempty
   (EditFollowupInteractionMessage aid it mid i) ->
-    Patch (interaction aid it /~ mid) (convert i) mempty
+    Patch (interaction aid it /~ mid) (convertIRM i) mempty
   (DeleteFollowupInteractionMessage aid it mid) ->
     Delete (interaction aid it /~ mid) mempty
   where
