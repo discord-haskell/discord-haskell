@@ -12,9 +12,6 @@ import qualified Data.Text as T
 import qualified Data.ByteString as B
 import Data.Functor ((<&>))
 
-import Network.HTTP.Client.MultipartFormData (PartM, partFileRequestBody)
-import Network.HTTP.Client (RequestBody(RequestBodyBS))
-
 import Discord.Internal.Types.Color (DiscordColor)
 
 createEmbed :: CreateEmbed -> Embed
@@ -271,14 +268,3 @@ instance FromJSON EmbedField where
     EmbedField <$> o .:  "name"
                <*> o .:  "value"
                <*> o .:? "inline"
-
-
-maybeEmbed :: Maybe CreateEmbed -> [PartM IO]
-maybeEmbed =
-      let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
-          uploads CreateEmbed{..} = [(T.filter (/=' ') $ createEmbedTitle<>n,c) | (n, Just (CreateEmbedImageUpload c)) <-
-                                          [ ("author.png", createEmbedAuthorIcon)
-                                          , ("thumbnail.png", createEmbedThumbnail)
-                                          , ("image.png", createEmbedImage)
-                                          , ("footer.png", createEmbedFooterIcon) ]]
-      in maybe [] (map mkPart . uploads)

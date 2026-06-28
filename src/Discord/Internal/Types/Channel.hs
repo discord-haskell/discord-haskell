@@ -16,6 +16,11 @@ module Discord.Internal.Types.Channel (
   , AllowedMentions (..)
   , MessageReaction (..)
   , Attachment (..)
+  , RequestAttachment (..)
+  , Upload (..)
+  , uploadsEmbeds
+  , uploadsAttachments
+  , uploadsParts
   , Nonce (..)
   , MessageReference (..)
   , MessageType (..)
@@ -29,14 +34,19 @@ module Discord.Internal.Types.Channel (
   ) where
 
 import Control.Applicative (empty)
+import Data.Maybe
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Default (Default, def)
+import Data.ByteString (ByteString)
 import Data.Text (Text)
 import Data.Time.Clock
 import qualified Data.Text as T
 import Data.Bits
 import Data.Data (Data)
+import Text.Printf
+import Network.HTTP.Client
+import Network.HTTP.Client.MultipartFormData
 
 import Discord.Internal.Types.Prelude
 import Discord.Internal.Types.User (User(..), GuildMember)
@@ -669,7 +679,10 @@ instance ToJSON MessageReaction where
       , "emoji" .== messageReactionEmoji
       ]
 
--- | Represents an attached to a message file.
+-- | Metadata of a message attachment in a response from the Discord API.
+-- This type is used when retrieving existing attachments.
+--
+-- Reference: https://docs.discord.com/developers/resources/message#attachment-object
 data Attachment = Attachment
   { attachmentId       :: AttachmentId     -- ^ Attachment id
   , attachmentFilename :: T.Text        -- ^ Name of attached file
@@ -700,6 +713,75 @@ instance ToJSON Attachment where
       , "height" .=? attachmentHeight
       , "width" .=? attachmentWidth
       ]
+
+-- | Metadata of a message attachment in a request to the Discord API.
+-- This type is used when creating or editing messages to specify attachments to be added or retained.
+--
+-- When using an `Upload` value for new uploads, corresponding `RequestAttachment` values are added automatically.
+-- When referring to existing attachments, they should use the `attachmentId`
+-- of the corresponding `Attachment` value of the existing attachment.
+--
+-- Discord calls this a "partial attachment object".
+-- It is briefly mentioned at https://docs.discord.com/developers/resources/message#message-call-object.
+-- Some examples are shown at https://docs.discord.com/developers/reference#uploading-files.
+data RequestAttachment = RequestAttachment
+  { requestAttachmentId :: AttachmentId
+  , requestAttachmentFilename :: Maybe Text
+  , requestAttachmentTitle :: Maybe Text
+  , requestAttachmentDescription :: Maybe Text
+  } deriving (Show, Read, Eq, Ord)
+
+instance ToJSON RequestAttachment where
+  toJSON RequestAttachment {..} = objectFromMaybes
+    [ "id" .== requestAttachmentId
+    , "filename" .=? requestAttachmentFilename
+    , "title" .=? requestAttachmentTitle
+    , "description" .=? requestAttachmentDescription
+    ]
+
+-- | Data and metadata for a file to be uploaded to Discord.
+-- This type is used when creating or editing messages to specify new files to be turned into attachments.
+--
+-- Reference: https://docs.discord.com/developers/reference#uploading-files
+data Upload = Upload
+  { uploadFilename :: Text
+  , uploadTitle :: Maybe Text
+  , uploadDescription :: Maybe Text
+  , uploadContent :: ByteString
+  } deriving (Show, Read, Eq, Ord)
+
+-- creates potentially ambiguous attachment urls
+-- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
+-- see https://github.com/discord-haskell/discord-haskell/issues/249
+uploadsEmbed :: CreateEmbed -> [Upload]
+uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
+  author = createEmbedAuthorIcon >>= go "author.png"
+  thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
+  image = createEmbedImage >>= go "image.png"
+  footer = createEmbedFooterIcon >>= go "footer.png"
+  go _ (CreateEmbedImageUrl _) = Nothing
+  go name (CreateEmbedImageUpload dat) = Just $ Upload (prefix <> name) Nothing Nothing dat
+  prefix = T.filter (/= ' ') createEmbedTitle
+
+uploadsEmbeds :: Maybe [CreateEmbed] -> [Upload]
+uploadsEmbeds = maybe [] $ concatMap uploadsEmbed
+
+uploadsEntries :: [Upload] -> [RequestAttachment]
+uploadsEntries = zipWith go [0 ..] where
+  go index Upload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
+    identifier = DiscordId $ Snowflake index
+    filename = Just uploadFilename
+
+uploadsAttachments :: [Upload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
+uploadsAttachments [] attachments = attachments
+uploadsAttachments uploads attachments = Just $ uploadsEntries uploads ++ fromMaybe [] attachments
+
+uploadsParts :: [Upload] -> [Part]
+uploadsParts = zipWith go [0 ..] where
+  go index Upload {..} = partFileRequestBody name path body where
+    name = T.pack $ printf "files[%d]" (index :: Int)
+    path = T.unpack uploadFilename
+    body = RequestBodyBS uploadContent
 
 newtype Nonce = Nonce T.Text
   deriving (Show, Read, Eq, Ord)

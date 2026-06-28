@@ -115,6 +115,18 @@ executable state-counter
                      , unliftio
                      , discord-haskell
 
+executable attachments
+  main-is:             attachments.hs
+  default-language:    Haskell2010
+  ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards -threaded
+  hs-source-dirs:      examples
+  other-modules:
+    ExampleUtils
+  build-depends:       base
+                     , bytestring
+                     , text
+                     , discord-haskell
+
 library
   ghc-options:         -Wall -fno-warn-type-defaults -fno-warn-unused-record-wildcards
   hs-source-dirs:      src

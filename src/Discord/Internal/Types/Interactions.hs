@@ -41,7 +41,7 @@ import Data.Bits (Bits (shift, (.|.)))
 import Data.Foldable (Foldable (toList))
 import qualified Data.Text as T
 import Discord.Internal.Types.ApplicationCommands (Choice, Number)
-import Discord.Internal.Types.Channel (AllowedMentions, Attachment, Message)
+import Discord.Internal.Types.Channel (AllowedMentions, RequestAttachment, Upload, uploadsEmbeds, uploadsAttachments, Message)
 import Discord.Internal.Types.Components (ActionRow, TextInput)
 import Discord.Internal.Types.Embed (CreateEmbed, createEmbed)
 import Discord.Internal.Types.Prelude (ApplicationCommandId, ApplicationId, ChannelId, GuildId, InteractionId, InteractionToken, MessageId, RoleId, Snowflake, UserId, objectFromMaybes, (.=?))
@@ -637,17 +637,18 @@ data InteractionResponseMessage = InteractionResponseMessage
     interactionResponseMessageAllowedMentions :: Maybe AllowedMentions,
     interactionResponseMessageFlags :: Maybe InteractionResponseMessageFlags,
     interactionResponseMessageComponents :: Maybe [ActionRow],
-    interactionResponseMessageAttachments :: Maybe [Attachment]
+    interactionResponseMessageAttachments :: Maybe [RequestAttachment],
+    interactionResponseMessageUploads :: [Upload]
   }
   deriving (Show, Read, Eq, Ord)
 
 -- | A basic interaction response, sending back the given text. This is
 -- effectively a helper function.
 interactionResponseMessageBasic :: T.Text -> InteractionResponseMessage
-interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing
+interactionResponseMessageBasic t = InteractionResponseMessage Nothing (Just t) Nothing Nothing Nothing Nothing Nothing []
 
 instance Default InteractionResponseMessage where
-  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing
+  def = InteractionResponseMessage Nothing Nothing Nothing Nothing Nothing Nothing Nothing []
 
 instance ToJSON InteractionResponseMessage where
   toJSON InteractionResponseMessage {..} =
@@ -658,8 +659,9 @@ instance ToJSON InteractionResponseMessage where
         "allowed_mentions" .=? interactionResponseMessageAllowedMentions,
         "flags" .=? interactionResponseMessageFlags,
         "components" .=? interactionResponseMessageComponents,
-        "attachments" .=? interactionResponseMessageAttachments
+        "attachments" .=? uploadsAttachments uploads interactionResponseMessageAttachments
       ]
+    where uploads = uploadsEmbeds interactionResponseMessageEmbeds ++ interactionResponseMessageUploads
 
 -- | Types of flags to attach to the interaction message.
 --
