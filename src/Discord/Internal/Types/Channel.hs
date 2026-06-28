@@ -752,13 +752,13 @@ data Upload = Upload
 
 -- | Internal function that extracts the required upload components of the given embeds.
 embedsToUploads :: Maybe [CreateEmbed] -> [Upload]
-embedsToUploads = maybe [] $ concatMap embedsToUploads'
+embedsToUploads = maybe [] $ concatMap embedToUploads
   where
   -- creates potentially ambiguous attachment urls
   -- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
   -- see https://github.com/discord-haskell/discord-haskell/issues/249
-  embedsToUploads' :: CreateEmbed -> [Upload]
-  embedsToUploads' CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
+  embedToUploads :: CreateEmbed -> [Upload]
+  embedToUploads CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
     author = createEmbedAuthorIcon >>= go "author.png"
     thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
     image = createEmbedImage >>= go "image.png"
