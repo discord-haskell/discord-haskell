@@ -2,10 +2,7 @@ extra-package-dbs: []
 packages:
 - '.'
 
-resolver: lts-20.26
-
-extra-deps:
-  - emojis-0.1.3
+resolver: lts-24.46
 
 nix:
   packages: [ zlib, gmp ]
