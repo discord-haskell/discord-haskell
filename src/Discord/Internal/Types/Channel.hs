@@ -767,8 +767,9 @@ embedsToUploads = maybe [] $ concatMap embedToUploads
     go name (CreateEmbedImageUpload dat) = Just $ Upload (prefix <> name) Nothing Nothing dat
     prefix = T.filter (/= ' ') createEmbedTitle
 
--- | Internal function to combine uploads and some optional other attachments
--- to create a new attacments set.
+-- | Internal function to combine metadata of new uploads with references to existing attachments.
+-- Discord will only retain attachments if either no metadata is sent or if they are explicitly mentioned.
+-- This function makes sure metadata is only created if necessary so existing uploads are not removed.
 --
 -- Usually used in combination with @uploadsToParts@.
 uploadsToAttachments :: [Upload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
