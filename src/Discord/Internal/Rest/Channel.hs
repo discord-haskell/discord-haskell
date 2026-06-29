@@ -507,14 +507,14 @@ channelJsonRequest c = case c of
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
-    let uploads = uploadsEmbeds (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
-        filePart = uploadsParts uploads
+    let uploads = embedsToUploads (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
+        filePart = uploadsToParts uploads
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "attachments" .=? uploadsAttachments uploads (messageDetailedAttachments msgOpts)
+                        , "attachments" .=? uploadsToAttachments uploads (messageDetailedAttachments msgOpts)
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts
@@ -553,14 +553,14 @@ channelJsonRequest c = case c of
 
   -- copied from CreateMessageDetailed, should be outsourced to function probably
   (EditMessage (chan, msg) msgOpts) ->
-    let uploads = uploadsEmbeds (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
-        filePart = uploadsParts uploads
+    let uploads = embedsToUploads (messageDetailedEmbeds msgOpts) ++ messageDetailedUpload msgOpts
+        filePart = uploadsToParts uploads
 
         payloadData =  objectFromMaybes $
                         [ "content" .== messageDetailedContent msgOpts
                         , "tts"     .== messageDetailedTTS msgOpts ] ++
                         [ "embeds" .=? ((createEmbed <$>) <$> messageDetailedEmbeds msgOpts)
-                        , "attachments" .=? uploadsAttachments uploads (messageDetailedAttachments msgOpts)
+                        , "attachments" .=? uploadsToAttachments uploads (messageDetailedAttachments msgOpts)
                         , "allowed_mentions" .=? messageDetailedAllowedMentions msgOpts
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts

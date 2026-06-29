@@ -18,9 +18,9 @@ module Discord.Internal.Types.Channel (
   , Attachment (..)
   , RequestAttachment (..)
   , Upload (..)
-  , uploadsEmbeds
-  , uploadsAttachments
-  , uploadsParts
+  , embedsToUploads
+  , uploadsToAttachments
+  , uploadsToParts
   , Nonce (..)
   , MessageReference (..)
   , MessageType (..)
@@ -750,34 +750,44 @@ data Upload = Upload
   , uploadContent :: ByteString
   } deriving (Show, Read, Eq, Ord)
 
--- creates potentially ambiguous attachment urls
--- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
--- see https://github.com/discord-haskell/discord-haskell/issues/249
-uploadsEmbed :: CreateEmbed -> [Upload]
-uploadsEmbed CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
-  author = createEmbedAuthorIcon >>= go "author.png"
-  thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
-  image = createEmbedImage >>= go "image.png"
-  footer = createEmbedFooterIcon >>= go "footer.png"
-  go _ (CreateEmbedImageUrl _) = Nothing
-  go name (CreateEmbedImageUpload dat) = Just $ Upload (prefix <> name) Nothing Nothing dat
-  prefix = T.filter (/= ' ') createEmbedTitle
+-- | Internal function that extracts the required upload components of the given embeds.
+embedsToUploads :: Maybe [CreateEmbed] -> [Upload]
+embedsToUploads = maybe [] $ concatMap embedToUploads
+  where
+  -- creates potentially ambiguous attachment urls
+  -- in accordance with what Discord.Internal.Types.Embed.createEmbed expects
+  -- see https://github.com/discord-haskell/discord-haskell/issues/249
+  embedToUploads :: CreateEmbed -> [Upload]
+  embedToUploads CreateEmbed {..} = catMaybes [author, thumbnail, image, footer] where
+    author = createEmbedAuthorIcon >>= go "author.png"
+    thumbnail = createEmbedThumbnail >>= go "thumbnail.png"
+    image = createEmbedImage >>= go "image.png"
+    footer = createEmbedFooterIcon >>= go "footer.png"
+    go _ (CreateEmbedImageUrl _) = Nothing
+    go name (CreateEmbedImageUpload dat) = Just $ Upload (prefix <> name) Nothing Nothing dat
+    prefix = T.filter (/= ' ') createEmbedTitle
 
-uploadsEmbeds :: Maybe [CreateEmbed] -> [Upload]
-uploadsEmbeds = maybe [] $ concatMap uploadsEmbed
+-- | Internal function to combine metadata of new uploads with references to existing attachments.
+-- Discord will only retain attachments if either no metadata is sent or if they are explicitly mentioned.
+-- This function makes sure metadata is only created if necessary so existing uploads are not removed.
+--
+-- Usually used in combination with @uploadsToParts@.
+uploadsToAttachments :: [Upload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
+uploadsToAttachments [] attachments = attachments
+uploadsToAttachments uploads attachments = Just $ uploadsToAttachments' uploads ++ fromMaybe [] attachments
+  where
+  uploadsToAttachments' :: [Upload] -> [RequestAttachment]
+  uploadsToAttachments' = zipWith go [0 ..] where
+    go index Upload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
+      identifier = DiscordId $ Snowflake index
+      filename = Just uploadFilename
 
-uploadsEntries :: [Upload] -> [RequestAttachment]
-uploadsEntries = zipWith go [0 ..] where
-  go index Upload {..} = RequestAttachment identifier filename uploadTitle uploadDescription where
-    identifier = DiscordId $ Snowflake index
-    filename = Just uploadFilename
-
-uploadsAttachments :: [Upload] -> Maybe [RequestAttachment] -> Maybe [RequestAttachment]
-uploadsAttachments [] attachments = attachments
-uploadsAttachments uploads attachments = Just $ uploadsEntries uploads ++ fromMaybe [] attachments
-
-uploadsParts :: [Upload] -> [Part]
-uploadsParts = zipWith go [0 ..] where
+-- | Meant to be used internally to turn a collection of @Upload@s into the file
+-- parts for upload.
+--
+-- Usually used in combination with @uploadsToAttachments@.
+uploadsToParts :: [Upload] -> [Part]
+uploadsToParts = zipWith go [0 ..] where
   go index Upload {..} = partFileRequestBody name path body where
     name = T.pack $ printf "files[%d]" (index :: Int)
     path = T.unpack uploadFilename
