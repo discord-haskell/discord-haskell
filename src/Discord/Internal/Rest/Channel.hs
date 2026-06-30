@@ -148,6 +148,8 @@ data MessageDetailedOpts = MessageDetailedOpts
     messageDetailedComponents               :: Maybe [ActionRow]
   , -- | IDs of up to 3 `Sticker` in the server to send with the message
     messageDetailedStickerIds               :: Maybe [StickerId]
+  , -- | Attached when the message is a poll
+    messageDetailedPoll                     :: Maybe PollCreateRequest
   } deriving (Show, Read, Eq, Ord)
 
 instance Default MessageDetailedOpts where
@@ -160,6 +162,7 @@ instance Default MessageDetailedOpts where
                             , messageDetailedReference       = Nothing
                             , messageDetailedComponents      = Nothing
                             , messageDetailedStickerIds      = Nothing
+                            , messageDetailedPoll            = Nothing
                             }
 
 -- | Data constructor for `GetReactions` requests
@@ -519,6 +522,7 @@ channelJsonRequest c = case c of
                         , "message_reference" .=? messageDetailedReference msgOpts
                         , "components" .=? messageDetailedComponents msgOpts
                         , "sticker_ids" .=? messageDetailedStickerIds msgOpts
+                        , "poll" .=? messageDetailedPoll msgOpts
                         ]
         payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
 
