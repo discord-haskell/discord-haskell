@@ -70,7 +70,7 @@ instance ToJSON User where
               , "flags" .=? userFlags
               , "premium_type" .=? userPremiumType
               , "public_flags" .=? userPublicFlags
-              , "member" .=? userPublicFlags
+              , "member" .=? userMember
               ]
 
 -- TODO: fully update webhook structure
