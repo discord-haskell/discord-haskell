@@ -19,6 +19,8 @@ module Discord.Internal.Rest.Channel
   , StartThreadForumMediaOpts(..)
   , StartThreadForumMediaMessage(..)
   , ListThreads(..)
+
+  , maxChannelMessagesRequestNumber
   ) where
 
 
@@ -46,7 +48,7 @@ data ChannelRequest a where
   ModifyChannel             :: ChannelId -> ModifyChannelOpts -> ChannelRequest Channel
   -- | Deletes a channel if its id doesn't equal to the id of guild.
   DeleteChannel             :: ChannelId -> ChannelRequest Channel
-  -- | Gets a messages from a channel with limit of 100 per request.
+  -- | Gets messages from a channel with a limit of `maxChannelMessagesRequestNumber` per request.
   GetChannelMessages        :: ChannelId -> (Int, MessageTiming) -> ChannelRequest [Message]
   -- | Gets a message in a channel by its id.
   GetChannelMessage         :: (ChannelId, MessageId) -> ChannelRequest Message
@@ -126,6 +128,12 @@ data ChannelRequest a where
   -- threads, thread members, and whether there are more to collect.
   -- Requires both the READ_MESSAGE_HISTORY and MANAGE_THREADS permissions.
   ListJoinedPrivateArchivedThreads :: ChannelId -> (Maybe UTCTime, Maybe Integer) -> ChannelRequest ListThreads
+
+-- | The maximum number of messages you can get in a request for all of the
+-- messages in a channel. See the @limit@ query parameter at
+-- <https://docs.discord.com/developers/resources/message#get-channel-messages>.
+maxChannelMessagesRequestNumber :: Int
+maxChannelMessagesRequestNumber = 100
 
 
 -- | Options for `CreateMessageDetailed` requests.
