@@ -1,7 +1,7 @@
 
 ### Embeds
 
-Embeds are special messages with boarders and images. [Example embed created by discord-haskell](./examples/embed-photo.jpg)
+Embeds are special messages with boarders and images. [Example embed created by discord-haskell](../examples/embed-photo.jpg)
 
 The `Embed` record (and sub-records) store embed data received from Discord.
 
