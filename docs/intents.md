@@ -6,7 +6,7 @@
 
 Discord servers are enforcing a rule that bots cannot access Message Content without declaring a Privileged Intent. https://support-dev.discord.com/hc/en-us/articles/4404772028055
 
-Bots in fewer than 75 (ie most bots) will need to check a box in the developer docs. Bots in >75 serves will need to be verified to have access to these intents. 
+Apps with fewer than 10,000 guild-installed users can enable privileged intents in the Developer Portal; apps reaching this threshold require review for continued access. See [Discord's current requirements](https://support-dev.discord.com/hc/en-us/articles/6205754771351-How-do-I-get-Privileged-Intents-for-my-bot).
 
 1. Go https://discord.com/developers/applications
 

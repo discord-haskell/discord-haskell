@@ -5,7 +5,7 @@ https://discord.com/developers/docs/interactions/application-commands
 There are three steps to application commands.
 
 1. Register the command with discord. This only needs to be done once, but there is no harm in doing it again/on each reboot, as the creation of commands just overwrites other commands of the same type and name.
-   1. This is achieved by sending a `CreateGuildApplicationCommand` event to discord. The easiest way to do this is by capturing and working off of the `Ready` event in the event loop, which is only sent in the initial startup.
+   1. This is achieved by sending a `CreateGuildApplicationCommand` request to Discord. The easiest way to do this is by capturing and working off of the `Ready` event in the event loop, which is only sent in the initial startup.
    2. Commands can either be global (in which case there is a delay to their addition) or they can be guild (server) specific.
    3. There are other application command requests that can be conducted in this step, so please have a look at the documentation.
    4. Finally, the application id (which is needed to create commands) of the bot is stored in the cache if you need to create, edit, delete, or get application commands later in the program.
