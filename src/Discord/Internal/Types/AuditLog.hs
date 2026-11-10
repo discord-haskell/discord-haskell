@@ -59,7 +59,7 @@ data AuditLogEntry = AuditLogEntry
   , auditLogEntryTargetId   :: Maybe Snowflake
   , auditLogEntryChanges    :: Maybe [AuditLogChange]
   , auditLogEntryOptions    :: Maybe AuditLogEntryOptions
-  , auditLogEntryReasons    :: Maybe String
+  , auditLogEntryReason    :: Maybe String
   } deriving ( Eq, Show, Read )
 
 instance FromJSON AuditLogEntry where
@@ -70,7 +70,7 @@ instance FromJSON AuditLogEntry where
                   <*> o .:? "target_id"
                   <*> o .:? "changes"
                   <*> o .:? "options"
-                  <*> o .:? "reasons"
+                  <*> o .:? "reason"
 
 newtype AuditLogEvent = MkAuditLogEvent Int
   deriving ( Eq, Show, Read )
