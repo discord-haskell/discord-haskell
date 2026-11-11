@@ -10,6 +10,7 @@ The Discord API constantly changes. This library issues updates when we implemen
 - [stanekondrej](https://github.com/discord-haskell/discord-haskell/pull/257) Add `maxChannelMessagesRequestNumber` (= 100)
 - [dajiaohuang](https://github.com/discord-haskell/discord-haskell/pull/258) Fix documentation links and guidance from Discord
 - [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/260) [**BREAKING**] Rename `AuditLogEntry.auditLogEntryReasons` to `auditLogEntryReason`
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/263) [**BREAKING**] Bump dependency upper bounds to allow `containers 0.8`, `time 1.16`, and `aeson 2.3`
 
 ## 1.19.0
 
