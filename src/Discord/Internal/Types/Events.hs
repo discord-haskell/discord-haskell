@@ -69,7 +69,7 @@ data Event =
   -- | guild became unavailable, or user left/was removed from a guild
   | GuildDelete                GuildUnavailable
   -- | new entry to the audit log was added
-  | GuildAuditLogEntryCreate   AuditLogEntry
+  | GuildAuditLogEntryCreate   GuildId AuditLogEntry
   -- | user was banned from a guild
   | GuildBanAdd                GuildId User
   -- | user was unbanned from a guild
@@ -145,7 +145,7 @@ data EventInternalParse =
   | InternalGuildCreate                Guild GuildCreateData
   | InternalGuildUpdate                Guild
   | InternalGuildDelete                GuildUnavailable
-  | InternalGuildAuditLogEntryCreate   AuditLogEntry
+  | InternalGuildAuditLogEntryCreate   GuildId AuditLogEntry
   | InternalGuildBanAdd                GuildId User
   | InternalGuildBanRemove             GuildId User
   | InternalGuildEmojiUpdate           GuildId [Emoji]
@@ -357,7 +357,7 @@ eventParse t o = case t of
     "GUILD_CREATE"              -> parseGuildCreate o
     "GUILD_UPDATE"              -> InternalGuildUpdate               <$> reparse o
     "GUILD_DELETE"              -> InternalGuildDelete               <$> reparse o
-    "GUILD_AUDIT_LOG_ENTRY_CREATE" -> InternalGuildAuditLogEntryCreate <$> reparse o
+    "GUILD_AUDIT_LOG_ENTRY_CREATE" -> InternalGuildAuditLogEntryCreate <$> o .: "guild_id" <*> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
     "GUILD_BAN_REMOVE"          -> InternalGuildBanRemove <$> o .: "guild_id" <*> o .: "user"
     "GUILD_EMOJI_UPDATE"        -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"

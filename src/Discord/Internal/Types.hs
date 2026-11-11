@@ -73,7 +73,7 @@ userFacingEvent event = case event of
   InternalMessageCreate a -> MessageCreate a
   InternalMessageUpdate a b -> MessageUpdate a b
   InternalMessageDelete a b -> MessageDelete a b
-  InternalGuildAuditLogEntryCreate a -> GuildAuditLogEntryCreate a
+  InternalGuildAuditLogEntryCreate a b -> GuildAuditLogEntryCreate a b
   InternalMessageDeleteBulk a b -> MessageDeleteBulk a b
   InternalMessageReactionAdd a -> MessageReactionAdd a
   InternalMessageReactionRemove a -> MessageReactionRemove a
