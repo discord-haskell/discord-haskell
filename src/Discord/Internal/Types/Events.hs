@@ -244,8 +244,8 @@ data ReactionRemoveInfo  = ReactionRemoveInfo
 
 instance FromJSON ReactionRemoveInfo where
   parseJSON = withObject "ReactionRemoveInfo" $ \o ->
-    ReactionRemoveInfo <$> o .:  "guild_id"
-                       <*> o .:  "channel_id"
+    ReactionRemoveInfo <$> o .:  "channel_id"
+                       <*> o .:  "guild_id"
                        <*> o .:  "message_id"
                        <*> o .:  "emoji"
 
