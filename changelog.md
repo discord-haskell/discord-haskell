@@ -6,11 +6,15 @@ The Discord API constantly changes. This library issues updates when we implemen
 
 ## 1.20.0
 
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/264) [**Breaking**] Fix `ReactionRemoveInfo` swapping its guild and channel IDs
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/265) [**Breaking**] Add `GuildAuditLogEntryCreate.guild_id` field
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/266) [**Breaking**] Add `MessageReactionRemoveAll.guild_id` field
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/260) [**Breaking**] Rename `AuditLogEntry.auditLogEntryReasons` to `auditLogEntryReason`
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/263) [**Breaking**] Bump dependency upper bounds to allow `containers 0.8`, `time 1.16`, and `aeson 2.3`. Also bump CI dependencies.
 - [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/253) Remove trailing zeros in dependency list
 - [stanekondrej](https://github.com/discord-haskell/discord-haskell/pull/257) Add `maxChannelMessagesRequestNumber` (= 100)
 - [dajiaohuang](https://github.com/discord-haskell/discord-haskell/pull/258) Fix documentation links and guidance from Discord
-- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/260) [**BREAKING**] Rename `AuditLogEntry.auditLogEntryReasons` to `auditLogEntryReason`
-- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/263) [**BREAKING**] Bump dependency upper bounds to allow `containers 0.8`, `time 1.16`, and `aeson 2.3`
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/267) Work around compilation issues for GHC 9.2/9.4 on Ubuntu 26 in CI
 
 ## 1.19.0
 
