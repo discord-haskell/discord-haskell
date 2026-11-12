@@ -51,6 +51,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Add binutils-gold
+        run: sudo apt-get install binutils-gold
+
       # Although the GitHub Action Runner comes with pre-installed Cabal and GHC,
       # we'll only use Cabal out of the box since that is independent of
       # the GHC version. For GHC, we'll use the Haskell setup action to install
