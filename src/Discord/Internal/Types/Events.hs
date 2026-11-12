@@ -105,7 +105,7 @@ data Event =
   -- | user removed a reaction from a message
   | MessageReactionRemove      ReactionInfo
   -- | all reactions were explicitly removed from a message
-  | MessageReactionRemoveAll   ChannelId MessageId
+  | MessageReactionRemoveAll   ReactionRemoveAllInfo
   -- | all reactions for a given emoji were explicitly removed from a message
   | MessageReactionRemoveEmoji ReactionRemoveInfo
   -- | user was updated
@@ -163,7 +163,7 @@ data EventInternalParse =
   | InternalMessageDeleteBulk          ChannelId [MessageId]
   | InternalMessageReactionAdd         ReactionInfo
   | InternalMessageReactionRemove      ReactionInfo
-  | InternalMessageReactionRemoveAll   ChannelId MessageId
+  | InternalMessageReactionRemoveAll   ReactionRemoveAllInfo
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
   | InternalPresenceUpdate             PresenceInfo
   | InternalTypingStart                TypingInfo
@@ -233,6 +233,19 @@ instance FromJSON ReactionInfo where
                  <*> o .:  "channel_id"
                  <*> o .:  "message_id"
                  <*> o .:  "emoji"
+
+-- | Structure containing information about all reactions that have been removed from a message
+data ReactionRemoveAllInfo = ReactionRemoveAllInfo
+  { reactionRemoveAllChannelId :: ChannelId -- ^ Channel in which the message is
+  , reactionRemoveAllMessageId :: MessageId -- ^ The message the reactions were removed from
+  , reactionRemoveAllGuildId   :: Maybe GuildId -- ^ Guild in which the message is (if any)
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ReactionRemoveAllInfo where
+  parseJSON = withObject "ReactionRemoveAllInfo" $ \o ->
+    ReactionRemoveAllInfo <$> o .:  "channel_id"
+                          <*> o .:  "message_id"
+                          <*> o .:? "guild_id"
 
 -- | Structure containing information about a reaction that has been removed
 data ReactionRemoveInfo  = ReactionRemoveInfo
@@ -378,8 +391,7 @@ eventParse t o = case t of
     "MESSAGE_DELETE_BULK"       -> InternalMessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
     "MESSAGE_REACTION_ADD"      -> InternalMessageReactionAdd <$> reparse o
     "MESSAGE_REACTION_REMOVE"   -> InternalMessageReactionRemove <$> reparse o
-    "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> o .: "channel_id"
-                                                                      <*> o .: "message_id"
+    "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> reparse o
     "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o

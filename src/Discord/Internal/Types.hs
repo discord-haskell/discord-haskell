@@ -77,7 +77,7 @@ userFacingEvent event = case event of
   InternalMessageDeleteBulk a b -> MessageDeleteBulk a b
   InternalMessageReactionAdd a -> MessageReactionAdd a
   InternalMessageReactionRemove a -> MessageReactionRemove a
-  InternalMessageReactionRemoveAll a b -> MessageReactionRemoveAll a b
+  InternalMessageReactionRemoveAll a -> MessageReactionRemoveAll a
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
