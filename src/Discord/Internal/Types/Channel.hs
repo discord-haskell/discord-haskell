@@ -53,6 +53,7 @@ import Discord.Internal.Types.User (User(..), GuildMember)
 import Discord.Internal.Types.Embed
 import Discord.Internal.Types.Components (ActionRow)
 import Discord.Internal.Types.Emoji
+import Discord.Internal.Types.Polls
 
 -- | Guild channels represent an isolated set of users and messages in a Guild (Server)
 data Channel
@@ -556,6 +557,7 @@ data Message = Message
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
   , messageComponents         :: Maybe [ActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
   , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
+  , messagePoll               :: Maybe Poll               -- ^ sent if the message is a poll
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
@@ -593,6 +595,7 @@ instance FromJSON Message where
             <*> o .:? "thread"
             <*> o .:? "components"
             <*> o .:? "sticker_items"
+            <*> o .:? "poll"
 
 
 instance ToJSON Message where
@@ -626,6 +629,7 @@ instance ToJSON Message where
       , "thread" .=? messageThread
       , "components" .=? messageComponents
       , "sticker_items" .=? messageStickerItems
+      , "poll" .=? messagePoll
       ]
 
 -- | Data constructor for a part of MessageDetailedOpts.

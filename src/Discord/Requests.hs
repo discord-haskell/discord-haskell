@@ -11,6 +11,7 @@ module Discord.Requests
   , module Discord.Internal.Rest.Interactions
   , module Discord.Internal.Rest.ScheduledEvents
   , module Discord.Internal.Rest.AutoModeration
+  , module Discord.Internal.Rest.Polls
   ) where
 
 import Discord.Internal.Rest.ApplicationInfo
@@ -25,3 +26,4 @@ import Discord.Internal.Rest.ApplicationCommands
 import Discord.Internal.Rest.Interactions
 import Discord.Internal.Rest.ScheduledEvents
 import Discord.Internal.Rest.AutoModeration
+import Discord.Internal.Rest.Polls
