@@ -4,6 +4,17 @@ View on GitHub for the newest ChangeLog: https://github.com/discord-haskell/disc
 
 The Discord API constantly changes. This library issues updates when we implement new features added to the API or remove outdated functionalities. In order to interact with the Discord API safely and predictably, please update the library whenever there is a new version released.
 
+## 1.20.0
+
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/264) [**Breaking**] Fix `ReactionRemoveInfo` swapping its guild and channel IDs
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/265) [**Breaking**] Add `GuildAuditLogEntryCreate.guild_id` field
+- [isaacthekind](https://github.com/discord-haskell/discord-haskell/pull/266) [**Breaking**] Add `MessageReactionRemoveAll.guild_id` field
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/260) [**Breaking**] Rename `AuditLogEntry.auditLogEntryReasons` to `auditLogEntryReason`
+- [L0neGamer](https://github.com/discord-haskell/discord-haskell/pull/253) Remove trailing zeros in dependency list
+- [stanekondrej](https://github.com/discord-haskell/discord-haskell/pull/257) Add `maxChannelMessagesRequestNumber` (= 100)
+- [dajiaohuang](https://github.com/discord-haskell/discord-haskell/pull/258) Fix documentation links and guidance from Discord
+- [yutotakano](https://github.com/discord-haskell/discord-haskell/pull/263) Bump dependency upper bounds to allow `containers 0.8`, `time 1.16`, and `aeson 2.3`
+
 ## 1.19.0
 
 - [ShapeOfMatter](https://github.com/discord-haskell/discord-haskell/pull/231) Fix broken parsing of channel IDs in STAGE_INSTANCE and VOICE scheduled events
