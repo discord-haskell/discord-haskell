@@ -28,13 +28,16 @@ import Data.Aeson
 import Data.Default (Default, def)
 import Text.Emoji (emojiFromAlias)
 import qualified Data.Text as T
-import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text.Encoding as T (encodeUtf8)
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Char8 as BS8
 import Network.HTTP.Client.MultipartFormData (partBS)
-import Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Network.HTTP.Types (RequestHeaders)
+import Network.HTTP.Client (RequestBody(RequestBodyLBS))
+import Web.HttpApiData (ToHttpApiData(toQueryParam))
 
 instance Request (ChannelRequest a) where
   majorRoute = channelMajorRoute
@@ -175,9 +178,9 @@ data ReactionTiming = AfterUser UserId
                     | FirstUsers
   deriving (Show, Read, Eq, Ord)
 
-reactionTimingToQuery :: ReactionTiming -> R.Option 'R.Https
+reactionTimingToQuery :: ReactionTiming -> RequestHeaders
 reactionTimingToQuery t = case t of
-  (AfterUser snow) -> "after"  R.=: show snow
+  (AfterUser snow) -> header "after" snow
   FirstUsers -> mempty
 
 -- | Data constructor for `GetChannelMessages` requests.
@@ -189,11 +192,11 @@ data MessageTiming = AroundMessage MessageId
                    | LatestMessages
   deriving (Show, Read, Eq, Ord)
 
-messageTimingToQuery :: MessageTiming -> R.Option 'R.Https
+messageTimingToQuery :: MessageTiming -> RequestHeaders
 messageTimingToQuery t = case t of
-  (AroundMessage snow) -> "around" R.=: show snow
-  (BeforeMessage snow) -> "before" R.=: show snow
-  (AfterMessage snow) -> "after"  R.=: show snow
+  (AroundMessage snow) -> header "around" snow
+  (BeforeMessage snow) -> header "before" snow
+  (AfterMessage snow) -> header "after" snow
   LatestMessages -> mempty
 
 -- | Options for `CreateChannelInvite` requests
@@ -487,7 +490,7 @@ cleanupEmoji emoji =
         (_, Just a) -> "custom:" <> a
         (_, Nothing) -> noAngles
 
-channels :: R.Url 'R.Https
+channels :: T.Text
 channels = baseUrl /: "channels"
 
 channelJsonRequest :: ChannelRequest r -> JsonRequest
@@ -496,14 +499,14 @@ channelJsonRequest c = case c of
       Get (channels /~ chan) mempty
 
   (ModifyChannel chan patch) ->
-      Patch (channels /~ chan) (pure (R.ReqBodyJson patch)) mempty
+      Patch (channels /~ chan) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (DeleteChannel chan) ->
       Delete (channels /~ chan) mempty
 
   (GetChannelMessages chan (n,timing)) ->
       let n' = max 1 (min 100 n)
-          options = "limit" R.=: n' <> messageTimingToQuery timing
+          options = (header "limit" n') <> messageTimingToQuery timing
       in Get (channels /~ chan /: "messages") options
 
   (GetChannelMessage (chan, msg)) ->
@@ -511,7 +514,7 @@ channelJsonRequest c = case c of
 
   (CreateMessage chan msg) ->
       let content = ["content" .= msg]
-          body = pure $ R.ReqBodyJson $ object content
+          body = Left $ RequestBodyLBS $ encode $ object content
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateMessageDetailed chan msgOpts) ->
@@ -528,15 +531,15 @@ channelJsonRequest c = case c of
                         , "components" .=? messageDetailedComponents msgOpts
                         , "sticker_ids" .=? messageDetailedStickerIds msgOpts
                         ]
-        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
+        payloadPart = partBS "payload_json" $ LBS.toStrict $ encode payloadData
 
-        body = R.reqBodyMultipart (payloadPart : filePart)
+        body = Right (payloadPart : filePart)
       in Post (channels /~ chan /: "messages") body mempty
 
   (CreateReaction (chan, msgid) emoji) ->
       let e = cleanupEmoji emoji
       in Put (channels /~ chan /: "messages" /~ msgid /: "reactions" /: e /: "@me" )
-             R.NoReqBody mempty
+             (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (DeleteOwnReaction (chan, msgid) emoji) ->
       let e = cleanupEmoji emoji
@@ -553,7 +556,7 @@ channelJsonRequest c = case c of
   (GetReactions (chan, msgid) emoji (n, timing)) ->
       let e = cleanupEmoji emoji
           n' = max 1 (min 100 n)
-          options = "limit" R.=: n' <> reactionTimingToQuery timing
+          options = [("limit", T.encodeUtf8 $ toQueryParam n')] <> reactionTimingToQuery timing
       in Get (channels /~ chan /: "messages" /~ msgid /: "reactions" /: e) options
 
   (DeleteAllReactions (chan, msgid)) ->
@@ -574,20 +577,20 @@ channelJsonRequest c = case c of
                         , "components" .=? messageDetailedComponents msgOpts
                         , "sticker_ids" .=? messageDetailedStickerIds msgOpts
                         ]
-        payloadPart = partBS "payload_json" $ BL.toStrict $ encode payloadData
+        payloadPart = partBS "payload_json" $ LBS.toStrict $ encode payloadData
 
-        body = R.reqBodyMultipart (payloadPart : filePart)
+        body = Right (payloadPart : filePart)
       in Patch (channels /~ chan /: "messages" /~ msg) body mempty
 
   (DeleteMessage (chan, msg)) ->
       Delete (channels /~ chan /: "messages" /~ msg) mempty
 
   (BulkDeleteMessage (chan, msgs)) ->
-      let body = pure . R.ReqBodyJson $ object ["messages" .= msgs]
+      let body = Left $ RequestBodyLBS $ encode $ object ["messages" .= msgs]
       in Post (channels /~ chan /: "messages" /: "bulk-delete") body mempty
 
   (EditChannelPermissions chan overwriteId (ChannelPermissionsOpts a d)) ->
-      let body = R.ReqBodyJson $ object [("type", toJSON (either (const 0) (const 1) overwriteId :: Int))
+      let body = Left $ RequestBodyLBS $ encode $ object [("type", toJSON (either (const 0) (const 1) overwriteId :: Int))
                                         ,("allow", toJSON a)
                                         ,("deny", toJSON d)]
       in Put (channels /~ chan /: "permissions" /~ either unId unId overwriteId) body mempty
@@ -596,27 +599,27 @@ channelJsonRequest c = case c of
       Get (channels /~ chan /: "invites") mempty
 
   (CreateChannelInvite chan patch) ->
-      Post (channels /~ chan /: "invites") (pure (R.ReqBodyJson patch)) mempty
+      Post (channels /~ chan /: "invites") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (DeleteChannelPermission chan overwriteId) ->
       Delete (channels /~ chan /: "permissions" /~ either unId unId overwriteId) mempty
 
   (TriggerTypingIndicator chan) ->
-      Post (channels /~ chan /: "typing") (pure R.NoReqBody) mempty
+      Post (channels /~ chan /: "typing") (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (GetPinnedMessages chan) ->
       Get (channels /~ chan /: "pins") mempty
 
   (AddPinnedMessage (chan, msg)) ->
-      Put (channels /~ chan /: "pins" /~ msg) R.NoReqBody mempty
+      Put (channels /~ chan /: "pins" /~ msg) (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (DeletePinnedMessage (chan, msg)) ->
       Delete (channels /~ chan /: "pins" /~ msg) mempty
 
   (GroupDMAddRecipient chan (GroupDMAddRecipientOpts uid nick tok)) ->
       Put (channels /~ chan /~ chan /: "recipients" /~ uid)
-          (R.ReqBodyJson (object [ ("access_token", toJSON tok)
-                                 , ("nick", toJSON nick)]))
+          (Left $ RequestBodyLBS $ encode $ object [ ("access_token", toJSON tok)
+                                 , ("nick", toJSON nick)])
           mempty
 
   (GroupDMRemoveRecipient chan userid) ->
@@ -624,26 +627,26 @@ channelJsonRequest c = case c of
 
   (StartThreadFromMessage chan mid sto) ->
       Post (channels /~ chan /: "messages" /~ mid /: "threads")
-           (pure $ R.ReqBodyJson $ toJSON sto)
+           (Left $ RequestBodyLBS $ encode $ toJSON sto)
            mempty
 
   (StartThreadNoMessage chan sto) ->
       Post (channels /~ chan /: "threads")
-           (pure $ R.ReqBodyJson $ toJSON sto)
+           (Left $ RequestBodyLBS $ encode $ toJSON sto)
            mempty
 
   (StartThreadForumMedia chan opts) ->
     Post (channels /~ chan /: "threads")
-      (pure $ R.ReqBodyJson $ toJSON opts)
+      (Left $ RequestBodyLBS $ encode $ toJSON opts)
       mempty
 
   (JoinThread chan) ->
       Put (channels /~ chan /: "thread-members" /: "@me")
-          R.NoReqBody mempty
+          (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (AddThreadMember chan uid) ->
       Put (channels /~ chan /: "thread-members" /~ uid)
-          R.NoReqBody mempty
+          (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (LeaveThread chan) ->
       Delete (channels /~ chan /: "thread-members" /: "@me")
@@ -663,12 +666,12 @@ channelJsonRequest c = case c of
 
   (ListPublicArchivedThreads chan (time, lim)) ->
       Get (channels /~ chan /: "threads" /: "archived" /: "public")
-          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+          (maybe mempty ("limit" `header`) lim <> maybe mempty ("before" `header`) time)
 
   (ListPrivateArchivedThreads chan (time, lim)) ->
       Get (channels /~ chan /: "threads" /: "archived" /: "private")
-          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+          (maybe mempty (header "limit") lim <> maybe mempty (header "before") time)
 
   (ListJoinedPrivateArchivedThreads chan (time, lim)) ->
       Get (channels /~ chan /: "users" /: "@me" /: "threads" /: "archived" /: "private")
-          (maybe mempty ("limit" R.=:) lim <> maybe mempty ("before" R.=:) time)
+          (maybe mempty (header "limit") lim <> maybe mempty (header "before") time)

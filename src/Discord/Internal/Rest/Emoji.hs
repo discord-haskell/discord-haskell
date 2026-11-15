@@ -22,8 +22,7 @@ import qualified Data.ByteString.Base64 as B64
 import qualified Data.Text as T
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
-import Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
+import Network.HTTP.Client (RequestBody (RequestBodyLBS))
 
 instance Request (EmojiRequest a) where
   majorRoute = emojiMajorRoute
@@ -75,7 +74,7 @@ emojiMajorRoute c = case c of
   (ModifyGuildEmoji g _ _) -> "emoji " <> show g
   (DeleteGuildEmoji g _) -> "emoji " <> show g
 
-guilds :: R.Url 'R.Https
+guilds :: T.Text
 guilds = baseUrl /: "guilds"
 
 emojiJsonRequest :: EmojiRequest r -> JsonRequest
@@ -85,21 +84,19 @@ emojiJsonRequest c = case c of
   (CreateGuildEmoji g name b64im) ->
     Post
       (guilds /~ g /: "emojis")
-      ( pure
-          ( R.ReqBodyJson
-              ( object
-                  [ "name" .= name,
-                    "image" .= b64im
-                    -- todo , "roles" .= ...
-                  ]
-              )
+      (Left $ RequestBodyLBS $ encode
+          ( object
+              [ "name" .= name,
+                "image" .= b64im
+                -- todo , "roles" .= ...
+              ]
           )
       )
       mempty
   (ModifyGuildEmoji g e o) ->
     Patch
       (guilds /~ g /: "emojis" /~ e)
-      (pure (R.ReqBodyJson o))
+      (Left (RequestBodyLBS $ encode o))
       mempty
   (DeleteGuildEmoji g e) -> Delete (guilds /~ g /: "emojis" /~ e) mempty
 
@@ -193,8 +190,8 @@ stickerJsonRequest = \case
   ListNitroStickerPacks -> Get (baseUrl /: "sticker-packs") mempty
   ListGuildStickers gid -> Get (stickersGuild gid) mempty
   GetGuildSticker gid sid -> Get (stickersGuild gid /~ sid) mempty
-  CreateGuildSticker gid cgso -> Post (stickersGuild gid) (pure $ R.ReqBodyJson $ toJSON cgso) mempty
-  ModifyGuildSticker gid sid egso -> Patch (stickersGuild gid /~ sid) (pure $ R.ReqBodyJson egso) mempty
+  CreateGuildSticker gid cgso -> Post (stickersGuild gid) (Left $ RequestBodyLBS $ encode $ toJSON cgso) mempty
+  ModifyGuildSticker gid sid egso -> Patch (stickersGuild gid /~ sid) (Left $ RequestBodyLBS $ encode $ toJSON egso) mempty
   DeleteGuildSticker gid sid -> Delete (stickersGuild gid /~ sid) mempty
   where
     stickersGuild gid = baseUrl /: "guilds" /~ gid /: "stickers"

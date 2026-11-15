@@ -20,8 +20,8 @@ module Discord.Internal.Rest.Guild
 
 
 import Data.Aeson
-import Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.ByteString.Char8 as BS8
 import qualified Data.Text as T
 
 import Discord.Internal.Rest.Prelude
@@ -29,6 +29,8 @@ import Discord.Internal.Types
 import Data.Default (Default(..))
 
 import Discord.Internal.Types.AuditLog ( AuditLogEvent(MkAuditLogEvent) )
+import Network.HTTP.Types (RequestHeaders)
+import Network.HTTP.Client (RequestBody(RequestBodyLBS))
 
 instance Request (GuildRequest a) where
   majorRoute = guildMajorRoute
@@ -327,14 +329,14 @@ instance FromJSON ListActiveThreads where
                       <*> o .: "members"
 
 
-guildMembersTimingToQuery :: GuildMembersTiming -> R.Option 'R.Https
+guildMembersTimingToQuery :: GuildMembersTiming -> RequestHeaders
 guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
   let limit = case mLimit of
               Nothing -> mempty
-              Just lim -> "limit" R.=: lim
+              Just lim -> header "limit" lim
       after = case mAfter of
               Nothing -> mempty
-              Just aft -> "after" R.=: show aft
+              Just aft -> header "after" aft
   in limit <> after
 
 guildMajorRoute :: GuildRequest a -> String
@@ -378,7 +380,7 @@ guildMajorRoute c = case c of
   (GetGuildVanityURL g) ->                "guild " <> show g
 
 
-guilds :: R.Url 'R.Https
+guilds :: T.Text
 guilds = baseUrl /: "guilds"
 
 guildJsonRequest :: GuildRequest r -> JsonRequest
@@ -387,7 +389,7 @@ guildJsonRequest c = case c of
       Get (guilds /~ guild) mempty
 
   (ModifyGuild guild patch) ->
-      Patch (guilds /~ guild) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (DeleteGuild guild) ->
       Delete (guilds /~ guild) mempty
@@ -397,12 +399,12 @@ guildJsonRequest c = case c of
 
   (CreateGuildChannel guild name perms patch) ->
       Post (guilds /~ guild /: "channels")
-           (pure (R.ReqBodyJson (createChannelOptsToJSON name perms patch))) mempty
+           (Left $ RequestBodyLBS $ encode (createChannelOptsToJSON name perms patch)) mempty
 
   (ModifyGuildChannelPositions guild newlocs) ->
       let patch = map (\(a, b) -> object [("id", toJSON a)
                                          ,("position", toJSON b)]) newlocs
-      in Patch (guilds /~ guild /: "channels") (pure (R.ReqBodyJson patch)) mempty
+      in Patch (guilds /~ guild /: "channels") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (ListActiveGuildThreads guild) ->
       Get (guilds /~ guild /: "threads" /: "active") mempty
@@ -414,17 +416,17 @@ guildJsonRequest c = case c of
       Get (guilds /~ guild /: "members") (guildMembersTimingToQuery range)
 
   (AddGuildMember guild user patch) ->
-      Put (guilds /~ guild /: "members" /~ user) (R.ReqBodyJson patch) mempty
+      Put (guilds /~ guild /: "members" /~ user) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (ModifyGuildMember guild member patch) ->
-      Patch (guilds /~ guild /: "members" /~ member) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "members" /~ member) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (ModifyCurrentUserNick guild name) ->
       let patch = object ["nick" .= name]
-      in Patch (guilds /~ guild /: "members/@me/nick") (pure (R.ReqBodyJson patch)) mempty
+      in Patch (guilds /~ guild /: "members/@me/nick") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (AddGuildMemberRole guild user role) ->
-      let body = R.ReqBodyJson (object [])
+      let body = Left $ RequestBodyLBS $ encode (object [])
       in Put (guilds /~ guild /: "members" /~ user /: "roles" /~ role) body mempty
 
   (RemoveGuildMemberRole guild user role) ->
@@ -438,7 +440,7 @@ guildJsonRequest c = case c of
   (GetGuildBans guild) -> Get (guilds /~ guild /: "bans") mempty
 
   (CreateGuildBan guild user patch) ->
-      Put (guilds /~ guild /: "bans" /~ user) (R.ReqBodyJson patch) mempty
+      Put (guilds /~ guild /: "bans" /~ user) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (RemoveGuildBan guild ban) ->
       Delete (guilds /~ guild /: "bans" /~ ban) mempty
@@ -447,44 +449,44 @@ guildJsonRequest c = case c of
       Get (guilds /~ guild /: "roles") mempty
 
   (CreateGuildRole guild patch) ->
-      Post (guilds /~ guild /: "roles") (pure (R.ReqBodyJson patch)) mempty
+      Post (guilds /~ guild /: "roles") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (ModifyGuildRolePositions guild patch) ->
       let body = map (\(role, pos) -> object ["id".=role, "position".=pos]) patch
-      in Patch (guilds /~ guild /: "roles") (pure (R.ReqBodyJson body)) mempty
+      in Patch (guilds /~ guild /: "roles") (Left $ RequestBodyLBS $ encode body) mempty
 
   (ModifyGuildRole guild role patch) ->
-      Patch (guilds /~ guild /: "roles" /~ role) (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "roles" /~ role) (Left $ RequestBodyLBS $ encode patch) mempty
 
   (DeleteGuildRole guild role) ->
       Delete (guilds /~ guild /: "roles" /~ role) mempty
 
   (GetGuildPruneCount guild days) ->
-      Get (guilds /~ guild /: "prune") ("days" R.=: days)
+      Get (guilds /~ guild /: "prune") (header "days" days)
 
   (GetGuildAuditLog guild auditOpts) ->
       let user_id = case getAuditLogUserId auditOpts of
             Nothing  -> mempty
-            Just uid -> "user_id" R.=: uid
+            Just uid -> header "user_id" uid
           action_type = case getAuditLogActionType auditOpts of
             Nothing                  -> mempty
-            Just (MkAuditLogEvent n) -> "action_type" R.=: n
+            Just (MkAuditLogEvent n) -> header "action_type" n
 
           timing = case getAuditLogTiming auditOpts of
             Nothing                    -> mempty
             Just LatestLogEntries      -> mempty
-            Just (BeforeLogEntry snow) -> "before" R.=: snow
-            Just (AfterLogEntry snow)  -> "after"  R.=: snow
+            Just (BeforeLogEntry snow) -> header "before" snow
+            Just (AfterLogEntry snow)  -> header "after" snow
 
           limit = case getAuditLogLimit auditOpts of
             Nothing -> mempty
-            Just n  -> "limit" R.=: max 1 (min 100 n)
-      
+            Just n  -> header "limit" (max 1 (min 100 n))
+
           body = user_id <> action_type <> timing <> limit
       in Get (guilds /~ guild /: "audit-logs") body
 
   (BeginGuildPrune guild days) ->
-      Post (guilds /~ guild /: "prune") (pure R.NoReqBody) ("days" R.=: days)
+      Post (guilds /~ guild /: "prune") (Left $ RequestBodyLBS $ LBS.empty) (header "days" days)
 
   (GetGuildVoiceRegions guild) ->
       Get (guilds /~ guild /: "regions") mempty
@@ -497,23 +499,23 @@ guildJsonRequest c = case c of
 
   (CreateGuildIntegration guild iid opts) ->
       let patch = object ["type" .= createGuildIntegrationOptsType opts, "id" .= iid]
-      in Post (guilds /~ guild /: "integrations") (pure (R.ReqBodyJson patch)) mempty
+      in Post (guilds /~ guild /: "integrations") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (ModifyGuildIntegration guild iid patch) ->
-      let body = pure (R.ReqBodyJson patch)
+      let body = Left $ RequestBodyLBS $ encode patch
       in Patch (guilds /~ guild /: "integrations" /~ iid) body mempty
 
   (DeleteGuildIntegration guild integ) ->
       Delete (guilds /~ guild /: "integrations" /~ integ) mempty
 
   (SyncGuildIntegration guild integ) ->
-      Post (guilds /~ guild /: "integrations" /~ integ) (pure R.NoReqBody) mempty
+      Post (guilds /~ guild /: "integrations" /~ integ) (Left $ RequestBodyLBS $ LBS.empty) mempty
 
   (GetGuildWidget guild) ->
       Get (guilds /~ guild /: "integrations") mempty
 
   (ModifyGuildWidget guild patch) ->
-      Patch (guilds /~ guild /: "widget") (pure (R.ReqBodyJson patch)) mempty
+      Patch (guilds /~ guild /: "widget") (Left $ RequestBodyLBS $ encode patch) mempty
 
   (GetGuildVanityURL guild) ->
       Get (guilds /~ guild /: "vanity-url") mempty

@@ -10,8 +10,7 @@ module Discord.Internal.Rest.ApplicationInfo
   ( FullApplicationRequest(..)
   ) where
 
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
+import qualified Data.Text as T
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
@@ -30,7 +29,7 @@ applicationMajorRoute :: FullApplicationRequest a -> String
 applicationMajorRoute c = case c of
   (GetCurrentApplication) ->     "application "
 
-applications :: R.Url 'R.Https
+applications :: T.Text
 applications = baseUrl /: "applications"
 
 applicationJsonRequest :: FullApplicationRequest r -> JsonRequest

@@ -7,16 +7,12 @@ module Discord.Internal.Rest.Interactions (InteractionResponseRequest(..)) where
 
 import Data.Aeson (encode)
 import qualified Data.ByteString.Lazy as BL
+import qualified Data.Text as T
 import Discord.Internal.Rest.Prelude
-    ( RestIO,
-      Request(..),
-      JsonRequest(Delete, Post, Get, Patch),
-      baseUrl)
 import Discord.Internal.Types
 import Discord.Internal.Types.Interactions
-import Network.HTTP.Client.MultipartFormData (PartM, partBS)
-import Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
+import Network.HTTP.Client.MultipartFormData (PartM, partBS, Part)
+import Network.HTTP.Client (RequestBody)
 
 -- | Data constructor for Interaction response requests
 data InteractionResponseRequest a where
@@ -56,7 +52,7 @@ interactionResponseMajorRoute a = case a of
   (EditFollowupInteractionMessage aid _ _ _) -> "intrespf " <> show aid
   (DeleteFollowupInteractionMessage aid _ _) -> "intrespf " <> show aid
 
-interaction :: ApplicationId -> InteractionToken -> R.Url 'R.Https
+interaction :: ApplicationId -> InteractionToken -> T.Text
 interaction aid it = baseUrl /: "webhooks" /~ aid /~ it /: "messages"
 
 interactionResponseJsonRequest :: InteractionResponseRequest a -> JsonRequest
@@ -78,11 +74,11 @@ interactionResponseJsonRequest a = case a of
   (DeleteFollowupInteractionMessage aid it mid) ->
     Delete (interaction aid it /~ mid) mempty
   where
-    convert :: InteractionResponse -> RestIO R.ReqBodyMultipart
-    convert ir@(InteractionResponseChannelMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
-    convert ir@(InteractionResponseUpdateMessage irm) = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
-    convert ir = R.reqBodyMultipart [partBS "payload_json" $ BL.toStrict $ encode ir]
-    convertIRM :: InteractionResponseMessage -> RestIO R.ReqBodyMultipart
-    convertIRM irm = R.reqBodyMultipart (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
+    convert :: InteractionResponse -> Either RequestBody [Part]
+    convert ir@(InteractionResponseChannelMessage irm) = Right (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
+    convert ir@(InteractionResponseUpdateMessage irm) = Right (partBS "payload_json" (BL.toStrict $ encode ir) : convert' irm)
+    convert ir = Right [partBS "payload_json" $ BL.toStrict $ encode ir]
+    convertIRM :: InteractionResponseMessage -> Either RequestBody [Part]
+    convertIRM irm = Right (partBS "payload_json" (BL.toStrict $ encode irm) : convert' irm)
     convert' :: InteractionResponseMessage -> [PartM IO]
     convert' InteractionResponseMessage {..} = uploadsToParts $ embedsToUploads interactionResponseMessageEmbeds ++ interactionResponseMessageUploads

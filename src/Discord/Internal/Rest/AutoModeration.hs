@@ -11,8 +11,8 @@ module Discord.Internal.Rest.AutoModeration
 import Data.Aeson
 import Discord.Internal.Types
 import Discord.Internal.Rest.Prelude
-import           Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
+import qualified Data.Text as T
+import Network.HTTP.Client (RequestBody(RequestBodyLBS))
 
 instance Request (AutoModerationRequest a) where
   majorRoute  = autoModerationMajorRoute
@@ -82,16 +82,16 @@ autoModerationJsonRequest c = case c of
       Get (guilds /~ guild /: "auto-moderation" /: "rules" /~ amid) mempty
 
   (CreateAutoModerationRule guild autoModRule) ->
-      let body = pure (R.ReqBodyJson autoModRule)
+      let body = Left (RequestBodyLBS $ encode autoModRule)
       in Post (guilds /~ guild /: "auto-moderation" /: "rules") body mempty
 
   (ModifyAutoModerationRule guild amid patch) ->
-      let body = pure (R.ReqBodyJson patch)
+      let body = Left (RequestBodyLBS $ encode patch)
       in Patch (guilds /~ guild /: "auto-moderation" /: "rules" /~ amid) body mempty
 
   (DeleteAutoModerationRule guild amid) ->
       Delete (guilds /~ guild /: "auto-moderation" /: "rules" /~ amid) mempty
   
   where
-    guilds :: R.Url 'R.Https
+    guilds :: T.Text
     guilds = baseUrl /: "guilds"

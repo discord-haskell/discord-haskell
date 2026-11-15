@@ -12,14 +12,13 @@ module Discord.Internal.Rest.User
 
 
 import Data.Aeson
-import Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base64 as B64
 
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
+import Network.HTTP.Client (RequestBody(RequestBodyLBS))
 
 instance Request (UserRequest a) where
   majorRoute = userMajorRoute
@@ -71,7 +70,7 @@ userMajorRoute c = case c of
   (CreateDM _) ->                       "make_dm "
   (GetUserConnections) ->           "connections "
 
-users :: R.Url 'R.Https
+users :: T.Text
 users = baseUrl /: "users"
 
 userJsonRequest :: UserRequest r -> JsonRequest
@@ -81,8 +80,8 @@ userJsonRequest c = case c of
   (GetUser user) -> Get (users /~ user ) mempty
 
   (ModifyCurrentUser name b64im) ->
-      Patch (users /: "@me")  (pure (R.ReqBodyJson (object [ "username" .= name
-                                                           , "avatar" .= b64im ]))) mempty
+      Patch (users /: "@me")  (Left (RequestBodyLBS $ encode $ object [ "username" .= name
+                                                           , "avatar" .= b64im ])) mempty
 
   (GetCurrentUserGuilds) -> Get (users /: "@me" /: "guilds") mempty
 
@@ -91,8 +90,8 @@ userJsonRequest c = case c of
   (GetUserDMs) -> Get (users /: "@me" /: "channels") mempty
 
   (CreateDM user) ->
-      let body = R.ReqBodyJson $ object ["recipient_id" .= user]
-      in Post (users /: "@me" /: "channels") (pure body) mempty
+      let body = RequestBodyLBS $ encode $ object ["recipient_id" .= user]
+      in Post (users /: "@me" /: "channels") (Left body) mempty
 
   (GetUserConnections) ->
     Get (users /: "@me" /: "connections") mempty
