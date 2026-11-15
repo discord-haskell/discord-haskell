@@ -16,7 +16,7 @@ import Discord.Internal.Types.ApplicationCommands
       ApplicationCommand )
 import qualified Data.Text as T
 import Network.HTTP.Client (RequestBody(RequestBodyLBS))
-import Network.HTTP.Client.MultipartFormData (PartM, Part)
+import Network.HTTP.Client.MultipartFormData (Part)
 
 instance Request (ApplicationCommandRequest a) where
   jsonRequest = applicationCommandJsonRequest

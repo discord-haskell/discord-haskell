@@ -30,7 +30,6 @@ import Text.Emoji (emojiFromAlias)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T (encodeUtf8)
 import qualified Data.ByteString.Lazy as LBS
-import qualified Data.ByteString.Char8 as BS8
 import Network.HTTP.Client.MultipartFormData (partBS)
 
 import Discord.Internal.Rest.Prelude
