@@ -554,8 +554,8 @@ data Message = Message
   , messageReferencedMessage  :: Maybe Message            -- ^ The full original message
   , messageInteraction        :: Maybe MessageInteraction -- ^ sent if message is an interaction response
   , messageThread             :: Maybe Channel            -- ^ the thread that was started from this message, includes thread member object
-  , messageComponents         :: Maybe [ActionRow]        -- ^ sent if the message contains components like buttons, action rows, or other interactive components
-  , messageStickerItems       :: Maybe [StickerItem]      -- ^ sent if the message contains stickers
+  , messageComponents         :: [ActionRow]              -- ^ sent if the message contains components like buttons, action rows, or other interactive components
+  , messageStickerItems       :: [StickerItem]            -- ^ sent if the message contains stickers
   } deriving (Show, Read, Eq, Ord)
 
 instance FromJSON Message where
@@ -591,8 +591,8 @@ instance FromJSON Message where
             <*> o .:? "referenced_message" .!= Nothing
             <*> o .:? "interaction"
             <*> o .:? "thread"
-            <*> o .:? "components"
-            <*> o .:? "sticker_items"
+            <*> o .:? "components" .!= []
+            <*> o .:? "sticker_items" .!= []
 
 
 instance ToJSON Message where
@@ -624,8 +624,8 @@ instance ToJSON Message where
       , "referenced_message" .=? messageReferencedMessage
       , "interaction" .=? messageInteraction
       , "thread" .=? messageThread
-      , "components" .=? messageComponents
-      , "sticker_items" .=? messageStickerItems
+      , "components" .== messageComponents
+      , "sticker_items" .== messageStickerItems
       ]
 
 -- | Data constructor for a part of MessageDetailedOpts.
