@@ -62,8 +62,11 @@ data GatewayIntent = GatewayIntent
   , gatewayIntentDirectMessageReactions :: Bool
   , gatewayIntentDirectMessageTyping :: Bool
   , gatewayIntentMessageContent :: Bool
+  , gatewayIntentScheduledEvents :: Bool
   , gatewayIntentAutoModerationConfiguration :: Bool
   , gatewayIntentAutoModerationExecution :: Bool
+  , gatewayIntentMessagePolls :: Bool
+  , gatewayIntentDirectMessagePolls :: Bool
   } deriving (Show, Read, Eq, Ord)
 
 instance Default GatewayIntent where
@@ -83,8 +86,11 @@ instance Default GatewayIntent where
                       , gatewayIntentDirectMessageReactions      = True
                       , gatewayIntentDirectMessageTyping         = True
                       , gatewayIntentMessageContent              = True
+                      , gatewayIntentScheduledEvents             = True
                       , gatewayIntentAutoModerationConfiguration = True
                       , gatewayIntentAutoModerationExecution     = True
+                      , gatewayIntentMessagePolls                = True
+                      , gatewayIntentDirectMessagePolls          = True
                       }
 
 compileGatewayIntent :: GatewayIntent -> Int
@@ -106,8 +112,11 @@ compileGatewayIntent GatewayIntent{..} =
                        , (2 ^ 13, gatewayIntentDirectMessageReactions)
                        , (2 ^ 14, gatewayIntentDirectMessageTyping)
                        , (2 ^ 15, gatewayIntentMessageContent)
+                       , (2 ^ 16, gatewayIntentScheduledEvents)
                        , (2 ^ 20, gatewayIntentAutoModerationConfiguration)
                        , (2 ^ 21, gatewayIntentAutoModerationExecution)
+                       , (2 ^ 24, gatewayIntentMessagePolls)
+                       , (2 ^ 25, gatewayIntentDirectMessagePolls)
                        ]
        ]
 
