@@ -107,11 +107,11 @@ data Event =
   -- | message was created
   | MessageCreate              Message
   -- | message was updated
-  | MessageUpdate              ChannelId MessageId
+  | MessageUpdate              MessageUpdateInfo
   -- | message was deleted
-  | MessageDelete              ChannelId MessageId
+  | MessageDelete              MessageDeleteInfo
   -- | multiple messages were deleted at once
-  | MessageDeleteBulk          ChannelId [MessageId]
+  | MessageDeleteBulk          MessageDeleteBulkInfo
   -- | user reacted to a message
   | MessageReactionAdd         ReactionInfo
   -- | user removed a reaction from a message
@@ -186,9 +186,9 @@ data EventInternalParse =
   | InternalGuildScheduledEventUserAdd ScheduledEventUserInfo
   | InternalGuildScheduledEventUserRemove ScheduledEventUserInfo
   | InternalMessageCreate              Message
-  | InternalMessageUpdate              ChannelId MessageId
-  | InternalMessageDelete              ChannelId MessageId
-  | InternalMessageDeleteBulk          ChannelId [MessageId]
+  | InternalMessageUpdate              MessageUpdateInfo
+  | InternalMessageDelete              MessageDeleteInfo
+  | InternalMessageDeleteBulk          MessageDeleteBulkInfo
   | InternalMessageReactionAdd         ReactionInfo
   | InternalMessageReactionRemove      ReactionInfo
   | InternalMessageReactionRemoveAll   ReactionRemoveAllInfo
@@ -266,6 +266,45 @@ instance FromJSON ReactionInfo where
                  <*> o .:  "channel_id"
                  <*> o .:  "message_id"
                  <*> o .:  "emoji"
+
+-- | Structure containing information about an updated message
+data MessageUpdateInfo = MessageUpdateInfo
+  { messageUpdateChannelId :: ChannelId -- ^ Channel in which the message is
+  , messageUpdateMessageId :: MessageId -- ^ The updated message
+  , messageUpdateGuildId   :: Maybe GuildId -- ^ Guild in which the message is (if any)
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON MessageUpdateInfo where
+  parseJSON = withObject "MessageUpdateInfo" $ \o ->
+    MessageUpdateInfo <$> o .:  "channel_id"
+                      <*> o .:  "id"
+                      <*> o .:? "guild_id"
+
+-- | Structure containing information about a deleted message
+data MessageDeleteInfo = MessageDeleteInfo
+  { messageDeleteChannelId :: ChannelId -- ^ Channel in which the message was
+  , messageDeleteMessageId :: MessageId -- ^ The deleted message
+  , messageDeleteGuildId   :: Maybe GuildId -- ^ Guild in which the message was (if any)
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON MessageDeleteInfo where
+  parseJSON = withObject "MessageDeleteInfo" $ \o ->
+    MessageDeleteInfo <$> o .:  "channel_id"
+                      <*> o .:  "id"
+                      <*> o .:? "guild_id"
+
+-- | Structure containing information about messages that have been deleted at once
+data MessageDeleteBulkInfo = MessageDeleteBulkInfo
+  { messageDeleteBulkChannelId  :: ChannelId -- ^ Channel in which the messages were
+  , messageDeleteBulkMessageIds :: [MessageId] -- ^ The deleted messages
+  , messageDeleteBulkGuildId    :: Maybe GuildId -- ^ Guild in which the messages were (if any)
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON MessageDeleteBulkInfo where
+  parseJSON = withObject "MessageDeleteBulkInfo" $ \o ->
+    MessageDeleteBulkInfo <$> o .:  "channel_id"
+                          <*> o .:  "ids"
+                          <*> o .:? "guild_id"
 
 -- | Structure containing information about all reactions that have been removed from a message
 data ReactionRemoveAllInfo = ReactionRemoveAllInfo
@@ -502,9 +541,9 @@ eventParse t o = case t of
     "GUILD_SCHEDULED_EVENT_USER_ADD" -> InternalGuildScheduledEventUserAdd <$> reparse o
     "GUILD_SCHEDULED_EVENT_USER_REMOVE" -> InternalGuildScheduledEventUserRemove <$> reparse o
     "MESSAGE_CREATE"            -> InternalMessageCreate     <$> reparse o
-    "MESSAGE_UPDATE"            -> InternalMessageUpdate     <$> o .: "channel_id" <*> o .: "id"
-    "MESSAGE_DELETE"            -> InternalMessageDelete     <$> o .: "channel_id" <*> o .: "id"
-    "MESSAGE_DELETE_BULK"       -> InternalMessageDeleteBulk <$> o .: "channel_id" <*> o .: "ids"
+    "MESSAGE_UPDATE"            -> InternalMessageUpdate     <$> reparse o
+    "MESSAGE_DELETE"            -> InternalMessageDelete     <$> reparse o
+    "MESSAGE_DELETE_BULK"       -> InternalMessageDeleteBulk <$> reparse o
     "MESSAGE_REACTION_ADD"      -> InternalMessageReactionAdd <$> reparse o
     "MESSAGE_REACTION_REMOVE"   -> InternalMessageReactionRemove <$> reparse o
     "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> reparse o

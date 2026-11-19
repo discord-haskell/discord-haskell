@@ -77,10 +77,10 @@ userFacingEvent event = case event of
   InternalGuildScheduledEventUserAdd a -> GuildScheduledEventUserAdd a
   InternalGuildScheduledEventUserRemove a -> GuildScheduledEventUserRemove a
   InternalMessageCreate a -> MessageCreate a
-  InternalMessageUpdate a b -> MessageUpdate a b
-  InternalMessageDelete a b -> MessageDelete a b
+  InternalMessageUpdate a -> MessageUpdate a
+  InternalMessageDelete a -> MessageDelete a
   InternalGuildAuditLogEntryCreate a b -> GuildAuditLogEntryCreate a b
-  InternalMessageDeleteBulk a b -> MessageDeleteBulk a b
+  InternalMessageDeleteBulk a -> MessageDeleteBulk a
   InternalMessageReactionAdd a -> MessageReactionAdd a
   InternalMessageReactionRemove a -> MessageReactionRemove a
   InternalMessageReactionRemoveAll a -> MessageReactionRemoveAll a
