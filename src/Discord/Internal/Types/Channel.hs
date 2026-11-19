@@ -6,6 +6,7 @@
 module Discord.Internal.Types.Channel (
     Channel (..)
   , channelIsInGuild
+  , VideoQualityMode (..)
   , Overwrite (..)
   , ThreadMetadata (..)
   , ThreadMember (..)
@@ -82,6 +83,7 @@ data Channel
       , channelTopic       :: T.Text          -- ^ Topic of the channel (0 - 1024 characters)
       , channelLastMessage :: Maybe MessageId -- ^ The ID of the last message of the channel
       , channelParentId    :: Maybe ParentId  -- ^ The id of the parent channel (category)
+      , channelUserRateLimit :: Integer       -- ^ Seconds before a user can speak again
       }
    -- | A store page channel in a guild
   | ChannelStorePage
@@ -104,6 +106,12 @@ data Channel
       , channelBitRate     :: Integer         -- ^ The bitrate (in bps) of the channel.
       , channelUserLimit   :: Integer         -- ^ The user limit of the voice channel.
       , channelParentId    :: Maybe ParentId  -- ^ The id of the parrent channel (category)
+      , channelRTCRegion   :: Maybe T.Text    -- ^ The id of the voice region of the channel
+                                              --   (Nothing means automatic).
+      , channelVideoQualityMode :: VideoQualityMode -- ^ The camera video quality mode of the channel
+      , channelLastMessage :: Maybe MessageId -- ^ The id of the last message sent in the
+                                              --   channel's text chat
+      , channelUserRateLimit :: Integer       -- ^ Seconds before a user can speak again
       }
   -- | DM Channels represent a one-to-one conversation between two users, outside the scope
   --   of guilds
@@ -117,6 +125,8 @@ data Channel
       { channelId          :: ChannelId       -- ^ The id of the channel
       , channelRecipients  :: [User]          -- ^ The 'User' object(s) of the DM recipent(s).
       , channelLastMessage :: Maybe MessageId -- ^ The last message sent to the channel
+      , channelGroupDMName :: Maybe T.Text    -- ^ The name of the group DM
+      , channelOwnerId     :: UserId          -- ^ The id of the creator of the group DM
       }
   -- | A channel category
   | ChannelGuildCategory
@@ -128,10 +138,16 @@ data Channel
       }
   -- | A stage channel
   | ChannelStage
-      { channelId          :: ChannelId -- ^ The id of the channel
-      , channelGuild       :: GuildId   -- ^ The id of the guild
-      , channelStageId     :: StageId   -- ^ The id of the stage
-      , channelStageTopic  :: Text      -- ^ The topic text
+      { channelId          :: ChannelId       -- ^ The id of the channel
+      , channelGuild       :: GuildId         -- ^ The id of the guild
+      , channelName        :: T.Text          -- ^ The name of the channel (1 - 100 characters)
+      , channelPosition    :: Integer         -- ^ The position of the channel
+      , channelPermissions :: [Overwrite]     -- ^ An array of permission 'Overwrite's
+      , channelNSFW        :: Bool            -- ^ Is not-safe-for-work
+      , channelBitRate     :: Integer         -- ^ The bitrate (in bps) of the channel.
+      , channelUserLimit   :: Integer         -- ^ The user limit of the stage channel.
+      , channelParentId    :: Maybe ParentId  -- ^ The id of the parent channel (category)
+      , channelStageTopic  :: Text            -- ^ The topic text
       }
   -- | A news Thread
   | ChannelNewsThread
@@ -144,6 +160,15 @@ data Channel
       , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
+      , channelThreadOwnerId :: Maybe UserId          -- ^ The id of the creator of the thread
+      , channelThreadMessageCount :: Maybe Integer    -- ^ The number of messages in the thread (not including
+                                                      --   the initial message or deleted messages)
+      , channelThreadMemberCount :: Maybe Integer     -- ^ An approximate count of users in the thread (stops
+                                                      --   counting at 50)
+      , channelThreadTotalMessageSent :: Maybe Integer -- ^ The number of messages ever sent in the thread
+                                                      --   (deleted messages included)
+      , channelThreadAppliedTags :: Maybe [Snowflake] -- ^ The ids of the tags applied to the thread, in
+                                                      --   forum and media channels
       }
   -- | A thread anyone can join
   | ChannelPublicThread
@@ -156,6 +181,15 @@ data Channel
       , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
+      , channelThreadOwnerId :: Maybe UserId          -- ^ The id of the creator of the thread
+      , channelThreadMessageCount :: Maybe Integer    -- ^ The number of messages in the thread (not including
+                                                      --   the initial message or deleted messages)
+      , channelThreadMemberCount :: Maybe Integer     -- ^ An approximate count of users in the thread (stops
+                                                      --   counting at 50)
+      , channelThreadTotalMessageSent :: Maybe Integer -- ^ The number of messages ever sent in the thread
+                                                      --   (deleted messages included)
+      , channelThreadAppliedTags :: Maybe [Snowflake] -- ^ The ids of the tags applied to the thread, in
+                                                      --   forum and media channels
       }
   -- | An on-invite thread
   | ChannelPrivateThread
@@ -168,6 +202,15 @@ data Channel
       , channelParentId    :: Maybe ParentId          -- ^ The id of the parent channel
       , channelThreadMetadata :: Maybe ThreadMetadata -- ^ Metadata about this thread
       , channelThreadMember :: Maybe ThreadMember     -- ^ Used to indicate if the user has joined the thread
+      , channelThreadOwnerId :: Maybe UserId          -- ^ The id of the creator of the thread
+      , channelThreadMessageCount :: Maybe Integer    -- ^ The number of messages in the thread (not including
+                                                      --   the initial message or deleted messages)
+      , channelThreadMemberCount :: Maybe Integer     -- ^ An approximate count of users in the thread (stops
+                                                      --   counting at 50)
+      , channelThreadTotalMessageSent :: Maybe Integer -- ^ The number of messages ever sent in the thread
+                                                      --   (deleted messages included)
+      , channelThreadAppliedTags :: Maybe [Snowflake] -- ^ The ids of the tags applied to the thread, in
+                                                      --   forum and media channels
       }
   -- | A channel of unknown type
   | ChannelUnknownType
@@ -204,10 +247,16 @@ instance FromJSON Channel where
                      <*> o .:  "bitrate"
                      <*> o .:  "user_limit"
                      <*> o .:? "parent_id"
+                     <*> o .:? "rtc_region"
+                     <*> o .:? "video_quality_mode" .!= VideoQualityModeAuto
+                     <*> o .:? "last_message_id"
+                     <*> o .:? "rate_limit_per_user" .!= 0
       3 ->
         ChannelGroupDM <$> o .:  "id"
                        <*> o .:  "recipients"
                        <*> o .:? "last_message_id"
+                       <*> o .:? "name"
+                       <*> o .:  "owner_id"
       4 ->
         ChannelGuildCategory <$> o .: "id"
                              <*> o .:  "guild_id"
@@ -224,6 +273,7 @@ instance FromJSON Channel where
                     <*> o .:? "topic" .!= ""
                     <*> o .:? "last_message_id"
                     <*> o .:? "parent_id"
+                    <*> o .:? "rate_limit_per_user" .!= 0
       6 ->
         ChannelStorePage <$> o .:  "id"
                          <*> o .:  "guild_id"
@@ -240,6 +290,11 @@ instance FromJSON Channel where
                               <*> o .:? "parent_id"
                               <*> o .:? "thread_metadata"
                               <*> o .:? "member"
+                              <*> o .:? "owner_id"
+                              <*> o .:? "message_count"
+                              <*> o .:? "member_count"
+                              <*> o .:? "total_message_sent"
+                              <*> o .:? "applied_tags"
       11 -> ChannelPublicThread <$> o.: "id"
                                 <*> o .:  "guild_id"
                                 <*> o .:? "name"
@@ -248,6 +303,11 @@ instance FromJSON Channel where
                                 <*> o .:? "parent_id"
                                 <*> o .:? "thread_metadata"
                                 <*> o .:? "member"
+                                <*> o .:? "owner_id"
+                                <*> o .:? "message_count"
+                                <*> o .:? "member_count"
+                                <*> o .:? "total_message_sent"
+                                <*> o .:? "applied_tags"
       12 -> ChannelPrivateThread <$> o.: "id"
                                  <*> o .:  "guild_id"
                                  <*> o .:? "name"
@@ -256,10 +316,21 @@ instance FromJSON Channel where
                                  <*> o .:? "parent_id"
                                  <*> o .:? "thread_metadata"
                                  <*> o .:? "member"
+                                 <*> o .:? "owner_id"
+                                 <*> o .:? "message_count"
+                                 <*> o .:? "member_count"
+                                 <*> o .:? "total_message_sent"
+                                 <*> o .:? "applied_tags"
       13 ->
         ChannelStage <$> o .:  "id"
                      <*> o .:  "guild_id"
-                     <*> o .:  "id"
+                     <*> o .:  "name"
+                     <*> o .:  "position"
+                     <*> o .:  "permission_overwrites"
+                     <*> o .:? "nsfw" .!= False
+                     <*> o .:  "bitrate"
+                     <*> o .:  "user_limit"
+                     <*> o .:? "parent_id"
                      <*> o .:? "topic" .!= ""
       _ -> ChannelUnknownType <$> o .:  "id"
                               <*> pure (T.pack (show o))
@@ -289,6 +360,7 @@ instance ToJSON Channel where
               , "topic" .== channelTopic
               , "last_message_id" .=? channelLastMessage
               , "parent_id" .=? channelParentId
+              , "rate_limit_per_user" .== channelUserRateLimit
               ]
   toJSON ChannelStorePage{..} = objectFromMaybes
               [ "type" .== Number 6
@@ -315,12 +387,18 @@ instance ToJSON Channel where
               , "permission_overwrites" .== channelPermissions
               , "bitrate" .== channelBitRate
               , "user_limit" .== channelUserLimit
+              , "rtc_region" .=? channelRTCRegion
+              , "video_quality_mode" .== channelVideoQualityMode
+              , "last_message_id" .=? channelLastMessage
+              , "rate_limit_per_user" .== channelUserRateLimit
               ]
   toJSON ChannelGroupDM{..} = objectFromMaybes
               [ "type" .== Number 3
               , "id" .== channelId
               , "recipients" .== channelRecipients
               , "last_message_id" .=? channelLastMessage
+              , "name" .=? channelGroupDMName
+              , "owner_id" .== channelOwnerId
               ]
   toJSON ChannelGuildCategory{..} = objectFromMaybes
               [ "type" .== Number 4
@@ -332,7 +410,13 @@ instance ToJSON Channel where
               [ "type" .== Number 13
               , "id" .== channelId
               , "guild_id" .== channelGuild
-              , "channel_id" .== channelStageId
+              , "name" .== channelName
+              , "position" .== channelPosition
+              , "nsfw" .== channelNSFW
+              , "permission_overwrites" .== channelPermissions
+              , "bitrate" .== channelBitRate
+              , "user_limit" .== channelUserLimit
+              , "parent_id" .=? channelParentId
               , "topic" .== channelStageTopic
               ]
   toJSON ChannelNewsThread{..} = objectFromMaybes
@@ -345,6 +429,11 @@ instance ToJSON Channel where
               , "parent_id" .== channelParentId
               , "thread_metadata" .=? channelThreadMetadata
               , "member" .=? channelThreadMember
+              , "owner_id" .=? channelThreadOwnerId
+              , "message_count" .=? channelThreadMessageCount
+              , "member_count" .=? channelThreadMemberCount
+              , "total_message_sent" .=? channelThreadTotalMessageSent
+              , "applied_tags" .=? channelThreadAppliedTags
               ]
   toJSON ChannelPublicThread{..} = objectFromMaybes
               [ "type" .== Number 11
@@ -356,6 +445,11 @@ instance ToJSON Channel where
               , "parent_id" .== channelParentId
               , "thread_metadata" .=? channelThreadMetadata
               , "member" .=? channelThreadMember
+              , "owner_id" .=? channelThreadOwnerId
+              , "message_count" .=? channelThreadMessageCount
+              , "member_count" .=? channelThreadMemberCount
+              , "total_message_sent" .=? channelThreadTotalMessageSent
+              , "applied_tags" .=? channelThreadAppliedTags
               ]
   toJSON ChannelPrivateThread{..} = objectFromMaybes
               [ "type" .== Number 12
@@ -367,6 +461,11 @@ instance ToJSON Channel where
               , "parent_id" .== channelParentId
               , "thread_metadata" .=? channelThreadMetadata
               , "member" .=? channelThreadMember
+              , "owner_id" .=? channelThreadOwnerId
+              , "message_count" .=? channelThreadMessageCount
+              , "member_count" .=? channelThreadMemberCount
+              , "total_message_sent" .=? channelThreadTotalMessageSent
+              , "applied_tags" .=? channelThreadAppliedTags
               ]
   toJSON ChannelUnknownType{..} = objectFromMaybes
               [ "id" .== channelId
@@ -385,6 +484,23 @@ channelIsInGuild c = case c of
         ChannelPublicThread{} -> True
         ChannelPrivateThread{} -> True
         _ -> False
+
+-- | The camera video quality mode of a voice channel.
+data VideoQualityMode
+  = VideoQualityModeAuto -- ^ Discord chooses the quality for optimal performance
+  | VideoQualityModeFull -- ^ 720p
+  deriving (Show, Read, Data, Eq, Ord)
+
+instance InternalDiscordEnum VideoQualityMode where
+  discordTypeStartValue = VideoQualityModeAuto
+  fromDiscordType VideoQualityModeAuto = 1
+  fromDiscordType VideoQualityModeFull = 2
+
+instance ToJSON VideoQualityMode where
+  toJSON = toJSON . fromDiscordType
+
+instance FromJSON VideoQualityMode where
+  parseJSON = discordTypeParseJSON "VideoQualityMode"
 
 -- | Permission overwrites for a channel.
 data Overwrite = Overwrite
