@@ -433,8 +433,8 @@ eventHandler testserverid event = case event of
 
 processTicTacToe :: ComponentData -> Message -> [InteractionResponseMessage]
 processTicTacToe (ButtonData cid) m = case messageComponents m of
-  Nothing -> [interactionResponseMessageBasic "Sorry, I couldn't get the components on that message."]
-  (Just cs) ->
+  [] -> [interactionResponseMessageBasic "Sorry, I couldn't get the components on that message."]
+  cs ->
     let newComp = newComp' cs
      in ( ( interactionResponseMessageBasic
               ("Some Tic Tac Toe! Player " <> (if '0' == T.last (messageContent m) then "1" else "0"))
