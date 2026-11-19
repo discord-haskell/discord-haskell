@@ -11,11 +11,14 @@ module Discord.Internal.Rest.Guild
   , AddGuildMemberOpts(..)
   , ModifyGuildMemberOpts(..)
   , GuildMembersTiming(..)
+  , GuildBansTiming(..)
   , CreateGuildBanOpts(..)
   , ModifyGuildRoleOpts(..)
   , CreateGuildIntegrationOpts(..)
   , ModifyGuildIntegrationOpts(..)
   , ListActiveThreads (..)
+
+  , maxGuildBansRequestNumber
   ) where
 
 
@@ -78,9 +81,10 @@ data GuildRequest a where
   -- | Remove a member from a guild. Requires 'KICK_MEMBER' permission. Fires a
   --   Guild Member Remove 'Event'.
   RemoveGuildMember        :: GuildId -> UserId -> GuildRequest ()
-  -- | Returns a list of 'Ban' objects for users that are banned from this guild. Requires the
-  --   'BAN_MEMBERS' permission
-  GetGuildBans             :: GuildId -> GuildRequest [GuildBan]
+  -- | Returns a list of 'Ban' objects for users that are banned from this guild, at most
+  --   `maxGuildBansRequestNumber` per request. Requires the 'BAN_MEMBERS' permission. To read
+  --   every ban, request again with 'AfterBan' set to the last user of the previous page.
+  GetGuildBans             :: GuildId -> (Int, GuildBansTiming) -> GuildRequest [GuildBan]
   -- | Returns a 'Ban' object for the user banned from this guild. Requires the
   --   'BAN_MEMBERS' permission
   GetGuildBan              :: GuildId -> UserId -> GuildRequest GuildBan
@@ -309,6 +313,19 @@ data GuildMembersTiming = GuildMembersTiming
                           , guildMembersTimingAfter :: Maybe UserId
                           } deriving (Show, Read, Eq, Ord)
 
+-- | Data constructor for `GetGuildBans` requests.
+--
+-- See <https://discord.com/developers/docs/resources/guild#get-guild-bans>
+data GuildBansTiming = BeforeBan UserId
+                     | AfterBan UserId
+                     | FirstBans
+  deriving (Show, Read, Eq, Ord)
+
+-- | The maximum number of bans you can get in one `GetGuildBans` request, 1000. See the
+-- @limit@ query parameter at <https://discord.com/developers/docs/resources/guild#get-guild-bans>.
+maxGuildBansRequestNumber :: Int
+maxGuildBansRequestNumber = 1000
+
 -- | result for `ListGuildActiveThreads`
 data ListActiveThreads = ListActiveThreads
   { listActiveThreadsThreads :: [Channel]
@@ -337,6 +354,12 @@ guildMembersTimingToQuery (GuildMembersTiming mLimit mAfter) =
               Just aft -> "after" R.=: show aft
   in limit <> after
 
+guildBansTimingToQuery :: GuildBansTiming -> R.Option 'R.Https
+guildBansTimingToQuery t = case t of
+  (BeforeBan snow) -> "before" R.=: show snow
+  (AfterBan snow) -> "after" R.=: show snow
+  FirstBans -> mempty
+
 guildMajorRoute :: GuildRequest a -> String
 guildMajorRoute c = case c of
   (GetGuild g) ->                         "guild " <> show g
@@ -355,7 +378,7 @@ guildMajorRoute c = case c of
   (RemoveGuildMemberRole g _ _) ->  "guild_membs " <> show g
   (RemoveGuildMember g _) ->        "guild_membs " <> show g
   (GetGuildBan g _) ->               "guild_bans " <> show g
-  (GetGuildBans g) ->                "guild_bans " <> show g
+  (GetGuildBans g _) ->              "guild_bans " <> show g
   (CreateGuildBan g _ _) ->           "guild_ban " <> show g
   (RemoveGuildBan g _) ->             "guild_ban " <> show g
   (GetGuildRoles g) ->              "guild_roles " <> show g
@@ -435,7 +458,10 @@ guildJsonRequest c = case c of
 
   (GetGuildBan guild user) -> Get (guilds /~ guild /: "bans" /~ user) mempty
 
-  (GetGuildBans guild) -> Get (guilds /~ guild /: "bans") mempty
+  (GetGuildBans guild (n, timing)) ->
+      let n' = max 1 (min maxGuildBansRequestNumber n)
+          options = "limit" R.=: n' <> guildBansTimingToQuery timing
+      in Get (guilds /~ guild /: "bans") options
 
   (CreateGuildBan guild user patch) ->
       Put (guilds /~ guild /: "bans" /~ user) (R.ReqBodyJson patch) mempty
