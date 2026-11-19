@@ -71,6 +71,11 @@ userFacingEvent event = case event of
   InternalGuildRoleCreate a b -> GuildRoleCreate a b
   InternalGuildRoleUpdate a b -> GuildRoleUpdate a b
   InternalGuildRoleDelete a b -> GuildRoleDelete a b
+  InternalGuildScheduledEventCreate a -> GuildScheduledEventCreate a
+  InternalGuildScheduledEventUpdate a -> GuildScheduledEventUpdate a
+  InternalGuildScheduledEventDelete a -> GuildScheduledEventDelete a
+  InternalGuildScheduledEventUserAdd a -> GuildScheduledEventUserAdd a
+  InternalGuildScheduledEventUserRemove a -> GuildScheduledEventUserRemove a
   InternalMessageCreate a -> MessageCreate a
   InternalMessageUpdate a b -> MessageUpdate a b
   InternalMessageDelete a b -> MessageDelete a b
@@ -82,6 +87,8 @@ userFacingEvent event = case event of
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
   InternalInviteCreate a -> InviteCreate a
   InternalInviteDelete a -> InviteDelete a
+  InternalMessagePollVoteAdd a -> MessagePollVoteAdd a
+  InternalMessagePollVoteRemove a -> MessagePollVoteRemove a
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a

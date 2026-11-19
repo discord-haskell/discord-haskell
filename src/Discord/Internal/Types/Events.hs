@@ -94,6 +94,16 @@ data Event =
   | GuildRoleUpdate            GuildId Role
   -- | guild role was deleted
   | GuildRoleDelete            GuildId RoleId
+  -- | guild scheduled event was created
+  | GuildScheduledEventCreate  ScheduledEvent
+  -- | guild scheduled event was updated
+  | GuildScheduledEventUpdate  ScheduledEvent
+  -- | guild scheduled event was deleted
+  | GuildScheduledEventDelete  ScheduledEvent
+  -- | user subscribed to a guild scheduled event
+  | GuildScheduledEventUserAdd ScheduledEventUserInfo
+  -- | user unsubscribed from a guild scheduled event
+  | GuildScheduledEventUserRemove ScheduledEventUserInfo
   -- | message was created
   | MessageCreate              Message
   -- | message was updated
@@ -114,6 +124,10 @@ data Event =
   | InviteCreate               InviteCreateInfo
   -- | invite to a channel was deleted, requires the Invites intent
   | InviteDelete               InviteDeleteInfo
+  -- | user voted on a poll
+  | MessagePollVoteAdd         PollVoteInfo
+  -- | user removed a vote from a poll
+  | MessagePollVoteRemove      PollVoteInfo
   -- | user was updated
   | PresenceUpdate             PresenceInfo
   -- | user started typing in a channel
@@ -166,6 +180,11 @@ data EventInternalParse =
   | InternalGuildRoleCreate            GuildId Role
   | InternalGuildRoleUpdate            GuildId Role
   | InternalGuildRoleDelete            GuildId RoleId
+  | InternalGuildScheduledEventCreate  ScheduledEvent
+  | InternalGuildScheduledEventUpdate  ScheduledEvent
+  | InternalGuildScheduledEventDelete  ScheduledEvent
+  | InternalGuildScheduledEventUserAdd ScheduledEventUserInfo
+  | InternalGuildScheduledEventUserRemove ScheduledEventUserInfo
   | InternalMessageCreate              Message
   | InternalMessageUpdate              ChannelId MessageId
   | InternalMessageDelete              ChannelId MessageId
@@ -176,6 +195,8 @@ data EventInternalParse =
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
   | InternalInviteCreate               InviteCreateInfo
   | InternalInviteDelete               InviteDeleteInfo
+  | InternalMessagePollVoteAdd         PollVoteInfo
+  | InternalMessagePollVoteRemove      PollVoteInfo
   | InternalPresenceUpdate             PresenceInfo
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
@@ -321,6 +342,36 @@ instance FromJSON ReactionRemoveInfo where
                        <*> o .:  "message_id"
                        <*> o .:  "emoji"
 
+-- | Structure containing information about a user subscribing to or unsubscribing from a scheduled event
+data ScheduledEventUserInfo = ScheduledEventUserInfo
+  { scheduledEventUserEventId :: ScheduledEventId -- ^ The scheduled event the user subscribed to or unsubscribed from
+  , scheduledEventUserUserId  :: UserId -- ^ The user who subscribed or unsubscribed
+  , scheduledEventUserGuildId :: GuildId -- ^ Guild in which the scheduled event is
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON ScheduledEventUserInfo where
+  parseJSON = withObject "ScheduledEventUserInfo" $ \o ->
+    ScheduledEventUserInfo <$> o .: "guild_scheduled_event_id"
+                           <*> o .: "user_id"
+                           <*> o .: "guild_id"
+
+-- | Structure containing information about a vote added to or removed from a poll
+data PollVoteInfo = PollVoteInfo
+  { pollVoteUserId    :: UserId -- ^ User who voted or removed their vote
+  , pollVoteChannelId :: ChannelId -- ^ Channel in which the poll's message is
+  , pollVoteMessageId :: MessageId -- ^ The poll's message
+  , pollVoteGuildId   :: Maybe GuildId -- ^ Guild in which the poll's message is (if any)
+  , pollVoteAnswerId  :: Int -- ^ Id of the answer the vote is for
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON PollVoteInfo where
+  parseJSON = withObject "PollVoteInfo" $ \o ->
+    PollVoteInfo <$> o .:  "user_id"
+                 <*> o .:  "channel_id"
+                 <*> o .:  "message_id"
+                 <*> o .:? "guild_id"
+                 <*> o .:  "answer_id"
+
 -- | Structre containing typing status information
 data TypingInfo = TypingInfo
   { typingUserId    :: UserId
@@ -445,6 +496,11 @@ eventParse t o = case t of
     "GUILD_ROLE_CREATE"         -> InternalGuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_UPDATE"         -> InternalGuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_DELETE"         -> InternalGuildRoleDelete  <$> o .: "guild_id" <*> o .: "role_id"
+    "GUILD_SCHEDULED_EVENT_CREATE" -> InternalGuildScheduledEventCreate <$> reparse o
+    "GUILD_SCHEDULED_EVENT_UPDATE" -> InternalGuildScheduledEventUpdate <$> reparse o
+    "GUILD_SCHEDULED_EVENT_DELETE" -> InternalGuildScheduledEventDelete <$> reparse o
+    "GUILD_SCHEDULED_EVENT_USER_ADD" -> InternalGuildScheduledEventUserAdd <$> reparse o
+    "GUILD_SCHEDULED_EVENT_USER_REMOVE" -> InternalGuildScheduledEventUserRemove <$> reparse o
     "MESSAGE_CREATE"            -> InternalMessageCreate     <$> reparse o
     "MESSAGE_UPDATE"            -> InternalMessageUpdate     <$> o .: "channel_id" <*> o .: "id"
     "MESSAGE_DELETE"            -> InternalMessageDelete     <$> o .: "channel_id" <*> o .: "id"
@@ -455,6 +511,8 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
     "INVITE_CREATE"             -> InternalInviteCreate              <$> reparse o
     "INVITE_DELETE"             -> InternalInviteDelete              <$> reparse o
+    "MESSAGE_POLL_VOTE_ADD"     -> InternalMessagePollVoteAdd        <$> reparse o
+    "MESSAGE_POLL_VOTE_REMOVE"  -> InternalMessagePollVoteRemove     <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
