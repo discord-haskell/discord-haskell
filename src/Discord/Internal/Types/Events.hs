@@ -24,7 +24,7 @@ import Discord.Internal.Types.AuditLog (AuditLogEntry)
 import Discord.Internal.Types.AutoModeration (AutoModerationRule, AutoModerationRuleAction, AutoModerationRuleTriggerType)
 import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
-import Discord.Internal.Types.Emoji (Emoji)
+import Discord.Internal.Types.Emoji (Emoji, Sticker)
 import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
 
 
@@ -76,6 +76,8 @@ data Event =
   | GuildBanRemove             GuildId User
   -- | guild emojis were updated
   | GuildEmojiUpdate           GuildId [Emoji]
+  -- | guild stickers were updated, contains all of the guild's stickers
+  | GuildStickersUpdate        GuildId [Sticker]
   -- | guild integration was updated
   | GuildIntegrationsUpdate    GuildId
   -- | new user joined a guild
@@ -108,12 +110,18 @@ data Event =
   | MessageReactionRemoveAll   ReactionRemoveAllInfo
   -- | all reactions for a given emoji were explicitly removed from a message
   | MessageReactionRemoveEmoji ReactionRemoveInfo
+  -- | invite to a channel was created, requires the Invites intent
+  | InviteCreate               InviteCreateInfo
+  -- | invite to a channel was deleted, requires the Invites intent
+  | InviteDelete               InviteDeleteInfo
   -- | user was updated
   | PresenceUpdate             PresenceInfo
   -- | user started typing in a channel
   | TypingStart                TypingInfo
   -- | properties about the user changed
   | UserUpdate                 User
+  -- | a webhook of a channel was created, updated, or deleted, requires the Webhooks intent
+  | WebhooksUpdate             GuildId ChannelId
   -- | someone joined, left, or moved a voice channel
   | InteractionCreate          Interaction
   --  | VoiceStateUpdate
@@ -149,6 +157,7 @@ data EventInternalParse =
   | InternalGuildBanAdd                GuildId User
   | InternalGuildBanRemove             GuildId User
   | InternalGuildEmojiUpdate           GuildId [Emoji]
+  | InternalGuildStickersUpdate        GuildId [Sticker]
   | InternalGuildIntegrationsUpdate    GuildId
   | InternalGuildMemberAdd             GuildId GuildMember
   | InternalGuildMemberRemove          GuildId User
@@ -165,9 +174,12 @@ data EventInternalParse =
   | InternalMessageReactionRemove      ReactionInfo
   | InternalMessageReactionRemoveAll   ReactionRemoveAllInfo
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
+  | InternalInviteCreate               InviteCreateInfo
+  | InternalInviteDelete               InviteDeleteInfo
   | InternalPresenceUpdate             PresenceInfo
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
+  | InternalWebhooksUpdate             GuildId ChannelId
   | InternalInteractionCreate          Interaction
   --  | InternalVoiceStateUpdate
   --  | InternalVoiceServerUpdate
@@ -246,6 +258,53 @@ instance FromJSON ReactionRemoveAllInfo where
     ReactionRemoveAllInfo <$> o .:  "channel_id"
                           <*> o .:  "message_id"
                           <*> o .:? "guild_id"
+
+-- | Structure containing information about a created invite. Discord's @target_application@ is
+-- not decoded, since the library has no type for an invite's partial application
+data InviteCreateInfo = InviteCreateInfo
+  { inviteCreateChannelId  :: ChannelId -- ^ Channel the invite is for
+  , inviteCreateCode       :: T.Text -- ^ The invite code
+  , inviteCreateCreatedAt  :: UTCTime -- ^ When the invite was created
+  , inviteCreateGuildId    :: Maybe GuildId -- ^ Guild the invite is for
+  , inviteCreateInviter    :: Maybe User -- ^ User that created the invite
+  , inviteCreateMaxAge     :: Integer -- ^ Duration (in seconds) after which the invite expires, 0 for never
+  , inviteCreateMaxUses    :: Integer -- ^ Maximum number of times the invite can be used, 0 for unlimited
+  , inviteCreateTargetType :: Maybe Int -- ^ Type of target for a voice channel invite (1 for a stream, 2 for an embedded application)
+  , inviteCreateTargetUser :: Maybe User -- ^ User whose stream to display for a voice channel stream invite
+  , inviteCreateTemporary  :: Bool -- ^ Whether the invite only grants temporary membership
+  , inviteCreateUses       :: Integer -- ^ How many times the invite has been used (always 0)
+  , inviteCreateExpiresAt  :: Maybe UTCTime -- ^ When the invite expires, if it does
+  , inviteCreateRoleIds    :: Maybe [RoleId] -- ^ Roles the invite assigns to the user who accepts it
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON InviteCreateInfo where
+  parseJSON = withObject "InviteCreateInfo" $ \o ->
+    InviteCreateInfo <$> o .:  "channel_id"
+                     <*> o .:  "code"
+                     <*> o .:  "created_at"
+                     <*> o .:? "guild_id"
+                     <*> o .:? "inviter"
+                     <*> o .:  "max_age"
+                     <*> o .:  "max_uses"
+                     <*> o .:? "target_type"
+                     <*> o .:? "target_user"
+                     <*> o .:  "temporary"
+                     <*> o .:  "uses"
+                     <*> o .:? "expires_at"
+                     <*> o .:? "role_ids"
+
+-- | Structure containing information about a deleted invite
+data InviteDeleteInfo = InviteDeleteInfo
+  { inviteDeleteChannelId :: ChannelId -- ^ Channel the invite was for
+  , inviteDeleteGuildId   :: Maybe GuildId -- ^ Guild the invite was for
+  , inviteDeleteCode      :: T.Text -- ^ The invite code
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON InviteDeleteInfo where
+  parseJSON = withObject "InviteDeleteInfo" $ \o ->
+    InviteDeleteInfo <$> o .:  "channel_id"
+                     <*> o .:? "guild_id"
+                     <*> o .:  "code"
 
 -- | Structure containing information about a reaction that has been removed
 data ReactionRemoveInfo  = ReactionRemoveInfo
@@ -374,6 +433,7 @@ eventParse t o = case t of
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
     "GUILD_BAN_REMOVE"          -> InternalGuildBanRemove <$> o .: "guild_id" <*> o .: "user"
     "GUILD_EMOJI_UPDATE"        -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
+    "GUILD_STICKERS_UPDATE"     -> InternalGuildStickersUpdate <$> o .: "guild_id" <*> o .: "stickers"
     "GUILD_INTEGRATIONS_UPDATE" -> InternalGuildIntegrationsUpdate   <$> o .: "guild_id"
     "GUILD_MEMBER_ADD"          -> InternalGuildMemberAdd <$> o .: "guild_id" <*> reparse o
     "GUILD_MEMBER_REMOVE"       -> InternalGuildMemberRemove <$> o .: "guild_id" <*> o .: "user"
@@ -393,9 +453,12 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE"   -> InternalMessageReactionRemove <$> reparse o
     "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> reparse o
     "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
+    "INVITE_CREATE"             -> InternalInviteCreate              <$> reparse o
+    "INVITE_DELETE"             -> InternalInviteDelete              <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
+    "WEBHOOKS_UPDATE"           -> InternalWebhooksUpdate            <$> o .: "guild_id" <*> o .: "channel_id"
  -- "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
  -- "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
     "INTERACTION_CREATE"        -> InternalInteractionCreate         <$> reparse o

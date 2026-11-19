@@ -62,6 +62,7 @@ userFacingEvent event = case event of
   InternalGuildBanAdd a b -> GuildBanAdd a b
   InternalGuildBanRemove a b -> GuildBanRemove a b
   InternalGuildEmojiUpdate a b -> GuildEmojiUpdate a b
+  InternalGuildStickersUpdate a b -> GuildStickersUpdate a b
   InternalGuildIntegrationsUpdate a -> GuildIntegrationsUpdate a
   InternalGuildMemberAdd a b -> GuildMemberAdd a b
   InternalGuildMemberRemove a b -> GuildMemberRemove a b
@@ -79,8 +80,11 @@ userFacingEvent event = case event of
   InternalMessageReactionRemove a -> MessageReactionRemove a
   InternalMessageReactionRemoveAll a -> MessageReactionRemoveAll a
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
+  InternalInviteCreate a -> InviteCreate a
+  InternalInviteDelete a -> InviteDelete a
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
+  InternalWebhooksUpdate a b -> WebhooksUpdate a b
   InternalInteractionCreate a -> InteractionCreate a
   InternalUnknownEvent a b -> UnknownEvent a b
