@@ -26,6 +26,7 @@ import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
+import Discord.Internal.Types.Voice (VoiceState)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
@@ -114,10 +115,11 @@ data Event =
   | TypingStart                TypingInfo
   -- | properties about the user changed
   | UserUpdate                 User
-  -- | someone joined, left, or moved a voice channel
   | InteractionCreate          Interaction
-  --  | VoiceStateUpdate
-  --  | VoiceServerUpdate
+  -- | someone joined, left, or moved a voice channel
+  | VoiceStateUpdate           VoiceState
+  -- | a guild's voice server was updated, or a voice connection needs a new one
+  | VoiceServerUpdate          VoiceServerUpdateInfo
   -- | An Unknown Event, none of the others
   | UnknownEvent               T.Text Object
   deriving (Show, Eq)
@@ -169,8 +171,8 @@ data EventInternalParse =
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
   | InternalInteractionCreate          Interaction
-  --  | InternalVoiceStateUpdate
-  --  | InternalVoiceServerUpdate
+  | InternalVoiceStateUpdate           VoiceState
+  | InternalVoiceServerUpdate          VoiceServerUpdateInfo
   | InternalUnknownEvent               T.Text Object
   deriving (Show, Eq, Read)
 
@@ -188,7 +190,7 @@ data GuildCreateData = GuildCreateData
   , guildCreateLarge :: !Bool
   , guildCreateUnavailable :: !(Maybe Bool)
   , guildCreateMemberCount :: !Int
-  -- , guildCreateVoiceStates
+  , guildCreateVoiceStates :: ![VoiceState]
   , guildCreateMembers :: ![GuildMember]
   , guildCreateChannels :: ![Channel]
   , guildCreateThreads :: ![Channel]
@@ -203,13 +205,16 @@ parseGuildCreate o = do
   let gid = guildId guild
   channelValues :: [Object] <- o .: "channels"
   threadValues :: [Object] <- o .: "threads"
+  voiceStateValues :: [Object] <- o .: "voice_states"
   let wellFormedChannels = fmap (Object . KM.insert "guild_id" (toJSON gid)) channelValues
       wellFormedThreads = fmap (Object . KM.insert "guild_id" (toJSON gid)) threadValues
+      wellFormedVoiceStates = fmap (Object . KM.insert "guild_id" (toJSON gid)) voiceStateValues
   guildCreateData <-
     GuildCreateData <$> o .:  "joined_at"
                     <*> o .:  "large"
                     <*> o .:? "unavailable"
                     <*> o .:  "member_count"
+                    <*> traverse parseJSON wellFormedVoiceStates
                     <*> o .:  "members"
                     <*> traverse parseJSON wellFormedChannels
                     <*> traverse parseJSON wellFormedThreads
@@ -276,6 +281,19 @@ instance FromJSON TypingInfo where
        posix <- o .: "timestamp"
        let utc = posixSecondsToUTCTime posix
        pure (TypingInfo uid cid utc)
+
+-- | Structure containing the voice server a voice connection should use
+data VoiceServerUpdateInfo = VoiceServerUpdateInfo
+  { voiceServerUpdateToken :: T.Text -- ^ Voice connection token
+  , voiceServerUpdateGuildId :: GuildId -- ^ Guild the voice server is for
+  , voiceServerUpdateEndpoint :: Maybe T.Text -- ^ Voice server host, or 'Nothing' if the voice server has gone away
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON VoiceServerUpdateInfo where
+  parseJSON = withObject "VoiceServerUpdateInfo" $ \o ->
+    VoiceServerUpdateInfo <$> o .:  "token"
+                          <*> o .:  "guild_id"
+                          <*> o .:? "endpoint"
 
 -- | Structure containing auto moderation action execution information
 data AutoModerationActionExecuteInfo = AutoModerationActionExecuteInfo
@@ -396,7 +414,7 @@ eventParse t o = case t of
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
- -- "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
- -- "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
+    "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
+    "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
     "INTERACTION_CREATE"        -> InternalInteractionCreate         <$> reparse o
     _other_event                -> InternalUnknownEvent t            <$> reparse o

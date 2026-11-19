@@ -14,6 +14,7 @@ module Discord.Internal.Types
     module Discord.Internal.Types.RolePermissions,
     module Discord.Internal.Types.AutoModeration,
     module Discord.Internal.Types.AuditLog,
+    module Discord.Internal.Types.Voice,
     module Data.Aeson,
     module Data.Time.Clock,
     userFacingEvent,
@@ -36,6 +37,7 @@ import Discord.Internal.Types.User
 import Discord.Internal.Types.RolePermissions
 import Discord.Internal.Types.AutoModeration
 import Discord.Internal.Types.AuditLog hiding ( MkAuditLogEvent )
+import Discord.Internal.Types.Voice
 
 -- | Converts an internal event to its user facing counterpart
 userFacingEvent :: EventInternalParse -> Event
@@ -83,4 +85,6 @@ userFacingEvent event = case event of
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
   InternalInteractionCreate a -> InteractionCreate a
+  InternalVoiceStateUpdate a -> VoiceStateUpdate a
+  InternalVoiceServerUpdate a -> VoiceServerUpdate a
   InternalUnknownEvent a b -> UnknownEvent a b

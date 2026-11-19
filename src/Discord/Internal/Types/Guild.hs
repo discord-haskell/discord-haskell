@@ -326,7 +326,7 @@ roleIdToRole :: Guild -> RoleId -> Maybe Role
 roleIdToRole  g r = find(\x -> roleId x == r) $ guildRoles g
 
 
--- | VoiceRegion is only refrenced in Guild endpoints, will be moved when voice support is added
+-- | VoiceRegion is referenced in both the Guild and the Voice endpoints
 data VoiceRegion = VoiceRegion
       { voiceRegionId          :: T.Text      -- ^ Unique id of the region
       , voiceRegionName        :: T.Text      -- ^ Name of the region
