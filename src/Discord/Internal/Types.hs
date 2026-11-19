@@ -66,7 +66,7 @@ userFacingEvent event = case event of
   InternalGuildIntegrationsUpdate a -> GuildIntegrationsUpdate a
   InternalGuildMemberAdd a b -> GuildMemberAdd a b
   InternalGuildMemberRemove a b -> GuildMemberRemove a b
-  InternalGuildMemberUpdate a b c d -> GuildMemberUpdate a b c d
+  InternalGuildMemberUpdate a -> GuildMemberUpdate a
   InternalGuildMemberChunk a b -> GuildMemberChunk a b
   InternalGuildRoleCreate a b -> GuildRoleCreate a b
   InternalGuildRoleUpdate a b -> GuildRoleUpdate a b

@@ -85,7 +85,7 @@ data Event =
   -- | user was removed from a guild
   | GuildMemberRemove          GuildId User
   -- | guild member was updated
-  | GuildMemberUpdate          GuildId [RoleId] User (Maybe T.Text)
+  | GuildMemberUpdate          GuildMemberUpdateInfo
   -- | response to @Request Guild Members@ gateway command
   | GuildMemberChunk           GuildId [GuildMember]
   -- | guild role was created
@@ -175,7 +175,7 @@ data EventInternalParse =
   | InternalGuildIntegrationsUpdate    GuildId
   | InternalGuildMemberAdd             GuildId GuildMember
   | InternalGuildMemberRemove          GuildId User
-  | InternalGuildMemberUpdate          GuildId [RoleId] User (Maybe T.Text)
+  | InternalGuildMemberUpdate          GuildMemberUpdateInfo
   | InternalGuildMemberChunk           GuildId [GuildMember]
   | InternalGuildRoleCreate            GuildId Role
   | InternalGuildRoleUpdate            GuildId Role
@@ -266,6 +266,38 @@ instance FromJSON ReactionInfo where
                  <*> o .:  "channel_id"
                  <*> o .:  "message_id"
                  <*> o .:  "emoji"
+
+-- | Structure containing information about an updated guild member. Discord's
+-- @avatar_decoration_data@ and @collectibles@ are not decoded, since the library has no type for them
+data GuildMemberUpdateInfo = GuildMemberUpdateInfo
+  { guildMemberUpdateGuildId      :: GuildId -- ^ Guild in which the member was updated
+  , guildMemberUpdateRoles        :: [RoleId] -- ^ The member's role ids
+  , guildMemberUpdateUser         :: User -- ^ The user the member belongs to
+  , guildMemberUpdateNick         :: Maybe T.Text -- ^ The member's guild nickname
+  , guildMemberUpdateAvatar       :: Maybe T.Text -- ^ The member's guild avatar hash
+  , guildMemberUpdateBanner       :: Maybe T.Text -- ^ The member's guild banner hash
+  , guildMemberUpdateJoinedAt     :: Maybe UTCTime -- ^ When the user joined the guild
+  , guildMemberUpdatePremiumSince :: Maybe UTCTime -- ^ When the user started boosting the guild
+  , guildMemberUpdateDeaf         :: Maybe Bool -- ^ Whether the user is deafened in voice channels
+  , guildMemberUpdateMute         :: Maybe Bool -- ^ Whether the user is muted in voice channels
+  , guildMemberUpdatePending      :: Maybe Bool -- ^ Whether the user has not yet passed the guild's membership screening
+  , guildMemberUpdateTimeoutEnd   :: Maybe UTCTime -- ^ When the member's timeout will expire and they can communicate again
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON GuildMemberUpdateInfo where
+  parseJSON = withObject "GuildMemberUpdateInfo" $ \o ->
+    GuildMemberUpdateInfo <$> o .:  "guild_id"
+                          <*> o .:  "roles"
+                          <*> o .:  "user"
+                          <*> o .:? "nick"
+                          <*> o .:? "avatar"
+                          <*> o .:? "banner"
+                          <*> o .:? "joined_at"
+                          <*> o .:? "premium_since"
+                          <*> o .:? "deaf"
+                          <*> o .:? "mute"
+                          <*> o .:? "pending"
+                          <*> o .:? "communication_disabled_until"
 
 -- | Structure containing information about an updated message
 data MessageUpdateInfo = MessageUpdateInfo
@@ -527,10 +559,7 @@ eventParse t o = case t of
     "GUILD_INTEGRATIONS_UPDATE" -> InternalGuildIntegrationsUpdate   <$> o .: "guild_id"
     "GUILD_MEMBER_ADD"          -> InternalGuildMemberAdd <$> o .: "guild_id" <*> reparse o
     "GUILD_MEMBER_REMOVE"       -> InternalGuildMemberRemove <$> o .: "guild_id" <*> o .: "user"
-    "GUILD_MEMBER_UPDATE"       -> InternalGuildMemberUpdate <$> o .: "guild_id"
-                                                             <*> o .: "roles"
-                                                             <*> o .: "user"
-                                                             <*> o .:? "nick"
+    "GUILD_MEMBER_UPDATE"       -> InternalGuildMemberUpdate <$> reparse o
     "GUILD_MEMBERS_CHUNK"       -> InternalGuildMemberChunk <$> o .: "guild_id" <*> o .: "members"
     "GUILD_ROLE_CREATE"         -> InternalGuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_UPDATE"         -> InternalGuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
