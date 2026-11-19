@@ -30,6 +30,7 @@ import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
 import Discord.Internal.Types.Soundboard (SoundboardSound)
+import Discord.Internal.Types.StageInstance (StageInstance)
 import Discord.Internal.Types.Voice (VoiceState)
 
 
@@ -125,6 +126,12 @@ data Event =
   | PresenceUpdate             PresenceInfo
   -- | response to @Request Soundboard Sounds@ gateway command
   | SoundboardSounds           GuildId [SoundboardSound]
+  -- | stage instance was created, the stage is now live
+  | StageInstanceCreate        StageInstance
+  -- | stage instance was updated
+  | StageInstanceUpdate        StageInstance
+  -- | stage instance was deleted or closed
+  | StageInstanceDelete        StageInstance
   -- | user started typing in a channel
   | TypingStart                TypingInfo
   -- | properties about the user changed
@@ -189,6 +196,9 @@ data EventInternalParse =
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
   | InternalPresenceUpdate             PresenceInfo
   | InternalSoundboardSounds           GuildId [SoundboardSound]
+  | InternalStageInstanceCreate        StageInstance
+  | InternalStageInstanceUpdate        StageInstance
+  | InternalStageInstanceDelete        StageInstance
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
   | InternalInteractionCreate          Interaction
@@ -217,7 +227,7 @@ data GuildCreateData = GuildCreateData
   , guildCreateChannels :: ![Channel]
   , guildCreateThreads :: ![Channel]
   , guildCreatePresences :: ![PresenceInfo]
-  -- , guildStageInstances :: [StageI]
+  , guildCreateStageInstances :: ![StageInstance]
   , guildCreateScheduledEvents :: ![ScheduledEvent]
   , guildCreateSoundboardSounds :: ![SoundboardSound]
   } deriving (Show, Eq, Read)
@@ -242,6 +252,7 @@ parseGuildCreate o = do
                     <*> traverse parseJSON wellFormedChannels
                     <*> traverse parseJSON wellFormedThreads
                     <*> o .:  "presences"
+                    <*> o .:  "stage_instances"
                     <*> o .:  "guild_scheduled_events"
                     <*> o .:  "soundboard_sounds"
   pure $ InternalGuildCreate guild guildCreateData
@@ -485,6 +496,9 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
     "SOUNDBOARD_SOUNDS"         -> InternalSoundboardSounds          <$> o .: "guild_id" <*> o .: "soundboard_sounds"
+    "STAGE_INSTANCE_CREATE"     -> InternalStageInstanceCreate       <$> reparse o
+    "STAGE_INSTANCE_UPDATE"     -> InternalStageInstanceUpdate       <$> reparse o
+    "STAGE_INSTANCE_DELETE"     -> InternalStageInstanceDelete       <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
     "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o

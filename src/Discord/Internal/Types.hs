@@ -15,6 +15,7 @@ module Discord.Internal.Types
     module Discord.Internal.Types.AutoModeration,
     module Discord.Internal.Types.AuditLog,
     module Discord.Internal.Types.Soundboard,
+    module Discord.Internal.Types.StageInstance,
     module Discord.Internal.Types.Voice,
     module Data.Aeson,
     module Data.Time.Clock,
@@ -39,6 +40,7 @@ import Discord.Internal.Types.RolePermissions
 import Discord.Internal.Types.AutoModeration
 import Discord.Internal.Types.AuditLog hiding ( MkAuditLogEvent )
 import Discord.Internal.Types.Soundboard
+import Discord.Internal.Types.StageInstance
 import Discord.Internal.Types.Voice
 
 -- | Converts an internal event to its user facing counterpart
@@ -89,6 +91,9 @@ userFacingEvent event = case event of
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalSoundboardSounds a b -> SoundboardSounds a b
+  InternalStageInstanceCreate a -> StageInstanceCreate a
+  InternalStageInstanceUpdate a -> StageInstanceUpdate a
+  InternalStageInstanceDelete a -> StageInstanceDelete a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
   InternalInteractionCreate a -> InteractionCreate a
