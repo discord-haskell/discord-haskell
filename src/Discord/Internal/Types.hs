@@ -62,25 +62,36 @@ userFacingEvent event = case event of
   InternalGuildBanAdd a b -> GuildBanAdd a b
   InternalGuildBanRemove a b -> GuildBanRemove a b
   InternalGuildEmojiUpdate a b -> GuildEmojiUpdate a b
+  InternalGuildStickersUpdate a b -> GuildStickersUpdate a b
   InternalGuildIntegrationsUpdate a -> GuildIntegrationsUpdate a
   InternalGuildMemberAdd a b -> GuildMemberAdd a b
   InternalGuildMemberRemove a b -> GuildMemberRemove a b
-  InternalGuildMemberUpdate a b c d -> GuildMemberUpdate a b c d
+  InternalGuildMemberUpdate a -> GuildMemberUpdate a
   InternalGuildMemberChunk a b -> GuildMemberChunk a b
   InternalGuildRoleCreate a b -> GuildRoleCreate a b
   InternalGuildRoleUpdate a b -> GuildRoleUpdate a b
   InternalGuildRoleDelete a b -> GuildRoleDelete a b
+  InternalGuildScheduledEventCreate a -> GuildScheduledEventCreate a
+  InternalGuildScheduledEventUpdate a -> GuildScheduledEventUpdate a
+  InternalGuildScheduledEventDelete a -> GuildScheduledEventDelete a
+  InternalGuildScheduledEventUserAdd a -> GuildScheduledEventUserAdd a
+  InternalGuildScheduledEventUserRemove a -> GuildScheduledEventUserRemove a
   InternalMessageCreate a -> MessageCreate a
-  InternalMessageUpdate a b -> MessageUpdate a b
-  InternalMessageDelete a b -> MessageDelete a b
+  InternalMessageUpdate a -> MessageUpdate a
+  InternalMessageDelete a -> MessageDelete a
   InternalGuildAuditLogEntryCreate a b -> GuildAuditLogEntryCreate a b
-  InternalMessageDeleteBulk a b -> MessageDeleteBulk a b
+  InternalMessageDeleteBulk a -> MessageDeleteBulk a
   InternalMessageReactionAdd a -> MessageReactionAdd a
   InternalMessageReactionRemove a -> MessageReactionRemove a
   InternalMessageReactionRemoveAll a -> MessageReactionRemoveAll a
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
+  InternalInviteCreate a -> InviteCreate a
+  InternalInviteDelete a -> InviteDelete a
+  InternalMessagePollVoteAdd a -> MessagePollVoteAdd a
+  InternalMessagePollVoteRemove a -> MessagePollVoteRemove a
   InternalPresenceUpdate a -> PresenceUpdate a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
+  InternalWebhooksUpdate a b -> WebhooksUpdate a b
   InternalInteractionCreate a -> InteractionCreate a
   InternalUnknownEvent a b -> UnknownEvent a b
