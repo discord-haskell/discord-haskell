@@ -373,7 +373,7 @@ eventParse t o = case t of
     "GUILD_AUDIT_LOG_ENTRY_CREATE" -> InternalGuildAuditLogEntryCreate <$> o .: "guild_id" <*> reparse o
     "GUILD_BAN_ADD"             -> InternalGuildBanAdd    <$> o .: "guild_id" <*> o .: "user"
     "GUILD_BAN_REMOVE"          -> InternalGuildBanRemove <$> o .: "guild_id" <*> o .: "user"
-    "GUILD_EMOJI_UPDATE"        -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
+    "GUILD_EMOJIS_UPDATE"       -> InternalGuildEmojiUpdate <$> o .: "guild_id" <*> o .: "emojis"
     "GUILD_INTEGRATIONS_UPDATE" -> InternalGuildIntegrationsUpdate   <$> o .: "guild_id"
     "GUILD_MEMBER_ADD"          -> InternalGuildMemberAdd <$> o .: "guild_id" <*> reparse o
     "GUILD_MEMBER_REMOVE"       -> InternalGuildMemberRemove <$> o .: "guild_id" <*> o .: "user"

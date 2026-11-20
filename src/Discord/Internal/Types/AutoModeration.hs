@@ -53,19 +53,21 @@ instance ToJSON AutoModerationRule where
     , ("exempt_channels", toJSON autoModerationRuleExemptChannels)
     ]
 
--- Discord makes it pretty clear they left room for updates, so far this is the only event type
 -- See <https://discord.com/developers/docs/resources/auto-moderation#auto-moderation-rule-object-event-types>
 data AutoModerationRuleEventType
   = MessageSent
+  | MemberUpdate
   deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleEventType where
   parseJSON = withScientific "AutoModerationRuleEventType" $ \v -> case toBoundedInteger v :: Maybe Int of
     Just 1 -> return MessageSent
+    Just 2 -> return MemberUpdate
     _      -> fail $ "Could not parse event type: " <> show v
 
 instance ToJSON AutoModerationRuleEventType where
-  toJSON MessageSent = Number 1
+  toJSON MessageSent  = Number 1
+  toJSON MemberUpdate = Number 2
 
 
 data AutoModerationRuleTriggerType
@@ -73,6 +75,7 @@ data AutoModerationRuleTriggerType
   | Spam
   | KeywordPreset
   | MentionSpam
+  | MemberProfile
   deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleTriggerType where
@@ -81,6 +84,7 @@ instance FromJSON AutoModerationRuleTriggerType where
     Just 3 -> return Spam
     Just 4 -> return KeywordPreset
     Just 5 -> return MentionSpam
+    Just 6 -> return MemberProfile
     _      -> fail $ "Could not parse trigger type: " <> show v
 
 instance ToJSON AutoModerationRuleTriggerType where
@@ -88,6 +92,7 @@ instance ToJSON AutoModerationRuleTriggerType where
   toJSON Spam           = Number 3
   toJSON KeywordPreset  = Number 4
   toJSON MentionSpam    = Number 5
+  toJSON MemberProfile  = Number 6
 
 data AutoModerationRuleTriggerMetadata = AutoModerationRuleTriggerMetadata
   { autoModerationRuleTriggerMetadataKeywordFilter  :: [String]
@@ -145,31 +150,34 @@ instance FromJSON AutoModerationRuleAction where
   parseJSON = withObject "AutoModerationRuleAction" $ \o ->
     AutoModerationRuleAction
       <$> o .: "type"
-      <*> o .: "metadata"
+      <*> o .:? "metadata"
 
 instance ToJSON AutoModerationRuleAction where
-  toJSON AutoModerationRuleAction{..} = object 
-    [ ("type", toJSON autoModerationRuleActionType)
-    , ("metadata", toJSON autoModerationRuleActionMetadata)
+  toJSON AutoModerationRuleAction{..} = objectFromMaybes
+    [ "type"     .== autoModerationRuleActionType
+    , "metadata" .=? autoModerationRuleActionMetadata
     ]
 
 data AutoModerationRuleActionType
   = BlockMessage
   | SendAlertMessage
   | Timeout
+  | BlockMemberInteraction
   deriving ( Eq, Show, Read )
 
 instance FromJSON AutoModerationRuleActionType where
   parseJSON = withScientific "AutoModerationRuleActionType" $ \v -> case toBoundedInteger v :: Maybe Int of
     Just 1 -> return BlockMessage
-    Just 3 -> return SendAlertMessage
-    Just 4 -> return Timeout
+    Just 2 -> return SendAlertMessage
+    Just 3 -> return Timeout
+    Just 4 -> return BlockMemberInteraction
     _      -> fail $ "Could not parse action type: " <> show v
 
 instance ToJSON AutoModerationRuleActionType where
-  toJSON BlockMessage     = Number 1
-  toJSON SendAlertMessage = Number 2
-  toJSON Timeout          = Number 3
+  toJSON BlockMessage           = Number 1
+  toJSON SendAlertMessage       = Number 2
+  toJSON Timeout                = Number 3
+  toJSON BlockMemberInteraction = Number 4
 
 data AutoModerationRuleActionMetadata = AutoModerationRuleActionMetadata
   { autoModerationRuleActionMetadataChannelId       :: Maybe ChannelId

@@ -515,7 +515,7 @@ instance FromJSON Overwrite where
     i <- case (t :: Int) of
       0 -> Left <$> o .: "id"
       1 -> Right <$> o .: "id"
-      _ -> error "Type field can only be 0 (role id) or 1 (user id)"
+      _ -> fail "Type field can only be 0 (role id) or 1 (user id)"
     Overwrite i
               <$> o .: "allow"
               <*> o .: "deny"
