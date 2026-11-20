@@ -38,6 +38,7 @@ module Discord.Internal.Types.Prelude
   , ScheduledEventEntityId
   , AuditLogEntryId
   , AutoModerationRuleId
+  , SoundboardSoundId
 
   , DiscordToken (..)
   , InteractionToken
@@ -197,6 +198,9 @@ type AuditLogEntryId = DiscordId AuditLogEntryIdType
 
 data AutoModerationRuleIdType
 type AutoModerationRuleId = DiscordId AutoModerationRuleIdType
+
+data SoundboardSoundIdType
+type SoundboardSoundId = DiscordId SoundboardSoundIdType
 
 newtype DiscordToken a = DiscordToken { unToken :: T.Text }
   deriving newtype (Ord, Eq, Show, Read, ToJSON, FromJSON, ToHttpApiData)

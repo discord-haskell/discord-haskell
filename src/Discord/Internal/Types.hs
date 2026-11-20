@@ -14,6 +14,9 @@ module Discord.Internal.Types
     module Discord.Internal.Types.RolePermissions,
     module Discord.Internal.Types.AutoModeration,
     module Discord.Internal.Types.AuditLog,
+    module Discord.Internal.Types.Soundboard,
+    module Discord.Internal.Types.StageInstance,
+    module Discord.Internal.Types.Voice,
     module Data.Aeson,
     module Data.Time.Clock,
     userFacingEvent,
@@ -36,6 +39,9 @@ import Discord.Internal.Types.User
 import Discord.Internal.Types.RolePermissions
 import Discord.Internal.Types.AutoModeration
 import Discord.Internal.Types.AuditLog hiding ( MkAuditLogEvent )
+import Discord.Internal.Types.Soundboard
+import Discord.Internal.Types.StageInstance
+import Discord.Internal.Types.Voice
 
 -- | Converts an internal event to its user facing counterpart
 userFacingEvent :: EventInternalParse -> Event
@@ -70,6 +76,10 @@ userFacingEvent event = case event of
   InternalGuildRoleCreate a b -> GuildRoleCreate a b
   InternalGuildRoleUpdate a b -> GuildRoleUpdate a b
   InternalGuildRoleDelete a b -> GuildRoleDelete a b
+  InternalGuildSoundboardSoundCreate a -> GuildSoundboardSoundCreate a
+  InternalGuildSoundboardSoundUpdate a -> GuildSoundboardSoundUpdate a
+  InternalGuildSoundboardSoundDelete a b -> GuildSoundboardSoundDelete a b
+  InternalGuildSoundboardSoundsUpdate a b -> GuildSoundboardSoundsUpdate a b
   InternalMessageCreate a -> MessageCreate a
   InternalMessageUpdate a b -> MessageUpdate a b
   InternalMessageDelete a b -> MessageDelete a b
@@ -80,7 +90,14 @@ userFacingEvent event = case event of
   InternalMessageReactionRemoveAll a -> MessageReactionRemoveAll a
   InternalMessageReactionRemoveEmoji a -> MessageReactionRemoveEmoji a
   InternalPresenceUpdate a -> PresenceUpdate a
+  InternalSoundboardSounds a b -> SoundboardSounds a b
+  InternalStageInstanceCreate a -> StageInstanceCreate a
+  InternalStageInstanceUpdate a -> StageInstanceUpdate a
+  InternalStageInstanceDelete a -> StageInstanceDelete a
   InternalTypingStart a -> TypingStart a
   InternalUserUpdate a -> UserUpdate a
   InternalInteractionCreate a -> InteractionCreate a
+  InternalVoiceStateUpdate a -> VoiceStateUpdate a
+  InternalVoiceServerUpdate a -> VoiceServerUpdate a
+  InternalVoiceChannelEffectSend a -> VoiceChannelEffectSend a
   InternalUnknownEvent a b -> UnknownEvent a b

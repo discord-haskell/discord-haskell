@@ -154,6 +154,8 @@ library
     , Discord.Internal.Rest.Guild
     , Discord.Internal.Rest.Channel
     , Discord.Internal.Rest.Voice
+    , Discord.Internal.Rest.Soundboard
+    , Discord.Internal.Rest.StageInstance
     , Discord.Internal.Rest.Webhook
     , Discord.Internal.Rest.ApplicationCommands
     , Discord.Internal.Rest.ApplicationInfo
@@ -178,6 +180,9 @@ library
     , Discord.Internal.Types.ScheduledEvents
     , Discord.Internal.Types.AutoModeration
     , Discord.Internal.Types.AuditLog
+    , Discord.Internal.Types.Voice
+    , Discord.Internal.Types.Soundboard
+    , Discord.Internal.Types.StageInstance
   build-depends:
   -- https://gitlab.haskell.org/ghc/ghc/-/wikis/commentary/libraries/version-history
   -- below also sets the GHC version effectively. set to == 8.10.*, == 9.0.*., == 9.2.*, == 9.4.*, == 9.6.*, == 9.8.*, == 9.10.*, == 9.12.*, == 9.14.*

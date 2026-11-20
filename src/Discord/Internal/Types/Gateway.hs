@@ -116,6 +116,7 @@ data GatewaySendable
   = RequestGuildMembers RequestGuildMembersOpts
   | UpdateStatus UpdateStatusOpts
   | UpdateStatusVoice UpdateStatusVoiceOpts
+  | RequestSoundboardSounds RequestSoundboardSoundsOpts
   deriving (Show, Read, Eq, Ord)
 
 -- | Options for `RequestGuildMembers`
@@ -123,6 +124,11 @@ data RequestGuildMembersOpts = RequestGuildMembersOpts
                              { requestGuildMembersOptsGuildId :: GuildId
                              , requestGuildMembersOptsNamesStartingWith :: T.Text
                              , requestGuildMembersOptsLimit :: Integer }
+  deriving (Show, Read, Eq, Ord)
+
+-- | Options for `RequestSoundboardSounds`
+newtype RequestSoundboardSoundsOpts = RequestSoundboardSoundsOpts
+                                    { requestSoundboardSoundsOptsGuildIds :: [GuildId] }
   deriving (Show, Read, Eq, Ord)
 
 -- | Options for `UpdateStatusVoice`
@@ -247,5 +253,12 @@ instance ToJSON GatewaySendable where
         "guild_id" .= guild
       , "query"    .= query
       , "limit"    .= limit
+      ]
+    ]
+  toJSON (RequestSoundboardSounds (RequestSoundboardSoundsOpts guilds)) =
+    object [
+      "op" .= (31 :: Int)
+    , "d"  .= object [
+        "guild_ids" .= guilds
       ]
     ]

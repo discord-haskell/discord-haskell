@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 -- | Data structures pertaining to gateway dispatch 'Event's
 module Discord.Internal.Types.Events where
@@ -10,6 +11,8 @@ import Prelude hiding (id)
 import Data.Time.ISO8601 (parseISO8601)
 import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
+import Data.Data (Data)
+import Data.Scientific (toBoundedInteger)
 import Network.Socket (HostName)
 
 import Data.Aeson
@@ -26,6 +29,9 @@ import Discord.Internal.Types.User (User, GuildMember)
 import Discord.Internal.Types.Interactions (Interaction)
 import Discord.Internal.Types.Emoji (Emoji)
 import Discord.Internal.Types.ScheduledEvents (ScheduledEvent)
+import Discord.Internal.Types.Soundboard (SoundboardSound)
+import Discord.Internal.Types.StageInstance (StageInstance)
+import Discord.Internal.Types.Voice (VoiceState)
 
 
 -- | Represents possible events sent by discord. Detailed information can be found at <https://discord.com/developers/docs/topics/gateway>.
@@ -92,6 +98,14 @@ data Event =
   | GuildRoleUpdate            GuildId Role
   -- | guild role was deleted
   | GuildRoleDelete            GuildId RoleId
+  -- | guild soundboard sound was created
+  | GuildSoundboardSoundCreate SoundboardSound
+  -- | guild soundboard sound was updated
+  | GuildSoundboardSoundUpdate SoundboardSound
+  -- | guild soundboard sound was deleted
+  | GuildSoundboardSoundDelete GuildId SoundboardSoundId
+  -- | multiple guild soundboard sounds were updated
+  | GuildSoundboardSoundsUpdate GuildId [SoundboardSound]
   -- | message was created
   | MessageCreate              Message
   -- | message was updated
@@ -110,14 +124,25 @@ data Event =
   | MessageReactionRemoveEmoji ReactionRemoveInfo
   -- | user was updated
   | PresenceUpdate             PresenceInfo
+  -- | response to @Request Soundboard Sounds@ gateway command
+  | SoundboardSounds           GuildId [SoundboardSound]
+  -- | stage instance was created, the stage is now live
+  | StageInstanceCreate        StageInstance
+  -- | stage instance was updated
+  | StageInstanceUpdate        StageInstance
+  -- | stage instance was deleted or closed
+  | StageInstanceDelete        StageInstance
   -- | user started typing in a channel
   | TypingStart                TypingInfo
   -- | properties about the user changed
   | UserUpdate                 User
-  -- | someone joined, left, or moved a voice channel
   | InteractionCreate          Interaction
-  --  | VoiceStateUpdate
-  --  | VoiceServerUpdate
+  -- | someone joined, left, or moved a voice channel
+  | VoiceStateUpdate           VoiceState
+  -- | a guild's voice server was updated, or a voice connection needs a new one
+  | VoiceServerUpdate          VoiceServerUpdateInfo
+  -- | someone sent an effect, such as an emoji reaction or a soundboard sound, in a voice channel
+  | VoiceChannelEffectSend     VoiceChannelEffectInfo
   -- | An Unknown Event, none of the others
   | UnknownEvent               T.Text Object
   deriving (Show, Eq)
@@ -157,6 +182,10 @@ data EventInternalParse =
   | InternalGuildRoleCreate            GuildId Role
   | InternalGuildRoleUpdate            GuildId Role
   | InternalGuildRoleDelete            GuildId RoleId
+  | InternalGuildSoundboardSoundCreate SoundboardSound
+  | InternalGuildSoundboardSoundUpdate SoundboardSound
+  | InternalGuildSoundboardSoundDelete GuildId SoundboardSoundId
+  | InternalGuildSoundboardSoundsUpdate GuildId [SoundboardSound]
   | InternalMessageCreate              Message
   | InternalMessageUpdate              ChannelId MessageId
   | InternalMessageDelete              ChannelId MessageId
@@ -166,11 +195,16 @@ data EventInternalParse =
   | InternalMessageReactionRemoveAll   ReactionRemoveAllInfo
   | InternalMessageReactionRemoveEmoji ReactionRemoveInfo
   | InternalPresenceUpdate             PresenceInfo
+  | InternalSoundboardSounds           GuildId [SoundboardSound]
+  | InternalStageInstanceCreate        StageInstance
+  | InternalStageInstanceUpdate        StageInstance
+  | InternalStageInstanceDelete        StageInstance
   | InternalTypingStart                TypingInfo
   | InternalUserUpdate                 User
   | InternalInteractionCreate          Interaction
-  --  | InternalVoiceStateUpdate
-  --  | InternalVoiceServerUpdate
+  | InternalVoiceStateUpdate           VoiceState
+  | InternalVoiceServerUpdate          VoiceServerUpdateInfo
+  | InternalVoiceChannelEffectSend     VoiceChannelEffectInfo
   | InternalUnknownEvent               T.Text Object
   deriving (Show, Eq, Read)
 
@@ -188,13 +222,14 @@ data GuildCreateData = GuildCreateData
   , guildCreateLarge :: !Bool
   , guildCreateUnavailable :: !(Maybe Bool)
   , guildCreateMemberCount :: !Int
-  -- , guildCreateVoiceStates
+  , guildCreateVoiceStates :: ![VoiceState]
   , guildCreateMembers :: ![GuildMember]
   , guildCreateChannels :: ![Channel]
   , guildCreateThreads :: ![Channel]
   , guildCreatePresences :: ![PresenceInfo]
-  -- , guildStageInstances :: [StageI]
+  , guildCreateStageInstances :: ![StageInstance]
   , guildCreateScheduledEvents :: ![ScheduledEvent]
+  , guildCreateSoundboardSounds :: ![SoundboardSound]
   } deriving (Show, Eq, Read)
 
 parseGuildCreate :: Object -> Parser EventInternalParse
@@ -203,18 +238,23 @@ parseGuildCreate o = do
   let gid = guildId guild
   channelValues :: [Object] <- o .: "channels"
   threadValues :: [Object] <- o .: "threads"
+  voiceStateValues :: [Object] <- o .: "voice_states"
   let wellFormedChannels = fmap (Object . KM.insert "guild_id" (toJSON gid)) channelValues
       wellFormedThreads = fmap (Object . KM.insert "guild_id" (toJSON gid)) threadValues
+      wellFormedVoiceStates = fmap (Object . KM.insert "guild_id" (toJSON gid)) voiceStateValues
   guildCreateData <-
     GuildCreateData <$> o .:  "joined_at"
                     <*> o .:  "large"
                     <*> o .:? "unavailable"
                     <*> o .:  "member_count"
+                    <*> traverse parseJSON wellFormedVoiceStates
                     <*> o .:  "members"
                     <*> traverse parseJSON wellFormedChannels
                     <*> traverse parseJSON wellFormedThreads
                     <*> o .:  "presences"
+                    <*> o .:  "stage_instances"
                     <*> o .:  "guild_scheduled_events"
+                    <*> o .:  "soundboard_sounds"
   pure $ InternalGuildCreate guild guildCreateData
 
 -- | Structure containing information about a reaction
@@ -276,6 +316,63 @@ instance FromJSON TypingInfo where
        posix <- o .: "timestamp"
        let utc = posixSecondsToUTCTime posix
        pure (TypingInfo uid cid utc)
+
+-- | Structure containing the voice server a voice connection should use
+data VoiceServerUpdateInfo = VoiceServerUpdateInfo
+  { voiceServerUpdateToken :: T.Text -- ^ Voice connection token
+  , voiceServerUpdateGuildId :: GuildId -- ^ Guild the voice server is for
+  , voiceServerUpdateEndpoint :: Maybe T.Text -- ^ Voice server host, or 'Nothing' if the voice server has gone away
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON VoiceServerUpdateInfo where
+  parseJSON = withObject "VoiceServerUpdateInfo" $ \o ->
+    VoiceServerUpdateInfo <$> o .:  "token"
+                          <*> o .:  "guild_id"
+                          <*> o .:? "endpoint"
+
+-- | Structure containing information about an effect sent in a voice channel. Discord documents the emoji and animation fields for an emoji reaction and a soundboard effect, and the sound fields for a soundboard effect only, so each of those fields is 'Nothing' where Discord does not send it.
+data VoiceChannelEffectInfo = VoiceChannelEffectInfo
+  { voiceChannelEffectChannelId :: ChannelId -- ^ Voice channel the effect was sent in
+  , voiceChannelEffectGuildId :: GuildId -- ^ Guild the voice channel is in
+  , voiceChannelEffectUserId :: UserId -- ^ User who sent the effect
+  , voiceChannelEffectEmoji :: Maybe Emoji -- ^ Emoji of an emoji reaction or a soundboard effect
+  , voiceChannelEffectAnimationType :: Maybe VoiceChannelEffectAnimationType -- ^ Type of the emoji animation, for an emoji reaction or a soundboard effect
+  , voiceChannelEffectAnimationId :: Maybe Integer -- ^ Id of the emoji animation, for an emoji reaction or a soundboard effect
+  , voiceChannelEffectSoundId :: Maybe SoundboardSoundId -- ^ Id of the soundboard sound, for a soundboard effect
+  , voiceChannelEffectSoundVolume :: Maybe Double -- ^ Volume of the soundboard sound, from 0 to 1, for a soundboard effect
+  } deriving (Show, Read, Eq, Ord)
+
+instance FromJSON VoiceChannelEffectInfo where
+  parseJSON = withObject "VoiceChannelEffectInfo" $ \o ->
+    VoiceChannelEffectInfo <$> o .:  "channel_id"
+                           <*> o .:  "guild_id"
+                           <*> o .:  "user_id"
+                           <*> o .:? "emoji"
+                           <*> o .:? "animation_type"
+                           <*> o .:? "animation_id"
+                           <*> (o .:? "sound_id" >>= traverse parseSoundId)
+                           <*> o .:? "sound_volume"
+    where
+      -- Discord documents the id as a snowflake or an integer
+      parseSoundId :: Value -> Parser SoundboardSoundId
+      parseSoundId (Number n) = maybe (fail "invalid sound_id") (pure . DiscordId . Snowflake) (toBoundedInteger n)
+      parseSoundId v = parseJSON v
+
+-- | The animation of a voice channel effect
+data VoiceChannelEffectAnimationType
+  -- | A fun animation sent by a Nitro subscriber
+  = VoiceChannelEffectAnimationTypePremium
+  -- | The standard animation
+  | VoiceChannelEffectAnimationTypeBasic
+  deriving (Show, Read, Eq, Ord, Data)
+
+instance InternalDiscordEnum VoiceChannelEffectAnimationType where
+  discordTypeStartValue = VoiceChannelEffectAnimationTypePremium
+  fromDiscordType VoiceChannelEffectAnimationTypePremium = 0
+  fromDiscordType VoiceChannelEffectAnimationTypeBasic = 1
+
+instance FromJSON VoiceChannelEffectAnimationType where
+  parseJSON = discordTypeParseJSON "VoiceChannelEffectAnimationType"
 
 -- | Structure containing auto moderation action execution information
 data AutoModerationActionExecuteInfo = AutoModerationActionExecuteInfo
@@ -385,6 +482,10 @@ eventParse t o = case t of
     "GUILD_ROLE_CREATE"         -> InternalGuildRoleCreate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_UPDATE"         -> InternalGuildRoleUpdate  <$> o .: "guild_id" <*> o .: "role"
     "GUILD_ROLE_DELETE"         -> InternalGuildRoleDelete  <$> o .: "guild_id" <*> o .: "role_id"
+    "GUILD_SOUNDBOARD_SOUND_CREATE" -> InternalGuildSoundboardSoundCreate <$> reparse o
+    "GUILD_SOUNDBOARD_SOUND_UPDATE" -> InternalGuildSoundboardSoundUpdate <$> reparse o
+    "GUILD_SOUNDBOARD_SOUND_DELETE" -> InternalGuildSoundboardSoundDelete <$> o .: "guild_id" <*> o .: "sound_id"
+    "GUILD_SOUNDBOARD_SOUNDS_UPDATE" -> InternalGuildSoundboardSoundsUpdate <$> o .: "guild_id" <*> o .: "soundboard_sounds"
     "MESSAGE_CREATE"            -> InternalMessageCreate     <$> reparse o
     "MESSAGE_UPDATE"            -> InternalMessageUpdate     <$> o .: "channel_id" <*> o .: "id"
     "MESSAGE_DELETE"            -> InternalMessageDelete     <$> o .: "channel_id" <*> o .: "id"
@@ -394,9 +495,14 @@ eventParse t o = case t of
     "MESSAGE_REACTION_REMOVE_ALL" -> InternalMessageReactionRemoveAll <$> reparse o
     "MESSAGE_REACTION_REMOVE_EMOJI" -> InternalMessageReactionRemoveEmoji <$> reparse o
     "PRESENCE_UPDATE"           -> InternalPresenceUpdate            <$> reparse o
+    "SOUNDBOARD_SOUNDS"         -> InternalSoundboardSounds          <$> o .: "guild_id" <*> o .: "soundboard_sounds"
+    "STAGE_INSTANCE_CREATE"     -> InternalStageInstanceCreate       <$> reparse o
+    "STAGE_INSTANCE_UPDATE"     -> InternalStageInstanceUpdate       <$> reparse o
+    "STAGE_INSTANCE_DELETE"     -> InternalStageInstanceDelete       <$> reparse o
     "TYPING_START"              -> InternalTypingStart               <$> reparse o
     "USER_UPDATE"               -> InternalUserUpdate                <$> reparse o
- -- "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
- -- "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
+    "VOICE_STATE_UPDATE"        -> InternalVoiceStateUpdate          <$> reparse o
+    "VOICE_SERVER_UPDATE"       -> InternalVoiceServerUpdate         <$> reparse o
+    "VOICE_CHANNEL_EFFECT_SEND" -> InternalVoiceChannelEffectSend    <$> reparse o
     "INTERACTION_CREATE"        -> InternalInteractionCreate         <$> reparse o
     _other_event                -> InternalUnknownEvent t            <$> reparse o
