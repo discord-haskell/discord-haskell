@@ -10,8 +10,6 @@ module Discord.Internal.Rest.Invite
   ( InviteRequest(..)
   ) where
 
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
 import qualified Data.Text as T
 
 import Discord.Internal.Rest.Prelude
@@ -34,10 +32,10 @@ inviteMajorRoute c = case c of
   (GetInvite _) ->     "invite "
   (DeleteInvite _) ->  "invite "
 
-invite :: R.Url 'R.Https
+invite :: T.Text
 invite = baseUrl /: "invites"
 
 inviteJsonRequest :: InviteRequest r -> JsonRequest
 inviteJsonRequest c = case c of
-  (GetInvite g) -> Get (invite R./: g) mempty
-  (DeleteInvite g) -> Delete (invite R./: g) mempty
+  (GetInvite g) -> Get (invite /: g) mempty
+  (DeleteInvite g) -> Delete (invite /: g) mempty

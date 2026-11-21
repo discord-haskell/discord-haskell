@@ -5,7 +5,7 @@
 
 module Discord.Internal.Rest.ApplicationCommands where
 
-import Data.Aeson (Value)
+import Data.Aeson (encode)
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 import Discord.Internal.Types.ApplicationCommands
@@ -14,7 +14,9 @@ import Discord.Internal.Types.ApplicationCommands
       EditApplicationCommand,
       CreateApplicationCommand,
       ApplicationCommand )
-import Network.HTTP.Req as R
+import qualified Data.Text as T
+import Network.HTTP.Client (RequestBody(RequestBodyLBS))
+import Network.HTTP.Client.MultipartFormData (Part)
 
 instance Request (ApplicationCommandRequest a) where
   jsonRequest = applicationCommandJsonRequest
@@ -112,7 +114,7 @@ data ApplicationCommandRequest a where
                                     -> ApplicationCommandRequest GuildApplicationCommandPermissions
 
 -- | The base url for application commands
-applications :: ApplicationId -> R.Url 'R.Https
+applications :: ApplicationId -> T.Text
 applications s = baseUrl /: "applications" /~ s
 
 -- | The major routes identifiers for `ApplicationCommandRequest`s
@@ -148,7 +150,7 @@ applicationCommandJsonRequest a = case a of
   (DeleteGlobalApplicationCommand aid aci) ->
     Delete (applications aid /: "commands" /~ aci) mempty
   (BulkOverWriteGlobalApplicationCommand aid cacs) ->
-    Put (applications aid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
+    Put (applications aid /: "commands") (convert cacs) mempty
   (GetGuildApplicationCommands aid gid) ->
     Get (applications aid /: "guilds" /~ gid /: "commands") mempty
   (CreateGuildApplicationCommand aid gid cac) ->
@@ -160,13 +162,13 @@ applicationCommandJsonRequest a = case a of
   (DeleteGuildApplicationCommand aid gid aci) ->
     Delete (applications aid /: "guilds" /~ gid /: "commands" /~ aci) mempty
   (BulkOverWriteGuildApplicationCommand aid gid cacs) ->
-    Put (applications aid /: "guilds" /~ gid /: "commands") (R.ReqBodyJson $ toJSON cacs) mempty
+    Put (applications aid /: "guilds" /~ gid /: "commands") (convert cacs) mempty
   (GetGuildApplicationCommandPermissions aid gid) ->
     Get (applications aid /: "guilds" /~ gid /: "commands" /: "permissions") mempty
   (GetApplicationCommandPermissions aid gid cid) ->
     Get (applications aid /: "guilds" /~ gid /: "commands" /~ cid /: "permissions") mempty
   (EditApplicationCommandPermissions aid gid cid ps) ->
-    Put (applications aid /: "guilds" /~ gid /: "commands" /~ cid /: "permissions") (R.ReqBodyJson $ toJSON (GuildApplicationCommandPermissions cid aid gid ps)) mempty
+    Put (applications aid /: "guilds" /~ gid /: "commands" /~ cid /: "permissions") (convert (GuildApplicationCommandPermissions cid aid gid ps)) mempty
   where
-    convert :: (ToJSON a) => a -> RestIO (ReqBodyJson Value)
-    convert = (pure @RestIO) . R.ReqBodyJson . toJSON
+    convert :: (ToJSON a) => a -> Either RequestBody [Part]
+    convert = Left . RequestBodyLBS . encode . toJSON

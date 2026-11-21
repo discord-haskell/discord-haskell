@@ -17,9 +17,7 @@ import qualified Data.Aeson.Key as Key
 import qualified Data.Text as T
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
-import           Network.HTTP.Req ((/:), (/~))
-import qualified Network.HTTP.Req as R
-import Network.HTTP.Client (RequestBody (RequestBodyBS))
+import Network.HTTP.Client (RequestBody (RequestBodyBS, RequestBodyLBS))
 import Network.HTTP.Client.MultipartFormData (partBS, partFileRequestBody)
 
 import Discord.Internal.Rest.Prelude
@@ -154,7 +152,7 @@ webhookMajorRoute ch = case ch of
 webhookJsonRequest :: WebhookRequest r -> JsonRequest
 webhookJsonRequest ch = case ch of
   (CreateWebhook channel patch) ->
-    let body = pure (R.ReqBodyJson patch)
+    let body = Left (RequestBodyLBS $ encode $ toJSON patch)
     in Post (baseUrl /: "channels" /~ channel /: "webhooks") body  mempty
 
   (GetChannelWebhooks c) ->
@@ -167,7 +165,7 @@ webhookJsonRequest ch = case ch of
     Get (baseUrl /: "webhooks" /~ w /? t)  mempty
 
   (ModifyWebhook w t p) ->
-    Patch (baseUrl /: "webhooks" /~ w /? t) (pure (R.ReqBodyJson p))  mempty
+    Patch (baseUrl /: "webhooks" /~ w /? t) (Left (RequestBodyLBS $ encode p))  mempty
 
   (DeleteWebhook w t) ->
     Delete (baseUrl /: "webhooks" /~ w /? t)  mempty
@@ -176,10 +174,10 @@ webhookJsonRequest ch = case ch of
     case executeWebhookWithTokenOptsContent o of
       WebhookContentFile name text  ->
         let part = partFileRequestBody "file" (T.unpack name) (RequestBodyBS text)
-            body = R.reqBodyMultipart [part]
+            body = Right [part]
         in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentText _ ->
-        let body = pure (R.ReqBodyJson o)
+        let body = Left (RequestBodyLBS $ encode o)
         in Post (baseUrl /: "webhooks" /~ w /~ tok) body mempty
       WebhookContentEmbeds embeds ->
         let mkPart (name,content) = partFileRequestBody name (T.unpack name) (RequestBodyBS content)
@@ -190,14 +188,14 @@ webhookJsonRequest ch = case ch of
                                           , ("footer.png", createEmbedFooterIcon) ]]
             parts =  map mkPart (concatMap uploads embeds)
             partsJson = [partBS "payload_json" $ BL.toStrict $ encode $ toJSON $ object ["embed" .= createEmbed e] | e <- embeds]
-            body = R.reqBodyMultipart (partsJson ++ parts)
+            body = Right (partsJson ++ parts)
         in Post (baseUrl /: "webhooks" /~ w /: unToken tok) body mempty
 
   (GetWebhookMessage w t m) ->
     Get (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty
 
   (EditWebhookMessage w t m p) ->
-    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (pure (R.ReqBodyJson $ object ["content" .= p]))  mempty
+    Patch (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m) (Left (RequestBodyLBS $ encode $ object ["content" .= p]))  mempty
 
   (DeleteWebhookMessage w t m) ->
     Delete (baseUrl /: "webhooks" /~ w /~ t /: "messages" /~ m)  mempty

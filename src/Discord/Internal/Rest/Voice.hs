@@ -10,9 +10,7 @@ module Discord.Internal.Rest.Voice
   ) where
 
 
-import Network.HTTP.Req ((/:))
-import qualified Network.HTTP.Req as R
-
+import qualified Data.Text as T
 import Discord.Internal.Rest.Prelude
 import Discord.Internal.Types
 
@@ -29,7 +27,7 @@ voiceMajorRoute :: VoiceRequest a -> String
 voiceMajorRoute c = case c of
   (ListVoiceRegions) -> "whatever "
 
-voices :: R.Url 'R.Https
+voices :: T.Text
 voices = baseUrl /: "voice"
 
 voiceJsonRequest :: VoiceRequest r -> JsonRequest
